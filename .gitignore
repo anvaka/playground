@@ -2,6 +2,7 @@
 logs
 *.log
 npm-debug.log*
+bundle.js
 
 # Runtime data
 pids
