@@ -5,8 +5,8 @@ var graph = require('miserables');
 // 3. The placement of a cell is determined by edges.
 var scene = createScene(document.getElementById('scene'));
 
-var layoutManager = createLayoutManager(graph);
 var nodes = getNodes(graph).sort(byDegree);
+var layoutManager = createLayoutManager(nodes);
 
 nodes.forEach(node => {
   var placement = layoutManager.getPosition(node);
@@ -21,36 +21,69 @@ function getNodes(graph) {
   var nodes = [];
 
   graph.forEachNode(function(node) {
+    var links = graph.getLinks(node.id) || [];
+
     nodes.push({
       id: node.id,
       node: node,
-      degree: getDegree(node.id)
+      links: links,
+      degree: links.length
     });
   });
 
   return nodes;
-
-  function getDegree(nodeId) {
-    var links = graph.getLinks(nodeId);
-    return links ? links.length : 0;
-  }
 }
 
-function createLayoutManager(graph) {
-  var nodesCount = graph.getNodesCount();
+function createLayoutManager(nodes) {
+  var positions = new Map(); // map from id to node position
+  var idToNode = indexNodes();
+  layout();
 
   return {
     getPosition: getPosition
   };
 
+  function indexNodes() {
+    var index = new Map();
+    nodes.forEach(function(node) { index.set(node.id, node); });
+
+    return index;
+  }
+
   function getPosition(node) {
-    // For now, we just do it randomly. But this will be our core:
-    var size = node.degree + 1;
-    return {
-      size: size,
-      cx: Math.random() * nodesCount * 10,
-      cy: Math.random() * nodesCount * 10,
-    };
+    return positions.get(node.id);
+  }
+
+  function layout() {
+    // Let's explore from the simple idea:
+    // 1. Place the largest node (by degree) in available spot
+    // 2. Place each unvisited neighbour in the nearest unoccupied cell
+    nodes.forEach(function(node) {
+      placeNode(node.id);
+    });
+
+    function placeNode(nodeId, nearestNeighbourId) {
+      if (positions.has(nodeId)) return; // already placed
+
+      var cell = findSpot(nodeId, nearestNeighbourId);
+      positions.set(nodeId, cell);
+
+      var node = idToNode.get(nodeId);
+
+      node.links.forEach(function(link) {
+        if (link.fromId === nodeId) {
+          placeNode(link.toId, link.fromId);
+        }
+      });
+    }
+
+    function findSpot(nodeId) {
+      return {
+        cx: Math.random() * nodes.length * 10,
+        cy: Math.random() * nodes.length * 10,
+        size: (idToNode.get(nodeId).links.length + 1) * 2
+      }
+    }
   }
 }
 
