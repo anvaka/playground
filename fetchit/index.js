@@ -67,13 +67,18 @@ function find(query, callback) {
     success: function( response ) {
       var suggestions = (response[1] || []).map(function(x) {
         return x[0];
-      });
+      }).filter(byFullPhrase);
       callback({
         suggestions: suggestions,
         query: query
       });
     }
   });
+}
+
+function byFullPhrase(x) {
+  // we dont want half-complete answers
+  return x.match(/<b>[^\s]/) === null;
 }
 
 function getStates() {
