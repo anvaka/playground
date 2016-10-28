@@ -4,7 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width">
   <title>Label placement playground</title>
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Roboto" rel="stylesheet">
   <style type="text/css" media="screen">
+text {
+  font-family: 'Roboto', sans-serif;
+}
 body {
   background: #A3CCFF;
   padding: 0;
@@ -14,13 +18,12 @@ body {
   </style>
 </head>
 <body>
-<svg style="width: 1280px; height: 699px;">
+<svg style="width: 1280px; height: 699px;" text-rendering="optimizeSpeed">
   <g id='scene'>
   </g>
 </svg>
   <script src='https://cdn.rawgit.com/anvaka/panzoom/v1.2.4/dist/panzoom.min.js'></script>
   <script src='https://rawgit.com/anvaka/simplesvg/master/dist/simplesvg.js'></script>
-  <script src='https://rawgit.com/mourner/simplify-js/master/simplify.js'></script>
   <script src='./countries.js'></script>
   <script src='./index.js'></script>
 </script>

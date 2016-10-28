@@ -5,8 +5,7 @@ var testPhrase = 'the richest country in the world';
 var scene = document.getElementById('scene');
 var colors = getColors();
 var textMeasure = createTextMeasure(scene);
-var fontSize = 3;
-console.log(textMeasure.measure(testPhrase, 3));
+// console.log(textMeasure.measure(testPhrase, 3));
 
 panzoom(scene);
 
@@ -22,35 +21,62 @@ renderLabels(geometries);
 
 // outlineIntersections(countryGeometry.candidates);
 
-function emptyCandidates(candidate) {
-  return candidate.segments.length > 1;
-}
+function renderLabels(geometries) {
+  geometries.forEach(renderPhrase);
 
-function renderLabels(countries) {
-  countries.forEach(renderPhrase);
+  function renderPhrase(geometry) {
+    var countryId = geometry.id;
+    var textLayout = geometry.getTextLayout(countryId);
 
-  function renderPhrase(country) {
-    var countryId = country.id;
-    var baseRect = country.baseOffest;
-    var size = textMeasure.measure(countryId, fontSize);
-
-    var name = sivg('text', {
-      'font-size': fontSize, // TODO: Should come from polygon area
-      x: baseRect.left + (baseRect.width - size.oneLineRect.width) * 0.5 ,
-      y: baseRect.top + baseRect.height
+    textLayout.forEach(function(chunk) {
+      var width = chunk.right - chunk.left;
+       // scene.appendChild(sivg('rect', {
+       //   fill: 'transparent',
+       //   stroke: 'red',
+       //   x: chunk.left,
+       //   y: chunk.top,
+       //   width: width,
+       //   height: chunk.bottom - chunk.top
+       // }));
+      var textWidth = textMeasure.measure(countryId, chunk.fontSize).preciseOneLineRect.width;
+      var chunkElement = sivg('text', {
+        'font-size': chunk.fontSize,
+        x: chunk.left + (width - textWidth)/2, // + (baseRect.width - size.oneLineRect.width) * 0.5 ,
+        y: chunk.bottom - chunk.fontSize  * 0.3 // baseRect.top + baseRect.height
+      });
+      chunkElement.text(chunk.text);
+      scene.appendChild(chunkElement);
+      // scene.appendChild(sivg('path', {
+      //   stroke: 'red',
+      //   'stroke-width': 0.1,
+      //   d: 'M' + toPath({
+      //     x: chunk.left,
+      //     y: chunk.top
+      //   }) + 'L' + toPath({
+      //     x: chunk.right,
+      //     y: chunk.top
+      //   })
+      // }));
     });
 
-    name.text(countryId);
-    scene.appendChild(name);
-    testPhrase
+    // var baseRect = geometry.baseOffest;
+    // var size = textMeasure.measure(countryId, fontSize);
+    //
+    // var name = sivg('text', {
+    //   'font-size': fontSize, // TODO: Should come from polygon area
+    //   x: baseRect.left + (baseRect.width - size.oneLineRect.width) * 0.5 ,
+    //   y: baseRect.top + baseRect.height
+    // });
+    //
+    // name.text(countryId);
+    // scene.appendChild(name);
+    // testPhrase
   }
 }
 
 function renderCountry(country, gdx, gdy) {
   var bounds = country.bounds;
-  var dx = bounds.maxX - bounds.minX;
-  var dy = bounds.maxY - bounds.minY;
-  var scaler = Math.max(dx, dy);
+  var scaler = Math.max(bounds.width, bounds.height);
 
   var countryContainer = sivg('g');
   var path = country.points/*.map(toZero)*/.map(toPath).join('L');
@@ -58,13 +84,13 @@ function renderCountry(country, gdx, gdy) {
   countryContainer.appendChild(sivg('path', {
     id: country.id,
     fill: colors[country.id] || '#F2ECCF',
-    'stroke-width': 0.1,
+    'stroke-width': 0.3,
+    'vector-effect':'non-scaling-stroke',
     stroke: '#333',
     d: 'M' + path + 'Z'
   }));
 
   scene.appendChild(countryContainer);
-  //renderCountryName();
 
   function toZero(p) {
     return {
@@ -72,40 +98,18 @@ function renderCountry(country, gdx, gdy) {
       y: (p.y - bounds.minY) * 100 / scaler + gdy
     };
   }
-
 }
 
-function getSegmentDistance(points) {
-  var distanceInside = 0;
-  var distanceOutside = 0;
-
-  points.forEach(function(p, idx) {
-    if (idx === 0) return;
-
-    var distance = p.x - points[idx - 1].x;
-    var pointInside = (idx % 2) === 0;
-    if (pointInside)
-      distanceOutside += distance;
-    else
-      distanceInside += distance;
-  });
-
-  return {
-    inside: distanceInside,
-    outside: distanceOutside
-  };
-}
-
-
+// provides an API to iterate over segments inside polyline.
 function polyLine(points) {
-  // sort by x, so that we know when line enters/quits.
-  var sortedSegmentIndices = points.map(function(_, i) {
-    return i;
-  })
+  // sort by x, so that we know when split-line enters/quits polygon.
+  var sortedSegmentIndices = points.map(function(_, i) { return i; })
     .sort(function(firstSegmentIndex, secondSegmentIndex) {
       var a = getSegment(firstSegmentIndex);
       var b = getSegment(secondSegmentIndex);
 
+      // make sure to sort by the smallest coordinate in each segment, because
+      // polyline may go from east to west too.
       var minA = Math.min(a.from.x, a.to.x);
       var minB = Math.min(b.from.x, b.to.x);
 
@@ -180,7 +184,6 @@ function findCentroid(points) {
   }
 }
 
-
 function parseFloat(x) {
   var result = Number.parseFloat(x);
   if (Number.isNaN(result))
@@ -190,51 +193,18 @@ function parseFloat(x) {
 }
 
 function log() {
-  return;
+  return; // Comment this line if you need logging.
   console.log.apply(console, arguments);
 }
 
-function translate(x, y) {
-  return function(p) {
-    return {
-      x: p.x + x,
-      y: p.y + y
-    };
-  }
-}
-
-function getBounds(points) {
-  var minX = Number.POSITIVE_INFINITY,
-    minY = Number.POSITIVE_INFINITY;
-  var maxX = Number.NEGATIVE_INFINITY,
-    maxY = Number.NEGATIVE_INFINITY;
-
-  points.forEach(function(p) {
-    if (p.x < minX)
-      minX = p.x;
-    if (p.y < minY)
-      minY = p.y;
-    if (p.x > maxX)
-      maxX = p.x;
-    if (p.y > maxY)
-      maxY = p.y;
-  });
-
-  return {
-    minX: minX,
-    minY: minY,
-    maxX: maxX,
-    maxY: maxY
-  };
-}
 
 function renderLineChart(country, dx, dy, name) {
   var maxY = Number.NEGATIVE_INFINITY;
   var candidates = country.candidates;
   var bounds = country.bounds;
-  var countryWidth = bounds.maxX - bounds.minX;
-  var countryHeight = bounds.maxY - bounds.minY;
-  var scaleY = 100; // * (bounds.maxY - bounds.minY)/scaler;
+  var countryWidth = bounds.width
+  var countryHeight = bounds.height;
+  var scaleY = 100; // * bounds.height/scaler;
   if (countryHeight < countryWidth) {
     scaleY /= countryHeight / countryWidth;
   }
@@ -299,7 +269,7 @@ function outlineIntersections(candidates) {
         })
       );
     }
-  })
+  });
 }
 
 function makeCountryGeometry(countryPath, countryId) {
@@ -309,25 +279,233 @@ function makeCountryGeometry(countryPath, countryId) {
   var slicer = makeSlicer(bounds, slicesCount);
 
   var poly = polyLine(points);
+  // TODO: Remove appendSliceLine?
   var lines = {};
   slicer.forEach(appendSliceLine)
 
   var candidates = Object.keys(lines).map(toRankedCandidates);
+  var area = computeAreaInside(candidates);
 
+  // we make each distance inside country normal length (from 0 to 1), so that
+  // we can build composite ranking of each line easier.
   normalizeDistances();
+
+  // Compute composite rank now:
   candidates.forEach(computeRank);
 
-  var basePoint = findBasePoint();
-  var ratio = (bounds.maxY - bounds.minY)/slicesCount;
-  var baseOffest = bounds.minY + ratio * basePoint;
+  // Find the index of the the horizontal line, that has the highest "rank".
+  // That index is our best candidate for label placement.
+  var candidateIndex = findBestCandidateIndex();
+  // Trnaslate that index into country coordinates
+  var ratio = bounds.height/slicesCount;
+
+  // and get the offset - this is where we want to render label by default.
+  var yOffset = bounds.minY + ratio * candidateIndex;
 
   return {
     id: countryId,
     bounds: bounds,
     candidates: candidates,
     points: points,
-    baseOffest: findRect(baseOffest, 3)
+    getTextLayout: getTextLayout
   };
+
+  function getTextLayout(text) {
+    var maxFontSize = 18; // TODO: Make configurable
+    var fontSize = Math.max(0.1, getSuggestedFontSize(text) - 4);
+    var rectForHeight = getRectForHeight(yOffset, fontSize);
+
+    if (!rectForHeight) {
+      // TODO: implement me. Reduce font size and retry.
+      return [{
+        fontSize: fontSize,
+        text: text,
+        right: bounds.maxX,
+        left: bounds.minX,
+        top: yOffset,
+        bottom: yOffset + 1
+      }];
+    }
+
+    return [{
+      fontSize: fontSize,
+      text: text,
+      right: rectForHeight.right,
+      left: rectForHeight.left,
+      bottom: rectForHeight.bottom,
+      top: rectForHeight.top
+    }];
+
+    function getRectForHeight(midPoint, height) {
+      var top = midPoint - height/2;
+      var bottom = midPoint + height/2;
+      var topIntervals = getIntervals(top);
+      var bottomIntervals = getIntervals(bottom);
+      var intersections = findIntersections(topIntervals, bottomIntervals);
+
+      var longestSegment = findLongestSegment(intersections);
+
+      if (!longestSegment) return;
+
+      return {
+        left: longestSegment.from,
+        top: top,
+        right: longestSegment.to,
+        bottom: bottom
+      };
+    }
+
+    function findLongestSegment(segments) {
+      var longest = segments[0];
+
+      segments.forEach(function(segment) {
+        if (longest.length < segment.length) longest = segment;
+      })
+
+      return longest;
+    }
+
+    // finds all intersections between two arrays of segments.
+    function findIntersections(topIntervals, bottomIntervals) {
+      var smaller, larger;
+      if (topIntervals.min <= bottomIntervals.min) {
+        smaller = topIntervals;
+        larger = bottomIntervals;
+      } else {
+        smaller = bottomIntervals;
+        larger = topIntervals;
+      }
+
+      var intersections = [];
+
+      while(smaller.hasMore) {
+        while (smaller.min > larger.max && larger.hasMore) {
+          // this means that our next interval does not intersect first interval
+          larger.next();
+        }
+
+        if (!larger.hasMore) {
+          // we exhasted the interval. All intersections are found.
+          break;
+        }
+
+        if (smaller.max < larger.min) {
+          // this means that smaller interval does not intersect larger one
+          smaller.next();
+          swapIntervals();
+        } else {
+          var from = larger.min;
+          var to;
+          if (larger.max < smaller.max) {
+            to = larger.max;
+            larger.next();
+          } else {
+            to = smaller.max;
+            smaller.next();
+            swapIntervals();
+          }
+
+          intersections.push({
+            from: from,
+            to: to,
+            length: to - from
+          });
+        }
+      }
+
+      return intersections;
+
+      function swapIntervals() {
+        var t = smaller;
+        smaller = larger;
+        larger = t;
+      }
+    }
+
+    // returns array of intervals, that lie inside country area at offset `yOffset`
+    function getIntervals(yOffset) {
+      var segments = findSegmentsOnLine({
+        y: yOffset,
+        x: bounds.minX
+      });
+      return segmentsCollection(segments);
+    }
+
+    function segmentsCollection(segments) {
+      var api = {
+        min: undefined,
+        max: undefined,
+        hasMore: undefined,
+        next: next,
+      };
+
+      var currentIndex = -1;
+      next();
+
+      return api;
+
+      function next() {
+        currentIndex += 1;
+        var enterIndex = currentIndex * 2;
+        var exitIndex = enterIndex + 1;
+        if (exitIndex < segments.length) {
+          api.hasMore = true;
+          api.min = segments[enterIndex].x;
+          api.max = segments[exitIndex].x;
+        } else {
+          api.hasMore = false;
+          api.min = undefined;
+          api.max = undefined;
+        }
+      }
+    }
+
+    function getSuggestedFontSize(text) {
+      if (text.length === 0) return 0;
+
+      // TODO: This needs to be improved. Current idea is that we want label
+      // to occupy less than 40% (0.4) of an area.
+      var maxCountrySpaceRatio = 0.4;
+      var fontSize = Math.round( Math.sqrt(area * maxCountrySpaceRatio/ text.length));
+      return Math.min(fontSize, maxFontSize); //Math.min(maxFontSize, Math.round(bounds.height / 2));
+    }
+  }
+
+  function computeAreaInside(candidates) {
+    var area = 0;
+    candidates.forEach(function(candidate) {
+      area += candidate.distance.inside;
+    });
+
+    return area;
+  }
+
+  function getBounds(points) {
+    var minX = Number.POSITIVE_INFINITY,
+      minY = Number.POSITIVE_INFINITY;
+    var maxX = Number.NEGATIVE_INFINITY,
+      maxY = Number.NEGATIVE_INFINITY;
+
+    points.forEach(function(p) {
+      if (p.x < minX)
+        minX = p.x;
+      if (p.y < minY)
+        minY = p.y;
+      if (p.x > maxX)
+        maxX = p.x;
+      if (p.y > maxY)
+        maxY = p.y;
+    });
+
+    return {
+      minX: minX,
+      minY: minY,
+      maxX: maxX,
+      maxY: maxY,
+      width: maxX - minX,
+      height: maxY - minY
+    };
+  }
 
   function findRect(yOffset, rectHeight) {
     var bottomSegments = findSegmentsOnLine({
@@ -338,6 +516,7 @@ function makeCountryGeometry(countryPath, countryId) {
       y: yOffset - rectHeight,
       x: bounds.minX
     });
+
     if (!bottomSegments.length && !topSegments.length) {
       throw new Error('yOffset is out of the range');
     }
@@ -349,7 +528,7 @@ function makeCountryGeometry(countryPath, countryId) {
 
 
     var left = Math.min(bottomSegments[0].x, topSegments[0].x);
-    var right = Math.max(last(bottomSegments).x, last(topSegments).x);
+    var right = Math.max(bottomSegments[1].x, topSegments[1].x);
     if (right < left) {
       throw new Error('how right could be smaller than left?')
     }
@@ -372,7 +551,7 @@ function makeCountryGeometry(countryPath, countryId) {
     }
   }
 
-  function findBasePoint() {
+  function findBestCandidateIndex() {
     var bestRank = Number.NEGATIVE_INFINITY;
     var bestCandidateForLabelBase = -1;
 
@@ -445,6 +624,27 @@ function makeCountryGeometry(countryPath, countryId) {
       segments: segments,
       segmentsCount: segments.length,
       distance: getSegmentDistance(segments)
+    };
+  }
+
+  function getSegmentDistance(points) {
+    var distanceInside = 0;
+    var distanceOutside = 0;
+
+    points.forEach(function(p, idx) {
+      if (idx === 0) return;
+
+      var distance = p.x - points[idx - 1].x;
+      var pointInside = (idx % 2) === 0;
+      if (pointInside)
+        distanceOutside += distance;
+      else
+        distanceInside += distance;
+    });
+
+    return {
+      inside: distanceInside,
+      outside: distanceOutside
     };
   }
 
@@ -558,7 +758,7 @@ function makeCountryGeometry(countryPath, countryId) {
   }
 
   function makeSlicer(bounds, slicesCount) {
-    var sliceWidth = (bounds.maxY - bounds.minY) / slicesCount;
+    var sliceWidth = bounds.height / slicesCount;
 
     return {
       forEach: forEach
