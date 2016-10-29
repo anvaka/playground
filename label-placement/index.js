@@ -26,9 +26,10 @@ function renderLabels(geometries) {
 
   function renderPhrase(geometry) {
     var countryId = geometry.id;
-    var textLayout = geometry.getTextLayout(countryId);
+    var text = countryId; //testPhrase; // countryId
+    var textLayout = geometry.getTextLayout(text); //countryId);
 
-    textLayout.forEach(function(chunk) {
+    textLayout.removeMe.forEach(function(chunk) {
       var width = chunk.right - chunk.left;
        // scene.appendChild(sivg('rect', {
        //   fill: 'transparent',
@@ -38,7 +39,7 @@ function renderLabels(geometries) {
        //   width: width,
        //   height: chunk.bottom - chunk.top
        // }));
-      var textWidth = textMeasure.measure(countryId, chunk.fontSize).preciseOneLineRect.width;
+      var textWidth = textMeasure.measure(text, chunk.fontSize).preciseOneLineRect.width;
       var chunkElement = sivg('text', {
         'font-size': chunk.fontSize,
         x: chunk.left + (width - textWidth)/2, // + (baseRect.width - size.oneLineRect.width) * 0.5 ,
@@ -58,6 +59,23 @@ function renderLabels(geometries) {
       //   })
       // }));
     });
+    var start = textLayout.allRectangles.start;
+    if (start) {
+        appendRect(start);
+        textLayout.allRectangles.north.forEach(appendRect);
+        textLayout.allRectangles.south.forEach(appendRect);
+    }
+
+    function appendRect(rect) {
+       scene.appendChild(sivg('rect', {
+         fill: 'transparent',
+         stroke: 'red',
+         x: rect.left,
+         y: rect.top,
+         width: rect.right - rect.left,
+         height: rect.bottom - rect.top
+       }));
+    }
 
     // var baseRect = geometry.baseOffest;
     // var size = textMeasure.measure(countryId, fontSize);
@@ -312,12 +330,30 @@ function makeCountryGeometry(countryPath, countryId) {
 
   function getTextLayout(text) {
     var maxFontSize = 18; // TODO: Make configurable
-    var fontSize = Math.max(0.1, getSuggestedFontSize(text) - 4);
-    var rectForHeight = getRectForHeight(yOffset, fontSize);
+    var fontSize = Math.max(0.1, getSuggestedFontSize(text));
 
-    if (!rectForHeight) {
+    console.time(text);
+    var allRectangles = getAllRectanglesAtHeight(yOffset, fontSize);
+    console.timeEnd(text);
+
+    var rectForHeight = getRectForHeight(yOffset, fontSize);
+    var result = {
+      removeMe: [],
+      allRectangles: allRectangles
+    };
+
+    if (rectForHeight) {
+      result.removeMe = [{
+        fontSize: fontSize,
+        text: text,
+        right: rectForHeight.right,
+        left: rectForHeight.left,
+        bottom: rectForHeight.bottom,
+        top: rectForHeight.top
+      }];
+    } else {
       // TODO: implement me. Reduce font size and retry.
-      return [{
+      result.removeMe = [{
         fontSize: fontSize,
         text: text,
         right: bounds.maxX,
@@ -327,14 +363,125 @@ function makeCountryGeometry(countryPath, countryId) {
       }];
     }
 
-    return [{
-      fontSize: fontSize,
-      text: text,
-      right: rectForHeight.right,
-      left: rectForHeight.left,
-      bottom: rectForHeight.bottom,
-      top: rectForHeight.top
-    }];
+    return result;
+
+
+    function getAllRectanglesAtHeight(midPoint, rectHeight) {
+      var rects = [];
+      var midPointHeight = (midPoint - bounds.minY);
+      var slicesCount = Math.floor(midPointHeight/rectHeight);
+      var dy = (midPointHeight - slicesCount * rectHeight);
+      var y = bounds.minY + dy;
+      var foundRects = 0;
+      while (y < bounds.maxY) {
+        rects[foundRects++]  = getRectForHeight(y, rectHeight);
+        y += rectHeight;
+      }
+
+      var startFrom = slicesCount;
+      var startRect = rects[startFrom];
+      if (!startRect) {
+        var nearestIndexOnNorth = getNearestAtNorth(startFrom)
+        var nearestIndexOnSouth = getNearestAtSouth(startFrom);
+        if (Number.isFinite(nearestIndexOnNorth) && !Number.isFinite(nearestIndexOnSouth)) {
+          startFrom = nearestIndexOnNorth;
+        } else if (!Number.isFinite(nearestIndexOnNorth) && Number.isFinite(nearestIndexOnSouth)) {
+          startFrom = nearestIndexOnSouth;
+        } else if (!Number.isFinite(nearestIndexOnNorth) && !Number.isFinite(nearestIndexOnSouth)) {
+          return {
+            north: [],
+            start: null, // not found.
+            south: []
+          };
+        } else {
+          var ds = Math.abs(nearestIndexOnSouth - startFrom);
+          var dn = Math.abs(nearestIndexOnNorth - startFrom);
+          startFrom = ds < dn ? nearestIndexOnSouth : nearestIndexOnNorth;
+        }
+      }
+
+      var finalRects = {
+        north: [],
+        start: startRect,
+        south: []
+      }
+
+      populateFinalRects(startFrom);
+      filterNonOverlapingRects(finalRects);
+
+      return finalRects;
+
+      function filterNonOverlapingRects(rects) {
+        filter(rects.start, rects.north);
+        filter(rects.start, rects.south);
+
+        function filter(start, array) {
+          var i = 0;
+          while (i < array.length && intersects(start, array[i])) {
+            start = array[i];
+            i += 1;
+          }
+          if (i < array.length) {
+            array.splice(i);
+          }
+        }
+
+        function intersects(rect1, rect2) {
+          var from = Math.max(rect1.left, rect2.left);
+          var to = Math.min(rect1.right, rect2.right);
+          return to - from > 0;
+        }
+      }
+
+      function getNearestAtNorth(startFrom) {
+        var idx = startFrom;
+        do {
+          var candidate = rects[idx];
+          if (candidate) return idx;
+
+          idx -= 1;
+        } while (idx > -1);
+      }
+
+      function getNearestAtSouth(startFrom) {
+        var idx = startFrom;
+        do {
+          var candidate = rects[idx];
+          if (candidate) return idx;
+
+          idx += 1;
+        } while (idx < foundRects);
+      }
+
+      function populateFinalRects(startFrom) {
+        var goSouth = true; var southOffset = 1;
+        var goNorth = true; var northOffset = 1;
+
+        var candidate;
+
+        while(goSouth || goNorth) {
+          if (goNorth) {
+            candidate = rects[startFrom - northOffset];
+            if (candidate) {
+              finalRects.north.push(candidate);
+              northOffset += 1;
+            } else {
+              goNorth = false;
+            }
+          }
+
+          if (goSouth) {
+            candidate = rects[startFrom + southOffset];
+            if (candidate) {
+              finalRects.south.push(candidate);
+              southOffset += 1;
+            } else {
+              goSouth = false;
+            }
+          }
+        }
+      }
+    }
 
     function getRectForHeight(midPoint, height) {
       var top = midPoint - height/2;
@@ -345,7 +492,11 @@ function makeCountryGeometry(countryPath, countryId) {
 
       var longestSegment = findLongestSegment(intersections);
 
-      if (!longestSegment) return;
+      if (!longestSegment) {
+        // we may not get any intersections at this height. Which means we cannot
+        // fit text entirely here.
+        return;
+      }
 
       return {
         left: longestSegment.from,
@@ -390,9 +541,13 @@ function makeCountryGeometry(countryPath, countryId) {
         }
 
         if (smaller.max < larger.min) {
-          // this means that smaller interval does not intersect larger one
+          // this means that smaller interval does not intersect larger one.
+          // Move to the next one in this array.
           smaller.next();
-          swapIntervals();
+          // And if the next one is larger than our largest, then swap
+          if (smaller.min > larger.min) {
+            swapIntervals();
+          }
         } else {
           var from = larger.min;
           var to;
@@ -464,9 +619,9 @@ function makeCountryGeometry(countryPath, countryId) {
       if (text.length === 0) return 0;
 
       // TODO: This needs to be improved. Current idea is that we want label
-      // to occupy less than 40% (0.4) of an area.
-      var maxCountrySpaceRatio = 0.4;
-      var fontSize = Math.round( Math.sqrt(area * maxCountrySpaceRatio/ text.length));
+      // to occupy less than 15% (0.15) of an area.
+      var maxCountrySpaceRatio = 0.15;
+      var fontSize = Math.round( Math.sqrt(area * maxCountrySpaceRatio / text.length));
       return Math.min(fontSize, maxFontSize); //Math.min(maxFontSize, Math.round(bounds.height / 2));
     }
   }
