@@ -789,6 +789,8 @@ function makeCountryGeometry(countryPath, countryId) {
 
 function createTextMeasure(container) {
   var cachedSizes = {};
+  var abc = 'abcdefghijklmnopqrstuvwxyz';
+  var avgLetterWidthByFontSize = {};
 
   return {
     measure: measure
@@ -824,21 +826,31 @@ function createTextMeasure(container) {
 
     function toWordWidths(word, idx, arr) {
       var suffix = idx === arr.length - 1 ? '' : ' ';
-      var wordToMeasure = word + suffix;
-
-      textContainer.text(wordToMeasure);
+      var text = word + suffix;
 
       return {
-        text: wordToMeasure,
-        width: measureTextWidth(textContainer)
+        text: text,
+        width: measureAvgWidth(text)
       };
     }
-  }
-}
 
-function measureTextWidth(svgTextElement) {
-  var result = svgTextElement.getBBox();
-  return result.width;
+    function measureAvgWidth(text) {
+      var avgWidthAtFontSize = avgLetterWidthByFontSize[fontSize];
+      if (!avgWidthAtFontSize) {
+        textContainer.text(abc);
+        var abcWidth = measureTextWidth(textContainer);
+        avgWidthAtFontSize = abcWidth/abc.length;
+        avgLetterWidthByFontSize[fontSize] = avgWidthAtFontSize;
+      }
+
+      return avgWidthAtFontSize * text.length;
+    }
+  }
+
+  function measureTextWidth(svgTextElement) {
+    var result = svgTextElement.getBBox();
+    return result.width;
+  }
 }
 
 function last(array) {
