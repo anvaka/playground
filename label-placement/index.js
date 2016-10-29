@@ -146,10 +146,6 @@ function makeCountryGeometry(countryPath, countryId) {
   var candidates = Object.keys(lines).map(toRankedCandidates);
   var area = computeAreaInside(candidates);
 
-  // we make each distance inside country normal length (from 0 to 1), so that
-  // we can build composite ranking of each line easier.
-  normalizeDistances();
-
   // Compute composite rank now:
   candidates.forEach(computeRank);
 
@@ -161,6 +157,9 @@ function makeCountryGeometry(countryPath, countryId) {
 
   // and get the offset - this is where we want to render label by default.
   var yOffset = bounds.minY + ratio * candidateIndex;
+  // try to move label somewhere between centroid and place with largest score.
+  var centroid = findCentroid(points);
+  yOffset = (centroid.y + yOffset)/2;
 
   return {
     id: countryId,
@@ -609,55 +608,24 @@ function makeCountryGeometry(countryPath, countryId) {
     return bestCandidateForLabelBase;
   }
 
-  function normalizeDistances() {
-    var maxLength = Number.NEGATIVE_INFINITY;
-    candidates.forEach(function(candidate) {
-      if (candidate.distance.inside > maxLength)
-        maxLength = candidate.distance.inside;
-    })
-
-    candidates.forEach(function(candidate) {
-      candidate.normalDistance = candidate.distance.inside / maxLength;
-    });
-
-  }
-
   function computeRank(candidate, idx) {
-    // TODO: Looks like neighboursDistance is perfect! Remove those with 0's if not
-    // needed.
-    var rank = segmentLengthRank(candidate, idx) * 0 +
-      distanceToMidPointRank(candidate, idx) * 0.0 +
-      neighboursDistance(candidate, idx) * 1;
-
-    candidate.rank = rank;
+    candidate.rank = neighboursArea(candidate, idx);
   }
 
-  function neighboursDistance(candidate, idx) {
+  function neighboursArea(candidate, idx) {
     var candidatesToConsider = 20;
 
-    var totalLength = 0;
+    var totalArea = 0;
 
     for(var i = idx - candidatesToConsider; i < idx + candidatesToConsider; ++i) {
       if (i < 0 || i >= candidates.length) continue; // Assume those values 0;
 
       // TODO: Do I need to fade away value the further it goes?
       // var fadePenalty = Math.abs(idx - i);
-      totalLength += candidates[i].normalDistance;
+      totalArea += candidates[i].distance.inside;
     }
-    return totalLength/(candidatesToConsider * 2);
-  }
 
-  function segmentLengthRank(segment) {
-    // return normalized distance of the land inside country
-    return segment.normalDistance;
-  }
-
-  function distanceToMidPointRank(segment, idx) {
-    // If point is at max distance to the midpoint - then the rank is 0;
-    // If point is at min distance to the midpoint - then rank is 1;
-    // So, we don't favor proximity to the borders
-    var midPointDistance = Math.abs(slicesCount * 0.5 - idx)/slicesCount; // from 0 at midpoint to 0.5 at edges
-    return 1 - midPointDistance * 2;
+    return totalArea/(candidatesToConsider * 2);
   }
 
   function toRankedCandidates(lineId) {
@@ -938,5 +906,23 @@ function makeLayoutRenderer(lines, fontSize) {
         y: line.getY() - fontSize * 0.3,
       });
     });
+  }
+}
+
+function findCentroid(points) {
+  var x = 0, y = 0;
+  var minX = Number.POSITIVE_INFINITY;
+
+  points.forEach(function(p) {
+    x += p.x;
+    y += p.y;
+    if (p.x < minX)
+      minX = p.x;
+  });
+
+  return {
+    x: x / points.length,
+    y: y / points.length,
+    minX: minX
   }
 }
