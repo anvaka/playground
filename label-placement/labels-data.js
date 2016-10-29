@@ -1674,6 +1674,21 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
+          "why is argentina<b> so white</b>",
+          "why is argentina<b> so poor</b>",
+          "why is argentina<b> a good place to visit</b>",
+          "why is argentina<b> important</b>",
+          "why is argentina<b> famous</b>",
+          "why is argentina<b> named after silver</b>",
+          "why is argentina<b> so good at soccer</b>",
+          "why is argentina<b> cold in july</b>",
+          "why is argentina<b> famous for beef</b>",
+          "why is argentina<b> poor</b>"
+        ],
+        "state": "Argentina"
+      },
+      {
+        "suggestions": [
           "why is united arab emirates<b> so hot</b>",
           "why is united arab emirates<b> so rich</b>",
           "why is united arab emirates<b> richest country</b>",
@@ -1686,37 +1701,18 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is argentina<b> so white</b>",
-          "why is argentina<b> so poor</b>",
-          "why is argentina<b> a good place to visit</b>",
-          "why is argentina<b> important</b>",
-          "why is argentina<b> famous</b>",
-          "why is argentina<b> so good at soccer</b>",
-          "why is argentina<b> cold in july</b>",
-          "why is argentina<b> named after silver</b>",
-          "why is argentina<b> special</b>",
-          "why is argentina<b> famous for beef</b>"
-        ],
-        "state": "Argentina"
-      },
-      {
-        "suggestions": [
-          "why is armenia<b> in uefa</b>",
           "why is armenia<b> important</b>",
+          "why is armenia<b> in uefa</b>",
           "why is armenia<b> christian</b>",
           "why is armenia<b> called hayastan</b>",
           "why is armenia<b> so poor</b>",
           "why is armenia<b> so small</b>",
           "why is armenia<b> in europe</b>",
-          "why is armenia<b> not recognised by pakistan</b>",
           "why is armenia<b> called armenia</b>",
+          "why is armenia<b> not recognised by pakistan</b>",
           "why is armenia<b> in eurovision</b>"
         ],
         "state": "Armenia"
-      },
-      {
-        "suggestions": [],
-        "state": "French Southern and Antarctic Lands"
       },
       {
         "suggestions": [
@@ -1734,19 +1730,18 @@ function getLabelsJSONWhy() {
         "state": "Austria"
       },
       {
+        "suggestions": [],
+        "state": "French Southern and Antarctic Lands"
+      },
+      {
         "suggestions": [
-          "why is afghanistan<b> poor</b>",
-          "why is afghanistan<b> known as the graveyard of empires</b>",
-          "why is afghanistan<b> so poor</b>",
-          "why is afghanistan<b> strategically important</b>",
-          "why is afghanistan<b> so hard to conquer</b>",
-          "why is afghanistan<b> a developing country</b>",
-          "why is afghanistan<b> in stage 2</b>",
-          "why is afghanistan<b> a failed state</b>",
-          "why is afghanistan<b> dangerous</b>",
-          "why is afghanistan<b> 30 minutes off</b>"
+          "why is burundi<b> so poor</b>",
+          "why is burundi<b> starving</b>",
+          "why is burundi<b> unhappy</b>",
+          "why is burundi<b> dangerous</b>",
+          "why is burundi<b> in poverty</b>"
         ],
-        "state": "Afghanistan"
+        "state": "Burundi"
       },
       {
         "suggestions": [
@@ -1765,14 +1760,6 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is benin<b> important</b>",
-          "why is benin<b> so poor</b>",
-          "why is benin<b> city in nigeria</b>"
-        ],
-        "state": "Benin"
-      },
-      {
-        "suggestions": [
           "why is burkina faso<b> so poor</b>",
           "why is burkina faso<b> underdeveloped</b>",
           "why is burkina faso<b> poor</b>"
@@ -1781,28 +1768,11 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is burundi<b> so poor</b>",
-          "why is burundi<b> starving</b>",
-          "why is burundi<b> dangerous</b>",
-          "why is burundi<b> unhappy</b>",
-          "why is burundi<b> in poverty</b>"
+          "why is benin<b> important</b>",
+          "why is benin<b> so poor</b>",
+          "why is benin<b> city in nigeria</b>"
         ],
-        "state": "Burundi"
-      },
-      {
-        "suggestions": [
-          "why is belgium<b> a country</b>",
-          "why is belgium<b> tax so high</b>",
-          "why is belgium<b> a francophone country</b>",
-          "why is belgium<b> a non country</b>",
-          "why is belgium<b> famous for chocolate</b>",
-          "why is belgium<b> flag similar to germany</b>",
-          "why is belgium<b> ranked so high</b>",
-          "why is belgium<b> ranked 2</b>",
-          "why is belgium<b> a french speaking country</b>",
-          "why is belgium<b> known for chocolate</b>"
-        ],
-        "state": "Belgium"
+        "state": "Benin"
       },
       {
         "suggestions": [
@@ -1825,9 +1795,9 @@ function getLabelsJSONWhy() {
           "why is the bahamas<b> water so clear</b>",
           "why is the bahamas<b> a good vacation spot</b>",
           "why is the bahamas<b> a great place to visit</b>",
-          "why is the bahamas<b> so expensive</b>",
-          "why is the bahamas<b> so poor</b>",
           "why is the bahamas<b> unique</b>",
+          "why is the bahamas<b> so poor</b>",
+          "why is the bahamas<b> so expensive</b>",
           "why is the bahamas<b> so popular</b>",
           "why is the bahamas<b> a tax haven</b>",
           "why is the bahamas<b> flag the bahamas flag</b>"
@@ -1836,26 +1806,18 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is bangladesh<b> so poor</b>",
-          "why is bangladesh<b> so populated</b>",
-          "why is bangladesh<b> overpopulated</b>",
-          "why is bangladesh<b> islamic</b>",
-          "why is bangladesh<b> poor</b>",
-          "why is bangladesh<b> a developing country</b>",
-          "why is bangladesh<b> not part of india</b>",
-          "why is bangladesh<b> vulnerable to natural disasters</b>",
-          "why is bangladesh<b> at risk of flooding</b>",
-          "why is bangladesh<b> underdeveloped</b>"
+          "why is belgium<b> a country</b>",
+          "why is belgium<b> tax so high</b>",
+          "why is belgium<b> a francophone country</b>",
+          "why is belgium<b> a non country</b>",
+          "why is belgium<b> famous for chocolate</b>",
+          "why is belgium<b> flag similar to germany</b>",
+          "why is belgium<b> ranked so high</b>",
+          "why is belgium<b> ranked 2</b>",
+          "why is belgium<b> a french speaking country</b>",
+          "why is belgium<b> known for chocolate</b>"
         ],
-        "state": "Bangladesh"
-      },
-      {
-        "suggestions": [
-          "why is bosnia and herzegovina<b> called that</b>",
-          "why is bosnia and herzegovina<b> one country</b>",
-          "why is bosnia and herzegovina<b> bih</b>"
-        ],
-        "state": "Bosnia and Herzegovina"
+        "state": "Belgium"
       },
       {
         "suggestions": [
@@ -1864,43 +1826,51 @@ function getLabelsJSONWhy() {
           "why is bulgaria<b> so cheap</b>",
           "why is bulgaria<b> in the eu</b>",
           "why is bulgaria<b> a developing country</b>",
-          "why is bulgaria<b> so cold</b>",
           "why is bulgaria<b> cheap</b>",
           "why is bulgaria<b> important</b>",
-          "why is bulgaria<b> so bad</b>",
-          "why is bulgaria<b> a developing tourist destination</b>"
+          "why is bulgaria<b> so cold</b>",
+          "why is bulgaria<b> a developing tourist destination</b>",
+          "why is bulgaria<b> so bad</b>"
         ],
         "state": "Bulgaria"
       },
       {
         "suggestions": [
-          "why is bolivia<b> so poor</b>",
-          "why is bolivia<b> poor</b>",
-          "why is bolivia<b> named bolivia</b>",
-          "why is bolivia<b> landlocked</b>",
-          "why is bolivia<b> so bad at soccer</b>",
-          "why is bolivia<b> in poverty</b>",
-          "why is bolivia<b> plurinational</b>",
-          "why is bolivia<b> the poorest country</b>",
-          "why is bolivia<b> a developing country</b>",
-          "why is bolivia<b> so unfriendly</b>"
+          "why is bangladesh<b> so poor</b>",
+          "why is bangladesh<b> so populated</b>",
+          "why is bangladesh<b> overpopulated</b>",
+          "why is bangladesh<b> poor</b>",
+          "why is bangladesh<b> a developing country</b>",
+          "why is bangladesh<b> islamic</b>",
+          "why is bangladesh<b> not part of india</b>",
+          "why is bangladesh<b> vulnerable to natural disasters</b>",
+          "why is bangladesh<b> underdeveloped</b>",
+          "why is bangladesh<b> at risk</b>"
         ],
-        "state": "Bolivia"
+        "state": "Bangladesh"
       },
       {
         "suggestions": [
-          "why is brunei<b> rich</b>",
-          "why is brunei<b> wealthy</b>",
-          "why is brunei<b> not part of malaysia</b>",
-          "why is brunei<b> split in two</b>",
-          "why is brunei<b> separated</b>",
-          "why is brunei<b> muslim</b>",
-          "why is brunei<b> trending on twitter</b>",
-          "why is brunei<b> currency same as singapore</b>",
-          "why is brunei<b> called the abode of peace</b>",
-          "why is brunei<b> darussalam so rich</b>"
+          "why is afghanistan<b> poor</b>",
+          "why is afghanistan<b> known as the graveyard of empires</b>",
+          "why is afghanistan<b> so poor</b>",
+          "why is afghanistan<b> strategically important</b>",
+          "why is afghanistan<b> so hard to conquer</b>",
+          "why is afghanistan<b> a developing country</b>",
+          "why is afghanistan<b> in stage 2</b>",
+          "why is afghanistan<b> a failed state</b>",
+          "why is afghanistan<b> dangerous</b>",
+          "why is afghanistan<b> 30 minutes off</b>"
         ],
-        "state": "Brunei"
+        "state": "Afghanistan"
+      },
+      {
+        "suggestions": [
+          "why is bosnia and herzegovina<b> called that</b>",
+          "why is bosnia and herzegovina<b> one country</b>",
+          "why is bosnia and herzegovina<b> bih</b>"
+        ],
+        "state": "Bosnia and Herzegovina"
       },
       {
         "suggestions": [
@@ -1913,7 +1883,7 @@ function getLabelsJSONWhy() {
           "why is belize<b> dangerous</b>",
           "why is belize<b> considered caribbean</b>",
           "why is belize<b> in debt</b>",
-          "why is belize<b> called belize</b>"
+          "why is belize<b> barrier reef in danger</b>"
         ],
         "state": "Belize"
       },
@@ -1931,6 +1901,21 @@ function getLabelsJSONWhy() {
           "why is belarus<b> sanctions</b>"
         ],
         "state": "Belarus"
+      },
+      {
+        "suggestions": [
+          "why is bolivia<b> so poor</b>",
+          "why is bolivia<b> poor</b>",
+          "why is bolivia<b> named bolivia</b>",
+          "why is bolivia<b> landlocked</b>",
+          "why is bolivia<b> so bad at soccer</b>",
+          "why is bolivia<b> in poverty</b>",
+          "why is bolivia<b> plurinational</b>",
+          "why is bolivia<b> the poorest country</b>",
+          "why is bolivia<b> so unfriendly</b>",
+          "why is bolivia<b> called plurinational</b>"
+        ],
+        "state": "Bolivia"
       },
       {
         "suggestions": [
@@ -1963,6 +1948,21 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
+          "why is brunei<b> rich</b>",
+          "why is brunei<b> wealthy</b>",
+          "why is brunei<b> not part of malaysia</b>",
+          "why is brunei<b> split in two</b>",
+          "why is brunei<b> separated</b>",
+          "why is brunei<b> muslim</b>",
+          "why is brunei<b> trending on twitter</b>",
+          "why is brunei<b> currency same as singapore</b>",
+          "why is brunei<b> called the abode of peace</b>",
+          "why is brunei<b> darussalam so rich</b>"
+        ],
+        "state": "Brunei"
+      },
+      {
+        "suggestions": [
           "why is central african republic<b> so dangerous</b>",
           "why is central african republic<b> so poor</b>",
           "why is central african republic<b> in poverty</b>",
@@ -1989,6 +1989,28 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
+          "why is chile<b> so narrow</b>",
+          "why is chile<b> named chile</b>",
+          "why is chile<b> important</b>",
+          "why is chile<b> hot</b>",
+          "why is chile<b> doing so well</b>",
+          "why is chile<b> famous</b>",
+          "why is chile<b> so dry</b>",
+          "why is chile<b> economy growing</b>",
+          "why is chile<b> so good at soccer</b>",
+          "why is chile<b> so long and thin</b>"
+        ],
+        "state": "Chile"
+      },
+      {
+        "suggestions": [
+          "why is cameroon<b> poor</b>",
+          "why is cameroon<b> called africa in miniature</b>"
+        ],
+        "state": "Cameroon"
+      },
+      {
+        "suggestions": [
           "why is ivory coast<b> called ivory coast</b>",
           "why is ivory coast<b> called cote d&#39;ivoire</b>",
           "why is ivory coast<b> poor</b>",
@@ -2000,13 +2022,6 @@ function getLabelsJSONWhy() {
           "why is<b> the </b>ivory coast<b> flag</b>"
         ],
         "state": "Ivory Coast"
-      },
-      {
-        "suggestions": [
-          "why is cameroon<b> poor</b>",
-          "why is cameroon<b> called africa in miniature</b>"
-        ],
-        "state": "Cameroon"
       },
       {
         "suggestions": [
@@ -2025,30 +2040,18 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is democratic republic of the congo<b> poor</b>",
-          "why is democratic republic of the congo<b> the poorest country</b>",
-          "why is the democratic republic of congo<b> so poor</b>",
-          "why is the democratic republic of congo<b> in war</b>",
-          "why is the democratic republic of congo<b> so dangerous</b>",
-          "why the democratic republic of congo is<b> a failed state</b>",
-          "why is<b> zaire </b>the democratic republic of congo"
+          "why is brazil<b> so poor</b>",
+          "why is brazil<b> spelled brasil</b>",
+          "why is brazil<b> so big</b>",
+          "why is brazil<b> so dirty</b>",
+          "why is brazil<b> so dangerous</b>",
+          "why is brazil<b> so populated</b>",
+          "why is brazil<b> called brazil</b>",
+          "why is brazil<b> in a recession</b>",
+          "why is brazil<b> spelled with an s in the olympics</b>",
+          "why is brazil<b> broke</b>"
         ],
-        "state": "Democratic Republic of the Congo"
-      },
-      {
-        "suggestions": [
-          "why is colombia<b> important</b>",
-          "why is colombia<b> famous</b>",
-          "why is colombia<b> poor</b>",
-          "why is colombia<b> a good place to visit</b>",
-          "why is colombia<b> famous for coffee</b>",
-          "why is colombia<b> called colombia</b>",
-          "why is colombia<b> so corrupt</b>",
-          "why is colombia<b> so violent</b>",
-          "why is colombia<b> important to the world</b>",
-          "why is colombia<b> so dangerous</b>"
-        ],
-        "state": "Colombia"
+        "state": "Brazil"
       },
       {
         "suggestions": [
@@ -2064,18 +2067,42 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is chile<b> so narrow</b>",
-          "why is chile<b> named chile</b>",
-          "why is chile<b> important</b>",
-          "why is chile<b> hot</b>",
-          "why is chile<b> doing so well</b>",
-          "why is chile<b> famous</b>",
-          "why is chile<b> soccer not in olympics</b>",
-          "why is chile<b> so dry</b>",
-          "why is chile<b> economy growing</b>",
-          "why is chile<b> zika free</b>"
+          "why is democratic republic of the congo<b> poor</b>",
+          "why is democratic republic of the congo<b> the poorest country</b>",
+          "why is the democratic republic of congo<b> so poor</b>",
+          "why is the democratic republic of congo<b> in war</b>",
+          "why is the democratic republic of congo<b> so dangerous</b>",
+          "why the democratic republic of congo is<b> a failed state</b>",
+          "why is<b> zaire </b>the democratic republic of congo"
         ],
-        "state": "Chile"
+        "state": "Democratic Republic of the Congo"
+      },
+      {
+        "suggestions": [
+          "why is colombia<b> important</b>",
+          "why is colombia<b> famous</b>",
+          "why is colombia<b> important to the world</b>",
+          "why is colombia<b> poor</b>",
+          "why is colombia<b> called colombia</b>",
+          "why is colombia<b> famous for coffee</b>",
+          "why is colombia<b> so corrupt</b>",
+          "why is colombia<b> so violent</b>",
+          "why is colombia<b> a good place to visit</b>",
+          "why is colombia<b> so dangerous</b>"
+        ],
+        "state": "Colombia"
+      },
+      {
+        "suggestions": [
+          "why is czech republic<b> called bohemia</b>",
+          "why is czech republic<b> atheist</b>",
+          "why is czech republic<b> so atheist</b>",
+          "why is czech republic<b> so cheap</b>",
+          "why is czech republic<b> famous</b>",
+          "why is czech republic<b> so poor</b>",
+          "why is czech republic<b> not on euro</b>"
+        ],
+        "state": "Czech Republic"
       },
       {
         "suggestions": [
@@ -2100,89 +2127,6 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is cyprus<b> divided</b>",
-          "why is cyprus<b> in europe</b>",
-          "why is cyprus<b> in the eu</b>",
-          "why is cyprus<b> important</b>",
-          "why is cyprus<b> not part of greece</b>",
-          "why is cyprus<b> called the island of love</b>",
-          "why is cyprus<b> in the commonwealth</b>",
-          "why is cyprus<b> so humid</b>",
-          "why is cyprus<b> greek</b>",
-          "why is cyprus<b> a good holiday destination</b>"
-        ],
-        "state": "Cyprus"
-      },
-      {
-        "suggestions": [
-          "why is canada<b> so big</b>",
-          "why is canada<b> so nice</b>",
-          "why is canada<b> called canada</b>",
-          "why is canada<b> a formal region</b>",
-          "why is canada<b> so gay</b>",
-          "why is canada<b> better than the usa</b>",
-          "why is canada<b> a good place to live</b>",
-          "why is canada<b> so great</b>",
-          "why is canada<b> so liberal</b>",
-          "why is canada<b> great</b>"
-        ],
-        "state": "Canada"
-      },
-      {
-        "suggestions": [
-          "why is czech republic<b> called bohemia</b>",
-          "why is czech republic<b> atheist</b>",
-          "why is czech republic<b> so atheist</b>",
-          "why is czech republic<b> so cheap</b>",
-          "why is czech republic<b> famous</b>",
-          "why is czech republic<b> so poor</b>",
-          "why is czech republic<b> not on euro</b>"
-        ],
-        "state": "Czech Republic"
-      },
-      {
-        "suggestions": [
-          "why is djibouti<b> important</b>",
-          "why is djibouti<b> poor</b>",
-          "why is djibouti<b> so hot</b>",
-          "why is djibouti<b> called djibouti</b>",
-          "why is djibouti<b> a developing country</b>",
-          "why is<b> the us military in </b>djibouti"
-        ],
-        "state": "Djibouti"
-      },
-      {
-        "suggestions": [
-          "why is dominican republic<b> important</b>",
-          "why is dominican republic<b> a good vacation place</b>",
-          "why is dominican republic<b> so poor</b>",
-          "why is dominican republic<b> so cheap</b>",
-          "why is dominican republic<b> better than haiti</b>",
-          "why is dominican republic<b> and haiti separate</b>",
-          "why is dominican republic<b> so dangerous</b>",
-          "why is dominican republic<b> poor</b>",
-          "why is dominican republic<b> dangerous</b>",
-          "why is dominican republic<b> richer than haiti</b>"
-        ],
-        "state": "Dominican Republic"
-      },
-      {
-        "suggestions": [
-          "why is brazil<b> so poor</b>",
-          "why is brazil<b> spelled brasil</b>",
-          "why is brazil<b> so big</b>",
-          "why is brazil<b> so dirty</b>",
-          "why is brazil<b> so dangerous</b>",
-          "why is brazil<b> so populated</b>",
-          "why is brazil<b> called brazil</b>",
-          "why is brazil<b> in a recession</b>",
-          "why is brazil<b> spelled with an s in the olympics</b>",
-          "why is brazil<b> broke</b>"
-        ],
-        "state": "Brazil"
-      },
-      {
-        "suggestions": [
           "why is algeria<b> dz</b>",
           "why is algeria<b> dza</b>",
           "why is algeria<b> so hot</b>",
@@ -2190,11 +2134,41 @@ function getLabelsJSONWhy() {
           "why is algeria<b> a francophone country</b>",
           "why is algeria<b> hot</b>",
           "why is algeria<b> so dangerous</b>",
-          "why is algeria<b> a developing country</b>",
           "why is algeria<b> important</b>",
-          "why is algeria<b> not in fifa 16</b>"
+          "why is algeria<b> a developing country</b>",
+          "why is algeria<b> so poor</b>"
         ],
         "state": "Algeria"
+      },
+      {
+        "suggestions": [
+          "why is dominican republic<b> a good vacation place</b>",
+          "why is dominican republic<b> important</b>",
+          "why is dominican republic<b> so poor</b>",
+          "why is dominican republic<b> so cheap</b>",
+          "why is dominican republic<b> better than haiti</b>",
+          "why is dominican republic<b> and haiti separate</b>",
+          "why is dominican republic<b> so dangerous</b>",
+          "why is dominican republic<b> dangerous</b>",
+          "why is dominican republic<b> poor</b>",
+          "why is dominican republic<b> richer than haiti</b>"
+        ],
+        "state": "Dominican Republic"
+      },
+      {
+        "suggestions": [
+          "why is cyprus<b> divided</b>",
+          "why is cyprus<b> in europe</b>",
+          "why is cyprus<b> in the eu</b>",
+          "why is cyprus<b> important</b>",
+          "why is cyprus<b> not part of greece</b>",
+          "why is cyprus<b> so windy</b>",
+          "why is cyprus<b> called the island of love</b>",
+          "why is cyprus<b> so humid</b>",
+          "why is cyprus<b> in the commonwealth</b>",
+          "why is cyprus<b> greek</b>"
+        ],
+        "state": "Cyprus"
       },
       {
         "suggestions": [
@@ -2213,33 +2187,29 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is cuba<b> important</b>",
-          "why is cuba<b> a command economy</b>",
-          "why is cuba<b> called cuba</b>",
-          "why is cuba<b> a communist country</b>",
-          "why is cuba<b> so bad</b>",
-          "why is cuba<b> poor</b>",
-          "why is cuba<b> communist</b>",
-          "why is cuba<b> stuck in the 1950s</b>",
-          "why is cuba<b> so behind</b>",
-          "why is cuba<b> outdated</b>"
+          "why is ecuador<b> protecting assange</b>",
+          "why is ecuador<b> named what it is</b>",
+          "why is ecuador<b> cold</b>",
+          "why is ecuador<b> poor</b>",
+          "why is ecuador<b> harboring julian assange</b>",
+          "why is ecuador<b> protecting julian</b>",
+          "why is ecuador<b> famous</b>",
+          "why is ecuador<b> shielding assange</b>",
+          "why is ecuador<b> important</b>",
+          "why is ecuador<b> assange</b>"
         ],
-        "state": "Cuba"
+        "state": "Ecuador"
       },
       {
         "suggestions": [
-          "why is ecuador<b> protecting assange</b>",
-          "why is ecuador<b> named what it is</b>",
-          "why is ecuador<b> famous</b>",
-          "why is ecuador<b> cold</b>",
-          "why is ecuador<b> protecting julian</b>",
-          "why is ecuador<b> harboring julian assange</b>",
-          "why is ecuador<b> poor</b>",
-          "why is ecuador<b> assange</b>",
-          "why is ecuador<b> important</b>",
-          "why is ecuador<b> shielding assange</b>"
+          "why is djibouti<b> important</b>",
+          "why is djibouti<b> poor</b>",
+          "why is djibouti<b> so hot</b>",
+          "why is djibouti<b> called djibouti</b>",
+          "why is djibouti<b> a developing country</b>",
+          "why is<b> the us military in </b>djibouti"
         ],
-        "state": "Ecuador"
+        "state": "Djibouti"
       },
       {
         "suggestions": [
@@ -2255,6 +2225,20 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
+          "why is estonia<b> so rich</b>",
+          "why is estonia<b> so cold</b>",
+          "why is estonia<b> cold</b>",
+          "why is estonia<b> so atheist</b>",
+          "why is estonia<b> so poor</b>",
+          "why is estonia<b> such a wonder of a country</b>",
+          "why is estonia<b> important</b>",
+          "why is estonia<b> famous</b>",
+          "why is<b> the president in </b>estonia"
+        ],
+        "state": "Estonia"
+      },
+      {
+        "suggestions": [
           "why is germany<b> so rich</b>",
           "why is germany<b> so powerful</b>",
           "why is germany<b> called alemania in spanish</b>",
@@ -2263,10 +2247,55 @@ function getLabelsJSONWhy() {
           "why is germany<b> stockpiling food</b>",
           "why is germany<b> the fatherland</b>",
           "why is germany<b> the best country</b>",
-          "why is germany<b> flag at half mast</b>",
-          "why is germany<b> important</b>"
+          "why is germany<b> important</b>",
+          "why is germany<b> so clean</b>"
         ],
         "state": "Germany"
+      },
+      {
+        "suggestions": [
+          "why is fiji<b> water so good</b>",
+          "why is fiji<b> so good at rugby</b>",
+          "why is fiji<b> water different</b>",
+          "why is fiji<b> in the olympics</b>",
+          "why is fiji<b> water</b>",
+          "why is fiji<b> so good at sevens</b>",
+          "why is fiji<b> water so expensive</b>",
+          "why is fiji<b> poor</b>",
+          "why is fiji<b> water vaporwave</b>",
+          "why is fiji<b> good at rugby</b>"
+        ],
+        "state": "Fiji"
+      },
+      {
+        "suggestions": [
+          "why is ethiopia<b> poor</b>",
+          "why is ethiopia<b> unique</b>",
+          "why is ethiopia<b> important</b>",
+          "why is ethiopia<b> christian</b>",
+          "why is ethiopia<b> a developing country</b>",
+          "why is ethiopia<b> mentioned in the bible</b>",
+          "why is ethiopia<b> so impoverished</b>",
+          "why is ethiopia<b> protesting</b>",
+          "why is ethiopia<b> a less developed country</b>",
+          "why is ethiopia<b> landlocked</b>"
+        ],
+        "state": "Ethiopia"
+      },
+      {
+        "suggestions": [
+          "why is cuba<b> important</b>",
+          "why is cuba<b> a command economy</b>",
+          "why is cuba<b> called cuba</b>",
+          "why is cuba<b> a communist country</b>",
+          "why is cuba<b> so bad</b>",
+          "why is cuba<b> poor</b>",
+          "why is cuba<b> named cuba</b>",
+          "why is cuba<b> communist</b>",
+          "why is cuba<b> stuck in the 1950s</b>",
+          "why is cuba<b> so behind</b>"
+        ],
+        "state": "Cuba"
       },
       {
         "suggestions": [
@@ -2285,200 +2314,18 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is china<b> called china</b>",
-          "why is china<b> so good at diving</b>",
-          "why is china<b> so populated</b>",
-          "why is china<b> communist</b>",
-          "why is china<b> so polluted</b>",
-          "why is china<b> overpopulated</b>",
-          "why is china<b> famous</b>",
-          "why is china<b> so rich</b>",
-          "why is china<b> good at table tennis</b>",
-          "why is china<b> so big</b>"
+          "why is canada<b> so big</b>",
+          "why is canada<b> so nice</b>",
+          "why is canada<b> called canada</b>",
+          "why is canada<b> a formal region</b>",
+          "why is canada<b> so gay</b>",
+          "why is canada<b> better than the usa</b>",
+          "why is canada<b> a good place to live</b>",
+          "why is canada<b> so great</b>",
+          "why is canada<b> so liberal</b>",
+          "why is canada<b> great</b>"
         ],
-        "state": "China"
-      },
-      {
-        "suggestions": [
-          "why is fiji<b> water so good</b>",
-          "why is fiji<b> so good at rugby</b>",
-          "why is fiji<b> water different</b>",
-          "why is fiji<b> in the olympics</b>",
-          "why is fiji<b> water</b>",
-          "why is fiji<b> so good at sevens</b>",
-          "why is fiji<b> water so expensive</b>",
-          "why is fiji<b> poor</b>",
-          "why is fiji<b> good at rugby</b>",
-          "why is fiji<b> water vaporwave</b>"
-        ],
-        "state": "Fiji"
-      },
-      {
-        "suggestions": [
-          "why is estonia<b> so rich</b>",
-          "why is estonia<b> so cold</b>",
-          "why is estonia<b> cold</b>",
-          "why is estonia<b> so atheist</b>",
-          "why is estonia<b> so poor</b>",
-          "why is estonia<b> famous</b>",
-          "why is estonia<b> such a wonder of a country</b>",
-          "why is estonia<b> important</b>",
-          "why is<b> the president in </b>estonia"
-        ],
-        "state": "Estonia"
-      },
-      {
-        "suggestions": [
-          "why is ethiopia<b> poor</b>",
-          "why is ethiopia<b> unique</b>",
-          "why is ethiopia<b> christian</b>",
-          "why is ethiopia<b> important</b>",
-          "why is ethiopia<b> a developing country</b>",
-          "why is ethiopia<b> mentioned in the bible</b>",
-          "why is ethiopia<b> so impoverished</b>",
-          "why is ethiopia<b> protesting</b>",
-          "why is ethiopia<b> a less developed country</b>",
-          "why is ethiopia<b> landlocked</b>"
-        ],
-        "state": "Ethiopia"
-      },
-      {
-        "suggestions": [
-          "why is egypt<b> called the gift of the nile</b>",
-          "why is egypt<b> important</b>",
-          "why is egypt<b> calling me</b>",
-          "why is egypt<b> called the seedbed of african cultures</b>",
-          "why is egypt<b> considered a theocracy</b>",
-          "why is egypt<b> famous in the history of storytelling</b>",
-          "why is egypt<b> important to the us</b>",
-          "why is egypt<b> not part of africa</b>",
-          "why is egypt<b> called egypt</b>",
-          "why is egypt<b> a desert</b>"
-        ],
-        "state": "Egypt"
-      },
-      {
-        "suggestions": [
-          "why is spain<b> so poor</b>",
-          "why is spain<b> esp</b>",
-          "why is spain<b> important</b>",
-          "why is spain<b> so hot</b>",
-          "why is spain<b> good at basketball</b>",
-          "why is spain<b> espana</b>",
-          "why is spain<b> famous</b>",
-          "why is spain<b> in debt</b>",
-          "why is spain<b> not called espana</b>",
-          "why is spain<b> called spain</b>"
-        ],
-        "state": "Spain"
-      },
-      {
-        "suggestions": [],
-        "state": "Gabon"
-      },
-      {
-        "suggestions": [
-          "why is georgia<b> called the peach state</b>",
-          "why is georgia<b> named georgia</b>",
-          "why is georgia<b> clay red</b>",
-          "why is georgia<b> called georgia</b>",
-          "why is georgia<b> rule rated r</b>",
-          "why is georgia<b> so hot</b>",
-          "why is georgia<b> a swing state</b>",
-          "why is georgia<b> turning blue</b>",
-          "why is georgia<b> republican</b>",
-          "why is georgia<b> o&#39;keeffe important</b>"
-        ],
-        "state": "Georgia"
-      },
-      {
-        "suggestions": [
-          "why is ghana<b> important</b>",
-          "why is ghana<b> not in fifa</b>",
-          "why is ghana<b> called ghana</b>",
-          "why is ghana<b> called the gold coast</b>",
-          "why is ghana<b> poor</b>",
-          "why is ghana<b> so poor</b>",
-          "why is ghana<b> a developing country</b>",
-          "why is ghana<b> an ledc</b>",
-          "why is ghana<b> not on paypal</b>",
-          "why is ghana<b> a less developed country</b>"
-        ],
-        "state": "Ghana"
-      },
-      {
-        "suggestions": [
-          "why is guinea bissau<b> poor</b>"
-        ],
-        "state": "Guinea Bissau"
-      },
-      {
-        "suggestions": [
-          "why is gambia<b> called the gambia</b>",
-          "why is gambia<b> so poor</b>",
-          "why is gambia<b> surrounded by senegal</b>",
-          "why is gambia<b> so oddly shaped</b>",
-          "why is gambia<b> called the smiling coast of africa</b>",
-          "why is gambia<b> a good tourist destination</b>",
-          "why is gambia<b> not part of senegal</b>",
-          "why is gambia<b> inside senegal</b>"
-        ],
-        "state": "Gambia"
-      },
-      {
-        "suggestions": [
-          "why is france<b> banning burkinis</b>",
-          "why is france<b> under attack</b>",
-          "why is france<b> a target for isis</b>",
-          "why is france<b> being targeted</b>",
-          "why is france<b> a rooster</b>",
-          "why is france<b> getting attacked</b>",
-          "why is france<b> called france</b>",
-          "why is france<b> so racist</b>",
-          "why is france<b> a mixed economy</b>",
-          "why is france<b> so secular</b>"
-        ],
-        "state": "France"
-      },
-      {
-        "suggestions": [
-          "why is equatorial guinea<b> a spanish speaking country</b>",
-          "why is equatorial guinea<b> so rich</b>",
-          "why is equatorial guinea<b> so poor</b>",
-          "why is equatorial guinea<b> the richest country in africa</b>",
-          "why is equatorial guinea<b> rich</b>"
-        ],
-        "state": "Equatorial Guinea"
-      },
-      {
-        "suggestions": [
-          "why is guinea<b> a racial slur</b>",
-          "why is guinea<b> pig pee white</b>",
-          "why is guinea<b> poor</b>",
-          "why is guinea<b> pig losing hair</b>",
-          "why is guinea<b> pig called that</b>",
-          "why is guinea<b> pig squeaking</b>",
-          "why is guinea<b> bissau poor</b>",
-          "why is guinea<b> pig ileum used in experiments</b>",
-          "why is guinea<b> pig urine white</b>",
-          "why is guinea<b> called guinea</b>"
-        ],
-        "state": "Guinea"
-      },
-      {
-        "suggestions": [
-          "why is guatemala<b> called guatemala</b>",
-          "why is guatemala<b> dangerous</b>",
-          "why is guatemala<b> poor</b>",
-          "why is guatemala<b> city important</b>",
-          "why is guatemala<b> so poor</b>",
-          "why is guatemala<b> famous</b>",
-          "why is guatemala<b> important</b>",
-          "why is guatemala<b> city the capital</b>",
-          "why is guatemala<b> a developing country</b>",
-          "why is guatemala<b> adoption closed</b>"
-        ],
-        "state": "Guatemala"
+        "state": "Canada"
       },
       {
         "suggestions": [
@@ -2488,6 +2335,25 @@ function getLabelsJSONWhy() {
           "why is falkland islands<b> famous</b>"
         ],
         "state": "Falkland Islands"
+      },
+      {
+        "suggestions": [],
+        "state": "Gabon"
+      },
+      {
+        "suggestions": [
+          "why is ghana<b> important</b>",
+          "why is ghana<b> not in fifa</b>",
+          "why is ghana<b> poor</b>",
+          "why is ghana<b> so poor</b>",
+          "why is ghana<b> called the gold coast</b>",
+          "why is ghana<b> called ghana</b>",
+          "why is ghana<b> not on paypal</b>",
+          "why is ghana<b> an ledc country</b>",
+          "why is ghana<b> a less developed country</b>",
+          "why is ghana<b> the gateway to africa</b>"
+        ],
+        "state": "Ghana"
       },
       {
         "suggestions": [
@@ -2506,12 +2372,146 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
+          "why is georgia<b> called the peach state</b>",
+          "why is georgia<b> named georgia</b>",
+          "why is georgia<b> clay red</b>",
+          "why is georgia<b> called georgia</b>",
+          "why is georgia<b> rule rated r</b>",
+          "why is georgia<b> so hot</b>",
+          "why is georgia<b> a swing state</b>",
+          "why is georgia<b> turning blue</b>",
+          "why is georgia<b> republican</b>",
+          "why is georgia<b> o&#39;keeffe important</b>"
+        ],
+        "state": "Georgia"
+      },
+      {
+        "suggestions": [
+          "why is egypt<b> called the gift of the nile</b>",
+          "why is egypt<b> important</b>",
+          "why is egypt<b> calling me</b>",
+          "why is egypt<b> called the seedbed of african cultures</b>",
+          "why is egypt<b> famous in the history of storytelling</b>",
+          "why is egypt<b> considered a theocracy</b>",
+          "why is egypt<b> important to the us</b>",
+          "why is egypt<b> not part of africa</b>",
+          "why is egypt<b> called egypt</b>",
+          "why is egypt<b> a desert</b>"
+        ],
+        "state": "Egypt"
+      },
+      {
+        "suggestions": [
+          "why is guinea bissau<b> poor</b>"
+        ],
+        "state": "Guinea Bissau"
+      },
+      {
+        "suggestions": [
+          "why is guinea<b> a racial slur</b>",
+          "why is guinea<b> pig pee white</b>",
+          "why is guinea<b> pig losing hair</b>",
+          "why is guinea<b> poor</b>",
+          "why is guinea<b> pig called that</b>",
+          "why is guinea<b> pig squeaking</b>",
+          "why is guinea<b> bissau poor</b>",
+          "why is guinea<b> pig ileum used in experiments</b>",
+          "why is guinea<b> pig jumping</b>",
+          "why is guinea<b> called guinea</b>"
+        ],
+        "state": "Guinea"
+      },
+      {
+        "suggestions": [
+          "why is gambia<b> called the gambia</b>",
+          "why is gambia<b> so poor</b>",
+          "why is gambia<b> surrounded by senegal</b>",
+          "why is gambia<b> so oddly shaped</b>",
+          "why is gambia<b> called the smiling coast of africa</b>",
+          "why is gambia<b> a good tourist destination</b>",
+          "why is gambia<b> not part of senegal</b>",
+          "why is gambia<b> inside senegal</b>"
+        ],
+        "state": "Gambia"
+      },
+      {
+        "suggestions": [
+          "why is guatemala<b> called guatemala</b>",
+          "why is guatemala<b> dangerous</b>",
+          "why is guatemala<b> poor</b>",
+          "why is guatemala<b> city important</b>",
+          "why is guatemala<b> so poor</b>",
+          "why is guatemala<b> famous</b>",
+          "why is guatemala<b> important</b>",
+          "why is guatemala<b> city the capital</b>",
+          "why is guatemala<b> a developing country</b>",
+          "why is guatemala<b> adoption closed</b>"
+        ],
+        "state": "Guatemala"
+      },
+      {
+        "suggestions": [
+          "why is equatorial guinea<b> a spanish speaking country</b>",
+          "why is equatorial guinea<b> so rich</b>",
+          "why is equatorial guinea<b> so poor</b>",
+          "why is equatorial guinea<b> the richest country in africa</b>",
+          "why is equatorial guinea<b> rich</b>"
+        ],
+        "state": "Equatorial Guinea"
+      },
+      {
+        "suggestions": [
+          "why is france<b> banning burkinis</b>",
+          "why is france<b> under attack</b>",
+          "why is france<b> a target for isis</b>",
+          "why is france<b> being targeted</b>",
+          "why is france<b> a rooster</b>",
+          "why is france<b> getting attacked</b>",
+          "why is france<b> called france</b>",
+          "why is france<b> so racist</b>",
+          "why is france<b> a mixed economy</b>",
+          "why is france<b> so secular</b>"
+        ],
+        "state": "France"
+      },
+      {
+        "suggestions": [
+          "why is spain<b> so poor</b>",
+          "why is spain<b> esp</b>",
+          "why is spain<b> important</b>",
+          "why is spain<b> so hot</b>",
+          "why is spain<b> good at basketball</b>",
+          "why is spain<b> espana</b>",
+          "why is spain<b> famous</b>",
+          "why is spain<b> in debt</b>",
+          "why is spain<b> not called espana</b>",
+          "why is spain<b> called spain</b>"
+        ],
+        "state": "Spain"
+      },
+      {
+        "suggestions": [
+          "why is china<b> called china</b>",
+          "why is china<b> so good at diving</b>",
+          "why is china<b> so populated</b>",
+          "why is china<b> communist</b>",
+          "why is china<b> so polluted</b>",
+          "why is china<b> overpopulated</b>",
+          "why is china<b> famous</b>",
+          "why is china<b> so rich</b>",
+          "why is china<b> good at table tennis</b>",
+          "why is china<b> so big</b>"
+        ],
+        "state": "China"
+      },
+      {
+        "suggestions": [
           "why is guyana<b> considered west indies</b>",
           "why is guyana<b> so poor</b>",
           "why is guyana<b> poor</b>",
           "why is guyana<b> part of the caribbean</b>",
-          "why is guyana<b> water brown</b>",
           "why is guyana<b> below sea level</b>",
+          "why is guyana<b> water brown</b>",
           "why is guyana<b> called gt</b>",
           "why is guyana<b> hindu</b>",
           "why is guyana<b> in concacaf</b>",
@@ -2523,61 +2523,16 @@ function getLabelsJSONWhy() {
         "suggestions": [
           "why is honduras<b> so poor</b>",
           "why is honduras<b> poor</b>",
-          "why is honduras<b> important</b>",
           "why is honduras<b> famous</b>",
-          "why is honduras<b> a developing country</b>",
+          "why is honduras<b> important</b>",
           "why is honduras<b> not in fifa</b>",
+          "why is honduras<b> a developing country</b>",
           "why is honduras<b> so violent</b>",
           "why is honduras<b> so dangerous</b>",
           "why is honduras<b> called honduras</b>",
           "why is honduras<b> dangerous</b>"
         ],
         "state": "Honduras"
-      },
-      {
-        "suggestions": [
-          "why is haiti<b> so poor</b>",
-          "why is haiti<b> poor</b>",
-          "why is haiti<b> a failed state</b>",
-          "why is haiti<b> named haiti</b>",
-          "why is haiti<b> in poverty</b>",
-          "why is haiti<b> cursed</b>",
-          "why is haiti<b> so poor reddit</b>",
-          "why is haiti<b> deforested</b>",
-          "why is haiti<b> separate from dominican republic</b>",
-          "why is haiti<b> such a mess</b>"
-        ],
-        "state": "Haiti"
-      },
-      {
-        "suggestions": [
-          "why is indonesia<b> poor</b>",
-          "why is indonesia<b> islamic</b>",
-          "why is indonesia<b> not in tpp</b>",
-          "why is indonesia<b> overpopulated</b>",
-          "why is indonesia<b> important</b>",
-          "why is indonesia<b> a developing country</b>",
-          "why is indonesia<b> called indonesia</b>",
-          "why is indonesia<b> underdeveloped</b>",
-          "why is indonesia<b> burning forests</b>",
-          "why is indonesia<b> so populated</b>"
-        ],
-        "state": "Indonesia"
-      },
-      {
-        "suggestions": [
-          "why is hungary<b> so racist</b>",
-          "why is hungary<b> called hungary</b>",
-          "why is hungary<b> so good at the olympics</b>",
-          "why is hungary<b> important</b>",
-          "why is hungary<b> so good at swimming</b>",
-          "why is hungary<b> not on the euro</b>",
-          "why is hungary<b> so cheap</b>",
-          "why is hungary<b> good at swimming</b>",
-          "why is hungary<b> so good at water polo</b>",
-          "why is hungary<b> good at water polo</b>"
-        ],
-        "state": "Hungary"
       },
       {
         "suggestions": [
@@ -2616,9 +2571,9 @@ function getLabelsJSONWhy() {
           "why is croatia<b> sponsored by jordan</b>",
           "why is croatia<b> so popular</b>",
           "why is croatia<b> not in fifa 17</b>",
+          "why is croatia<b> so good at sports</b>",
           "why is croatia<b> not in fifa</b>",
           "why is croatia<b> split in two</b>",
-          "why is croatia<b> so good at sports</b>",
           "why is croatia<b> so expensive</b>",
           "why is croatia<b> a popular tourist destination</b>"
         ],
@@ -2626,18 +2581,48 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is iceland<b> called iceland</b>",
-          "why is iceland<b> green and greenland ice</b>",
-          "why is iceland<b> so safe</b>",
-          "why is iceland<b> isl</b>",
-          "why is iceland<b> expensive</b>",
-          "why is iceland<b> a mixed economy</b>",
-          "why is iceland<b> named</b>",
-          "why is iceland<b> so cheap</b>",
-          "why is iceland<b> so good at crossfit</b>",
-          "why is iceland<b> so expensive</b>"
+          "why is hungary<b> so racist</b>",
+          "why is hungary<b> called hungary</b>",
+          "why is hungary<b> so good at the olympics</b>",
+          "why is hungary<b> important</b>",
+          "why is hungary<b> not on the euro</b>",
+          "why is hungary<b> so good at swimming</b>",
+          "why is hungary<b> so cheap</b>",
+          "why is hungary<b> good at swimming</b>",
+          "why is hungary<b> so good at water polo</b>",
+          "why is hungary<b> good at water polo</b>"
         ],
-        "state": "Iceland"
+        "state": "Hungary"
+      },
+      {
+        "suggestions": [
+          "why is haiti<b> so poor</b>",
+          "why is haiti<b> poor</b>",
+          "why is haiti<b> a failed state</b>",
+          "why is haiti<b> named haiti</b>",
+          "why is haiti<b> in poverty</b>",
+          "why is haiti<b> cursed</b>",
+          "why is haiti<b> so poor reddit</b>",
+          "why is haiti<b> deforested</b>",
+          "why is haiti<b> separate from dominican republic</b>",
+          "why is haiti<b> such a mess</b>"
+        ],
+        "state": "Haiti"
+      },
+      {
+        "suggestions": [
+          "why is indonesia<b> poor</b>",
+          "why is indonesia<b> islamic</b>",
+          "why is indonesia<b> not in tpp</b>",
+          "why is indonesia<b> overpopulated</b>",
+          "why is indonesia<b> important</b>",
+          "why is indonesia<b> a developing country</b>",
+          "why is indonesia<b> called indonesia</b>",
+          "why is indonesia<b> underdeveloped</b>",
+          "why is indonesia<b> burning forests</b>",
+          "why is indonesia<b> so populated</b>"
+        ],
+        "state": "Indonesia"
       },
       {
         "suggestions": [
@@ -2656,18 +2641,48 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is kazakhstan<b> so big</b>",
-          "why is kazakhstan<b> a brick</b>",
-          "why is kazakhstan<b> muslim</b>",
-          "why is kazakhstan<b> so cold</b>",
-          "why is kazakhstan<b> in uefa</b>",
-          "why is kazakhstan<b> so poor</b>",
-          "why is kazakhstan<b> used for space launches</b>",
-          "why is kazakhstan<b> so rich</b>",
-          "why is kazakhstan<b> so good at boxing</b>",
-          "why is kazakhstan<b> in europe</b>"
+          "why is iceland<b> called iceland</b>",
+          "why is iceland<b> green and greenland ice</b>",
+          "why is iceland<b> so safe</b>",
+          "why is iceland<b> isl</b>",
+          "why is iceland<b> expensive</b>",
+          "why is iceland<b> a mixed economy</b>",
+          "why is iceland<b> named</b>",
+          "why is iceland<b> so cheap</b>",
+          "why is iceland<b> so good at crossfit</b>",
+          "why is iceland<b> so expensive</b>"
         ],
-        "state": "Kazakhstan"
+        "state": "Iceland"
+      },
+      {
+        "suggestions": [
+          "why is kenya<b> so poor</b>",
+          "why is kenya<b> a developing country</b>",
+          "why is kenya<b> important</b>",
+          "why is kenya<b> so good at distance running</b>",
+          "why is kenya<b> so good at running</b>",
+          "why is kenya<b> in stage 2</b>",
+          "why is kenya<b> poor</b>",
+          "why is kenya<b> a ledc</b>",
+          "why is kenya<b> famous</b>",
+          "why is kenya<b> so popular</b>"
+        ],
+        "state": "Kenya"
+      },
+      {
+        "suggestions": [
+          "why is jamaica<b> so fast</b>",
+          "why is jamaica<b> poor</b>",
+          "why is jamaica<b> black</b>",
+          "why is jamaica<b> in debt</b>",
+          "why is jamaica<b> so popular</b>",
+          "why is jamaica<b> one hour behind</b>",
+          "why is jamaica<b> so good at track and field</b>",
+          "why is jamaica<b> dangerous</b>",
+          "why is jamaica<b> so cheap</b>",
+          "why is jamaica<b> all black</b>"
+        ],
+        "state": "Jamaica"
       },
       {
         "suggestions": [
@@ -2700,54 +2715,18 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is jamaica<b> so fast</b>",
-          "why is jamaica<b> poor</b>",
-          "why is jamaica<b> black</b>",
-          "why is jamaica<b> in debt</b>",
-          "why is jamaica<b> so popular</b>",
-          "why is jamaica<b> one hour behind</b>",
-          "why is jamaica<b> so good at track and field</b>",
-          "why is jamaica<b> dangerous</b>",
-          "why is jamaica<b> called the west indies</b>",
-          "why is jamaica<b> so dominant in sprinting</b>"
+          "why is laos<b> so poor</b>",
+          "why is laos<b> communist today</b>",
+          "why is laos<b> communist</b>",
+          "why is laos<b> the most bombed country</b>",
+          "why is laos<b> so expensive</b>",
+          "why is laos<b> landlocked</b>",
+          "why is laos<b> poor</b>",
+          "why is laos<b> a poor country</b>",
+          "why is laos<b> considered undeveloped</b>",
+          "why is laos<b> important</b>"
         ],
-        "state": "Jamaica"
-      },
-      {
-        "suggestions": [
-          "why is kyrgyzstan<b> poor</b>"
-        ],
-        "state": "Kyrgyzstan"
-      },
-      {
-        "suggestions": [
-          "why is kenya<b> so poor</b>",
-          "why is kenya<b> a developing country</b>",
-          "why is kenya<b> important</b>",
-          "why is kenya<b> so good at distance running</b>",
-          "why is kenya<b> in stage 2</b>",
-          "why is kenya<b> so good at running</b>",
-          "why is kenya<b> poor</b>",
-          "why is kenya<b> a ledc</b>",
-          "why is kenya<b> famous</b>",
-          "why is kenya<b> airways abbreviated kq</b>"
-        ],
-        "state": "Kenya"
-      },
-      {
-        "suggestions": [
-          "why is cambodia<b> so poor</b>",
-          "why is cambodia<b> so corrupt</b>",
-          "why is cambodia<b> so expensive</b>",
-          "why is cambodia<b> corrupt</b>",
-          "why is cambodia<b> called the kingdom of wonder</b>",
-          "why is cambodia<b> a low income country</b>",
-          "why is cambodia<b> a developing country</b>",
-          "why is cambodia<b> kh</b>",
-          "why is cambodia<b> called cambodia</b>",
-          "why is cambodia<b> using usd</b>"
-        ],
-        "state": "Cambodia"
+        "state": "Laos"
       },
       {
         "suggestions": [
@@ -2758,55 +2737,76 @@ function getLabelsJSONWhy() {
           "why is kuwait<b> suspended from the olympics</b>",
           "why is kuwait<b> important</b>",
           "why is kuwait<b> not allowed in olympics</b>",
-          "why is kuwait<b> so fat</b>",
-          "why is kuwait<b> excluded from the olympics</b>"
+          "why is kuwait<b> city so hot</b>",
+          "why is kuwait<b> so fat</b>"
         ],
         "state": "Kuwait"
       },
       {
         "suggestions": [
-          "why is italy<b> blue</b>",
-          "why is italy<b> shaped like a boot</b>",
-          "why is italy<b> called italy</b>",
-          "why is italy<b> so corrupt</b>",
-          "why is italy<b> the birthplace of the renaissance</b>",
-          "why is italy<b> so poor</b>",
-          "why is italy<b> a peninsula</b>",
-          "why is italy<b> prone to earthquakes</b>",
-          "why is italy<b> important</b>",
-          "why is italy<b> so racist</b>"
+          "why is kazakhstan<b> so big</b>",
+          "why is kazakhstan<b> a brick</b>",
+          "why is kazakhstan<b> muslim</b>",
+          "why is kazakhstan<b> so cold</b>",
+          "why is kazakhstan<b> in uefa</b>",
+          "why is kazakhstan<b> used for space launches</b>",
+          "why is kazakhstan<b> so poor</b>",
+          "why is kazakhstan<b> so rich</b>",
+          "why is kazakhstan<b> so good at boxing</b>",
+          "why is kazakhstan<b> in europe</b>"
         ],
-        "state": "Italy"
+        "state": "Kazakhstan"
       },
       {
         "suggestions": [
-          "why is kosovo<b> not in the un</b>",
-          "why is kosovo<b> important</b>",
-          "why is kosovo<b> a country</b>",
-          "why is kosovo<b> muslim</b>",
-          "why is kosovo<b> disputed</b>",
-          "why is kosovo<b> not part of albania</b>",
-          "why is kosovo<b> not recognized</b>",
-          "why is kosovo<b> not a country</b>",
-          "why is kosovo<b> in the olympics</b>",
-          "why is kosovo<b> so poor</b>"
+          "why is cambodia<b> so poor</b>",
+          "why is cambodia<b> so corrupt</b>",
+          "why is cambodia<b> so expensive</b>",
+          "why is cambodia<b> called the kingdom of wonder</b>",
+          "why is cambodia<b> a low income country</b>",
+          "why is cambodia<b> corrupt</b>",
+          "why is cambodia<b> a developing country</b>",
+          "why is cambodia<b> in poverty</b>",
+          "why is cambodia<b> kh</b>",
+          "why is cambodia<b> called cambodia</b>"
         ],
-        "state": "Kosovo"
+        "state": "Cambodia"
       },
       {
         "suggestions": [
-          "why is japan<b> so weird</b>",
-          "why is japan<b> considered to be an archipelago</b>",
-          "why is japan<b> called japan</b>",
-          "why is japan<b> so safe</b>",
-          "why is japan<b> so clean</b>",
-          "why is japan<b> so perverted</b>",
-          "why is japan<b> so expensive</b>",
-          "why is japan<b> in debt</b>",
-          "why is japan<b> not in the olympics</b>",
-          "why is japan<b> so healthy</b>"
+          "why is lebanon<b> important</b>",
+          "why is lebanon<b> library</b>",
+          "why is lebanon<b> so liberal</b>",
+          "why is lebanon<b> ohio historic</b>",
+          "why is lebanon<b> christian</b>",
+          "why is lebanon<b> dangerous</b>",
+          "why is lebanon<b> called the lebanon</b>",
+          "why is lebanon<b> so small</b>",
+          "why is lebanon<b> so important</b>",
+          "why is lebanon<b> so expensive</b>"
         ],
-        "state": "Japan"
+        "state": "Lebanon"
+      },
+      {
+        "suggestions": [
+          "why is kyrgyzstan<b> poor</b>"
+        ],
+        "state": "Kyrgyzstan"
+      },
+      {
+        "suggestions": [
+          "why is liberia<b> poor</b>",
+          "why is liberia<b> important</b>",
+          "why is liberia<b> in poverty</b>",
+          "why is liberia<b> underdeveloped</b>",
+          "why is liberia<b> so messed up</b>",
+          "why is liberia<b> one of the poorest countries</b>",
+          "why is liberia<b> a failed state</b>",
+          "why is liberia<b> called liberia</b>",
+          "why is liberia<b> not colonized</b>",
+          "why is liberia<b> referred to as a constitutional democracy</b>"
+        ],
+        "state": "Liberia"
       },
       {
         "suggestions": [
@@ -2830,13 +2830,73 @@ function getLabelsJSONWhy() {
           "why is iraq<b> important to the united states</b>",
           "why is iraq<b> a desert</b>",
           "why is iraq<b> important to the world</b>",
-          "why is iraq<b> poor</b>",
           "why is iraq<b> so poor</b>",
+          "why is iraq<b> poor</b>",
           "why is iraq<b> important to the us</b>",
           "why is iraq<b> so corrupt</b>",
-          "why is iraq<b> so violent</b>"
+          "why is iraq<b> so dangerous</b>"
         ],
         "state": "Iraq"
+      },
+      {
+        "suggestions": [
+          "why is kosovo<b> not in the un</b>",
+          "why is kosovo<b> important</b>",
+          "why is kosovo<b> a country</b>",
+          "why is kosovo<b> muslim</b>",
+          "why is kosovo<b> disputed</b>",
+          "why is kosovo<b> not part of albania</b>",
+          "why is kosovo<b> not recognized</b>",
+          "why is kosovo<b> not a country</b>",
+          "why is kosovo<b> in the olympics</b>",
+          "why is kosovo<b> so poor</b>"
+        ],
+        "state": "Kosovo"
+      },
+      {
+        "suggestions": [
+          "why is south korea<b> so good at archery</b>",
+          "why is south korea<b> important</b>",
+          "why is south korea<b> so rich</b>",
+          "why is south korea<b> so bad</b>",
+          "why is south korea<b> internet so fast</b>",
+          "why is south korea<b> good at olympics</b>",
+          "why is south korea<b> so racist</b>",
+          "why is south korea<b> so populated</b>",
+          "why is south korea<b> calling me</b>",
+          "why is south korea<b> and north korea divided</b>"
+        ],
+        "state": "South Korea"
+      },
+      {
+        "suggestions": [
+          "why is sri lanka<b> not part of india</b>",
+          "why is sri lanka<b> famous</b>",
+          "why is sri lanka<b> so expensive</b>",
+          "why is sri lanka<b> a developing country</b>",
+          "why is sri lanka<b> hotter than nepal</b>",
+          "why is sri lanka<b> called sri lanka</b>",
+          "why is sri lanka<b> called the pearl of the indian ocean</b>",
+          "why is sri lanka<b> so poor</b>",
+          "why is sri lanka<b> called teardrop of india</b>",
+          "why is sri lanka<b> important to india</b>"
+        ],
+        "state": "Sri Lanka"
+      },
+      {
+        "suggestions": [
+          "why is japan<b> so weird</b>",
+          "why is japan<b> considered to be an archipelago</b>",
+          "why is japan<b> called japan</b>",
+          "why is japan<b> so safe</b>",
+          "why is japan<b> so clean</b>",
+          "why is japan<b> so perverted</b>",
+          "why is japan<b> so expensive</b>",
+          "why is japan<b> in debt</b>",
+          "why is japan<b> not in the olympics</b>",
+          "why is japan<b> so healthy</b>"
+        ],
+        "state": "Japan"
       },
       {
         "suggestions": [
@@ -2855,84 +2915,24 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is laos<b> so poor</b>",
-          "why is laos<b> communist today</b>",
-          "why is laos<b> communist</b>",
-          "why is laos<b> the most bombed country</b>",
-          "why is laos<b> so expensive</b>",
-          "why is laos<b> important</b>",
-          "why is laos<b> considered undeveloped</b>",
-          "why is laos<b> a poor country</b>",
-          "why is laos<b> landlocked</b>",
-          "why is laos<b> poor</b>"
+          "why is libya<b> a failed state</b>",
+          "why is libya<b> important</b>",
+          "why is libya<b> at war</b>",
+          "why is libya<b> so hot</b>",
+          "why is libya<b> important to the united states</b>",
+          "why is libya<b> bad</b>",
+          "why is libya<b> so dangerous</b>",
+          "why is libya<b> in a civil war</b>",
+          "why is libya<b> dangerous</b>",
+          "why is libya<b> so lawless</b>"
         ],
-        "state": "Laos"
-      },
-      {
-        "suggestions": [
-          "why is lebanon<b> library</b>",
-          "why is lebanon<b> important</b>",
-          "why is lebanon<b> so liberal</b>",
-          "why is lebanon<b> ohio historic</b>",
-          "why is lebanon<b> christian</b>",
-          "why is lebanon<b> dangerous</b>",
-          "why is lebanon<b> called the lebanon</b>",
-          "why is lebanon<b> so small</b>",
-          "why is lebanon<b> so important</b>",
-          "why is lebanon<b> so expensive</b>"
-        ],
-        "state": "Lebanon"
-      },
-      {
-        "suggestions": [
-          "why is south korea<b> so good at archery</b>",
-          "why is south korea<b> important</b>",
-          "why is south korea<b> so rich</b>",
-          "why is south korea<b> so bad</b>",
-          "why is south korea<b> internet so fast</b>",
-          "why is south korea<b> good at olympics</b>",
-          "why is south korea<b> so racist</b>",
-          "why is south korea<b> a developed country</b>",
-          "why is south korea<b> so populated</b>",
-          "why is south korea<b> and north korea divided</b>"
-        ],
-        "state": "South Korea"
-      },
-      {
-        "suggestions": [
-          "why is liberia<b> poor</b>",
-          "why is liberia<b> in poverty</b>",
-          "why is liberia<b> important</b>",
-          "why is liberia<b> underdeveloped</b>",
-          "why is liberia<b> so messed up</b>",
-          "why is liberia<b> a failed state</b>",
-          "why is liberia<b> one of the poorest countries</b>",
-          "why is liberia<b> called liberia</b>",
-          "why is liberia<b> referred to as a constitutional democracy</b>",
-          "why is liberia<b> not colonized</b>"
-        ],
-        "state": "Liberia"
-      },
-      {
-        "suggestions": [
-          "why is sri lanka<b> not part of india</b>",
-          "why is sri lanka<b> famous</b>",
-          "why is sri lanka<b> a developing country</b>",
-          "why is sri lanka<b> so expensive</b>",
-          "why is sri lanka<b> hotter than nepal</b>",
-          "why is sri lanka<b> called sri lanka</b>",
-          "why is sri lanka<b> called the pearl of the indian ocean</b>",
-          "why is sri lanka<b> so poor</b>",
-          "why is sri lanka<b> called teardrop of india</b>",
-          "why is sri lanka<b> important</b>"
-        ],
-        "state": "Sri Lanka"
+        "state": "Libya"
       },
       {
         "suggestions": [
           "why is lesotho<b> inside south africa</b>",
-          "why is lesotho<b> landlocked</b>",
           "why is lesotho<b> in the middle of south africa</b>",
+          "why is lesotho<b> landlocked</b>",
           "why is lesotho<b> an enclave of south africa</b>",
           "why is lesotho<b> known as the switzerland of africa</b>",
           "why is lesotho<b> poor</b>",
@@ -2942,44 +2942,6 @@ function getLabelsJSONWhy() {
           "why is lesotho<b> part of south africa</b>"
         ],
         "state": "Lesotho"
-      },
-      {
-        "suggestions": [
-          "why is libya<b> a failed state</b>",
-          "why is libya<b> important</b>",
-          "why is libya<b> at war</b>",
-          "why is libya<b> so hot</b>",
-          "why is libya<b> important to the united states</b>",
-          "why is libya<b> bad</b>",
-          "why is libya<b> so dangerous</b>",
-          "why is libya<b> in a civil war</b>",
-          "why is libya<b> so lawless</b>",
-          "why is libya<b> population so low</b>"
-        ],
-        "state": "Libya"
-      },
-      {
-        "suggestions": [
-          "why is latvia<b> population declining</b>",
-          "why is latvia<b> so poor</b>",
-          "why is latvia<b> famous</b>"
-        ],
-        "state": "Latvia"
-      },
-      {
-        "suggestions": [
-          "why is lithuania<b> so small</b>",
-          "why is lithuania<b> so poor</b>",
-          "why is lithuania<b> so suicidal</b>",
-          "why is lithuania<b> so good at basketball</b>",
-          "why is lithuania<b> population decreasing</b>",
-          "why is lithuania<b> spelled lietuva</b>",
-          "why is lithuania<b> famous</b>",
-          "why is lithuania<b> the best country in the world</b>",
-          "why lithuania is<b> the best</b>",
-          "why is<b> russia in between poland and </b>lithuania"
-        ],
-        "state": "Lithuania"
       },
       {
         "suggestions": [
@@ -2998,28 +2960,21 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is madagascar<b> a biodiversity hotspot</b>",
-          "why is madagascar<b> poor</b>",
-          "why is madagascar<b> important</b>",
-          "why is madagascar<b> vanilla the best</b>",
-          "why is madagascar<b> unique</b>",
-          "why is madagascar<b> a french speaking country</b>",
-          "why is madagascar<b> rated pg</b>",
-          "why is madagascar<b> so unique</b>",
-          "why is madagascar<b> a developing country</b>",
-          "why is madagascar<b> a francophone country</b>"
+          "why is latvia<b> population declining</b>",
+          "why is latvia<b> so poor</b>",
+          "why is latvia<b> famous</b>"
         ],
-        "state": "Madagascar"
+        "state": "Latvia"
       },
       {
         "suggestions": [
           "why is morocco<b> dangerous</b>",
-          "why is morocco<b> safe</b>",
           "why is morocco<b> mar</b>",
           "why is morocco<b> a developing country</b>",
           "why is morocco<b> poor</b>",
           "why is morocco<b> not in the au</b>",
           "why is morocco<b> called the red city</b>",
+          "why is morocco<b> safe</b>",
           "why is morocco<b> abbreviation mar</b>",
           "why is morocco<b> not part of the african union</b>",
           "why is morocco<b> important</b>"
@@ -3028,15 +2983,45 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
+          "why is lithuania<b> so small</b>",
+          "why is lithuania<b> so poor</b>",
+          "why is lithuania<b> so suicidal</b>",
+          "why is lithuania<b> so good at basketball</b>",
+          "why is lithuania<b> population decreasing</b>",
+          "why is lithuania<b> spelled lietuva</b>",
+          "why is lithuania<b> famous</b>",
+          "why is lithuania<b> the best country in the world</b>",
+          "why lithuania is<b> the best</b>",
+          "why is<b> russia in between poland and </b>lithuania"
+        ],
+        "state": "Lithuania"
+      },
+      {
+        "suggestions": [
           "why is moldova<b> poor</b>",
           "why is moldova<b> not part of romania</b>",
           "why is moldova<b> separate from romania</b>",
-          "why is moldova<b> a country</b>",
           "why is moldova<b> the poorest country in europe</b>",
           "why is moldova<b> a failed state</b>",
+          "why is moldova<b> a country</b>",
           "why is moldova<b> not in the eu</b>"
         ],
         "state": "Moldova"
+      },
+      {
+        "suggestions": [
+          "why is mali<b> important</b>",
+          "why is mali<b> so poor</b>",
+          "why is mali<b> overpopulated</b>",
+          "why is mali<b> poor</b>",
+          "why is mali<b> a poor country</b>",
+          "why is mali<b> a french speaking country</b>",
+          "why is mali<b> a less developed country</b>",
+          "why is mali<b> a developing country</b>",
+          "why is mali<b> a francophone country</b>",
+          "why is mali<b> in poverty</b>"
+        ],
+        "state": "Mali"
       },
       {
         "suggestions": [
@@ -3053,18 +3038,33 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is mali<b> important</b>",
-          "why is mali<b> so poor</b>",
-          "why is mali<b> overpopulated</b>",
-          "why is mali<b> poor</b>",
-          "why is mali<b> a french speaking country</b>",
-          "why is mali<b> a poor country</b>",
-          "why is mali<b> a less developed country</b>",
-          "why is mali<b> a developing country</b>",
-          "why is mali<b> a francophone country</b>",
-          "why is mali<b> in poverty</b>"
+          "why is madagascar<b> a biodiversity hotspot</b>",
+          "why is madagascar<b> poor</b>",
+          "why is madagascar<b> important</b>",
+          "why is madagascar<b> vanilla the best</b>",
+          "why is madagascar<b> unique</b>",
+          "why is madagascar<b> a french speaking country</b>",
+          "why is madagascar<b> so unique</b>",
+          "why is madagascar<b> rated pg</b>",
+          "why is madagascar<b> a francophone country</b>",
+          "why is madagascar<b> a developing country</b>"
         ],
-        "state": "Mali"
+        "state": "Madagascar"
+      },
+      {
+        "suggestions": [
+          "why is myanmar<b> still called burma</b>",
+          "why is myanmar<b> so poor</b>",
+          "why is myanmar<b> also called burma</b>",
+          "why is myanmar<b> sanctioned</b>",
+          "why is myanmar<b> called burma</b>",
+          "why is myanmar<b> called the golden land</b>",
+          "why is myanmar<b> not a democratic country</b>",
+          "why is myanmar<b> called the land of golden pagodas</b>",
+          "why is myanmar<b> a non democratic country</b>",
+          "why is myanmar<b> expensive</b>"
+        ],
+        "state": "Myanmar"
       },
       {
         "suggestions": [
@@ -3080,21 +3080,6 @@ function getLabelsJSONWhy() {
           "why is mongolia<b> so big</b>"
         ],
         "state": "Mongolia"
-      },
-      {
-        "suggestions": [
-          "why is myanmar<b> still called burma</b>",
-          "why is myanmar<b> so poor</b>",
-          "why is myanmar<b> also called burma</b>",
-          "why is myanmar<b> sanctioned</b>",
-          "why is myanmar<b> called burma</b>",
-          "why is myanmar<b> called the golden land</b>",
-          "why is myanmar<b> not a democratic country</b>",
-          "why is myanmar<b> expensive</b>",
-          "why is myanmar<b> called the land of golden pagodas</b>",
-          "why is myanmar<b> a non democratic country</b>"
-        ],
-        "state": "Myanmar"
       },
       {
         "suggestions": [],
@@ -3113,21 +3098,6 @@ function getLabelsJSONWhy() {
           "why is malawi<b> not developing</b>"
         ],
         "state": "Malawi"
-      },
-      {
-        "suggestions": [
-          "why is mexico<b> so poor</b>",
-          "why is mexico<b> water bad</b>",
-          "why is mexico<b> city sinking</b>",
-          "why is mexico<b> poor</b>",
-          "why is mexico<b> so corrupt</b>",
-          "why is mexico<b> called mexico</b>",
-          "why is mexico<b> sinking</b>",
-          "why is mexico<b> important</b>",
-          "why is mexico<b> dangerous</b>",
-          "why is mexico<b> not part of nato</b>"
-        ],
-        "state": "Mexico"
       },
       {
         "suggestions": [
@@ -3151,15 +3121,38 @@ function getLabelsJSONWhy() {
         "suggestions": [
           "why is namibia<b> sparsely populated</b>",
           "why is namibia<b> a developing country</b>",
-          "why is namibia<b> a desert</b>",
-          "why is namibia<b> a happy country</b>",
           "why is namibia<b> not a happy country</b>",
+          "why is namibia<b> a happy country</b>",
+          "why is namibia<b> a desert</b>",
           "why is namibia<b> a democratic country</b>",
           "why is namibia<b> a beautiful country</b>",
-          "why is namibia<b> so dry</b>",
-          "why is namibia<b> domain so expensive</b>"
+          "why is namibia<b> domain so expensive</b>",
+          "why is namibia<b> so dry</b>"
         ],
         "state": "Namibia"
+      },
+      {
+        "suggestions": [
+          "why is new caledonia<b> french</b>",
+          "why is new caledonia<b> so expensive</b>",
+          "why is<b> french spoken in </b>new caledonia"
+        ],
+        "state": "New Caledonia"
+      },
+      {
+        "suggestions": [
+          "why is mexico<b> so poor</b>",
+          "why is mexico<b> water bad</b>",
+          "why is mexico<b> city sinking</b>",
+          "why is mexico<b> poor</b>",
+          "why is mexico<b> so corrupt</b>",
+          "why is mexico<b> called mexico</b>",
+          "why is mexico<b> sinking</b>",
+          "why is mexico<b> important</b>",
+          "why is mexico<b> dangerous</b>",
+          "why is mexico<b> not part of nato</b>"
+        ],
+        "state": "Mexico"
       },
       {
         "suggestions": [
@@ -3169,10 +3162,10 @@ function getLabelsJSONWhy() {
           "why is niger<b> so underdeveloped</b>",
           "why is niger<b> population increasing</b>",
           "why is niger<b> a developing country</b>",
-          "why is niger<b> the poorest country</b>",
           "why is niger<b> delta swamp</b>",
-          "why is niger<b> in poverty</b>",
-          "why is niger<b> underdeveloped</b>"
+          "why is niger<b> the poorest country</b>",
+          "why is niger<b> underdeveloped</b>",
+          "why is niger<b> in poverty</b>"
         ],
         "state": "Niger"
       },
@@ -3183,21 +3176,13 @@ function getLabelsJSONWhy() {
           "why is malaysia<b> muslim</b>",
           "why is malaysia<b> flag similar to the us</b>",
           "why is malaysia<b> split in two</b>",
-          "why is malaysia<b> getting a divorce</b>",
+          "why is malaysia<b> divorcing her husband</b>",
           "why is malaysia<b> so corrupt</b>",
           "why is malaysia<b> in two parts</b>",
-          "why is malaysia<b> divorcing her husband</b>",
+          "why is malaysia<b> getting a divorce</b>",
           "why is malaysia<b> so hot</b>"
         ],
         "state": "Malaysia"
-      },
-      {
-        "suggestions": [
-          "why is new caledonia<b> french</b>",
-          "why is new caledonia<b> so expensive</b>",
-          "why is<b> french spoken in </b>new caledonia"
-        ],
-        "state": "New Caledonia"
       },
       {
         "suggestions": [
@@ -3227,41 +3212,11 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is netherlands<b> orange</b>",
-          "why is netherlands<b> ned</b>",
-          "why is netherlands<b> called dutch</b>",
-          "why is netherlands<b> called holland</b>",
-          "why is netherlands<b> not in euro cup</b>",
-          "why is netherlands<b> called netherlands</b>",
-          "why is netherlands<b> so tall</b>",
-          "why is netherlands<b> rich</b>",
-          "why is netherlands<b> so liberal</b>",
-          "why is netherlands<b> wearing orange</b>"
-        ],
-        "state": "Netherlands"
-      },
-      {
-        "suggestions": [
-          "why is nepal<b> so poor</b>",
-          "why is nepal<b> flag not rectangular</b>",
-          "why is nepal<b> dangerous</b>",
-          "why is nepal<b> considered a failed state</b>",
-          "why is nepal<b> called nepal</b>",
-          "why is nepal<b> time 45 minutes</b>",
-          "why is nepal<b> not part of india</b>",
-          "why is nepal<b> vulnerable to earthquakes</b>",
-          "why is nepal<b> not a democratic country</b>",
-          "why is nepal<b> prone to earthquakes</b>"
-        ],
-        "state": "Nepal"
-      },
-      {
-        "suggestions": [
           "why is oman<b> split in two</b>",
           "why is oman<b> safe</b>",
           "why is oman<b> peaceful</b>",
-          "why is oman<b> currency so strong</b>",
           "why is oman<b> so rich</b>",
+          "why is oman<b> currency so strong</b>",
           "why is oman<b> so expensive</b>",
           "why is oman<b> air so cheap</b>",
           "why is oman<b> not in opec</b>",
@@ -3276,13 +3231,28 @@ function getLabelsJSONWhy() {
           "why is peru<b> so dry</b>",
           "why is peru<b> dangerous</b>",
           "why is peru<b> called the heartland of the incas</b>",
-          "why is peru<b> poor</b>",
           "why is peru<b> so cold</b>",
-          "why is peru<b> named peru</b>",
+          "why is peru<b> poor</b>",
           "why is peru<b> economy growing</b>",
+          "why is peru<b> named peru</b>",
           "why is peru<b> so poor</b>"
         ],
         "state": "Peru"
+      },
+      {
+        "suggestions": [
+          "why is norway<b> so rich</b>",
+          "why is norway<b> not in the eu</b>",
+          "why is norway<b> so happy</b>",
+          "why is norway<b> so expensive</b>",
+          "why is norway<b> so good at winter olympics</b>",
+          "why is norway<b> not in the european union</b>",
+          "why is norway<b> the happiest country in the world</b>",
+          "why is norway<b> killing wolves</b>",
+          "why is norway<b> the best democracy</b>",
+          "why is norway<b> not part of the eu</b>"
+        ],
+        "state": "Norway"
       },
       {
         "suggestions": [
@@ -3301,18 +3271,108 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is romania<b> rou</b>",
-          "why is romania<b> not in the olympics</b>",
-          "why is romania<b> not slavic</b>",
-          "why is romania<b> called romania</b>",
-          "why is romania<b> poor</b>",
-          "why is romania<b> abbreviation rou</b>",
-          "why is romania<b> not in the 2016 olympics</b>",
-          "why is romania<b> listed as rou</b>",
-          "why is romania<b> not in olympics gymnastics</b>",
-          "why is romania<b> not in rio gymnastics</b>"
+          "why is panama<b> a good place to retire</b>",
+          "why is panama<b> famous</b>",
+          "why is panama<b> city beach closed</b>",
+          "why is panama<b> city named panama city</b>",
+          "why is panama<b> important</b>",
+          "why is panama<b> so rich</b>",
+          "why is panama<b> city beach water brown</b>",
+          "why is panama<b> so cheap</b>",
+          "why is panama<b> canal needed</b>",
+          "why is panama<b> canal important</b>"
         ],
-        "state": "Romania"
+        "state": "Panama"
+      },
+      {
+        "suggestions": [
+          "why is pakistan<b> such a mess</b>",
+          "why is pakistan<b> obsessed with kashmir</b>",
+          "why is pakistan<b> so poor</b>",
+          "why is pakistan<b> muslim</b>",
+          "why is pakistan<b> an acronym</b>",
+          "why is pakistan<b> a terrorist state</b>",
+          "why is pakistan<b> and india enemies</b>",
+          "why is pakistan<b> important</b>",
+          "why is pakistan<b> obsessed with india</b>",
+          "why is pakistan<b> so dangerous</b>"
+        ],
+        "state": "Pakistan"
+      },
+      {
+        "suggestions": [
+          "why is nepal<b> so poor</b>",
+          "why is nepal<b> flag not rectangular</b>",
+          "why is nepal<b> dangerous</b>",
+          "why is nepal<b> considered a failed state</b>",
+          "why is nepal<b> called nepal</b>",
+          "why is nepal<b> time 45 minutes</b>",
+          "why is nepal<b> not part of india</b>",
+          "why is nepal<b> vulnerable to earthquakes</b>",
+          "why is nepal<b> not a democratic country</b>",
+          "why is nepal<b> prone to earthquakes</b>"
+        ],
+        "state": "Nepal"
+      },
+      {
+        "suggestions": [
+          "why is new zealand<b> so good at rugby</b>",
+          "why is new zealand<b> new</b>",
+          "why is new zealand<b> black</b>",
+          "why is new zealand<b> so beautiful</b>",
+          "why is new zealand<b> called oz</b>",
+          "why is new zealand<b> the freest country</b>",
+          "why is new zealand<b> called middle earth</b>",
+          "why is new zealand<b> dollar so strong</b>",
+          "why is new zealand<b> a great place to live</b>",
+          "why is new zealand<b> a good place to live</b>"
+        ],
+        "state": "New Zealand"
+      },
+      {
+        "suggestions": [
+          "why is philippines<b> so poor</b>",
+          "why is philippines<b> important</b>",
+          "why is philippines<b> important to the us</b>",
+          "why is philippines<b> corrupt</b>",
+          "why is philippines<b> a third world country</b>",
+          "why is philippines<b> called philippines</b>",
+          "why is philippines<b> internet so slow</b>",
+          "why is philippines<b> not in the olympics</b>",
+          "why is philippines<b> spelled with a ph and filipino with an f</b>",
+          "why is philippines<b> so humid</b>"
+        ],
+        "state": "Philippines"
+      },
+      {
+        "suggestions": [
+          "why is netherlands<b> orange</b>",
+          "why is netherlands<b> ned</b>",
+          "why is netherlands<b> called dutch</b>",
+          "why is netherlands<b> called holland</b>",
+          "why is netherlands<b> not in euro cup</b>",
+          "why is netherlands<b> called netherlands</b>",
+          "why is netherlands<b> so tall</b>",
+          "why is netherlands<b> rich</b>",
+          "why is netherlands<b> so liberal</b>",
+          "why is netherlands<b> wearing orange</b>"
+        ],
+        "state": "Netherlands"
+      },
+      {
+        "suggestions": [
+          "why is italy<b> blue</b>",
+          "why is italy<b> shaped like a boot</b>",
+          "why is italy<b> called italy</b>",
+          "why is italy<b> so corrupt</b>",
+          "why is italy<b> the birthplace of the renaissance</b>",
+          "why is italy<b> so poor</b>",
+          "why is italy<b> a peninsula</b>",
+          "why is italy<b> prone to earthquakes</b>",
+          "why is italy<b> important</b>",
+          "why is italy<b> so racist</b>"
+        ],
+        "state": "Italy"
       },
       {
         "suggestions": [
@@ -3322,40 +3382,10 @@ function getLabelsJSONWhy() {
           "why is paraguay<b> poor</b>",
           "why is paraguay<b> so poor</b>",
           "why is paraguay<b> the happiest country</b>",
-          "why is paraguay<b> suspended from mercosur</b>",
-          "why is paraguay<b> so happy</b>"
+          "why is paraguay<b> so happy</b>",
+          "why is paraguay<b> suspended from mercosur</b>"
         ],
         "state": "Paraguay"
-      },
-      {
-        "suggestions": [
-          "why is portugal<b> so poor</b>",
-          "why is portugal<b> so small</b>",
-          "why is portugal<b> not part of spain</b>",
-          "why is portugal<b> on fire</b>",
-          "why is portugal<b> called portugal</b>",
-          "why is portugal<b> a separate country from spain</b>",
-          "why is portugal<b> important</b>",
-          "why is portugal<b> not in the olympics</b>",
-          "why is portugal<b> independence</b>",
-          "why is portugal<b> burning</b>"
-        ],
-        "state": "Portugal"
-      },
-      {
-        "suggestions": [
-          "why is panama<b> a good place to retire</b>",
-          "why is panama<b> famous</b>",
-          "why is panama<b> city beach closed</b>",
-          "why is panama<b> city named panama city</b>",
-          "why is panama<b> so cheap</b>",
-          "why is panama<b> so rich</b>",
-          "why is panama<b> city beach water brown</b>",
-          "why is panama<b> canal needed</b>",
-          "why is panama<b> important</b>",
-          "why is panama<b> canal important</b>"
-        ],
-        "state": "Panama"
       },
       {
         "suggestions": [
@@ -3374,15 +3404,33 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is western sahara<b> disputed</b>",
-          "why is western sahara<b> not a country</b>",
-          "why is western sahara<b> important</b>",
-          "why is western sahara<b> so sparsely populated</b>",
-          "why is western sahara<b> sparsely populated</b>",
-          "why is western sahara<b> a part of morocco</b>",
-          "why is western sahara<b> not considered a state</b>"
+          "why is portugal<b> so poor</b>",
+          "why is portugal<b> so small</b>",
+          "why is portugal<b> not part of spain</b>",
+          "why is portugal<b> on fire</b>",
+          "why is portugal<b> called portugal</b>",
+          "why is portugal<b> a separate country from spain</b>",
+          "why is portugal<b> important</b>",
+          "why is portugal<b> not in the olympics</b>",
+          "why is portugal<b> burning</b>",
+          "why is portugal<b> independence</b>"
         ],
-        "state": "Western Sahara"
+        "state": "Portugal"
+      },
+      {
+        "suggestions": [
+          "why is romania<b> rou</b>",
+          "why is romania<b> not in the olympics</b>",
+          "why is romania<b> not slavic</b>",
+          "why is romania<b> called romania</b>",
+          "why is romania<b> poor</b>",
+          "why is romania<b> abbreviation rou</b>",
+          "why is romania<b> not in rio gymnastics</b>",
+          "why is romania<b> not in the 2016 olympics</b>",
+          "why is romania<b> gymnastics not at the olympics</b>",
+          "why is romania<b> so religious</b>"
+        ],
+        "state": "Romania"
       },
       {
         "suggestions": [
@@ -3416,105 +3464,15 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is poland<b> so catholic</b>",
-          "why is poland<b> so good civ 5</b>",
-          "why is poland<b> so poor</b>",
-          "why is poland<b> so cheap</b>",
-          "why is poland<b> called poland</b>",
-          "why is poland<b> so bad</b>",
-          "why is poland<b> so depressing</b>",
-          "why is poland<b> so weak</b>",
-          "why is poland<b> so conservative</b>",
-          "why is poland<b> poor</b>"
+          "why is western sahara<b> disputed</b>",
+          "why is western sahara<b> not a country</b>",
+          "why is western sahara<b> important</b>",
+          "why is western sahara<b> so sparsely populated</b>",
+          "why is western sahara<b> sparsely populated</b>",
+          "why is western sahara<b> a part of morocco</b>",
+          "why is western sahara<b> not considered a state</b>"
         ],
-        "state": "Poland"
-      },
-      {
-        "suggestions": [
-          "why is philippines<b> so poor</b>",
-          "why is philippines<b> important</b>",
-          "why is philippines<b> important to the us</b>",
-          "why is philippines<b> corrupt</b>",
-          "why is philippines<b> a third world country</b>",
-          "why is philippines<b> called philippines</b>",
-          "why is philippines<b> internet so slow</b>",
-          "why is philippines<b> not in the olympics</b>",
-          "why is philippines<b> spelled with a ph and filipino with an f</b>",
-          "why is philippines<b> so humid</b>"
-        ],
-        "state": "Philippines"
-      },
-      {
-        "suggestions": [
-          "why is pakistan<b> such a mess</b>",
-          "why is pakistan<b> obsessed with kashmir</b>",
-          "why is pakistan<b> so poor</b>",
-          "why is pakistan<b> muslim</b>",
-          "why is pakistan<b> an acronym</b>",
-          "why is pakistan<b> a terrorist state</b>",
-          "why is pakistan<b> and india enemies</b>",
-          "why is pakistan<b> important</b>",
-          "why is pakistan<b> obsessed with india</b>",
-          "why is pakistan<b> so dangerous</b>"
-        ],
-        "state": "Pakistan"
-      },
-      {
-        "suggestions": [],
-        "state": "Solomon Islands"
-      },
-      {
-        "suggestions": [
-          "why is south sudan<b> fighting</b>",
-          "why is south sudan<b> in a civil war</b>",
-          "why is south sudan<b> a failed state</b>",
-          "why is south sudan<b> so dangerous</b>",
-          "why is south sudan<b> so poor</b>",
-          "why is south sudan<b> fighting for independence</b>",
-          "why is south sudan<b> poor</b>",
-          "why is south sudan<b> a country</b>",
-          "why is south sudan<b> in poverty</b>",
-          "why is<b> north and </b>south sudan<b> in conflict</b>"
-        ],
-        "state": "South Sudan"
-      },
-      {
-        "suggestions": [
-          "why is el salvador<b> called el salvador</b>",
-          "why is el salvador<b> so small</b>",
-          "why is el salvador<b> important</b>",
-          "why is el salvador<b> famous</b>",
-          "why is el salvador<b> so poor</b>",
-          "why is el salvador<b> so dangerous</b>",
-          "why is el salvador<b> so violent</b>",
-          "why is el salvador<b> dangerous</b>",
-          "why is el salvador<b> called the land of volcanoes</b>",
-          "why is el salvador<b> so densely populated</b>"
-        ],
-        "state": "El Salvador"
-      },
-      {
-        "suggestions": [
-          "why is sierra leone<b> poor</b>",
-          "why is sierra leone<b> called freetown</b>",
-          "why is sierra leone<b> important</b>",
-          "why is sierra leone<b> called sierra leone</b>",
-          "why is sierra leone<b> a developing country</b>",
-          "why is sierra leone<b> in a civil war</b>",
-          "why is sierra leone<b> famous</b>",
-          "why is<b> ebola in </b>sierra leone",
-          "why is sierra leone<b> so poor</b>"
-        ],
-        "state": "Sierra Leone"
-      },
-      {
-        "suggestions": [
-          "why is senegal<b> poor</b>",
-          "why is senegal<b> a french speaking country</b>",
-          "why is senegal<b> lake pink</b>",
-          "why is<b> gambia in </b>senegal"
-        ],
-        "state": "Senegal"
+        "state": "Western Sahara"
       },
       {
         "suggestions": [
@@ -3533,21 +3491,6 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is new zealand<b> so good at rugby</b>",
-          "why is new zealand<b> new</b>",
-          "why is new zealand<b> black</b>",
-          "why is new zealand<b> all black</b>",
-          "why is new zealand<b> so beautiful</b>",
-          "why is new zealand<b> called oz</b>",
-          "why is new zealand<b> the freest country</b>",
-          "why is new zealand<b> called middle earth</b>",
-          "why is new zealand<b> dollar so strong</b>",
-          "why is new zealand<b> a great place to live</b>"
-        ],
-        "state": "New Zealand"
-      },
-      {
-        "suggestions": [
           "why is saudi arabia<b> our ally</b>",
           "why is saudi arabia<b> so rich</b>",
           "why is saudi arabia<b> so strict</b>",
@@ -3556,14 +3499,68 @@ function getLabelsJSONWhy() {
           "why is saudi arabia<b> attacking yemen</b>",
           "why is saudi arabia<b> in yemen</b>",
           "why is saudi arabia<b> a monarchy</b>",
-          "why is saudi arabia<b> free of mental illness</b>",
-          "why is saudi arabia<b> responsible for 9/11</b>"
+          "why is saudi arabia<b> blamed for 9/11</b>",
+          "why is saudi arabia<b> free of mental illness</b>"
         ],
         "state": "Saudi Arabia"
       },
       {
+        "suggestions": [
+          "why is sudan<b> at war</b>",
+          "why is sudan<b> so poor</b>",
+          "why is sudan<b> a failed state</b>",
+          "why is sudan<b> called the sudan</b>",
+          "why is sudan<b> iv hydrophobic</b>",
+          "why is sudan<b> dangerous</b>",
+          "why is sudan<b> important</b>",
+          "why is sudan<b> sanctioned</b>",
+          "why is sudan<b> so dangerous</b>",
+          "why is sudan<b> on the terror list</b>"
+        ],
+        "state": "Sudan"
+      },
+      {
+        "suggestions": [
+          "why is poland<b> so catholic</b>",
+          "why is poland<b> so good civ 5</b>",
+          "why is poland<b> so poor</b>",
+          "why is poland<b> so cheap</b>",
+          "why is poland<b> called poland</b>",
+          "why is poland<b> so bad</b>",
+          "why is poland<b> so depressing</b>",
+          "why is poland<b> so weak</b>",
+          "why is poland<b> so conservative</b>",
+          "why is poland<b> poor</b>"
+        ],
+        "state": "Poland"
+      },
+      {
+        "suggestions": [
+          "why is senegal<b> poor</b>",
+          "why is senegal<b> a french speaking country</b>",
+          "why is senegal<b> lake pink</b>",
+          "why is<b> gambia in </b>senegal"
+        ],
+        "state": "Senegal"
+      },
+      {
+        "suggestions": [
+          "why is el salvador<b> called el salvador</b>",
+          "why is el salvador<b> so small</b>",
+          "why is el salvador<b> important</b>",
+          "why is el salvador<b> famous</b>",
+          "why is el salvador<b> so poor</b>",
+          "why is el salvador<b> so dangerous</b>",
+          "why is el salvador<b> so violent</b>",
+          "why is el salvador<b> dangerous</b>",
+          "why is el salvador<b> so densely populated</b>",
+          "why is el salvador<b> not in fifa games</b>"
+        ],
+        "state": "El Salvador"
+      },
+      {
         "suggestions": [],
-        "state": "Republic of Serbia"
+        "state": "Solomon Islands"
       },
       {
         "suggestions": [
@@ -3576,18 +3573,21 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is sudan<b> at war</b>",
-          "why is sudan<b> so poor</b>",
-          "why is sudan<b> a failed state</b>",
-          "why is sudan<b> called the sudan</b>",
-          "why is sudan<b> iv hydrophobic</b>",
-          "why is sudan<b> dangerous</b>",
-          "why is sudan<b> sanctioned</b>",
-          "why is sudan<b> important</b>",
-          "why is sudan<b> so dangerous</b>",
-          "why is sudan<b> on the terror list</b>"
+          "why is sierra leone<b> poor</b>",
+          "why is sierra leone<b> called freetown</b>",
+          "why is sierra leone<b> important</b>",
+          "why is sierra leone<b> a developing country</b>",
+          "why is sierra leone<b> called sierra leone</b>",
+          "why is sierra leone<b> in a civil war</b>",
+          "why is sierra leone<b> famous</b>",
+          "why is<b> ebola in </b>sierra leone",
+          "why is sierra leone<b> so poor</b>"
         ],
-        "state": "Sudan"
+        "state": "Sierra Leone"
+      },
+      {
+        "suggestions": [],
+        "state": "Republic of Serbia"
       },
       {
         "suggestions": [
@@ -3608,13 +3608,28 @@ function getLabelsJSONWhy() {
       {
         "suggestions": [
           "why is suriname<b> in concacaf</b>",
-          "why is suriname<b> not in latin america</b>",
           "why is suriname<b> hindu</b>",
+          "why is suriname<b> not in latin america</b>",
           "why is suriname<b> sparsely populated</b>",
           "why is suriname<b> so sparsely populated</b>",
           "why is suriname<b> considered a caribbean country</b>"
         ],
         "state": "Suriname"
+      },
+      {
+        "suggestions": [
+          "why is russia<b> in syria</b>",
+          "why is russia<b> so big</b>",
+          "why is russia<b> bombing aleppo</b>",
+          "why is russia<b> banned from the olympics</b>",
+          "why is russia<b> bad</b>",
+          "why is russia<b> so poor</b>",
+          "why is russia<b> attacking syria</b>",
+          "why is russia<b> involved in syria</b>",
+          "why is russia<b> helping syria</b>",
+          "why is russia<b> so crazy</b>"
+        ],
+        "state": "Russia"
       },
       {
         "suggestions": [
@@ -3633,6 +3648,36 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
+          "why is south sudan<b> fighting</b>",
+          "why is south sudan<b> in a civil war</b>",
+          "why is south sudan<b> a failed state</b>",
+          "why is south sudan<b> so dangerous</b>",
+          "why is south sudan<b> so poor</b>",
+          "why is south sudan<b> fighting for independence</b>",
+          "why is south sudan<b> poor</b>",
+          "why is south sudan<b> a country</b>",
+          "why is south sudan<b> in poverty</b>",
+          "why is<b> north and </b>south sudan<b> in conflict</b>"
+        ],
+        "state": "South Sudan"
+      },
+      {
+        "suggestions": [
+          "why is sweden<b> so rich</b>",
+          "why is sweden<b> so liberal</b>",
+          "why is sweden<b> sui</b>",
+          "why is sweden<b> so great</b>",
+          "why is sweden<b> not in nato</b>",
+          "why is sweden<b> abbreviated sui</b>",
+          "why is sweden<b> neutral</b>",
+          "why is sweden<b> so happy</b>",
+          "why is sweden<b> so gay</b>",
+          "why is sweden<b> called sweden</b>"
+        ],
+        "state": "Sweden"
+      },
+      {
+        "suggestions": [
           "why is chad<b> called chad</b>",
           "why is chad<b> always eating</b>",
           "why is chad<b> on bachelor in paradise</b>",
@@ -3640,9 +3685,9 @@ function getLabelsJSONWhy() {
           "why is chad<b> a douche name</b>",
           "why is chad<b> such a jerk</b>",
           "why is chad<b> a failed state</b>",
+          "why is chad<b> on paradise</b>",
           "why is chad<b> a developing country</b>",
-          "why is chad<b> le clos famous</b>",
-          "why is chad<b> on paradise</b>"
+          "why is chad<b> le clos famous</b>"
         ],
         "state": "Chad"
       },
@@ -3667,71 +3712,9 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is turkmenistan<b> so poor</b>"
-        ],
-        "state": "Turkmenistan"
-      },
-      {
-        "suggestions": [
           "why is tajikistan<b> so poor</b>"
         ],
         "state": "Tajikistan"
-      },
-      {
-        "suggestions": [
-          "why is sweden<b> so rich</b>",
-          "why is sweden<b> so liberal</b>",
-          "why is sweden<b> sui</b>",
-          "why is sweden<b> so great</b>",
-          "why is sweden<b> not in nato</b>",
-          "why is sweden<b> abbreviated sui</b>",
-          "why is sweden<b> neutral</b>",
-          "why is sweden<b> so happy</b>",
-          "why is sweden<b> so gay</b>",
-          "why is sweden<b> called sweden</b>"
-        ],
-        "state": "Sweden"
-      },
-      {
-        "suggestions": [
-          "why is east timor<b> poor</b>",
-          "why is east timor<b> called timor leste</b>",
-          "why is east timor<b> not in asean</b>",
-          "why is east timor<b> called land of fear</b>",
-          "why is<b> australia in </b>east timor"
-        ],
-        "state": "East Timor"
-      },
-      {
-        "suggestions": [
-          "why is tunisia<b> important</b>",
-          "why is tunisia<b> so poor</b>",
-          "why is tunisia<b> cheap</b>"
-        ],
-        "state": "Tunisia"
-      },
-      {
-        "suggestions": [
-          "why is russia<b> in syria</b>",
-          "why is russia<b> bombing aleppo</b>",
-          "why is russia<b> so big</b>",
-          "why is russia<b> banned from the olympics</b>",
-          "why is russia<b> bad</b>",
-          "why is russia<b> so poor</b>",
-          "why is russia<b> attacking syria</b>",
-          "why is russia<b> involved in syria</b>",
-          "why is russia<b> helping syria</b>",
-          "why is russia<b> so crazy</b>"
-        ],
-        "state": "Russia"
-      },
-      {
-        "suggestions": [
-          "why is trinidad and tobago<b> one country</b>",
-          "why is trinidad and tobago<b> called that</b>",
-          "why is<b> it </b>trinidad and tobago"
-        ],
-        "state": "Trinidad and Tobago"
       },
       {
         "suggestions": [
@@ -3750,60 +3733,17 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is taiwan<b> called chinese taipei</b>",
-          "why is taiwan<b> not considered an official country</b>",
-          "why is taiwan<b> called chinese taipei in olympics</b>",
-          "why is taiwan<b> important to the us</b>",
-          "why is taiwan<b> tpe</b>",
-          "why is taiwan<b> important to china</b>",
-          "why is taiwan<b> the republic of china</b>",
-          "why is taiwan<b> part of china</b>",
-          "why is taiwan<b> so rich</b>",
-          "why is taiwan<b> called republic of china</b>"
+          "why is turkmenistan<b> so poor</b>"
         ],
-        "state": "Taiwan"
+        "state": "Turkmenistan"
       },
       {
         "suggestions": [
-          "why is uganda<b> called the pearl of africa</b>",
-          "why is uganda<b> so poor</b>",
-          "why is uganda<b> so homophobic</b>",
-          "why is uganda<b> poor</b>",
-          "why is uganda<b> in poverty</b>",
-          "why is uganda<b> a poor country</b>",
-          "why is uganda<b> population increasing</b>",
-          "why is uganda<b> underdeveloped</b>",
-          "why is uganda<b> in debt</b>",
-          "why is uganda<b> a developing country</b>"
+          "why is tunisia<b> important</b>",
+          "why is tunisia<b> so poor</b>",
+          "why is tunisia<b> cheap</b>"
         ],
-        "state": "Uganda"
-      },
-      {
-        "suggestions": [],
-        "state": "United Republic of Tanzania"
-      },
-      {
-        "suggestions": [
-          "why is norway<b> so rich</b>",
-          "why is norway<b> not in the eu</b>",
-          "why is norway<b> so happy</b>",
-          "why is norway<b> so expensive</b>",
-          "why is norway<b> so good at winter olympics</b>",
-          "why is norway<b> not in the european union</b>",
-          "why is norway<b> the happiest country in the world</b>",
-          "why is norway<b> killing wolves</b>",
-          "why is norway<b> the best democracy</b>",
-          "why is norway<b> not part of the eu</b>"
-        ],
-        "state": "Norway"
-      },
-      {
-        "suggestions": [
-          "why is uzbekistan<b> important</b>",
-          "why is uzbekistan<b> poor</b>",
-          "why is uzbekistan<b> corrupt</b>"
-        ],
-        "state": "Uzbekistan"
+        "state": "Tunisia"
       },
       {
         "suggestions": [
@@ -3822,6 +3762,39 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
+          "why is trinidad and tobago<b> one country</b>",
+          "why is trinidad and tobago<b> called that</b>",
+          "why is<b> it </b>trinidad and tobago"
+        ],
+        "state": "Trinidad and Tobago"
+      },
+      {
+        "suggestions": [
+          "why is east timor<b> poor</b>",
+          "why is east timor<b> called timor leste</b>",
+          "why is east timor<b> not in asean</b>",
+          "why is east timor<b> called land of fear</b>",
+          "why is<b> australia in </b>east timor"
+        ],
+        "state": "East Timor"
+      },
+      {
+        "suggestions": [
+          "why is taiwan<b> called chinese taipei</b>",
+          "why is taiwan<b> not considered an official country</b>",
+          "why is taiwan<b> called chinese taipei in olympics</b>",
+          "why is taiwan<b> important to the us</b>",
+          "why is taiwan<b> tpe</b>",
+          "why is taiwan<b> important to china</b>",
+          "why is taiwan<b> the republic of china</b>",
+          "why is taiwan<b> so rich</b>",
+          "why is taiwan<b> called republic of china</b>",
+          "why is taiwan<b> part of china</b>"
+        ],
+        "state": "Taiwan"
+      },
+      {
+        "suggestions": [
           "why is uruguay<b> called uruguay</b>",
           "why is uruguay<b> so white</b>",
           "why is uruguay<b> called the oriental republic of uruguay</b>",
@@ -3837,32 +3810,70 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
+          "why is tanzania<b> so poor</b>",
+          "why is tanzania<b> not a member of comesa</b>",
+          "why is tanzania<b> poor</b>",
+          "why is tanzania<b> overpopulated</b>",
+          "why is tanzania<b> underdeveloped</b>",
+          "why is tanzania<b> so expensive</b>",
+          "why is tanzania<b> a developing country</b>",
+          "why is tanzania<b> in poverty</b>",
+          "why is<b> kilimanjaro in </b>tanzania",
+          "why tanzania is<b> united republic</b>"
+        ],
+        "state": "Tanzania"
+      },
+      {
+        "suggestions": [
+          "why is uganda<b> called the pearl of africa</b>",
+          "why is uganda<b> so poor</b>",
+          "why is uganda<b> so homophobic</b>",
+          "why is uganda<b> poor</b>",
+          "why is uganda<b> in poverty</b>",
+          "why is uganda<b> a poor country</b>",
+          "why is uganda<b> population increasing</b>",
+          "why is uganda<b> underdeveloped</b>",
+          "why is uganda<b> such a poor country</b>",
+          "why is uganda<b> a developing country</b>"
+        ],
+        "state": "Uganda"
+      },
+      {
+        "suggestions": [
+          "why is united states<b> eeuu in spanish</b>",
+          "why is united states<b> in debt</b>",
+          "why is united states<b> so powerful</b>",
+          "why is united states<b> in afghanistan</b>",
+          "why is united states<b> the greatest country in the world</b>",
+          "why is united states<b> so good at olympics</b>",
+          "why is united states<b> so rich</b>",
+          "why is united states<b> history important</b>",
+          "why is united states<b> called america</b>",
+          "why is united states<b> a developed country</b>"
+        ],
+        "state": "United States"
+      },
+      {
+        "suggestions": [
+          "why is uzbekistan<b> poor</b>",
+          "why is uzbekistan<b> corrupt</b>",
+          "why is uzbekistan<b> important</b>"
+        ],
+        "state": "Uzbekistan"
+      },
+      {
+        "suggestions": [
           "why is vanuatu<b> so expensive</b>",
           "why is vanuatu<b> the riskiest place to live</b>",
           "why is vanuatu<b> a less developed country</b>",
-          "why is vanuatu<b> the riskiest place on earth</b>",
           "why is vanuatu<b> so dangerous</b>",
+          "why is vanuatu<b> the riskiest place on earth</b>",
           "why is vanuatu<b> so poor</b>",
           "why is vanuatu<b> the happiest place on earth</b>",
           "why is vanuatu<b> in the news</b>",
           "why is vanuatu<b> a tax haven</b>"
         ],
         "state": "Vanuatu"
-      },
-      {
-        "suggestions": [
-          "why is turkey<b> called turkey</b>",
-          "why is turkey<b> in nato</b>",
-          "why is turkey<b> bad for dogs</b>",
-          "why is turkey<b> good for you</b>",
-          "why is turkey<b> important to the us</b>",
-          "why is turkey<b> fighting the kurds</b>",
-          "why is turkey<b> bad for you</b>",
-          "why is turkey<b> bacon good for you</b>",
-          "why is turkey<b> invading syria</b>",
-          "why is turkey<b> fighting syria</b>"
-        ],
-        "state": "Turkey"
       },
       {
         "suggestions": [
@@ -3881,18 +3892,18 @@ function getLabelsJSONWhy() {
       },
       {
         "suggestions": [
-          "why is united states of america<b> the richest country in the world</b>",
-          "why is united states of america<b> called that</b>",
-          "why is united states of america",
-          "why<b> usa </b>is<b> called the </b>united states of america",
-          "why<b> the </b>is<b> used before </b>united states of america",
-          "why is<b> federalism important to the health </b>of<b> the </b>united states of america",
-          "why is<b> it called the </b>united states of america<b> and not the india</b>",
-          "why is<b> it the </b>united states of america<b> and not the india</b>",
-          "why is<b> it named the </b>united states of america",
-          "why is<b> the </b>united states of america<b> in debt</b>"
+          "why is turkey<b> called turkey</b>",
+          "why is turkey<b> in nato</b>",
+          "why is turkey<b> bad for dogs</b>",
+          "why is turkey<b> good for you</b>",
+          "why is turkey<b> important to the us</b>",
+          "why is turkey<b> fighting the kurds</b>",
+          "why is turkey<b> bad for you</b>",
+          "why is turkey<b> bacon good for you</b>",
+          "why is turkey<b> invading syria</b>",
+          "why is turkey<b> fighting syria</b>"
         ],
-        "state": "United States of America"
+        "state": "Turkey"
       },
       {
         "suggestions": [
@@ -3907,30 +3918,31 @@ function getLabelsJSONWhy() {
         "suggestions": [
           "why is vietnam<b> poor</b>",
           "why is vietnam<b> communist</b>",
-          "why is vietnam<b> so poor</b>",
           "why is vietnam<b> divided</b>",
+          "why is vietnam<b> so poor</b>",
           "why is vietnam<b> important</b>",
           "why is vietnam<b> so hot</b>",
           "why is vietnam<b> so dirty</b>",
-          "why is vietnam<b> dangerous</b>",
           "why is vietnam<b> a good place to visit</b>",
-          "why is vietnam<b> war important</b>"
+          "why is vietnam<b> war important</b>",
+          "why is vietnam<b> dangerous</b>"
         ],
         "state": "Vietnam"
       },
       {
         "suggestions": [
-          "why is zambia<b> so poor</b>",
-          "why is zambia<b> called country of copper</b>",
-          "why is zambia<b> in poverty</b>",
-          "why is zambia<b> food insecure</b>",
-          "why is zambia<b> a christian nation</b>",
-          "why is zambia<b> underdeveloped</b>",
-          "why is zambia<b> called a christian nation</b>",
-          "why is zambia<b> called a landlocked country</b>",
-          "why is zambia<b> a developing country</b>"
+          "why is ukraine<b> so poor</b>",
+          "why is ukraine<b> called the ukraine</b>",
+          "why is ukraine<b> important</b>",
+          "why is ukraine<b> gymnast not competing</b>",
+          "why is ukraine<b> taking 0</b>",
+          "why is ukraine<b> taking 0 in olympics</b>",
+          "why is ukraine<b> not part of nato</b>",
+          "why is ukraine<b> eliminated</b>",
+          "why is ukraine<b> gymnast</b>",
+          "why is ukraine<b> taking zeros at olympics</b>"
         ],
-        "state": "Zambia"
+        "state": "Ukraine"
       },
       {
         "suggestions": [
@@ -3954,28 +3966,27 @@ function getLabelsJSONWhy() {
           "why is yemen<b> at war</b>",
           "why is yemen<b> a failed state</b>",
           "why is yemen<b> dangerous</b>",
+          "why is yemen<b> in stage 2</b>",
           "why is yemen<b> not part of the gcc</b>",
           "why is yemen<b> being attacked</b>",
           "why is yemen<b> starving</b>",
-          "why is yemen<b> important to the united states</b>",
-          "why is yemen<b> poor</b>"
+          "why is yemen<b> important to the united states</b>"
         ],
         "state": "Yemen"
       },
       {
         "suggestions": [
-          "why is ukraine<b> so poor</b>",
-          "why is ukraine<b> called the ukraine</b>",
-          "why is ukraine<b> important</b>",
-          "why is ukraine<b> gymnast not competing</b>",
-          "why is ukraine<b> taking 0</b>",
-          "why is ukraine<b> gymnast</b>",
-          "why is ukraine<b> taking 0 in olympics</b>",
-          "why is ukraine<b> eliminated</b>",
-          "why is ukraine<b> taking zeros at olympics</b>",
-          "why is ukraine<b> men&#39;s gymnastics</b>"
+          "why is zambia<b> so poor</b>",
+          "why is zambia<b> called country of copper</b>",
+          "why is zambia<b> in poverty</b>",
+          "why is zambia<b> food insecure</b>",
+          "why is zambia<b> called a christian nation</b>",
+          "why is zambia<b> underdeveloped</b>",
+          "why is zambia<b> a christian nation</b>",
+          "why is zambia<b> a developing country</b>",
+          "why is zambia<b> called a landlocked country</b>"
         ],
-        "state": "Ukraine"
+        "state": "Zambia"
       },
       {
         "suggestions": [
@@ -3985,9 +3996,9 @@ function getLabelsJSONWhy() {
           "why is south africa<b> zaf</b>",
           "why is south africa<b> so rich</b>",
           "why is south africa<b> so dangerous</b>",
-          "why is south africa<b> abbreviated rsa</b>",
           "why is south africa<b> so poor</b>",
           "why is south africa<b> so white</b>",
+          "why is south africa<b> not in the olympics</b>",
           "why is south africa<b> important</b>"
         ],
         "state": "South Africa"

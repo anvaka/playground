@@ -28,62 +28,12 @@ function renderLabels(geometries) {
     textLayout.forEach(function(line) {
       var chunkElement = sivg('text', {
         'font-size': line.fontSize,
-        x: line.x, // + (width - textWidth)/2,
-        y: line.y//  - chunk.fontSize  * 0.3
+        x: line.x,
+        y: line.y
       });
       chunkElement.text(line.text);
       scene.appendChild(chunkElement);
     });
-
-    /*
-    textLayout.removeMe.forEach(function(chunk) {
-      var width = chunk.right - chunk.left;
-       // scene.appendChild(sivg('rect', {
-       //   fill: 'transparent',
-       //   stroke: 'red',
-       //   x: chunk.left,
-       //   y: chunk.top,
-       //   width: width,
-       //   height: chunk.bottom - chunk.top
-       // }));
-      var textWidth = textLineSize.measure(text, chunk.fontSize).totalWidth;
-      var chunkElement = sivg('text', {
-        'font-size': chunk.fontSize,
-        x: chunk.left + (width - textWidth)/2,
-        y: chunk.bottom - chunk.fontSize  * 0.3
-      });
-      chunkElement.text(chunk.text);
-      scene.appendChild(chunkElement);
-      // scene.appendChild(sivg('path', {
-      //   stroke: 'red',
-      //   'stroke-width': 0.1,
-      //   d: 'M' + toPath({
-      //     x: chunk.left,
-      //     y: chunk.top
-      //   }) + 'L' + toPath({
-      //     x: chunk.right,
-      //     y: chunk.top
-      //   })
-      // }));
-    });
-    var start = textLayout.allRectangles.start;
-    if (start) {
-        // appendRect(start);
-        // textLayout.allRectangles.north.forEach(appendRect);
-        // textLayout.allRectangles.south.forEach(appendRect);
-    }
-    */
-
-    function appendRect(rect) {
-       scene.appendChild(sivg('rect', {
-         fill: 'transparent',
-         stroke: 'red',
-         x: rect.left,
-         y: rect.top,
-         width: rect.right - rect.left,
-         height: rect.bottom - rect.top
-       }));
-    }
   }
 }
 
@@ -226,31 +176,21 @@ function makeCountryGeometry(countryPath, countryId) {
 
     var suggestedLayout;
 
+    var maxFontDecrease = 4;
     while (!suggestedLayout && fontSize > 0) {
       fontSize -= 1;
+      if (fontSize <= 0 && maxFontDecrease > 0) {
+        fontSize = 1 - 1/(maxFontDecrease * 2);
+        maxFontDecrease -= 1;
+      }
+
       suggestedLayout = getLayoutForFont(fontSize);
     }
-
-    // if (suggestedLayout) {
-    //   do {
-    //     fontSize += 1;
-    //     newLayout = getLayoutForFont(fontSize);
-    //     if (newLayout) suggestedLayout = newLayout;
-    //   } while (fontSize < maxFontSize && newLayout)
-    // } else {
-    //   do {
-    //     fontSize -= 1;
-    //     newLayout = getLayoutForFont(fontSize);
-    //     if (newLayout) suggestedLayout = newLayout;
-    //   } while (fontSize > 0 && !newLayout)
-    // }
-
 
     return suggestedLayout;
 
     function getLayoutForFont(fontSize) {
-      if (!fontSize) {
-        // TODO: IMplement me. Should go 0..1 sizes
+      if (fontSize <= 0) {
         return;
       }
       var availableLines = getAllRectanglesAtHeight(yOffset, fontSize);
@@ -313,37 +253,6 @@ function makeCountryGeometry(countryPath, countryId) {
         return makeLayoutRenderer(lineLayout, fontSize);
       }
     }
-
-    // var allRectangles = getAllRectanglesAtHeight(yOffset, fontSize);
-    //
-    // var rectForHeight = getRectForHeight(yOffset, fontSize);
-    // var result = {
-    //   removeMe: [],
-    //   allRectangles: allRectangles
-    // };
-    //
-    // if (rectForHeight) {
-    //   result.removeMe = [{
-    //     fontSize: fontSize,
-    //     text: text,
-    //     right: rectForHeight.right,
-    //     left: rectForHeight.left,
-    //     bottom: rectForHeight.bottom,
-    //     top: rectForHeight.top
-    //   }];
-    // } else {
-    //   // TODO: implement me. Reduce font size and retry.
-    //   result.removeMe = [{
-    //     fontSize: fontSize,
-    //     text: text,
-    //     right: bounds.maxX,
-    //     left: bounds.minX,
-    //     top: yOffset,
-    //     bottom: yOffset + 1
-    //   }];
-    // }
-    //
-    // return result;
 
     function makePossibleLayouts(availableLines) {
       var lineLayouts = [];
@@ -684,50 +593,6 @@ function makeCountryGeometry(countryPath, countryId) {
       width: maxX - minX,
       height: maxY - minY
     };
-  }
-
-  function findRect(yOffset, rectHeight) {
-    var bottomSegments = findSegmentsOnLine({
-      y: yOffset,
-      x: bounds.minX
-    });
-    var topSegments = findSegmentsOnLine({
-      y: yOffset - rectHeight,
-      x: bounds.minX
-    });
-
-    if (!bottomSegments.length && !topSegments.length) {
-      throw new Error('yOffset is out of the range');
-    }
-    if (!bottomSegments.length) {
-      bottomSegments = duplicateMaxRect(topSegments);
-    } else if (!topSegments.length) {
-      topSegments = duplicateMaxRect(bottomSegments);
-    }
-
-
-    var left = Math.min(bottomSegments[0].x, topSegments[0].x);
-    var right = Math.max(bottomSegments[1].x, topSegments[1].x);
-    if (right < left) {
-      throw new Error('how right could be smaller than left?')
-    }
-
-    return {
-      left: left,
-      top: yOffset - rectHeight,
-      width: right - left,
-      height: rectHeight
-    }
-
-    function duplicateMaxRect(segments) {
-      return [{
-        x: segments[0].x,
-        y: segments[0].y,
-      }, {
-        x: last(segments).x,
-        y: last(segments).y
-      }];
-    }
   }
 
   function findBestCandidateIndex() {
