@@ -1,11 +1,8 @@
-/* globals sivg panzoom countries */
+/* globals sivg panzoom countries getColors getLabel */
 
-// var simplePoints = simplify(points);
-var testPhrase = 'the richest country in the world';
 var scene = document.getElementById('scene');
 var colors = getColors();
-var textMeasure = createTextMeasure(scene);
-// console.log(textMeasure.measure(testPhrase, 3));
+var textLineSize = createTextMeasure(scene);
 
 panzoom(scene);
 
@@ -13,22 +10,32 @@ var geometries = [];
 countries.forEach(function(country, i) {
   var countryGeometry = makeCountryGeometry(country.path, country.id);
   geometries.push(countryGeometry);
-  //renderLineChart(countryGeometry, 0, i * 110, country.id);
   renderCountry(countryGeometry, 110, i * 110, country.id);
 })
 
 renderLabels(geometries);
-
-// outlineIntersections(countryGeometry.candidates);
 
 function renderLabels(geometries) {
   geometries.forEach(renderPhrase);
 
   function renderPhrase(geometry) {
     var countryId = geometry.id;
-    var text = countryId; //testPhrase; // countryId
+    var text = getLabel(countryId); //testPhrase; // countryId
     var textLayout = geometry.getTextLayout(text); //countryId);
 
+    if (!textLayout) return;
+
+    textLayout.forEach(function(line) {
+      var chunkElement = sivg('text', {
+        'font-size': line.fontSize,
+        x: line.x, // + (width - textWidth)/2,
+        y: line.y//  - chunk.fontSize  * 0.3
+      });
+      chunkElement.text(line.text);
+      scene.appendChild(chunkElement);
+    });
+
+    /*
     textLayout.removeMe.forEach(function(chunk) {
       var width = chunk.right - chunk.left;
        // scene.appendChild(sivg('rect', {
@@ -39,11 +46,11 @@ function renderLabels(geometries) {
        //   width: width,
        //   height: chunk.bottom - chunk.top
        // }));
-      var textWidth = textMeasure.measure(text, chunk.fontSize).preciseOneLineRect.width;
+      var textWidth = textLineSize.measure(text, chunk.fontSize).totalWidth;
       var chunkElement = sivg('text', {
         'font-size': chunk.fontSize,
-        x: chunk.left + (width - textWidth)/2, // + (baseRect.width - size.oneLineRect.width) * 0.5 ,
-        y: chunk.bottom - chunk.fontSize  * 0.3 // baseRect.top + baseRect.height
+        x: chunk.left + (width - textWidth)/2,
+        y: chunk.bottom - chunk.fontSize  * 0.3
       });
       chunkElement.text(chunk.text);
       scene.appendChild(chunkElement);
@@ -61,10 +68,11 @@ function renderLabels(geometries) {
     });
     var start = textLayout.allRectangles.start;
     if (start) {
-        appendRect(start);
-        textLayout.allRectangles.north.forEach(appendRect);
-        textLayout.allRectangles.south.forEach(appendRect);
+        // appendRect(start);
+        // textLayout.allRectangles.north.forEach(appendRect);
+        // textLayout.allRectangles.south.forEach(appendRect);
     }
+    */
 
     function appendRect(rect) {
        scene.appendChild(sivg('rect', {
@@ -76,28 +84,12 @@ function renderLabels(geometries) {
          height: rect.bottom - rect.top
        }));
     }
-
-    // var baseRect = geometry.baseOffest;
-    // var size = textMeasure.measure(countryId, fontSize);
-    //
-    // var name = sivg('text', {
-    //   'font-size': fontSize, // TODO: Should come from polygon area
-    //   x: baseRect.left + (baseRect.width - size.oneLineRect.width) * 0.5 ,
-    //   y: baseRect.top + baseRect.height
-    // });
-    //
-    // name.text(countryId);
-    // scene.appendChild(name);
-    // testPhrase
   }
 }
 
-function renderCountry(country, gdx, gdy) {
-  var bounds = country.bounds;
-  var scaler = Math.max(bounds.width, bounds.height);
-
+function renderCountry(country) {
   var countryContainer = sivg('g');
-  var path = country.points/*.map(toZero)*/.map(toPath).join('L');
+  var path = country.points.map(toPath).join('L');
 
   countryContainer.appendChild(sivg('path', {
     id: country.id,
@@ -109,13 +101,6 @@ function renderCountry(country, gdx, gdy) {
   }));
 
   scene.appendChild(countryContainer);
-
-  function toZero(p) {
-    return {
-      x: (p.x - bounds.minX) * 100 / scaler + gdx,
-      y: (p.y - bounds.minY) * 100 / scaler + gdy
-    };
-  }
 }
 
 // provides an API to iterate over segments inside polyline.
@@ -184,24 +169,6 @@ function toPath(point) {
   return point.x + ',' + point.y;
 }
 
-function findCentroid(points) {
-  var x = 0, y = 0;
-  var minX = Number.POSITIVE_INFINITY;
-
-  points.forEach(function(p) {
-    x += p.x;
-    y += p.y;
-    if (p.x < minX)
-      minX = p.x;
-  });
-
-  return {
-    x: x / points.length,
-    y: y / points.length,
-    minX: minX
-  }
-}
-
 function parseFloat(x) {
   var result = Number.parseFloat(x);
   if (Number.isNaN(result))
@@ -213,81 +180,6 @@ function parseFloat(x) {
 function log() {
   return; // Comment this line if you need logging.
   console.log.apply(console, arguments);
-}
-
-
-function renderLineChart(country, dx, dy, name) {
-  var maxY = Number.NEGATIVE_INFINITY;
-  var candidates = country.candidates;
-  var bounds = country.bounds;
-  var countryWidth = bounds.width
-  var countryHeight = bounds.height;
-  var scaleY = 100; // * bounds.height/scaler;
-  if (countryHeight < countryWidth) {
-    scaleY /= countryHeight / countryWidth;
-  }
-  var totalLength = 0;
-  var bestCandidateForLabelBase = 0;
-  var bestRank = Number.NEGATIVE_INFINITY;
-
-  var chartPoints = candidates.map(function(candidate, i) {
-    var y = candidate.distance.inside;
-    if (y > maxY) maxY = y;
-    totalLength += y;
-
-    if (candidate.rank > bestRank) {
-      bestRank = candidate.rank;
-      bestCandidateForLabelBase = i;
-    }
-
-    return {
-      y: i,
-      x: y
-    }
-  });
-
-  console.log(name, totalLength / 100);
-
-  var chartContainer = sivg('g');
-  chartPoints.forEach(p => renderPoint(p, 'red'));
-  renderPoint(chartPoints[bestCandidateForLabelBase], 'blue')
-
-  scene.appendChild(chartContainer);
-
-  function renderPoint(point, color) {
-    var y = dy + 100 * point.y / scaleY;
-    chartContainer.appendChild(sivg('path', {
-      stroke: color,
-      d: pathLine({
-        x: dx,
-        y: y
-      }, {
-        x: dx + point.x * 100 / maxY,
-        y: y
-      })
-    }))
-  }
-}
-
-function pathLine(from, to) {
-  return 'M' + toPath(from) + 'L' + toPath(to);
-}
-
-function outlineIntersections(candidates) {
-  candidates.forEach(function(line) {
-    var segments = line.segments;
-    for (var i = 0; i < segments.length - 1; ++i) {
-      var pathValue = pathLine(segments[i], segments[i + 1]);
-      scene.appendChild(
-        sivg('path', {
-          stroke: (i % 2) === 0 ? 'red' : 'blue',
-          'stroke-width': 0.1,
-          fill: '#FFFDDB',
-          d: pathValue
-        })
-      );
-    }
-  });
 }
 
 function makeCountryGeometry(countryPath, countryId) {
@@ -329,42 +221,173 @@ function makeCountryGeometry(countryPath, countryId) {
   };
 
   function getTextLayout(text) {
-    var maxFontSize = 18; // TODO: Make configurable
-    var fontSize = Math.max(0.1, getSuggestedFontSize(text));
+    var maxFontSize = 24; // TODO: Make configurable
+    var fontSize = Math.max(0.1, getSuggestedFontSize(text)) + 1;
 
-    console.time(text);
-    var allRectangles = getAllRectanglesAtHeight(yOffset, fontSize);
-    console.timeEnd(text);
+    var suggestedLayout;
 
-    var rectForHeight = getRectForHeight(yOffset, fontSize);
-    var result = {
-      removeMe: [],
-      allRectangles: allRectangles
-    };
-
-    if (rectForHeight) {
-      result.removeMe = [{
-        fontSize: fontSize,
-        text: text,
-        right: rectForHeight.right,
-        left: rectForHeight.left,
-        bottom: rectForHeight.bottom,
-        top: rectForHeight.top
-      }];
-    } else {
-      // TODO: implement me. Reduce font size and retry.
-      result.removeMe = [{
-        fontSize: fontSize,
-        text: text,
-        right: bounds.maxX,
-        left: bounds.minX,
-        top: yOffset,
-        bottom: yOffset + 1
-      }];
+    while (!suggestedLayout && fontSize > 0) {
+      fontSize -= 1;
+      suggestedLayout = getLayoutForFont(fontSize);
     }
 
-    return result;
+    // if (suggestedLayout) {
+    //   do {
+    //     fontSize += 1;
+    //     newLayout = getLayoutForFont(fontSize);
+    //     if (newLayout) suggestedLayout = newLayout;
+    //   } while (fontSize < maxFontSize && newLayout)
+    // } else {
+    //   do {
+    //     fontSize -= 1;
+    //     newLayout = getLayoutForFont(fontSize);
+    //     if (newLayout) suggestedLayout = newLayout;
+    //   } while (fontSize > 0 && !newLayout)
+    // }
 
+
+    return suggestedLayout;
+
+    function getLayoutForFont(fontSize) {
+      if (!fontSize) {
+        // TODO: IMplement me. Should go 0..1 sizes
+        return;
+      }
+      var availableLines = getAllRectanglesAtHeight(yOffset, fontSize);
+      if (!availableLines.start) {
+        // This means that there is no rectangle with height `fontSize` can be
+        // embedded inside pologyon. Reduce the font size and try again
+        return;
+      }
+
+      // split the text into words
+      var input = textLineSize.measure(text, fontSize);
+      var words = input.words;
+
+      // This should give [middle], [north[0], middle], [north[0], middle, south[0]] ...
+      var possibleLineLayouts = makePossibleLayouts(availableLines);
+
+      for (var i = 0; i < possibleLineLayouts.length; ++i) {
+        var lineLayout = possibleLineLayouts[i];
+        var textInLineLayout = tryLineLayout(lineLayout);
+        if (textInLineLayout) {
+          return textInLineLayout;
+        }
+      }
+
+      return null;
+
+      function tryLineLayout(lineLayout) {
+        // TODO This could be one possible optimization:
+        // if (lineLayout.totalWidth < input.totalWidth) {
+        //   // we know for sure, that this line layout is smaller than required
+        //   // width by the text. bail out quickly.
+        //   return;
+        // }
+
+        var currentLineIndex = 0;
+        var currentWordIndex = 0;
+
+        while (currentWordIndex < words.length) {
+          if (currentLineIndex >= lineLayout.length) {
+            // No more lines to fit the text
+            return;
+          }
+
+          var currentWord = words[currentWordIndex];
+          var currentLine = lineLayout[currentLineIndex];
+
+          if (currentLine.add(currentWord)) {
+            // Yay! This word fits inside this line. Move on to the next one:
+            currentWordIndex += 1;
+          } else if (currentLine.isEmpty()) {
+            // This means that no word can fit this line, and thus the entire
+            // layout doesn't fit.
+            return; // TODO: should I return line index?
+          } else {
+            // The line is just full. Move on to the next line and retry:
+            currentLineIndex += 1;
+          }
+        }
+        // if we are here - the words can fit this line layout!
+        return makeLayoutRenderer(lineLayout, fontSize);
+      }
+    }
+
+    // var allRectangles = getAllRectanglesAtHeight(yOffset, fontSize);
+    //
+    // var rectForHeight = getRectForHeight(yOffset, fontSize);
+    // var result = {
+    //   removeMe: [],
+    //   allRectangles: allRectangles
+    // };
+    //
+    // if (rectForHeight) {
+    //   result.removeMe = [{
+    //     fontSize: fontSize,
+    //     text: text,
+    //     right: rectForHeight.right,
+    //     left: rectForHeight.left,
+    //     bottom: rectForHeight.bottom,
+    //     top: rectForHeight.top
+    //   }];
+    // } else {
+    //   // TODO: implement me. Reduce font size and retry.
+    //   result.removeMe = [{
+    //     fontSize: fontSize,
+    //     text: text,
+    //     right: bounds.maxX,
+    //     left: bounds.minX,
+    //     top: yOffset,
+    //     bottom: yOffset + 1
+    //   }];
+    // }
+    //
+    // return result;
+
+    function makePossibleLayouts(availableLines) {
+      var lineLayouts = [];
+      if (!availableLines.start) return lineLayouts;
+
+      var totalLength = availableLines.north.length + availableLines.south.length + 1;
+      var northOffset = -1;
+      var southOffset = 0;
+
+      var iterationCounter = 0;
+      while (northOffset + southOffset < totalLength) {
+        var layout = [];
+        var i = 0;
+        // add everything from north first
+        for (i = northOffset; i >= 0; --i) {
+          addLine(availableLines.north[i]);
+        }
+
+        // then middle
+        addLine(availableLines.start);
+
+        // then south
+        for (i = 0; i < southOffset; ++i) {
+          addLine(availableLines.south[i]);
+        }
+
+        // layout is ready!
+        lineLayouts.push(layout)
+
+        // increase movement so that we are alternating between north/south
+        iterationCounter += 1;
+        if (iterationCounter % 2 === 1) {
+          northOffset += 1;
+        } else {
+          southOffset += 1;
+        }
+      }
+
+      return lineLayouts;
+
+      function addLine(lineRecangle) {
+        if (lineRecangle) layout.push(toLine(lineRecangle));
+      }
+    }
 
     function getAllRectanglesAtHeight(midPoint, rectHeight) {
       var rects = [];
@@ -373,6 +396,7 @@ function makeCountryGeometry(countryPath, countryId) {
       var dy = (midPointHeight - slicesCount * rectHeight);
       var y = bounds.minY + dy;
       var foundRects = 0;
+
       while (y < bounds.maxY) {
         rects[foundRects++]  = getRectForHeight(y, rectHeight);
         y += rectHeight;
@@ -620,7 +644,7 @@ function makeCountryGeometry(countryPath, countryId) {
 
       // TODO: This needs to be improved. Current idea is that we want label
       // to occupy less than 15% (0.15) of an area.
-      var maxCountrySpaceRatio = 0.15;
+      var maxCountrySpaceRatio = 0.45;
       var fontSize = Math.round( Math.sqrt(area * maxCountrySpaceRatio / text.length));
       return Math.min(fontSize, maxFontSize); //Math.min(maxFontSize, Math.round(bounds.height / 2));
     }
@@ -942,284 +966,112 @@ function createTextMeasure(container) {
     var cachedResult = cachedSizes[cacheKey];
     if (cachedResult) return cachedResult;
     var result = {};
+
     cachedSizes[cacheKey] = result;
 
     var textContainer = sivg('text', {
       'font-size': fontSize
     });
-
-    textContainer.innerHTML = '&nbsp;';
+    // we need this to measure words separators.
+    textContainer.setAttributeNS('http://www.w3.org/XML/1998/namespace', 'xml:space', 'preserve');
     container.appendChild(textContainer);
 
-    result.space = measureText(textContainer);
-    result.words = text.split(/\s/).map(function(word) {
-      textContainer.text(word);
-      return measureText(textContainer);
-    });
-    result.oneLineRect = sumUpRects(result.words, result.space);
-
-    textContainer.innerHTML = text;
-    result.preciseOneLineRect = measureText(textContainer);
+    result.words = text.split(/\s/).map(toWordWidths);
+    result.totalWidth = sumUpWordsLengthInPixels(result.words);
 
     container.removeChild(textContainer);
 
     return result;
 
-    function sumUpRects(rects, spaceRect) {
-      var maxHeight = 0;
+    function sumUpWordsLengthInPixels(words) {
       var width = 0;
-      rects.forEach(function(rect) {
-        if (rect.height > maxHeight) maxHeight = rect.height;
-        width += rect.width;
-      });
-      width += spaceRect.width * (rects.length - 1);
+      words.forEach(function(word) { width += word.width; });
+      return width;
+    }
+
+    function toWordWidths(word, idx, arr) {
+      var suffix = idx === arr.length - 1 ? '' : ' ';
+      var wordToMeasure = word + suffix;
+
+      textContainer.text(wordToMeasure);
+
       return {
-        width: width,
-        height: maxHeight
-      }
+        text: wordToMeasure,
+        width: measureTextWidth(textContainer)
+      };
     }
   }
 }
 
-function measureText(svgTextElement) {
+function measureTextWidth(svgTextElement) {
   var result = svgTextElement.getBBox();
-  return {
-    width: result.width,
-    height: result.height
-  };
+  return result.width;
 }
 
 function last(array) {
   if (array.length > 0) return array[array.length - 1];
 }
 
+function toLine(lineRecangle) {
+  var addedWords = [];
+  var lineWidth = lineRecangle.right - lineRecangle.left;
+  var availableWidth = lineWidth;
+  var wordsWidth = 0;
 
+  return {
+    add: add,
+    isEmpty: isEmpty,
+    getX: getX,
+    getY: getY,
+    getText: getText
+  };
 
-function getColors() {
-  var countries = getCountries();
-  var colors = getColors();
-  var max = 0;
-  var min = Number.POSITIVE_INFINITY;
-  var results = Object.keys(countries).map(key => {
-      var value = countries[key];
-      if (value > max) max = countries[key];
-      if (value < min) min = value;
+  function getText() {
+    return addedWords.map(toWord).join('');
+  }
 
-      return key;
-  }).map(toColor);
-  var result = Object.create(null);
-  results.forEach(function(r) {
-    result[r.countryName] = r.color
-  })
-  return result;
+  function toWord(wordWidth) {
+    return wordWidth.text;
+  }
 
+  function getX() {
+    return lineRecangle.left + (lineWidth - wordsWidth)/2;
+  }
 
-function toColor(countryName) {
-    var value = countries[countryName] - min;
-    var colorIdx = Math.round(colors.length * value/(max - min));
-    if (colorIdx === colors.length) colorIdx -= 1;
-    var color = colors[colors.length -1 - colorIdx]
-    if (!color) {
-        console.log(colors.length - colorIdx, colors.length, countryName);
+  function getY() {
+    return lineRecangle.bottom;
+  }
+
+  function add(word) {
+    if (availableWidth - word.width >= 0) {
+      addedWords.push(word);
+      availableWidth -= word.width;
+      wordsWidth += word.width;
+
+      return true;
     }
-    return {
-        countryName: countryName,
-        color:color
-    };
+  }
+
+  function isEmpty() {
+    return addedWords.length === 0;
+  }
 }
 
-function getColors() {
-return [
-'#F5F4F2',
-'#E0DED8',
-'#CAC3B8',
-'#BAAE9A',
-'#AC9A7C',
-'#AA8753',
-'#B9985A',
-'#C3A76B',
-'#CAB982',
-'#D3CA9D',
-'#DED6A3',
-'#E8E1B6',
-'#EFEBC0',
-'#E1E4B5',
-'#D1D7AB',
-'#BDCC96',
-'#A8C68F',
-'#94BF8B',
-'#ACD0A5'
-]
-}
+function makeLayoutRenderer(lines, fontSize) {
+  return {
+    forEach: forEach
+  };
 
-function getCountries() {
-return { 'Afghanistan':1884,
-'Albania':708,
-'Algeria':800,
-'Andorra':1996,
-'Angola':1112,
-'Antarctica':2300,
-'Argentina':595,
-'Armenia':1792,
-'Australia':330,
-'Austria':910,
-'Azerbaijan':384,
-'Bangladesh':85,
-'Belarus':160,
-'Belgium':181,
-'Belize':173,
-'Benin':273,
-'Bhutan':3280,
-'Bolivia':1192,
-'Bosnia and Herzegovina':	500,
-'Botswana':1013,
-'Brazil':320,
-'Brunei':478,
-'Bulgaria':472,
-'Burkina Faso':	297,
-'Myanmar':702,
-'Burundi':1504,
-'Cambodia':126,
-'Cameroon':667,
-'Canada':487,
-'Central African Republic':	635,
-'Chad':543,
-'Chile':1871,
-'China':1840,
-'Colombia':593,
-'Republic of the Congo':430,
-'Democratic Republic of the Congo':	726,
-'Corsica':568,
-'Costa Rica':	746,
-'Croatia':331,
-'Cuba':108,
-'Cyprus':91,
-'Czech Republic':	433,
-'Denmark':34,
-'Djibouti':430,
-'Dominican Republic':	424,
-'Ecuador':1117,
-'Egypt':321,
-'El Salvador':	442,
-'Estonia':61,
-'Equatorial Guinea':	577,
-'Eritrea':853,
-'Ethiopia':1330,
-'Finland':164,
-'France':375,
-'French Guiana':	168,
-'Gabon':377,
-'Gambia':34,
-'Georgia':1432,
-'Germany':263,
-'Ghana':190,
-'Greece':498,
-'Greenland':1792,
-'Guatemala':759,
-'Guinea':472,
-'Guinea Bissau':	70,
-'Guyana':207,
-'Haiti':470,
-'Honduras':684,
-'Hungary':143,
-'Iceland':557,
-'India':160,
-'Indonesia':367,
-'Iran':1305,
-'Iraq':312,
-'Ireland':118,
-'Israel':508,
-'Italy':538,
-'Ivory Coast':	250,
-'Jamaica':340,
-'Japan':438,
-'Jordan':812,
-'Kazakhstan':387,
-'Kenya':762,
-'Kuwait':108,
-'Kyrgyzstan':2988,
-'Latvia':87,
-'Laos':710,
-'Lebanon':1250,
-'Lesotho':2161,
-'Liberia':243,
-'Libya':423,
-'Lithuania':110,
-'Luxembourg':325,
-'Macedonia':741,
-'Madagascar':615,
-'Malawi':779,
-'Malaysia':538,
-'Maldives':1.8,
-'Mali':343,
-'Mauritania':276,
-'Mexico':1111,
-'Moldova':139,
-'Mongolia':1528,
-'Montenegro':1086,
-'Morocco':909,
-'Mozambique':345,
-'Namibia':1141,
-'Nepal':3265,
-'Netherlands':30,
-'New Zealand':	388,
-'Nicaragua':298,
-'Niger':474,
-'Nigeria':380,
-'North Korea':	400,
-'Norway':460,
-'Oman':310,
-'Pakistan':900,
-'Panama':360,
-'Papua New Guinea':	667,
-'Paraguay':178,
-'Peru':1555,
-'Philippines':442,
-'Poland':173,
-'Portugal':372,
-'Puerto Rico':	261,
-'Qatar':28,
-'Romania':414,
-'Rwanda':1598,
-'Russia':600,
-'Saudi Arabia':	665,
-'Senegal':69,
-'Republic of Serbia':442,
-'Sierra Leone':	279,
-'Slovakia': 458,
-'Slovenia': 492,
-'Somaliland':410,
-'South Africa':	1034,
-'South Korea':	282,
-'Spain':660,
-'Sri Lanka':	228,
-'Sudan':568,
-'Suriname':246,
-'Swaziland':305,
-'Sweden':320,
-'Switzerland':1350,
-'Syria':514,
-'Tajikistan':3186,
-'Taiwan':1150,
-'United Republic of Tanzania':1018,
-'Uganda': 1100,
-'Thailand':287,
-'Togo':236,
-'Trinidad and Tobago':	83,
-'Tunisia':246,
-'Turkey':1132,
-'Turkmenistan':230,
-'Ukraine':175,
-'United Arab Emirates': 149,
-'United Kingdom':162,
-'United States of America':759,
-'Uruguay':109,
-'Venezuela':450,
-'Vietnam':398,
-'Western Sahara': 256,
-'Yemen':999,
-'Zambia':1138,
-'Zimbabwe':961
-}
-}
+  function forEach(callback) {
+    lines.forEach(function(line) {
+      if (line.isEmpty()) return;
+
+      callback({
+        fontSize: fontSize,
+        text: line.getText(),
+        x: line.getX(),
+        y: line.getY() - fontSize * 0.3,
+      });
+    });
+  }
 }
