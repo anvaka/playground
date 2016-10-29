@@ -20,8 +20,8 @@ function renderLabels(geometries) {
 
   function renderPhrase(geometry) {
     var countryId = geometry.id;
-    var text = getLabel(countryId); //testPhrase; // countryId
-    var textLayout = geometry.getTextLayout(text); //countryId);
+    var text = getLabel(countryId);
+    var textLayout = geometry.getTextLayout(text);
 
     if (!textLayout) return;
 
@@ -173,17 +173,28 @@ function makeCountryGeometry(countryPath, countryId) {
     var maxFontSize = 24; // TODO: Make configurable
     var fontSize = Math.max(0.1, getSuggestedFontSize(text)) + 1;
 
-    var suggestedLayout;
+    var suggestedLayout = getLayoutForFont(fontSize);
+    if (suggestedLayout) {
+      // TODO: This can probably be removed... Not sure yet.
+      // go up!
+      var newLayout;
+      do {
+        fontSize += 1;
+        newLayout = getLayoutForFont(fontSize);
+        if (newLayout) suggestedLayout = newLayout;
+      } while (newLayout && fontSize < maxFontSize);
+    } else {
+      // go down
+      var maxFontDecrease = 4;
+      while (!suggestedLayout && fontSize > 0) {
+        fontSize -= 1;
+        if (fontSize <= 0 && maxFontDecrease > 0) {
+          fontSize = 1 - 1/(maxFontDecrease * 2);
+          maxFontDecrease -= 1;
+        }
 
-    var maxFontDecrease = 4;
-    while (!suggestedLayout && fontSize > 0) {
-      fontSize -= 1;
-      if (fontSize <= 0 && maxFontDecrease > 0) {
-        fontSize = 1 - 1/(maxFontDecrease * 2);
-        maxFontDecrease -= 1;
+        suggestedLayout = getLayoutForFont(fontSize);
       }
-
-      suggestedLayout = getLayoutForFont(fontSize);
     }
 
     return suggestedLayout;
@@ -226,6 +237,7 @@ function makeCountryGeometry(countryPath, countryId) {
 
         var currentLineIndex = 0;
         var currentWordIndex = 0;
+        var layoutStarted = false;
 
         while (currentWordIndex < words.length) {
           if (currentLineIndex >= lineLayout.length) {
@@ -239,12 +251,16 @@ function makeCountryGeometry(countryPath, countryId) {
           if (currentLine.add(currentWord)) {
             // Yay! This word fits inside this line. Move on to the next one:
             currentWordIndex += 1;
-          } else if (currentLine.isEmpty()) {
+
+            // from now on, we cannot break layout. Should keep adding lines
+            // while we can.
+            layoutStarted = true;
+          } else if (currentLine.isEmpty() && layoutStarted) {
             // This means that no word can fit this line, and thus the entire
             // layout doesn't fit.
             return; // TODO: should I return line index?
           } else {
-            // The line is just full. Move on to the next line and retry:
+            // The line cannot fit any more text. Move on to the next line and retry:
             currentLineIndex += 1;
           }
         }
@@ -279,7 +295,14 @@ function makeCountryGeometry(countryPath, countryId) {
         }
 
         // layout is ready!
-        lineLayouts.push(layout)
+        if (lineLayouts.length > 0) {
+          if (last(lineLayouts).length < layout.length) {
+            // only add layout if it has more lines than the previous one.
+            lineLayouts.push(layout);
+          }
+        } else {
+          lineLayouts.push(layout)
+        }
 
         // increase movement so that we are alternating between north/south
         iterationCounter += 1;
@@ -430,10 +453,14 @@ function makeCountryGeometry(countryPath, countryId) {
         return;
       }
 
+      // Add small padding (1% of the rectangle width), so that labels are not
+      // too close to the borders
+      var padding = (longestSegment.to - longestSegment.from) * 0.01;
+
       return {
-        left: longestSegment.from,
+        left: longestSegment.from + padding,
         top: top,
-        right: longestSegment.to,
+        right: longestSegment.to - padding,
         bottom: bottom
       };
     }
@@ -721,6 +748,7 @@ function makeCountryGeometry(countryPath, countryId) {
         y: point.y
       })
     }
+
     function appendPointToSegment(p) {
       if (pointVisited(p)) return;
       log('Adding segment at', p);
