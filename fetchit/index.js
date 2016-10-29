@@ -72,6 +72,10 @@ function find(query, callback) {
         suggestions: suggestions,
         query: query
       });
+    },
+    error: function(err) {
+      document.writeln('Error!')
+      document.writeln(JSON.stringify(err))
     }
   });
 }
