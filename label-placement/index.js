@@ -215,7 +215,7 @@ function makeCountryGeometry(countryPath, countryId) {
       var words = input.words;
 
       // This should give [middle], [north[0], middle], [north[0], middle, south[0]] ...
-      var possibleLineLayouts = makePossibleLayouts(availableLines);
+      var possibleLineLayouts = makePossibleLayouts(availableLines, input.spaceWidth);
 
       for (var i = 0; i < possibleLineLayouts.length; ++i) {
         var lineLayout = possibleLineLayouts[i];
@@ -269,7 +269,7 @@ function makeCountryGeometry(countryPath, countryId) {
       }
     }
 
-    function makePossibleLayouts(availableLines) {
+    function makePossibleLayouts(availableLines, spaceWidth) {
       var lineLayouts = [];
       if (!availableLines.start) return lineLayouts;
 
@@ -316,7 +316,7 @@ function makeCountryGeometry(countryPath, countryId) {
       return lineLayouts;
 
       function addLine(lineRecangle) {
-        if (lineRecangle) layout.push(toLine(lineRecangle));
+        if (lineRecangle) layout.push(toLine(lineRecangle, spaceWidth));
       }
     }
 
@@ -840,22 +840,35 @@ function createTextMeasure(container) {
     container.appendChild(textContainer);
 
     result.words = text.split(/\s/).map(toWordWidths);
-    result.totalWidth = sumUpWordsLengthInPixels(result.words);
+    result.spaceWidth = measureSpaceWidth();
+    result.totalWidth = sumUpWordsLengthInPixels(result.words, result.spaceWidth);
 
     container.removeChild(textContainer);
 
     return result;
 
-    function sumUpWordsLengthInPixels(words) {
+    function sumUpWordsLengthInPixels(words, spaceWidth) {
       var width = 0;
+
       words.forEach(function(word) { width += word.width; });
+      width += (words.length - 1) * spaceWidth;
+
       return width;
     }
 
-    function toWordWidths(word, idx, arr) {
-      var suffix = idx === arr.length - 1 ? '' : ' ';
-      var text = word + suffix;
+    function measureSpaceWidth() {
+      var spaceWidthKey = 'space' + fontSize;
+      var spaceWidth = avgLetterWidthByFontSize[spaceWidthKey];
+      if (!spaceWidth) {
+        textContainer.text(' ');
+        spaceWidth = measureTextWidth(textContainer);
+        avgLetterWidthByFontSize[spaceWidthKey] = spaceWidth;
+      }
 
+      return spaceWidth;
+    }
+
+    function toWordWidths(text) {
       return {
         text: text,
         width: measureAvgWidth(text)
@@ -885,7 +898,7 @@ function last(array) {
   if (array.length > 0) return array[array.length - 1];
 }
 
-function toLine(lineRecangle) {
+function toLine(lineRecangle, spaceWidth) {
   var addedWords = [];
   var lineWidth = lineRecangle.right - lineRecangle.left;
   var availableWidth = lineWidth;
@@ -900,7 +913,7 @@ function toLine(lineRecangle) {
   };
 
   function getText() {
-    return addedWords.map(toWord).join('');
+    return addedWords.map(toWord).join(' ');
   }
 
   function toWord(wordWidth) {
@@ -916,10 +929,17 @@ function toLine(lineRecangle) {
   }
 
   function add(word) {
-    if (availableWidth - word.width >= 0) {
+    var requiredWidth = word.width;
+
+    if (!isEmpty()) {
+      // words should be separated by space
+      requiredWidth += spaceWidth;
+    }
+
+    if (availableWidth - requiredWidth >= 0) {
       addedWords.push(word);
-      availableWidth -= word.width;
-      wordsWidth += word.width;
+      availableWidth -= requiredWidth;
+      wordsWidth += requiredWidth;
 
       return true;
     }
