@@ -455,7 +455,7 @@ function makeCountryGeometry(countryPath, countryId) {
 
       // Add small padding (1% of the rectangle width), so that labels are not
       // too close to the borders
-      var padding = (longestSegment.to - longestSegment.from) * 0.01;
+      var padding = (longestSegment.to - longestSegment.from) * 0.1;
 
       return {
         left: longestSegment.from + padding,
