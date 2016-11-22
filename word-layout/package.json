@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "ngraph.events": "0.0.4",
+    "ngraph.random": "0.0.1"
+  }
+}
