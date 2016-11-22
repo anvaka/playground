@@ -1,11 +1,11 @@
 var hash = computeHash();
 
 function getLabel(countryId) {
-  return hash[countryId];
+  return hash[countryId] || '';
 }
 
 function computeHash() {
-  var getter = getLabelsJSONWhy;// getWhatIf; //getLabelsJSONWhy
+  var getter = getLabelsJSONWhy; // getWhatIf; //getLabelsJSONWhy
   var records = getter().records;
   var result = {};
   records.forEach(function(record) {
@@ -1562,7 +1562,7 @@ function getWhatIf() {
           "if<b> it is tuesday in sydney </b>what<b> day is it in the </b>united states of america",
           "if<b> i was born in the </b>united states of america what<b> is my nationality</b>"
         ],
-        "state": "United States of America"
+        "state": "United States"
       },
       {
         "suggestions": [

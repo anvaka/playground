@@ -119,13 +119,6 @@ function toPath(point) {
   return point.x + ',' + point.y;
 }
 
-function parseFloat(x) {
-  var result = Number.parseFloat(x);
-  if (Number.isNaN(result))
-    throw new Error(x + ' is not a number');
-
-  return result
-}
 
 function log() {
   return; // Comment this line if you need logging.
@@ -794,6 +787,14 @@ function makeCountryGeometry(countryPath, countryId) {
 
     function byLength(x, y) {
       return y.length - x.length;
+    }
+
+    function parseFloat(x) {
+      var result = Number.parseFloat(x);
+      if (Number.isNaN(result))
+        throw new Error(x + ' is not a number');
+
+      return result
     }
   }
 
