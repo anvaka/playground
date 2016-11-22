@@ -1,6 +1,18 @@
 {
+  "scripts": {
+    "start": "browserify demo/index.js > demo/bundle.js",
+    "watch": "watchify --debug demo/index.js -o demo/bundle.js -v",
+    "server": "http-server -c-1",
+    "dev": "concurrently --kill-others \"npm run watch\" \"npm run server\""
+  },
   "dependencies": {
     "ngraph.events": "0.0.4",
     "ngraph.random": "0.0.1"
+  },
+  "devDependencies": {
+    "concurrently": "^3.1.0",
+    "panzoom": "^2.4.2",
+    "simplesvg": "^0.1.1",
+    "watchify": "^3.7.0"
   }
 }
