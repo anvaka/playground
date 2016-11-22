@@ -20,6 +20,7 @@ var eventify = require('ngraph.events');
 var getMinFontSize = require('./lib/getMinFontSize.js');
 var getCanvasContextStrict = require('./lib/getCanvasContextStrict.js');
 var randomAPI = require('ngraph.random');
+var getTextInfo = require('./lib/getTextInfo.js');
 
 module.exports = wordLayout;
 
@@ -69,148 +70,6 @@ function wordLayout(list, options) {
     // ctx.canvas.parentNode.removeChild(ctx.canvas);
   }
 
-  function getTextInfo(word, weight, rotateDeg) {
-    // calculate the acutal font size
-    // fontSize === 0 means weightFactor function wants the text skipped,
-    // and size < minSize means we cannot draw the text.
-    var fontSize = settings.weightFactor(weight);
-    if (fontSize <= settings.minSize) {
-      return false;
-    }
-
-    // Scale factor here is to make sure fillText is not limited by
-    // the minium font size set by browser.
-    // It will always be 1 or 2n.
-    var mu = 1;
-    if (fontSize < minFontSize) {
-      mu = (function calculateScaleFactor() {
-        var mu = 2;
-        while (mu * fontSize < minFontSize) {
-          mu += 2;
-        }
-        return mu;
-      })();
-    }
-
-    var fcanvas = document.createElement('canvas');
-    var fctx = fcanvas.getContext('2d', { willReadFrequently: true });
-
-    fctx.font = settings.fontWeight + ' ' + (fontSize * mu).toString(10) + 'px ' + settings.fontFamily;
-
-    // Estimate the dimension of the text with measureText().
-    var fw = fctx.measureText(word).width / mu;
-    var fh = Math.max(fontSize * mu,
-                      fctx.measureText('m').width,
-                      fctx.measureText('\uFF37').width) / mu;
-
-    // Create a boundary box that is larger than our estimates,
-    // so text don't get cut of (it sill might)
-    var boxWidth = fw + fh * 2;
-    var boxHeight = fh * 3;
-    var fgw = Math.ceil(boxWidth / g);
-    var fgh = Math.ceil(boxHeight / g);
-    boxWidth = fgw * g;
-    boxHeight = fgh * g;
-
-    // Calculate the proper offsets to make the text centered at
-    // the preferred position.
-
-    // This is simply half of the width.
-    var fillTextOffsetX = - fw / 2;
-    // Instead of moving the box to the exact middle of the preferred
-    // position, for Y-offset we move 0.4 instead, so Latin alphabets look
-    // vertical centered.
-    var fillTextOffsetY = - fh * 0.4;
-
-    // Calculate the actual dimension of the canvas, considering the rotation.
-    var cgh = Math.ceil((boxWidth * Math.abs(Math.sin(rotateDeg)) +
-                          boxHeight * Math.abs(Math.cos(rotateDeg))) / g) + 5;
-    var cgw = Math.ceil((boxWidth * Math.abs(Math.cos(rotateDeg)) +
-                          boxHeight * Math.abs(Math.sin(rotateDeg))) / g) + 5;
-    var width = cgw * g;
-    var height = cgh * g;
-
-    fcanvas.setAttribute('width', width + 'px');
-    fcanvas.setAttribute('height', height + 'px');
-
-    // Scale the canvas with |mu|.
-    fctx.scale(1 / mu, 1 / mu);
-    fctx.translate(width * mu / 2, height * mu / 2);
-    fctx.rotate(- rotateDeg);
-
-    // Once the width/height is set, ctx info will be reset.
-    // Set it again here.
-    fctx.font = settings.fontWeight + ' ' + (fontSize * mu) + 'px ' + settings.fontFamily;
-
-    // Fill the text into the fcanvas.
-    // XXX: We cannot because textBaseline = 'top' here because
-    // Firefox and Chrome uses different default line-height for canvas.
-    // Please read https://bugzil.la/737852#c6.
-    // Here, we use textBaseline = 'middle' and draw the text at exactly
-    // 0.5 * fontSize lower.
-    fctx.fillStyle = '#000';
-    // fctx.textBaseline = 'middle';
-    fctx.fillText(word, fillTextOffsetX * mu,
-                  (fillTextOffsetY + fontSize * 0.5) * mu);
-
-    // Get the pixels of the text
-    var imageData = fctx.getImageData(0, 0, width, height).data;
-
-    if (exceedTime()) {
-      return false;
-    }
-
-    // Read the pixels and save the information to the occupied array
-    var occupied = [];
-    var gx = cgw, gy, x, y;
-    var bounds = [cgh / 2, cgw / 2, cgh / 2, cgw / 2];
-    while (gx--) {
-      gy = cgh;
-      while (gy--) {
-        y = g;
-        singleGridLoop: {
-          while (y--) {
-            x = g;
-            while (x--) {
-              if (imageData[((gy * g + y) * width +
-                              (gx * g + x)) * 4 + 3]) {
-                occupied.push([gx, gy]);
-
-                if (gx < bounds[3]) {
-                  bounds[3] = gx;
-                }
-                if (gx > bounds[1]) {
-                  bounds[1] = gx;
-                }
-                if (gy < bounds[0]) {
-                  bounds[0] = gy;
-                }
-                if (gy > bounds[2]) {
-                  bounds[2] = gy;
-                }
-
-                break singleGridLoop;
-              }
-            }
-          }
-        }
-      }
-    }
-
-    // Return information needed to create the text on the real canvas
-    return {
-      mu: mu,
-      occupied: occupied,
-      bounds: bounds,
-      gw: cgw,
-      gh: cgh,
-      fillTextOffsetX: fillTextOffsetX,
-      fillTextOffsetY: fillTextOffsetY,
-      fillTextWidth: fw,
-      fillTextHeight: fh,
-      fontSize: fontSize
-    };
-  }
 
   /* Determine if there is room available in the given dimension */
   function canFitText(gx, gy, gw, gh, occupied) {
@@ -240,17 +99,17 @@ function wordLayout(list, options) {
     var fontSize = info.fontSize;
     var color = settings.getTextColor(word, weight, fontSize, distance, theta);
 
-    var mu = info.mu;
+    var scaleFactor = info.scaleFactor;
     var transform = {
-      scale: 1/mu,
+      scale: 1/scaleFactor,
       translate: {
-        x: (gx + info.gw * 0.5) * g * mu,
-        y: (gy + info.gh * 0.5) * g * mu
+        x: (gx + info.gw * 0.5) * g * scaleFactor,
+        y: (gy + info.gh * 0.5) * g * scaleFactor
       },
       rotate: -rotateDeg,
-      x: info.fillTextOffsetX * mu,
-      y: (info.fillTextOffsetY  + fontSize * 0.5) * mu,
-      fontSize: info.fontSize * mu,
+      x: info.fillTextOffsetX * scaleFactor,
+      y: (info.fillTextOffsetY  + fontSize * 0.5) * scaleFactor,
+      fontSize: info.fontSize * scaleFactor,
       fontFamily: settings.fontFamily,
       color: color
     };
@@ -376,7 +235,21 @@ function wordLayout(list, options) {
     var rotateDeg = getRotateDeg();
 
     // get info needed to put the text onto the canvas
-    var info = getTextInfo(word, weight, rotateDeg);
+    // 
+    // calculate the acutal font size
+    // fontSize === 0 means weightFactor function wants the text skipped,
+    // and size < minSize means we cannot draw the text.
+    var fontSize = settings.weightFactor(weight);
+    if (fontSize <= settings.minSize) {
+      return false;
+    }
+
+    // Scale factor here is to make sure fillText is not limited by
+    // the minium font size set by browser.
+    // It will always be 1 or 2n.
+    var scaleFactor = getScaleFactor(fontSize);
+
+    var info = getTextInfo(word, fontSize, scaleFactor, rotateDeg, settings);
 
     // not getting the info means we shouldn't be drawing this one.
     if (!info) {
@@ -420,6 +293,17 @@ function wordLayout(list, options) {
     }
     // we tried all distances but text won't fit, return false
     return false;
+
+    function getScaleFactor(fontSize) {
+      if (fontSize >= minFontSize) return 1;
+
+      var scaleFactor = 2;
+      while (scaleFactor * fontSize < minFontSize) {
+        scaleFactor += 2;
+      }
+
+      return scaleFactor;
+    }
 
     function forEachInRandomOrder(array, callback) {
       var i, j, t;
