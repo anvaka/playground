@@ -5,6 +5,8 @@
   <meta http-equiv='X-UA-Compatible' content='IE=edge' >
   <meta charset="utf-8">
   <title>word layout demo</title>
+  <link href="https://fonts.googleapis.com/css?family=Abel" rel="stylesheet">
+
   <style type="text/css" media="screen">
   * {
     box-sizing: border-box;
@@ -13,6 +15,7 @@
     padding: 0;
     margin: 0;
     overflow: hidden;
+      background: #5F6062;
   }
   svg {
     position: absolute;
@@ -21,12 +24,21 @@
     width: 100%;
     height: 100%;
   }
+  canvas {
+    font-family: 'FontAwesome'
+  }
+
+  .font-loader {
+    font-family: 'Abel', sans-serif;
+    color: #5F6062;
+  }
   </style>
 </head>
 <body>
-  <svg>
-    <g id='scene'></g>
-  </svg>
+  <div class='font-loader'>A</div>
+  <canvas id='cnv' width=800 height=600>
+  </canvas>
+  <svg> <g id='scene'></g> </svg>
   <script src="bundle.js"></script>
 </body>
 </html>
