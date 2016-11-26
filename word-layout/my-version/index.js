@@ -1,5 +1,5 @@
 var eventify = require('ngraph.events');
-var getWordBox = require('./lib/getWordBox.js');
+var measureText = require('./lib/measureText.js');
 var makeGrid = require('./lib/makeGrid.js');
 var WordLayoutModel = require('./lib/WordLayoutModel.js');
 
@@ -24,7 +24,10 @@ function wordCloud(words, settings) {
     if (lastProcessedWordIndex < words.length - 1) {
       setTimeout(loop, 0);
     }
-    var wordPosition = findPosition(words[lastProcessedWordIndex]);
+    var word = words[lastProcessedWordIndex];
+    console.time('search' + word[0])
+    var wordPosition = findPosition(word);
+    console.timeEnd('search' + word[0])
     if (wordPosition) triggerPositionFound(wordPosition);
 
     lastProcessedWordIndex += 1;
@@ -32,7 +35,7 @@ function wordCloud(words, settings) {
 
   function findPosition(word) {
     var wordPosition = new WordLayoutModel(word, settings.fontFamily);
-    var box = getWordBox(wordPosition)
+    var box = measureText(wordPosition)
     if (!box) return;
 
     var spot = grid.findSpot(box)
