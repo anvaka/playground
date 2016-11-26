@@ -2,10 +2,11 @@ module.exports = makeGrid;
 var randomAPI = require('ngraph.random');
 var random = randomAPI.random(42);
 
-function makeGrid(width, height) {
-  var mask = getMask(width, height)
+function makeGrid(mask) {
+  var width = mask.width;
+  var height = mask.height
 
-  var cumSum = new Uint32Array(width * height)
+  var integralSum = new Uint32Array(width * height)
 
   recomputeIntegral(0, 0);
 
@@ -72,16 +73,16 @@ function makeGrid(width, height) {
     var occupied = mask.occupied;
     for (var x = minX; x < width; ++x) {
       for (var y = minY; y < height; ++y) {
-        var i = get(occupied, x, y) + get(cumSum, x - 1, y) + get(cumSum, x, y - 1) - get(cumSum, x - 1, y - 1);
-        cumSum[getIdx(x, y)] = i;
+        var i = get(occupied, x, y) + get(integralSum, x - 1, y) + get(integralSum, x, y - 1) - get(integralSum, x - 1, y - 1);
+        integralSum[getIdx(x, y)] = i;
       }
     }
   }
 
   function integral(x, y, width, height) {
     // https://en.wikipedia.org/wiki/Summed_area_table
-    var area = get(cumSum, x, y) + get(cumSum, x + width, y + height);
-    area -= get(cumSum, x + width, y) + get(cumSum, x, y + height);
+    var area = get(integralSum, x, y) + get(integralSum, x + width, y + height);
+    area -= get(integralSum, x + width, y) + get(integralSum, x, y + height);
 
     return area;
   }
@@ -98,31 +99,3 @@ function makeGrid(width, height) {
   }
 }
 
-function getMask(width, height) {
-  var c = document.createElement('canvas');
-  var ctx = c.getContext('2d');
-
-  c.setAttribute('width', width);
-  c.setAttribute('height', height);
-
-  ctx.font = 'normal 400px sans-serif';
-  ctx.fillStyle = 'red';
-  ctx.textBaseline='top';
-  ctx.fillText('1876', 0, 0);
-
-  var occupied = new Uint32Array(width * height);
-  var imageData = ctx.getImageData(0, 0, width, height).data;
-
-  for (var y = 0; y < height; ++y) {
-    var offset = y * width;
-    for (var x = 0; x < width; ++x) {
-      occupied[offset + x] = imageData[(offset + x ) * 4] === 255 ? 0 : 1
-    }
-  }
-
-  return {
-    occupied: occupied,
-    width: width,
-    height: height
-  };
-}

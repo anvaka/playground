@@ -2,13 +2,18 @@ var eventify = require('ngraph.events');
 var measureText = require('./lib/measureText.js');
 var makeGrid = require('./lib/makeGrid.js');
 var WordLayoutModel = require('./lib/WordLayoutModel.js');
+var getMask = require('./lib/getMask.js');
 
 module.exports = wordCloud;
+
 
 function wordCloud(words, settings) {
   words.sort(bySize);
 
-  var grid = makeGrid(settings.width || 400, settings.height || 400);
+
+  var mask = getMask('hi', settings.width || 400, settings.height || 400)
+  var grid = makeGrid(mask);
+
   var lastProcessedWordIndex = 0;
   var api = {
     mask: grid.mask
