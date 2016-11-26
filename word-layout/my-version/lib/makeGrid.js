@@ -2,9 +2,9 @@ module.exports = makeGrid;
 var randomAPI = require('ngraph.random');
 var random = randomAPI.random(42);
 
-function makeGrid(mask) {
-  var width = mask.width;
-  var height = mask.height
+function makeGrid(maskIndex) {
+  var width = maskIndex.width;
+  var height = maskIndex.height
 
   var integralSum = new Uint32Array(width * height)
 
@@ -12,27 +12,23 @@ function makeGrid(mask) {
 
   var api = {
     findSpot: findSpot,
-    useSpot: useSpot,
-    mask: mask
+    useSpot: useSpot
   }
 
   return api;
 
   function findSpot(wordBox) {
-    var searchWidth = width - wordBox.width;
-    var searchHeight = height - wordBox.height;
     var spots = [];
 
     var padding = 1;
-    for (var x = 0; x < searchWidth; ++x) {
-      for (var y = 0; y < searchHeight; ++y) {
-        var takenArea = integral(x - 1 - padding, y - 1 - padding, wordBox.width + padding * 2, wordBox.height + padding * 2);
 
-        if (takenArea === 0) {
-          spots.push({x: x, y: y});
-        }
+    maskIndex.forEachFreeCell(function(x, y) {
+      var takenArea = integral(x - 1 - padding, y - 1 - padding, wordBox.width + padding * 2, wordBox.height + padding * 2);
+
+      if (takenArea === 0) {
+        spots.push({x: x, y: y});
       }
-    }
+    });
 
     if (spots.length > 0) {
       var candidate = spots[random.next(spots.length)];
@@ -48,10 +44,9 @@ function makeGrid(mask) {
   }
 
   function useSpot(spot) {
-    // just make it all blank
     var maxX = spot.x + spot.width;
     var maxY = spot.y + spot.originalHeight;
-    var occupied = mask.occupied;
+    var occupied = maskIndex.occupied;
 
     for (var x = spot.x; x < maxX; ++x) {
       for (var y = spot.y; y < maxY; ++y) {
@@ -61,7 +56,8 @@ function makeGrid(mask) {
         var shouldBeOccupied = spot.mask[oy * spot.width + ox]
         if (occupied[idx] && shouldBeOccupied) throw new Error('Already taken!')
         else if (shouldBeOccupied) {
-          occupied[idx] = shouldBeOccupied;
+          occupied[idx] = 1;
+          maskIndex.occupyCell(x, y);
         }
       }
     }
@@ -70,7 +66,7 @@ function makeGrid(mask) {
   }
 
   function recomputeIntegral(minX, minY) {
-    var occupied = mask.occupied;
+    var occupied = maskIndex.occupied;
     for (var x = minX; x < width; ++x) {
       for (var y = minY; y < height; ++y) {
         var i = get(occupied, x, y) + get(integralSum, x - 1, y) + get(integralSum, x, y - 1) - get(integralSum, x - 1, y - 1);

@@ -3,6 +3,7 @@ var measureText = require('./lib/measureText.js');
 var makeGrid = require('./lib/makeGrid.js');
 var WordLayoutModel = require('./lib/WordLayoutModel.js');
 var getMask = require('./lib/getMask.js');
+var indexMask = require('./lib/indexMask.js');
 
 module.exports = wordCloud;
 
@@ -11,12 +12,13 @@ function wordCloud(words, settings) {
   words.sort(bySize);
 
 
-  var mask = getMask('hi', settings.width || 400, settings.height || 400)
-  var grid = makeGrid(mask);
+  var mask = getMask('1876', settings.width || 1200, settings.height || 600)
+  var maskIndex = indexMask(mask);
+  var grid = makeGrid(maskIndex);
 
   var lastProcessedWordIndex = 0;
   var api = {
-    mask: grid.mask
+    maskIndex: maskIndex
   }
 
   eventify(api);
@@ -30,7 +32,9 @@ function wordCloud(words, settings) {
       setTimeout(loop, 0);
     }
     var word = words[lastProcessedWordIndex];
+    console.time('find ' + word[0])
     var wordPosition = findPosition(word);
+    console.timeEnd('find ' + word[0])
     if (wordPosition) triggerPositionFound(wordPosition);
 
     lastProcessedWordIndex += 1;
@@ -38,14 +42,10 @@ function wordCloud(words, settings) {
 
   function findPosition(word) {
     var wordPosition = new WordLayoutModel(word, settings.fontFamily);
-    console.time('measure ' + word[0])
     var box = measureText(wordPosition)
-    console.timeEnd('measure ' + word[0])
     if (!box) return;
 
-    console.time('spot ' + word[0])
     var spot = grid.findSpot(box)
-    console.timeEnd('spot ' + word[0])
 
     if (spot) {
       grid.useSpot(spot);

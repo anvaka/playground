@@ -27,15 +27,15 @@ var cloud = wordCloud(
 
 var canvas = document.getElementById('cnv');
 var ctx = canvas.getContext('2d');
-var mask = cloud.mask;
-var width = mask.width;
-var height = mask.height;
+var maskIndex = cloud.maskIndex;
+var width = maskIndex.width;
+var height = maskIndex.height;
 
 canvas.setAttribute('width', width);
 canvas.setAttribute('height', height);
 
 if (renderNotMask) {
-  var occupied = mask.occupied;
+  var occupied = maskIndex.occupied;
   var id = ctx.createImageData(width, height); // only do this once per page
   var d  = id.data;                        // only do this once per page
   for (var y = 0; y < height; ++y) {
