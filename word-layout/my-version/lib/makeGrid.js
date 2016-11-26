@@ -1,6 +1,12 @@
 module.exports = makeGrid;
 var randomAPI = require('ngraph.random');
 var random = randomAPI.random(42);
+var counters = {
+  timePassed: 0,
+  called: 0
+}
+
+window.counters = counters;
 
 function makeGrid(maskIndex) {
   var width = maskIndex.width;
@@ -22,6 +28,7 @@ function makeGrid(maskIndex) {
 
     var padding = 1;
 
+    var now = window.performance.now();
     maskIndex.forEachFreeCell(function(x, y) {
       var takenArea = integral(x - 1 - padding, y - 1 - padding, wordBox.width + padding * 2, wordBox.height + padding * 2);
 
@@ -29,6 +36,9 @@ function makeGrid(maskIndex) {
         spots.push({x: x, y: y});
       }
     });
+
+    counters.timePassed += window.performance.now() - now;
+    counters.called += 1;
 
     if (spots.length > 0) {
       var candidate = spots[random.next(spots.length)];
