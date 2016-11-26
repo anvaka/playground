@@ -8,7 +8,7 @@ module.exports = wordCloud;
 function wordCloud(words, settings) {
   words.sort(bySize);
 
-  var grid = makeGrid();
+  var grid = makeGrid(settings.width || 400, settings.height || 400);
   var lastProcessedWordIndex = 0;
   var api = {
     mask: grid.mask
@@ -25,9 +25,7 @@ function wordCloud(words, settings) {
       setTimeout(loop, 0);
     }
     var word = words[lastProcessedWordIndex];
-    console.time('search' + word[0])
     var wordPosition = findPosition(word);
-    console.timeEnd('search' + word[0])
     if (wordPosition) triggerPositionFound(wordPosition);
 
     lastProcessedWordIndex += 1;
@@ -35,10 +33,14 @@ function wordCloud(words, settings) {
 
   function findPosition(word) {
     var wordPosition = new WordLayoutModel(word, settings.fontFamily);
+    console.time('measure ' + word[0])
     var box = measureText(wordPosition)
+    console.timeEnd('measure ' + word[0])
     if (!box) return;
 
+    console.time('spot ' + word[0])
     var spot = grid.findSpot(box)
+    console.timeEnd('spot ' + word[0])
 
     if (spot) {
       grid.useSpot(spot);

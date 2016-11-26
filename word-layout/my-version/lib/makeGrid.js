@@ -2,10 +2,8 @@ module.exports = makeGrid;
 var randomAPI = require('ngraph.random');
 var random = randomAPI.random(42);
 
-function makeGrid() {
-  var mask = getMask()
-  var width = mask.width;
-  var height = mask.height;
+function makeGrid(width, height) {
+  var mask = getMask(width, height)
 
   var cumSum = new Uint32Array(width * height)
 
@@ -100,11 +98,9 @@ function makeGrid() {
   }
 }
 
-function getMask() {
+function getMask(width, height) {
   var c = document.createElement('canvas');
   var ctx = c.getContext('2d');
-  var width = 1200;
-  var height = 600;
 
   c.setAttribute('width', width);
   c.setAttribute('height', height);
@@ -112,7 +108,7 @@ function getMask() {
   ctx.font = 'normal 400px sans-serif';
   ctx.fillStyle = 'red';
   ctx.textBaseline='top';
-  ctx.fillText("1876", 0, 0);
+  ctx.fillText('1876', 0, 0);
 
   var occupied = new Uint32Array(width * height);
   var imageData = ctx.getImageData(0, 0, width, height).data;
