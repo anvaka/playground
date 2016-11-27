@@ -1,8 +1,11 @@
 module.exports = indexMask;
 
 function indexMask(mask) {
-  var index = buildIndex(mask);
+  var width = mask.width;
+  var height = mask.height;
+  var occupied = mask.occupied;
 
+  var index = buildIndex(mask);
 
   return {
     forEachFreeCell: forEachFreeCell,
@@ -21,7 +24,7 @@ function indexMask(mask) {
   }
 
   function isFreeCell(x, y) {
-    return index.has(getHash(x, y));
+    return occupied[y * width + x] === 0;
   }
 
   function occupyCell(x, y) {
@@ -29,20 +32,19 @@ function indexMask(mask) {
     index.delete(hashKey);
   }
 
-  function buildIndex(mask) {
+  function buildIndex() {
     var index = new Map();
-    var width = mask.width;
-    var height = mask.height;
-    var occupied = mask.occupied;
 
     for (var y = 0; y < height; ++y) {
       var offset = y * width;
       for (var x = 0; x < width; ++x) {
         if (!occupied[offset + x]) {
-          index.set(getHash(x, y), {
+          var key = getHash(x, y);
+          var value = {
             x: x,
             y: y
-          });
+          };
+          index.set(key, value);
         }
       }
     }

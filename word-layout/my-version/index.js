@@ -12,7 +12,7 @@ function wordCloud(words, settings) {
   words.sort(bySize);
 
 
-  var mask = getMask('1876', settings.width || 1200, settings.height || 600)
+  var mask = getMask('1876', settings.width || 400, settings.height || 400)
   var maskIndex = indexMask(mask);
   var grid = makeGrid(maskIndex);
 
@@ -28,16 +28,17 @@ function wordCloud(words, settings) {
   return api;
 
   function loop() {
+    var itemsPerCall = 1;
+    while (itemsPerCall-- && lastProcessedWordIndex < words.length) {
+      var word = words[lastProcessedWordIndex];
+      var wordPosition = findPosition(word);
+      if (wordPosition) triggerPositionFound(wordPosition);
+
+      lastProcessedWordIndex += 1;
+    }
     if (lastProcessedWordIndex < words.length - 1) {
       setTimeout(loop, 0);
     }
-    var word = words[lastProcessedWordIndex];
-    console.time('find ' + word[0])
-    var wordPosition = findPosition(word);
-    console.timeEnd('find ' + word[0])
-    if (wordPosition) triggerPositionFound(wordPosition);
-
-    lastProcessedWordIndex += 1;
   }
 
   function findPosition(word) {
