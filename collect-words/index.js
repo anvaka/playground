@@ -1,19 +1,19 @@
 const readline = require('readline');
 const fs = require('fs');
 
-var fileName = process.argv[2] || 'martin_eden_ru.txt';
+var fileName = process.argv[2] || 'martin_eden.txt';
 const rl = readline.createInterface({
   input: fs.createReadStream(fileName)
 });
 
-var ignoreWords = new Set(require('./stowords_ru.js'))
+var ignoreWords = new Set(require('./stowords.js'))
 
 var counts = new Map();
 var maxValue = 0;
-var maxFontSize = 50;
+var maxFontSize = 150;
 rl.on('line', (line) => {
   line.split(/\s/).forEach(p => {
-    p = p.toLowerCase().replace(/[-?,!."']/g, '');
+    p = p.toLowerCase().replace(/[-?,!."':;]/g, '');
 
     if (ignoreWords.has(p) || !p) return;
     var newCount = (counts.get(p) || 0) + 1;
