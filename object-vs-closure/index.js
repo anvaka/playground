@@ -34,7 +34,7 @@ suite.add('average counter Object', function() {
 
   if (counter.get() !== expectedAverage) throw new Error('Math is wrong');
 }).add('average counter function', function() {
-  var counter = new averageCounterFunction();
+  var counter = averageCounterFunction();
 
   for (var i = 0; i <= testCount; ++i) {
     counter.add(i);
