@@ -3,7 +3,7 @@
 
 
 ``` js
-# Which API is faster?
+// # Which API is faster?
 
 // Object
 function AverageCounterObject() {
@@ -36,3 +36,6 @@ average counter function x 41,750 ops/sec ±1.90% (77 runs sampled)
 ```
 
 Which means that function-based implementation is alsmos 7x slower than Object
+
+Browse throw the code to see different variations/optimizations of each method:
+https://github.com/anvaka/playground/blob/master/object-vs-closure/index.js

@@ -44,6 +44,25 @@ var AverageCounterObjectSymbol = (function() {
   return AverageCounterObjectSymbol
 })()
 
+// reusing functions, as suggested here https://www.reddit.com/r/javascript/comments/5fxkx1/til_in_chrome_calling_new_foo_is_faster_than/daoxqbh/
+function averageCounterReusedFunction() {
+  return {
+    sum: 0,
+    parts: 0,
+    add: averagerAdd,
+    get: averagerGet,
+  };
+}
+
+function averagerAdd(number) {
+  this.sum += number;
+  this.parts += 1;
+}
+
+function averagerGet() {
+  return this.sum / this.parts;
+}
+
 suite.add('average counter Object', function() {
   var counter = new AverageCounterObject();
 
@@ -62,6 +81,14 @@ suite.add('average counter Object', function() {
   if (counter.get() !== expectedAverage) throw new Error('Math is wrong');
 }).add('average counter function', function() {
   var counter = averageCounterFunction();
+
+  for (var i = 0; i <= testCount; ++i) {
+    counter.add(i);
+  }
+
+  if (counter.get() !== expectedAverage) throw new Error('Math is wrong');
+}).add('average counter reused function', function() {
+  var counter = averageCounterReusedFunction();
 
   for (var i = 0; i <= testCount; ++i) {
     counter.add(i);
