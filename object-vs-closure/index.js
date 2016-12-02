@@ -5,6 +5,7 @@ var testCount = 2000;
 var sum = testCount * (testCount + 1) / 2;
 var expectedAverage = sum / (testCount + 1);
 
+// newable object
 function AverageCounterObject() {
   this.sum = 0;
   this.numbersCount = 0;
@@ -15,6 +16,7 @@ AverageCounterObject.prototype = {
   get: function() { return this.sum / this.numbersCount; }
 };
 
+// closure
 function averageCounterFunction() {
   var sum = 0;
   var numbersCount = 0;
@@ -25,8 +27,29 @@ function averageCounterFunction() {
   }
 }
 
+// symbol (private object)
+var _sum = Symbol('sum');
+var _count = Symbol('number-count');
+
+function AverageCounterObjectSymbol() {
+    this[_sum] = this[_count] = 0;
+}
+
+AverageCounterObjectSymbol.prototype = {
+  add: function(number) { this[_sum] += number; this[_count] += 1; },
+  get: function() { return this[_sum] / this[_count]; }
+};
+
 suite.add('average counter Object', function() {
   var counter = new AverageCounterObject();
+
+  for (var i = 0; i <= testCount; ++i) {
+    counter.add(i);
+  }
+
+  if (counter.get() !== expectedAverage) throw new Error('Math is wrong');
+}).add('average counter Object with private symbols', function() {
+  var counter = new AverageCounterObjectSymbol();
 
   for (var i = 0; i <= testCount; ++i) {
     counter.add(i);
