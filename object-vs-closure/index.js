@@ -28,17 +28,21 @@ function averageCounterFunction() {
 }
 
 // symbol (private object)
-var _sum = Symbol('sum');
-var _count = Symbol('number-count');
+var AverageCounterObjectSymbol = (function() {
+  var _sum = Symbol('sum');
+  var _count = Symbol('number-count');
 
-function AverageCounterObjectSymbol() {
-    this[_sum] = this[_count] = 0;
-}
+  function AverageCounterObjectSymbol() {
+      this[_sum] = this[_count] = 0;
+  }
 
-AverageCounterObjectSymbol.prototype = {
-  add: function(number) { this[_sum] += number; this[_count] += 1; },
-  get: function() { return this[_sum] / this[_count]; }
-};
+  AverageCounterObjectSymbol.prototype = {
+    add: function(number) { this[_sum] += number; this[_count] += 1; },
+    get: function() { return this[_sum] / this[_count]; }
+  };
+
+  return AverageCounterObjectSymbol
+})()
 
 suite.add('average counter Object', function() {
   var counter = new AverageCounterObject();
