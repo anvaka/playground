@@ -13,7 +13,7 @@ function toEntity(child) {
   if (child.kind !== 't3') throw new Error('Unknown child type: ' + JSON.stringify(child));
 
   var data = child.data;
-  return '<p>' + markdown.toHTML(data.selftext) + '</p>';
+  return '<p>' + marked(data.selftext) + '</p>';
 }
 
 function parseQuery(qstr) {
