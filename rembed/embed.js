@@ -5,8 +5,16 @@ var queryString = myScript.src.split('?')[1];
 var query = parseQuery(queryString);
 
 request('https://reddit.com/r/' + query.r + '/.json').then(function(data) {
-  console.log(data);
+  var content = document.getElementById('content');
+  content.innerHTML = data.data.children.map(toEntity).join('\n');
 })
+
+function toEntity(child) {
+  if (child.kind !== 't3') throw new Error('Unknown child type: ' + JSON.stringify(child));
+
+  var data = child.data;
+  return '<p>' + markdown.toHTML(data.selftext) + '</p>';
+}
 
 function parseQuery(qstr) {
   var query = {};
