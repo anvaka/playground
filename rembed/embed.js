@@ -3,6 +3,10 @@ var index = scripts.length - 1;
 var myScript = scripts[index];
 var queryString = myScript.src.split('?')[1];
 var query = parseQuery(queryString);
+request('https://www.reddit.com/r/' + query.r + '/about.json').then(function(data) {
+  var content = document.getElementById('about');
+  content.innerHTML = marked(data.data.public_description);
+});
 
 request('https://reddit.com/r/' + query.r + '/.json').then(function(data) {
   var content = document.getElementById('content');
