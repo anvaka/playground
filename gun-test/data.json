@@ -1,0 +1,13 @@
+{
+  "graph": {
+    "greetings": {
+      "_": {
+        ">": {
+          "hello": 1486096914836
+        },
+        "#": "greetings"
+      },
+      "hello": "world"
+    }
+  }
+}
