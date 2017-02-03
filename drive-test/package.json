@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "start": "http-server -p 8100"
+  }
+}
+
