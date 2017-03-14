@@ -3,16 +3,21 @@ const inputFileName = process.argv[2] || './athletes.1.js';
 const records = [];
 const json2csv = require('json2csv');
 
+const augmentWithScore = firstWorkout;
+
 forEach(inputFileName, (athlete) => {
   let weight = parseWeight(athlete.weight);
   let height = parseHeight(athlete.height);
   let age = athlete.age;
-  records.push({
+  let record = {
     weight,
     height,
     age,
     name: athlete.name
-  });
+  };
+  augmentWithScore(record, athlete.scores);
+
+  records.push(record);
 }).then(() => {
   const csv = json2csv({ data: records });
   console.log(csv);
@@ -48,4 +53,14 @@ function parseHeight(height) {
     return Math.round(heightInCm);
   }
   throw new Error(height);
+}
+
+function firstWorkout(record, scores) {
+  let firstWorkoutScore = scores[0];
+  const scoredetails = firstWorkoutScore.scoredetails || {
+    breakdown: 0,
+    time: 0
+  };
+  record.reps = scoredetails.breakdown;
+  record.timeSeconds = scoredetails.time;
 }
