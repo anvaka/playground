@@ -2,12 +2,60 @@ var DAY_LENGTH = 30;
 var DAY_PADDING = 5;
 var INNER_CIRCLE_R = 100;
 var BORDER_ANGLE = (2 * Math.PI/24) * 0.45; // 46% of angle is for border;
-
+var dowNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+//
+// var shapes =[
+//     [0.97, 1, 0.5],
+//     [0.57, 1, 0.5],
+//     [0.87, 1, 0.5],
+//     [0.67, 1, 0.5],
+//     [0.77, 1, 0.5]
+// ].map(hslColor => {
+//   return (offset) => {
+//      return sivg('path', {
+//        d: ' M0 ' + (0 - offset * DAY_LENGTH) + 'l 10 -10 m -10 10 l -10 -10',
+//        stroke: toHSL(hslColor),
+//        fill: 'transparent'
+//      });
+//   }
+// });
+//
 var shapes = [
-   (offset) => ' M0 ' + (0 - offset * DAY_LENGTH) + 'l 10 -2 m -10 2 l -10 -2 ',
-   (offset) => ' M0 ' + (0 - offset * DAY_LENGTH) + 'h -10 h 20',
-   
-]
+  (offset) => {
+     return sivg('path', {
+       d: ' M0 ' + (0 - offset * DAY_LENGTH) + 'l 10 -10 m -10 10 l -10 -10',
+       stroke: 'black',
+       fill: 'transparent'
+     });
+  },
+
+  (offset) => {
+     return sivg('path', {
+       d: ' M0 ' + (0 - offset * DAY_LENGTH) + 'l 10 -10 h -2.5 h 5 h -2.5 m -10 10 l -10 -10 h-2.5 h 5',
+       stroke: 'black',
+       fill: 'transparent'
+     });
+  },
+
+  (offset) => {
+    var start = (0 - offset * DAY_LENGTH);
+     return sivg('path', {
+       d: ' M0 ' + start + 'l 8 -8 h -3 L 0 ' + start + ' l -8 -8 h3 L0 ' + start,
+       stroke: 'black',
+       'stroke-width': 0.5,
+       fill: 'transparent'
+     });
+  }
+];
+
+function toHSL(hsl) {
+  var h = Math.round(hsl[0] * 360);
+  var s = Math.round(hsl[1] * 100);
+  var l = Math.round((hsl[2]) * 100);
+
+  return 'hsl(' + h + ', ' + s + '%, ' + l + '%)';
+}
+
 var scene = sivg(document.getElementById('scene'));
 c = sivg('circle', {
   cx: 0,
@@ -21,19 +69,24 @@ panzoom(scene);
 scene.addEventListener('mouseenter', mouseEnterHandler, true);
 
 var lastHighlighted;
+
 function mouseEnterHandler(e) {
   if (!isTickBackground(e.target)) return;
   if (e.target === lastHighlighted) return;
-  
+
   if (lastHighlighted) {
      removeClass('highlight')(lastHighlighted);
      forAll('.hour-hl', removeClass('hour-hl'));
      forAll('.dow-hl', removeClass('dow-hl'));
   }
-  
+
   lastHighlighted = e.target;
+
   var hour = lastHighlighted.getAttribute('data-hour');
-  forAll('[data-hour="' + hour + '"]', addClass('hour-hl'))
+
+  forAll('[data-hour="' + hour + '"]' + ',' +
+    '[data-hour-label="' + hour + '"]', addClass('hour-hl'))
+
   var dow = lastHighlighted.getAttribute('data-dow');
   forAll('[data-dow="' + dow + '"]', addClass('dow-hl'));
   addClass('highlight')(lastHighlighted);
@@ -66,9 +119,9 @@ var hoursLabel = sivg('text', {
      'font-size': '15px',
      'fill': 'black'
   });
-  hoursLabel.text("HOURS");
+  hoursLabel.text('HOURS');
   scene.appendChild(hoursLabel);
-  
+
 var data = getData().map(x => ({
   date: new Date(x.Date),
   symbol: x.Symbol
@@ -78,12 +131,32 @@ for	(var hour = 0; hour < 24; ++hour) {
   drawLabel(hour);
   for (var dow = 0; dow < 7; ++dow) {
     drawTick(hour, dow);
+    drawDayName(dow);
   }
 }
+
+
+function drawDayName(dow) {
+  return;
+  var r = getRadiusForDow(dow + 1) + 7;// small padding
+  var dowLabel = sivg('text', {
+    'text-anchor': 'middle',
+    'font-size': '15px',
+    'fill': 'black',
+    'class': 'dow-label',
+    'data-dow': dow,
+     y: r
+  });
+  dowLabel.text(dowNames[dow]);
+  scene.appendChild(dowLabel);
+}
+
 function drawLabel(hour) {
   var angle = (hour - 6) * 2 * Math.PI/24;
   var r = INNER_CIRCLE_R * 0.85;
   drawBackground(angle, INNER_CIRCLE_R * 0.725, INNER_CIRCLE_R * 0.25, {
+    'class': 'hour-label',
+    'data-hour-label': hour,
     fill: '#333'
   });
   var x = r * Math.cos(angle);
@@ -106,26 +179,26 @@ function drawBackground(angle, r, height, attributes) {
   var lsa = Math.sin(leftAngle);
   var x0 = r * lca;
   var y0 = r * lsa;
-  
+
   var largeR = r + height;
   var x1 = largeR * lca;
   var y1 = largeR  * lsa;
-  
+
   var rca = Math.cos(angle + BORDER_ANGLE);
   var rsa = Math.sin(angle + BORDER_ANGLE);
   var x2 = largeR * rca;
   var y2 = largeR * rsa;
   var x3 = r * rca; var y3 = r * rsa;
-  
+
   // left pole
-  var d = 'M' + x0 + ' ' + y0 + ' L ' + x1 + ' ' + y1 + 
+  var d = 'M' + x0 + ' ' + y0 + ' L ' + x1 + ' ' + y1 +
   // upper arc
-  ' A ' + largeR + ' ' + largeR + ' 0 0 1 ' + x2 + ' ' + y2 + 
+  ' A ' + largeR + ' ' + largeR + ' 0 0 1 ' + x2 + ' ' + y2 +
   // right pole
-  ' L ' + x3 + ' ' + y3 + 
+  ' L ' + x3 + ' ' + y3 +
   // bottom arc
   ' A ' + r + ' ' + r + ' 0 0 0 ' + x0 + ' ' + y0;
-    
+
   var background = sivg('path', Object.assign({
     d: d,
     fill: 'transparent'
@@ -133,8 +206,13 @@ function drawBackground(angle, r, height, attributes) {
   scene.appendChild(background);
 }
 
+function getRadiusForDow(dow) {
+  return INNER_CIRCLE_R + dow * (DAY_LENGTH + DAY_PADDING);
+}
+
 function drawTick(hour, dow) {
-  var r = INNER_CIRCLE_R + dow * (DAY_LENGTH + DAY_PADDING);
+  var r = getRadiusForDow(dow);
+
   // -6 to adjust for clocks.
   var angle = (hour - 6) * 2 * Math.PI/24;
   drawBackground(angle, r, DAY_LENGTH, {
@@ -142,7 +220,7 @@ function drawTick(hour, dow) {
     'data-dow': dow,
     'class': 'tick-background'
   });
-  
+
   var x = r * Math.cos(angle);
   var y = r * Math.sin(angle);
 
@@ -160,11 +238,16 @@ function drawTick(hour, dow) {
   var points = getAllPoints(dow, hour);
   points.forEach((point, i) => {
     var d = drawArrowForSymbol(point.symbol, i/points.length);
-    var path = sivg('path', {
-      d: d,
-      stroke: 'black',
-      fill: 'transparent'
-    });
+    var path;
+    if (typeof d === 'string') {
+      path = sivg('path', {
+        d: d,
+        stroke: 'black',
+        fill: 'transparent'
+      });
+    } else {
+      path = d;
+    }
     g.appendChild(path);
   });
   scene.appendChild(g)
@@ -178,7 +261,8 @@ function getAllPoints(dow, hour) {
 
 
 function drawArrowForSymbol(symbol, offset) {
-  var shapeId = getHash(symbol) % shapes.length;
+  var shapeId = getHash(symbol) % (shapes.length);
+  console.log(shapeId);
   return shapes[shapeId](offset);
 }
 
@@ -1369,6 +1453,101 @@ function getData() {
   },
   {
     "Date": "04/02/2017 8:40:02",
+    "Symbol": "iPhone",
+    "Note to self": ""
+  },
+  {
+    "Date": "04/02/2017 9:57:09",
+    "Symbol": "iPhone",
+    "Note to self": ""
+  },
+  {
+    "Date": "04/02/2017 10:46:45",
+    "Symbol": "iPhone",
+    "Note to self": ""
+  },
+  {
+    "Date": "04/02/2017 12:17:58",
+    "Symbol": "iPhone",
+    "Note to self": ""
+  },
+  {
+    "Date": "04/02/2017 12:35:18",
+    "Symbol": "iPhone",
+    "Note to self": ""
+  },
+  {
+    "Date": "04/02/2017 14:09:44",
+    "Symbol": "Microwave at home",
+    "Note to self": ""
+  },
+  {
+    "Date": "04/02/2017 16:02:20",
+    "Symbol": "iPhone",
+    "Note to self": ""
+  },
+  {
+    "Date": "04/02/2017 16:22:18",
+    "Symbol": "iPhone",
+    "Note to self": ""
+  },
+  {
+    "Date": "04/02/2017 17:27:09",
+    "Symbol": "Personal laptop",
+    "Note to self": ""
+  },
+  {
+    "Date": "04/02/2017 17:55:15",
+    "Symbol": "Personal laptop",
+    "Note to self": ""
+  },
+  {
+    "Date": "04/02/2017 18:48:00",
+    "Symbol": "iPhone",
+    "Note to self": ""
+  },
+  {
+    "Date": "04/02/2017 18:57:43",
+    "Symbol": "iPhone",
+    "Note to self": ""
+  },
+  {
+    "Date": "04/02/2017 20:21:17",
+    "Symbol": "iPhone",
+    "Note to self": ""
+  },
+  {
+    "Date": "04/02/2017 20:41:24",
+    "Symbol": "iPhone",
+    "Note to self": ""
+  },
+  {
+    "Date": "04/02/2017 20:55:36",
+    "Symbol": "iPhone",
+    "Note to self": ""
+  },
+  {
+    "Date": "04/02/2017 21:06:21",
+    "Symbol": "iPhone",
+    "Note to self": ""
+  },
+  {
+    "Date": "04/02/2017 21:36:26",
+    "Symbol": "iPhone",
+    "Note to self": ""
+  },
+  {
+    "Date": "04/02/2017 21:57:35",
+    "Symbol": "iPhone",
+    "Note to self": ""
+  },
+  {
+    "Date": "04/02/2017 22:25:42",
+    "Symbol": "iPhone",
+    "Note to self": ""
+  },
+  {
+    "Date": "04/02/2017 22:47:19",
     "Symbol": "iPhone",
     "Note to self": ""
   }
