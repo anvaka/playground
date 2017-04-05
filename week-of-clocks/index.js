@@ -3,138 +3,154 @@ var DAY_PADDING = 5;
 var INNER_CIRCLE_R = 100;
 var BORDER_ANGLE = (2 * Math.PI/24) * 0.45; // 46% of angle is for border;
 var dowNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-//
-// var shapes =[
-//     [0.97, 1, 0.5],
-//     [0.57, 1, 0.5],
-//     [0.87, 1, 0.5],
-//     [0.67, 1, 0.5],
-//     [0.77, 1, 0.5]
-// ].map(hslColor => {
-//   return (offset) => {
-//      return sivg('path', {
-//        d: ' M0 ' + (0 - offset * DAY_LENGTH) + 'l 10 -10 m -10 10 l -10 -10',
-//        stroke: toHSL(hslColor),
-//        fill: 'transparent'
-//      });
-//   }
-// });
-//
-var shapes = [
-  (offset) => {
-     return sivg('path', {
-       d: ' M0 ' + (0 - offset * DAY_LENGTH) + 'l 10 -10 m -10 10 l -10 -10',
-       stroke: 'black',
-       fill: 'transparent'
-     });
-  },
 
-  (offset) => {
-     return sivg('path', {
-       d: ' M0 ' + (0 - offset * DAY_LENGTH) + 'l 10 -10 h -2.5 h 5 h -2.5 m -10 10 l -10 -10 h-2.5 h 5',
-       stroke: 'black',
-       fill: 'transparent'
-     });
-  },
-
-  (offset) => {
-    var start = (0 - offset * DAY_LENGTH);
-     return sivg('path', {
-       d: ' M0 ' + start + 'l 8 -8 h -3 L 0 ' + start + ' l -8 -8 h3 L0 ' + start,
-       stroke: 'black',
-       'stroke-width': 0.5,
-       fill: 'transparent'
-     });
-  }
-];
-
-function toHSL(hsl) {
-  var h = Math.round(hsl[0] * 360);
-  var s = Math.round(hsl[1] * 100);
-  var l = Math.round((hsl[2]) * 100);
-
-  return 'hsl(' + h + ', ' + s + '%, ' + l + '%)';
-}
-
-var scene = sivg(document.getElementById('scene'));
-c = sivg('circle', {
-  cx: 0,
-  cy: 0,
-  stroke: 'black',
-  fill: 'transparent',
-  r: INNER_CIRCLE_R
-});
-// scene.appendChild(c);
-panzoom(scene);
-scene.addEventListener('mouseenter', mouseEnterHandler, true);
-
-var lastHighlighted;
-
-function mouseEnterHandler(e) {
-  if (!isTickBackground(e.target)) return;
-  if (e.target === lastHighlighted) return;
-
-  if (lastHighlighted) {
-     removeClass('highlight')(lastHighlighted);
-     forAll('.hour-hl', removeClass('hour-hl'));
-     forAll('.dow-hl', removeClass('dow-hl'));
-  }
-
-  lastHighlighted = e.target;
-
-  var hour = lastHighlighted.getAttribute('data-hour');
-
-  forAll('[data-hour="' + hour + '"]' + ',' +
-    '[data-hour-label="' + hour + '"]', addClass('hour-hl'))
-
-  var dow = lastHighlighted.getAttribute('data-dow');
-  forAll('[data-dow="' + dow + '"]', addClass('dow-hl'));
-  addClass('highlight')(lastHighlighted);
-}
-
-function addClass(className) {
-  return function(el) {
-     el.classList.add(className);
-  }
-}
-function removeClass(className) {
-  return function(el) {
-     el.classList.remove(className);
-  }
-}
-
-function forAll(query, action) {
-  (Array.from(scene.querySelectorAll(query))).forEach(function(el) {
-     action(el);
-  })
-}
-
-function isTickBackground(element) {
-  return element && element.classList.contains('tick-background');
-}
-
-var hoursLabel = sivg('text', {
-     'text-anchor': 'middle',
-     'alignment-baseline': 'central',
-     'font-size': '15px',
-     'fill': 'black'
-  });
-  hoursLabel.text('HOURS');
-  scene.appendChild(hoursLabel);
+var shapes = makeShapesLibrary();;
 
 var data = getData().map(x => ({
   date: new Date(x.Date),
   symbol: x.Symbol
 }));
 
-for	(var hour = 0; hour < 24; ++hour) {
-  drawLabel(hour);
-  for (var dow = 0; dow < 7; ++dow) {
-    drawTick(hour, dow);
-    drawDayName(dow);
+var symbolToPlace = countSymbolOccurances(data);
+
+var scene = sivg(document.getElementById('scene'));
+var backgroundLayer = sivg('g');
+scene.appendChild(backgroundLayer);
+panzoom(scene);
+listenToSceneEvents();
+
+drawScene();
+drawLegend(symbolToPlace);
+
+function drawLegend(legend) {
+	var g = sivg('g', {
+      transform: 'translate(400, -300)'
+  });
+
+  shapes.forEach((shape, place) => {
+    var symbol = findSymbolByPlace(place);
+    var record = legend.get(symbol);
+
+    var row = sivg('g', {
+      'transform': 'translate(0, ' + place * 20 + ')'
+    });
+
+    listenToSymbol(row, symbol);
+
+    var text = sivg('text', {
+      x: 20
+    });
+
+    text.text(symbol + ' - ' + record.total);
+
+    row.appendChild(shape());
+    row.appendChild(text);
+    g.appendChild(row);
+  });
+
+	scene.appendChild(g);
+
+  function listenToSymbol(row, symbol) {
+    row.addEventListener('click', function(e) {
+      highlight(symbol);
+    });
   }
 }
 
+function findSymbolByPlace(place) {
+  var symbol;
+  symbolToPlace.forEach((v) => {
+     if (v.place === place) symbol = v.symbol;
+  });
+
+  return symbol;
+}
+
+function highlight(symbol) {
+  forAll('[data-symbol]', removeClass('hl'))
+  forAll('[data-symbol="' + symbol + '"]', addClass('hl'))
+}
+
+function drawScene() {
+  var hoursLabel = sivg('text', {
+      'text-anchor': 'middle',
+      'alignment-baseline': 'central',
+      'font-size': '15px',
+      'fill': 'black'
+    });
+    hoursLabel.text('HOURS');
+    scene.appendChild(hoursLabel);
+
+
+  console.log(symbolToPlace);
+
+  for	(var hour = 0; hour < 24; ++hour) {
+    drawLabel(hour);
+    for (var dow = 0; dow < 7; ++dow) {
+      drawTick(hour, dow);
+      drawDayName(dow);
+    }
+  }
+}
+
+
+function makeShapesLibrary() {
+  return [
+    () => {
+      return sivg('path', {
+        d: 'M0 0 l 10 -10 m -10 10 l -10 -10',
+        stroke: 'black',
+        fill: 'transparent'
+      });
+    },
+
+    () => {
+      return sivg('path', {
+        d: 'M0 0 l 10 -10 h -2.5 h 5 h -2.5 m -10 10 l -10 -10 h-2.5 h 5',
+        stroke: 'black',
+        fill: 'transparent'
+      });
+    },
+
+    () => {
+      return sivg('path', {
+        d: 'M0 0 l 8 -8 h -3 L 0 0 l -8 -8 h3 L0 0',
+        stroke: 'black',
+        'stroke-width': 0.5,
+        fill: 'transparent'
+      });
+    },
+
+    () => {
+      return sivg('path', {
+        d: 'M0 0 l 10 -10 m 2.5 -2.5 a 2.5 2.5 0 1 0 0.00001 0',
+        stroke: 'black',
+        fill: 'white'
+      });
+    },
+    () => {
+      return sivg('path', {
+        d: 'M0 0 l -10 -10 m -2.5 -2.5 a 2.5 2.5 0 1 0 0.00001 0',
+        stroke: 'black',
+        fill: 'white'
+      });
+    },
+    () => {
+      return sivg('path', {
+        d: 'M0 0 l 10 -10 m 2.5 -2.5 a 2.5 2.5 0 1 0 0.00001 0',
+        stroke: 'black',
+        fill: 'black'
+      });
+    },
+    () => {
+      return sivg('path', {
+        d: 'M0 0 l -10 -10 m 2.5 -2.5 a 2.5 2.5 0 1 0 0.00001 0',
+        stroke: 'black',
+        fill: 'black'
+      });
+    }
+  ];
+}
 
 function drawDayName(dow) {
   return;
@@ -203,7 +219,7 @@ function drawBackground(angle, r, height, attributes) {
     d: d,
     fill: 'transparent'
   }, attributes));
-  scene.appendChild(background);
+  backgroundLayer.appendChild(background);
 }
 
 function getRadiusForDow(dow) {
@@ -248,8 +264,9 @@ function drawTick(hour, dow) {
     } else {
       path = d;
     }
-    g.appendChild(path);
+    if (path) g.appendChild(path);
   });
+
   scene.appendChild(g)
 }
 
@@ -259,30 +276,95 @@ function getAllPoints(dow, hour) {
    })
 }
 
+function listenToSceneEvents() {
+  var lastHighlighted;
 
-function drawArrowForSymbol(symbol, offset) {
-  var shapeId = getHash(symbol) % (shapes.length);
-  console.log(shapeId);
-  return shapes[shapeId](offset);
-}
+  scene.addEventListener('mouseenter', mouseEnterHandler, true);
 
-function getHash(str) {
-  if (!str) return 0; // if it's falsy object return null hash.
+  return;
 
-  const strType = typeof str;
-  if (strType === 'number') return str;
-  if (strType !== 'string') throw new Error('Only strings or numbers expected here');
+  function mouseEnterHandler(e) {
+    if (!isTickBackground(e.target)) return;
+    if (e.target === lastHighlighted) return;
 
-  let hash = 0;
+    if (lastHighlighted) {
+      removeClass('highlight')(lastHighlighted);
+      forAll('.hour-hl', removeClass('hour-hl'));
+      forAll('.dow-hl', removeClass('dow-hl'));
+    }
 
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash |= 0; // Convert to 32bit integer
+    lastHighlighted = e.target;
+
+    var hour = lastHighlighted.getAttribute('data-hour');
+
+    forAll('[data-hour="' + hour + '"]' + ',' +
+      '[data-hour-label="' + hour + '"]', addClass('hour-hl'))
+
+    var dow = lastHighlighted.getAttribute('data-dow');
+    forAll('[data-dow="' + dow + '"]', addClass('dow-hl'));
+    addClass('highlight')(lastHighlighted);
   }
 
-  return Math.abs(hash);
+  function isTickBackground(element) {
+    return element && element.classList.contains('tick-background');
+  }
 }
 
+function forAll(query, action) {
+  (Array.from(scene.querySelectorAll(query))).forEach(function(el) {
+    action(el);
+  })
+}
+
+function addClass(className) {
+  return function(el) {
+    el.classList.add(className);
+  }
+}
+function removeClass(className) {
+  return function(el) {
+    el.classList.remove(className);
+  }
+}
+
+function drawArrowForSymbol(symbol, offset) {
+  var shapeId = symbolToPlace.get(symbol).place; // % (shapes.length);
+  if (shapeId >= shapes.length) {
+    // todo: return "other" shape?
+    return;
+  }
+  var domElement = shapes[shapeId]();
+  domElement.attr({
+    'data-symbol': symbol,
+    'class': 'shape hl',
+    'transform': 'translate(0, ' + (-offset * DAY_LENGTH) + ')'
+  });
+  return domElement;
+}
+
+function countSymbolOccurances(data) {
+  var counts = new Map(); // symbol -> count
+  data.forEach(x => {
+    var count = counts.get(x.symbol) || 0;
+    counts.set(x.symbol, count + 1);
+  });
+
+  var sortedByCount = Array.from(counts);
+  sortedByCount.sort((x, y) => { 
+    return y[1] - x[1];
+  });
+  var symbolToPlace = new Map(); // symbol -> 0 based index. 0 - happens a lot, 1 - happens less...
+
+  sortedByCount.forEach((a, idx) => {
+    symbolToPlace.set(a[0], {
+      symbol: a[0],
+      total: a[1],
+      place: idx
+    });
+  });
+
+  return symbolToPlace;
+}
 
 function getData() {
   return [
@@ -1553,3 +1635,4 @@ function getData() {
   }
 ];
 }
+
