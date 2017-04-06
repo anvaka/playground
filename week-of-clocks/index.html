@@ -26,20 +26,35 @@
 .tick-background.dow-hl {
   fill: #eee;
 }
+  text {
+    font-family: Verdana, sans-serif;
+  }
+  .legend-text {
+    cursor: pointer;
+  }
+  .legend-text.hl {
+    fill: red;
+  }
+
   .shape {
     display: none
   }
   .shape.hl {
     display: block;
-  },
-  .hour-label.hour-hl {
+  }
+
+	.hour-label.hour-hl {
     fill: red;
   }
+
   .dow-label {
-    display: none;
+    fill: rgba(0, 0, 0, 0.3);
+    font-family: Verdana, sans-serif;
+    font-weight: lighter;
+		pointer-events: none;
   }
   .dow-label.dow-hl {
-    display: block;
+    fill: red;
   }
   svg {
     width: 100%;

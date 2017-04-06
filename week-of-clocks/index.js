@@ -4,7 +4,7 @@ var INNER_CIRCLE_R = 100;
 var BORDER_ANGLE = (2 * Math.PI/24) * 0.45; // 46% of angle is for border;
 var dowNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-var shapes = makeShapesLibrary();;
+var shapes = makeShapesLibrary();
 
 var data = getData().map(x => ({
   date: new Date(x.Date),
@@ -14,6 +14,10 @@ var data = getData().map(x => ({
 var symbolToPlace = countSymbolOccurances(data);
 
 var scene = sivg(document.getElementById('scene'));
+
+var defs = sivg('defs')
+scene.appendChild(defs);
+
 var backgroundLayer = sivg('g');
 scene.appendChild(backgroundLayer);
 panzoom(scene);
@@ -21,6 +25,27 @@ listenToSceneEvents();
 
 drawScene();
 drawLegend(symbolToPlace);
+
+function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+  var angleInRadians = (angleInDegrees-90) * Math.PI / 180.0;
+
+  return {
+    x: centerX + (radius * Math.cos(angleInRadians)),
+    y: centerY + (radius * Math.sin(angleInRadians))
+  };
+}
+
+function describeArc(x, y, radius, startAngle, endAngle){
+    var start = polarToCartesian(x, y, radius, endAngle);
+    var end = polarToCartesian(x, y, radius, startAngle);
+
+    var d = [
+        "M", start.x, start.y,
+        "A", radius, radius, 0, 0, 1, end.x, end.y
+    ].join(" ");
+
+    return d;
+}
 
 function drawLegend(legend) {
 	var g = sivg('g', {
@@ -38,6 +63,7 @@ function drawLegend(legend) {
     listenToSymbol(row, symbol);
 
     var text = sivg('text', {
+      'class': 'legend-text',
       x: 20
     });
 
@@ -52,7 +78,13 @@ function drawLegend(legend) {
 
   function listenToSymbol(row, symbol) {
     row.addEventListener('click', function(e) {
-      highlight(symbol);
+      var currentlyHighlighted = e.target.classList.contains('hl');
+      forAll('.legend-text.hl', removeClass('hl'));
+      if (!currentlyHighlighted) {
+        addClass('hl')(e.target);
+      }
+
+      highlight(symbol, currentlyHighlighted);
     });
   }
 }
@@ -66,9 +98,16 @@ function findSymbolByPlace(place) {
   return symbol;
 }
 
-function highlight(symbol) {
-  forAll('[data-symbol]', removeClass('hl'))
-  forAll('[data-symbol="' + symbol + '"]', addClass('hl'))
+function highlight(symbol, shouldRemove) {
+  if (shouldRemove) {
+    // by default all symbols have 'hl' to indicate that they are visible.
+    forAll('[data-symbol]', addClass('hl'))
+  } else {
+    // hide all symbols
+    forAll('[data-symbol]', removeClass('hl'))
+    // except this one
+    forAll('[data-symbol="' + symbol + '"]', addClass('hl'))
+  }
 }
 
 function drawScene() {
@@ -76,20 +115,54 @@ function drawScene() {
       'text-anchor': 'middle',
       'alignment-baseline': 'central',
       'font-size': '15px',
-      'fill': 'black'
+      'fill': 'rgba(0, 0, 0, 0.3)'
     });
     hoursLabel.text('HOURS');
     scene.appendChild(hoursLabel);
 
+  var marker = sivg('marker', {
+    id: 'arrow',
+    markerWidth: '10', 
+    markerHeight: '10',
+    refX: '0',
+    refY: '3',
+    orient: 'auto',
+    markerUnits: 'strokeWidth'
+  })
 
-  console.log(symbolToPlace);
+  marker.appendChild(sivg('path', {
+    d: "M0,0 L0,6 L9,3 z" ,
+    fill: 'rgba(0, 0, 0, 0.3)'
+  }));
+
+  defs.appendChild(marker);
+  var R = 35;
+  var endAngle = Math.PI * 3 / 2;
+  var startAngle = Math.PI * 3 / 2 + Math.PI * 15 / 180;
+
+  var x = R * Math.cos(startAngle);
+  var y = R * Math.sin(startAngle);
+  var x1 = R * Math.cos(endAngle);
+  var y1 = R * Math.sin(endAngle);
+
+  var path = 'M ' + x + ' ' + y + ' A ' + R + ' ' + R + ' 0 1 1 ' + x1 + ' ' + y1;
+  scene.appendChild(sivg('path', {
+    d: path,
+    fill: 'transparent',
+    stroke: 'rgba(0, 0, 0, 0.3)',
+    'marker-end': 'url(#arrow)'
+  }));
+
 
   for	(var hour = 0; hour < 24; ++hour) {
     drawLabel(hour);
     for (var dow = 0; dow < 7; ++dow) {
       drawTick(hour, dow);
-      drawDayName(dow);
     }
+  }
+
+  for (var dow = 0; dow < 7; ++dow) {
+    drawDayName(dow);
   }
 }
 
@@ -148,22 +221,46 @@ function makeShapesLibrary() {
         stroke: 'black',
         fill: 'black'
       });
-    }
+    },
+
+    () => {
+      return sivg('path', {
+        d: 'M0 0 l 8 -8 h -3 L 0 0 l -8 -8 h3 L0 0',
+        stroke: 'black',
+        'stroke-width': 0.5,
+        fill: 'black'
+      });
+    },
   ];
 }
 
 function drawDayName(dow) {
-  return;
-  var r = getRadiusForDow(dow + 1) + 7;// small padding
+  var arc = describeArc(0, 0, getRadiusForDow(dow) + DAY_LENGTH * 0.3, 45, 30);
+  var path = sivg('path', {
+    id: 'dow-' + dow,
+    d: arc
+  });
+  defs.appendChild(path);
+
+  // scene.appendChild(sivg('path', {
+  //   d: arc,
+  //   stroke: 'black',
+  //   fill:'transparent'
+  // }));
+
   var dowLabel = sivg('text', {
+    'font-size': (15 * (dow + 4)/7) + 'px',
     'text-anchor': 'middle',
-    'font-size': '15px',
-    'fill': 'black',
     'class': 'dow-label',
     'data-dow': dow,
-     y: r
   });
-  dowLabel.text(dowNames[dow]);
+  var textPath = sivg('textPath', {
+    startOffset: '50%'
+  });
+  textPath.link('#dow-' + dow);
+  textPath.text(dowNames[dow].substring(0, 3))
+
+  dowLabel.appendChild(textPath);
   scene.appendChild(dowLabel);
 }
 
@@ -182,7 +279,7 @@ function drawLabel(hour) {
      x: x, y: y,
      'text-anchor': 'middle',
      'alignment-baseline': 'central',
-     'font-size': '15px',
+     'font-size': '12px',
      'fill': 'white'
   });
   text.text(hour);
@@ -247,7 +344,7 @@ function drawTick(hour, dow) {
   })
   g.appendChild(sivg('path', {
     d: 'M0,0 L0 ' + (-DAY_LENGTH) + ' ',
-    stroke: '#999'
+    stroke: 'rgba(0, 0, 0, 0.3)'
   }))
 
 
@@ -291,8 +388,8 @@ function listenToSceneEvents() {
       removeClass('highlight')(lastHighlighted);
       forAll('.hour-hl', removeClass('hour-hl'));
       forAll('.dow-hl', removeClass('dow-hl'));
+      lastHighlighted = null;
     }
-
     lastHighlighted = e.target;
 
     var hour = lastHighlighted.getAttribute('data-hour');
@@ -350,7 +447,7 @@ function countSymbolOccurances(data) {
   });
 
   var sortedByCount = Array.from(counts);
-  sortedByCount.sort((x, y) => { 
+  sortedByCount.sort((x, y) => {
     return y[1] - x[1];
   });
   var symbolToPlace = new Map(); // symbol -> 0 based index. 0 - happens a lot, 1 - happens less...
