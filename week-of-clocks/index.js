@@ -2,7 +2,7 @@ var DAY_LENGTH = 30;
 var DAY_PADDING = 5;
 var INNER_CIRCLE_R = 100;
 var BORDER_ANGLE = (2 * Math.PI/24) * 0.45; // 46% of angle is for border;
-var dowNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+var dowNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 var shapes = makeShapesLibrary();
 
@@ -369,8 +369,14 @@ function drawTick(hour, dow) {
 
 function getAllPoints(dow, hour) {
    return data.filter(x => {
-      return (x.date.getDay() === dow) && (x.date.getHours() === hour);
+      return (getDow(x.date) === dow) && (x.date.getHours() === hour);
    })
+}
+
+function getDow(date) {
+  var day = date.getDay() - 1;
+  if (day < 0) day = 6; // sunday.
+  return day;
 }
 
 function listenToSceneEvents() {
