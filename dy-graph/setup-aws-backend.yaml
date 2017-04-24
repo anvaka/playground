@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion : '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: An experiment to use dynamodb as a graph store
+
+Resources:
+  GraphEdges:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Graph_Edges
+      AttributeDefinitions:
+        - AttributeName: FromId
+          AttributeType: S
+        - AttributeName: ToId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: FromId
+          KeyType: HASH
+        - AttributeName: ToId
+          KeyType: RANGE
+      ProvisionedThroughput:
+          ReadCapacityUnits: '1'
+          WriteCapacityUnits: '1'
+      GlobalSecondaryIndexes:
+        - IndexName: ToId
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+              ReadCapacityUnits: '1'
+              WriteCapacityUnits: '1'
+          KeySchema:
+            - AttributeName: ToId
+              KeyType: HASH
+            - AttributeName: FromId
+              KeyType: RANGE
+
+  GraphNodes:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Graph_Nodes
+      AttributeDefinitions:
+        - AttributeName: NodeId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: NodeId
+          KeyType: HASH
+      ProvisionedThroughput:
+          ReadCapacityUnits: '1'
+          WriteCapacityUnits: '1'
