@@ -1,0 +1,26 @@
+AWSTemplateFormatVersion : '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Crawls twitter followers
+
+Outputs:
+  ApiEndpoint:
+    Description: "Cralwler API endpoint"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Stage/followers"
+
+Resources:
+  PostStreakAPI:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs6.10
+      CodeUri: ./src/
+      Description: 'Collects follower ids'
+      Policies: AmazonDynamoDBFullAccess
+      MemorySize: 128
+      Timeout: 60
+      Events:
+        PostResource:
+          Type: Api
+          Properties:
+            Path: /followers
+            Method: GET
