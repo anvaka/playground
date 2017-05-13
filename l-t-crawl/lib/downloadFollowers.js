@@ -1,12 +1,12 @@
-const https = require('https');
+const client = require('http');
 
 module.exports = downloadFollowers;
 
 function downloadFollowers(requests, auth) {
   return new Promise((resolve, reject) => {
-    let endpoint = 'https://e7c1ekfa9f.execute-api.us-west-2.amazonaws.com/Stage/followers';
+    let endpoint = 'http://localhost:3000/';
 
-    https.get(endpoint + '?requests=' + urlArg(requests) + '&auth=' + urlArg(auth), (res) => {
+    const req = client.get(endpoint + '?requests=' + urlArg(requests) + '&auth=' + urlArg(auth), (res) => {
       const chunks = [];
 
       res.on('data', (d) => {
@@ -16,10 +16,13 @@ function downloadFollowers(requests, auth) {
         let res = JSON.parse(Buffer.concat(chunks).toString('utf8'));
         resolve(res);
       });
-    }).on('error', (e) => {
+    });
+    req.on('error', (e) => {
       console.error(e);
       reject(e);
     });
+
+    req.end();
 
     function urlArg(obj) {
       return encodeURIComponent(JSON.stringify(obj));

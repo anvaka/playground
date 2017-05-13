@@ -1,4 +1,10 @@
-let tokens = require('/Users/anvaka/twitter/keys.js');
+let tokens = [{
+  consumer_key:        process.env.TWITTER_CONSUMER_KEY,
+  consumer_secret:     process.env.TWITTER_CONSUMER_SECRET,
+  access_token:        process.env.TWITTER_ACCESS_TOKEN,
+  access_token_key:    process.env.TWITTER_ACCESS_TOKEN,
+  access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
+}];
 
 const fs = require('fs');
 const path = require('path');
@@ -51,7 +57,9 @@ function start(queue) {
   console.log('Starting the queue processing. Ids remaining: ', queue.length);
   let eventStack = createEventStack(onTokenReady);
 
+  // eventStack.push({ auth: tokens[0], idx: 0 });
   tokens.forEach((auth, idx) => {
+    console.log('using token', idx);
     eventStack.push({ auth, id: idx });
   });
 
@@ -129,8 +137,15 @@ function markComplete(user) {
   } else {
     prevResult = user;
   }
+  if (prevResult.followers) {
+    prevResult.followers = dedupe(prevResult.followers);
+  }
 
   outStream.write(prevResult);
+}
+
+function dedupe(array) {
+  return Array.from(new Set(array));
 }
 
 function createOutStream(outFileName) {
