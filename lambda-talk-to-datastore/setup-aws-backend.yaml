@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion : '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: An experiment to use dynamodb as a graph store
+
+Outputs:
+  ApiEndpoint:
+    Description: "Stage API endpoint"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Stage/streak"
+
+Resources:
+  GetSomething:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs6.10
+      CodeUri: ./handler/
+      Environment:
+        Variables:
+          GOOGLE_APPLICATION_CREDENTIALS: "streak-service-account.json"
+          DATASTORE_PROJECT_ID: "streak-146302"
+      Description: 'Just a test'
+      MemorySize: 128
+      Timeout: 6
+      Events:
+        GetResource:
+          Type: Api
+          Properties:
+            Path: /streak
+            Method: GET
