@@ -1,8 +1,11 @@
 let downloadAbout = require('./download-about.js');
-let REDDIT_LOOKUP = /\/r\/([^\/\])#\s.,!]+)/g;
+let REDDIT_LOOKUP = /\/r\/([a-zA-Z0-9_.:\-]+)/g;
 
-downloadAbout('virtualization').then(extractRelated)
-.then(x => console.log(x))
+module.exports = getRelated;
+
+function getRelated(subName) {
+  return downloadAbout(subName).then(extractRelated);
+}
 
 function extractRelated(subredit) {
   let display_name = subredit.display_name;
