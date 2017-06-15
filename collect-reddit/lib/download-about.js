@@ -40,8 +40,8 @@ function downloadAbout(subredit) {
           throw e;
         }
 
-        if (r.error === 404) {
-          // Not found sub? no worries.
+        if (r.error === 404 || r.error === 403) {
+          // Not found sub? Private sub? No worries
           resolve({
             display_name: subredit,
             error: r.error
