@@ -3,7 +3,7 @@ const forEachSub = require('./lib/forEachSub.js');
 const extractRelated = require('./lib/extract-related.js');
 const random = require('ngraph.random').random(42);
 
-const saveRatio = 0.2; // Save only 20% of the graph, so that we can explore it faster
+const saveRatio = 1; // Save only XX% of the graph, so that we can explore it faster
 let saved = 0;
 let total = 0;
 

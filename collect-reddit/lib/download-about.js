@@ -3,7 +3,9 @@ const url = require('url');
 
 module.exports = downloadAbout;
 
-function downloadAbout(subredit) {
+function downloadAbout(subredit, retryCount) {
+  if (retryCount === undefined) retryCount = 3;
+
   return new Promise((resolve, reject) => {
     let endpoint = 'https://www.reddit.com/r/' + subredit + '/about.json';
     console.log('Downloading ' + endpoint);
@@ -27,6 +29,9 @@ function downloadAbout(subredit) {
             error: 302
           });
           return;
+        }
+        if (res.statusCode === 502 && (retryCount > 0)) {
+          return downloadAbout(subredit, retryCount - 1).then(resolve).catch(reject);
         }
 
         let r;
