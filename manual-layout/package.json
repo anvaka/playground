@@ -13,7 +13,13 @@
     "lint": "eslint --ext .js,.vue src test/unit/specs"
   },
   "dependencies": {
+    "delaunay-fast": "^1.0.1",
     "miserables": "^1.0.0",
+    "ngraph.forcelayout": "^0.1.2",
+    "ngraph.graph": "0.0.12",
+    "ngraph.kruskal": "^1.0.0",
+    "panzoom": "^2.5.0",
+    "remove-overlaps": "^2.1.0",
     "vue": "^2.3.3"
   },
   "devDependencies": {
