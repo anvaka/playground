@@ -8,5 +8,5 @@ data.nodes.forEach(n => graph.addNode(n.id))
 data.links.forEach(l => graph.addLink(l.fromId, l.toId))
 
 function getData () {
-  return require('./linux.json')
+  return require('./gamedev.json')
 }
