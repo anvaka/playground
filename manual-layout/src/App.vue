@@ -5,9 +5,9 @@
         <g v-if='showEdges'>
           <path v-for='edge in edges' :d='edge.getPath()' stroke='rgba(0, 0, 0, 0.2)'></path>
         </g>
-        <!--g v-if='showTriangulation'>
+        <g v-if='showTriangulation'>
           <path v-for='triangle in triangulation' :d='triangle.getPath()' stroke='rgba(255, 0, 0, 0.2)' fill='transparent'></path>
-        </g-->
+        </g>
         <g v-if='showMst'>
           <path v-for='edge in mst' :d='edge.getPath()' stroke='rgba(0, 0, 255, 1)'></path>
         </g>
@@ -104,7 +104,9 @@ export default {
 
     toggleTriangulation () {
       this.showTriangulation = !this.showTriangulation
-      this.recomputeTriangulation()
+      for (let i = 0; i < 200; ++i) {
+        this.recomputeTriangulation()
+      }
     },
 
     recomputeTriangulation () {
