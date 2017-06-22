@@ -52,17 +52,6 @@ function getAbout() {
   return Promise.all(chunk).then(() => true);
 }
 
-// const getRelated = require('./get-related.js');
-//
-// console.log(work.length);
-// console.time('foo');
-// Promise.all(work.slice(0, 10).map(getRelated)).then(x => {
-//   console.timeEnd('foo');
-//   console.log(x);
-// }).catch((e) => {
-//   console.log(e);
-// });
-
 function saveAbout(about) {
   if (!about) throw new Error('Missing about');
 
