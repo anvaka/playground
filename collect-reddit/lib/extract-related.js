@@ -9,7 +9,10 @@ function extractRelated(subredit) {
   let matches = description && description.match(REDDIT_LOOKUP);
   let related;
   if (matches) {
-    let uniqueSubset = new Set(matches.map(x => x.toLowerCase().substr(3))); // we remove preceding /r/ - 3 chars
+    let uniqueSubset = new Set(matches.map(x => {
+      let id = x.toLowerCase().substr(3)
+      return id.replace(/[:.]+$/g, ''); // trim 
+    })); // we remove preceding /r/ - 3 chars
     // make sure we do not record this very subreddit:
     uniqueSubset.delete(subredit);
 

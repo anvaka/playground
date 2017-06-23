@@ -4,7 +4,12 @@
     "event-stream": "^3.3.4",
     "nangraph": "^3.0.0",
     "nanlayout": "^2.0.3",
+    "ngraph.coarsen": "^1.2.0",
+    "ngraph.fromdot": "^0.1.6",
+    "ngraph.graph": "0.0.12",
+    "ngraph.louvain": "^1.0.1",
     "ngraph.random": "0.0.1",
-    "ngraph.tobinary": "^1.0.1"
+    "ngraph.tobinary": "^1.0.1",
+    "ngraph.tojson": "^0.1.4"
   }
 }
