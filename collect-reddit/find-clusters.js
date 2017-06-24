@@ -1,63 +1,51 @@
 // Let's say you have an ngraph instance:
-const graph = require('ngraph.graph')({uniqueLinkId: false});
+const createGraph = require('ngraph.graph');
+const graph = createGraph({uniqueLinkId: false});
 const downloadedFile = process.argv[3] || 'abouts.json';
 const forEachSub = require('./lib/forEachSub.js');
 const extractRelated = require('./lib/extract-related.js');
 const detectClusters = require('ngraph.louvain');
 const coarsen = require('ngraph.coarsen');
-const save_json = require('ngraph.tojson');
 const fs = require('fs');
+const tojson = require('ngraph.tojson');
+const path = require('path');
+const outFolder = path.join('data', 'clusters');
+const mkdirp = require('mkdirp');
+
+mkdirp.sync(outFolder);
 
 // // To detect clusters:
 //
 forEachSub(downloadedFile, (sub) => {
   const subName = sub.display_name.toLowerCase();
   const subInfo = extractRelated(sub);
+
+  graph.addNode(subName, sub.subscribers);
+
   if (subInfo.related.length > 0) {
     subInfo.related.forEach(x => {
       graph.addLink(subName, x);
     });
   }
-}, () => {
+}, saveClusters);
+
+function saveClusters() {
   const clusters = detectClusters(graph);
+
   const clusterGraph = coarsen(graph, clusters);
-  fs.writeFileSync('cluster-graph.json', save_json(clusterGraph));
-});
+  clusterGraph.forEachNode(coarseNode => {
+    const nodeGraph = createGraph({uniqueLinkId: false});
 
-function findLargestCluster() {
-  const clusters = detectClusters(graph);
-  const counts = new Map();
+    coarseNode.data.forEach(nodeId => {
+      nodeGraph.addNode(nodeId, graph.getNode(nodeId).data);
 
-  // now you can iterate over each node and get it's community (aka class):
-  let largestClusterCount = -1;
-  let largeCluster;
+      graph.forEachLinkedNode(nodeId, otherNode => {
+        if (coarseNode.data.has(otherNode.id)) {
+          nodeGraph.addLink(nodeId, otherNode.id)
+        }
+      }, true);
+    });
 
-  graph.forEachNode(function(node) {
-    const nodeClass = clusters.getClass(node.id);
-    const count = (counts.get(nodeClass) || 0) + 1;
-    if (count > largestClusterCount) {
-      largestClusterCount = count;
-      largeCluster = nodeClass
-    }
-    counts.set(nodeClass, count)
-  });
-
-  const largeClusterSet = new Set();
-  graph.forEachNode(function(node) {
-    const nodeClass = clusters.getClass(node.id);
-    if (nodeClass === largeCluster) {
-      largeClusterSet.add(node.id);
-    }
-  });
-
-  console.log('digraph G {');
-
-  largeClusterSet.forEach((nodeId) => {
-    graph.forEachLinkedNode(nodeId, otherNode => {
-      if (largeClusterSet.has(otherNode.id)) {
-        console.log(nodeId + ' -> ' + otherNode.id);
-      }
-    }, true);
-  });
-  console.log('}');
+    fs.writeFileSync(path.join(outFolder, coarseNode.id + '.json'), tojson(nodeGraph));
+  })
 }

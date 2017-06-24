@@ -1,4 +1,4 @@
-const REDDIT_LOOKUP = /\/r\/([a-zA-Z0-9_.:\-]+)/g;
+const REDDIT_LOOKUP = /\.com\/r\/([a-zA-Z0-9_.:\-]+)/g;
 
 module.exports = extractRelated;
 
@@ -10,9 +10,9 @@ function extractRelated(subredit) {
   let related;
   if (matches) {
     let uniqueSubset = new Set(matches.map(x => {
-      let id = x.toLowerCase().substr(3)
+      let id = x.toLowerCase().substr(7)
       return id.replace(/[:.]+$/g, ''); // trim 
-    })); // we remove preceding /r/ - 3 chars
+    })); // we remove preceding .com/r/ - 7 chars
     // make sure we do not record this very subreddit:
     uniqueSubset.delete(subredit);
 
