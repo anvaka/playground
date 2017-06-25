@@ -15,9 +15,11 @@
   "dependencies": {
     "delaunay-fast": "^1.0.1",
     "miserables": "^1.0.0",
+    "ngraph.coarsen": "^1.2.0",
     "ngraph.forcelayout": "^0.2.0",
     "ngraph.graph": "0.0.12",
     "ngraph.kruskal": "^1.0.0",
+    "ngraph.louvain": "^1.0.1",
     "panzoom": "^2.5.0",
     "vue": "^2.3.3"
   },

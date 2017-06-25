@@ -18,7 +18,10 @@ function removeOverlaps (rectangles, options) {
   // triangulation
   const vertices = []
   options = options || {}
+
   const canMove = options.canMove || yes
+  const pullX = options.pullX || false
+  const pullY = options.pullY || false
 
   rectangles.forEach(r => {
     const pair = [r.cx, r.cy]
@@ -53,9 +56,11 @@ function removeOverlaps (rectangles, options) {
     getRect(edge.toId)
   ))
 
-  const spanningTree = makeSpanningTree(mstEdges)
+  if (mstEdges.length > 0) {
+    const spanningTree = makeSpanningTree(mstEdges)
 
-  grow(spanningTree)
+    grow(spanningTree)
+  }
 
   return
 
@@ -133,10 +138,10 @@ function removeOverlaps (rectangles, options) {
   function overlaps (a, b) {
     // If one rectangle is on left side of other
     // NOTE: This gives funny results when we always return true
-    if (a.left > b.right || b.left > a.right) return false
+    if (a.left > b.right || b.left > a.right) return pullX
 
     // If one rectangle is above other
-    if (a.top > b.bottom || b.top > a.bottom) return false
+    if (a.top > b.bottom || b.top > a.bottom) return pullY
 
     return true
   }

@@ -26,8 +26,8 @@ function getInitialLayout (graph) {
     const next = side // roundGrid(side, 5)
 
     rects.push({
-      x: roundGrid(pos.x, 5),
-      y: roundGrid(pos.y, 5),
+      cx: roundGrid(pos.x, 5),
+      cy: roundGrid(pos.y, 5),
       width: next,
       height: next,
       id: node.id,

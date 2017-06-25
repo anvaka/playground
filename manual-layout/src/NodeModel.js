@@ -1,8 +1,8 @@
 class NodeModel {
   constructor (node) {
     this.id = node.id
-    this.cx = node.x
-    this.cy = node.y
+    this.cx = node.cx
+    this.cy = node.cy
     this.width = node.width
     this.height = node.height
     this.highlighted = false
