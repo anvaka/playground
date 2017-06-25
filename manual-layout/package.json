@@ -15,7 +15,7 @@
   "dependencies": {
     "delaunay-fast": "^1.0.1",
     "miserables": "^1.0.0",
-    "ngraph.forcelayout": "^0.1.2",
+    "ngraph.forcelayout": "^0.2.0",
     "ngraph.graph": "0.0.12",
     "ngraph.kruskal": "^1.0.0",
     "panzoom": "^2.5.0",
