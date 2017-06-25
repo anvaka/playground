@@ -19,7 +19,6 @@
     "ngraph.graph": "0.0.12",
     "ngraph.kruskal": "^1.0.0",
     "panzoom": "^2.5.0",
-    "remove-overlaps": "^2.1.0",
     "vue": "^2.3.3"
   },
   "devDependencies": {

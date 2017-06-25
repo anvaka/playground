@@ -1,4 +1,6 @@
-export default function getScore (graph, positions) {
+module.exports = getScore
+
+function getScore (graph, positions) {
   let distance = 0
 
   graph.forEachNode(node => {

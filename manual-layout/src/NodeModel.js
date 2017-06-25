@@ -1,4 +1,4 @@
-export default class NodeModel {
+class NodeModel {
   constructor (node) {
     this.id = node.id
     this.cx = node.x
@@ -7,7 +7,7 @@ export default class NodeModel {
     this.height = node.height
     this.highlighted = false
     this.selected = false
-    this.fontSize = 1.5 * node.width / (node.id.length)
+    this.fontSize = node.fontSize
   }
 
   get right () {
@@ -26,3 +26,5 @@ export default class NodeModel {
     return this.cy - this.height / 2
   }
 }
+
+module.exports = NodeModel

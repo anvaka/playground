@@ -1,7 +1,13 @@
-import createLayout from 'ngraph.forcelayout'
-// import removeOverlaps from 'remove-overlaps'
+const createLayout = require('ngraph.forcelayout')
 
-export default function getInitialLayout (graph) {
+module.exports = getInitialLayout
+
+function getInitialLayout (graph) {
+  graph.forEachNode(node => {
+    if (typeof node.data !== 'number') {
+      node.data = node.links.length
+    }
+  })
   const layout = createLayout(graph, {
     nodeMass (nodeId) {
       return graph.getNode(nodeId).data
@@ -14,7 +20,7 @@ export default function getInitialLayout (graph) {
   const rects = []
   graph.forEachNode(node => {
     const pos = layout.getNodePosition(node.id)
-    const x = node.data // || node.links.length
+    const x = node.data
     const side = (5 + x) // 2 * Math.log(x) * Math.log(x))
     // const side = (5 + x * 2)
     const next = side // roundGrid(side, 5)
@@ -24,13 +30,10 @@ export default function getInitialLayout (graph) {
       y: roundGrid(pos.y, 5),
       width: next,
       height: next,
-      id: node.id
+      id: node.id,
+      fontSize: 4
     })
   })
-
-  // removeOverlaps(rects, {
-  //   method: 'rectangle'
-  // })
 
   return rects
 }

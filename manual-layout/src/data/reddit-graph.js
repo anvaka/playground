@@ -1,6 +1,7 @@
 const createGraph = require('ngraph.graph')
 
 const graph = createGraph({})
+
 module.exports = graph
 
 const data = getData()
