@@ -17,7 +17,6 @@ function cityLayout (graph) {
 
   const rects = []
   graph.forEachNode(clusterNode => {
-    debugger
     const sideX = clusterNode.bounds.maxX - clusterNode.bounds.minX
     const sideY = clusterNode.bounds.maxY - clusterNode.bounds.minY
     clusterNode.weight = Math.sqrt(sideX * sideY)
@@ -39,7 +38,6 @@ function cityLayout (graph) {
     // })
   })
 
-  debugger
   const layout = createLayout(graph, {
     nodeMass (nodeId) {
       return graph.getNode(nodeId).weight
@@ -79,9 +77,11 @@ function cityLayout (graph) {
     clusterNode.rects.forEach(v => {
       v.cx += crect.cx - minX - crect.width / 2
       v.cy += crect.cy - minY - crect.height / 2
-      rects.push(v)
+//      rects.push(v)
     })
   })
+
+  rects.bounds = getBounds(rects)
 
   return rects
   // clusters = detectClusters(graph);
@@ -133,33 +133,37 @@ function cityLayout (graph) {
       })
     }
 
-    let minX = Number.POSITIVE_INFINITY
-    let minY = Number.POSITIVE_INFINITY
-    let maxX = Number.NEGATIVE_INFINITY
-    let maxY = Number.NEGATIVE_INFINITY
+    const bounds = getBounds(rects)
+    const dw = (bounds.maxX - bounds.minX) * 0.1
+    const dh = (bounds.maxY - bounds.minY) * 0.1
 
-    debugger
-    rects.forEach(r => {
-      const side = r.width
-
-      if (r.cx - side / 2 < minX) minX = r.cx - side / 2
-      if (r.cx + side / 2 > maxX) maxX = r.cx + side / 2
-
-      if (r.cy - side / 2 < minY) minY = r.cy - side / 2
-      if (r.cy + side / 2 > maxY) maxY = r.cy + side / 2
-    })
-
-    const dw = (maxX - minX) * 0.1
-    const dh = (maxY - minY) * 0.1
-
-    minX -= dw
-    maxX += dw
-    minY -= dh
-    maxY += dh
+    bounds.minX -= dw
+    bounds.maxX += dw
+    bounds.minY -= dh
+    bounds.maxY += dh
 
     node.rects = rects
-    node.bounds = { minX, minY, maxX, maxY }
+    node.bounds = bounds
   }
+}
+
+function getBounds (rects) {
+  let minX = Number.POSITIVE_INFINITY
+  let minY = Number.POSITIVE_INFINITY
+  let maxX = Number.NEGATIVE_INFINITY
+  let maxY = Number.NEGATIVE_INFINITY
+
+  rects.forEach(r => {
+    const side = r.width
+
+    if (r.cx - side / 2 < minX) minX = r.cx - side / 2
+    if (r.cx + side / 2 > maxX) maxX = r.cx + side / 2
+
+    if (r.cy - side / 2 < minY) minY = r.cy - side / 2
+    if (r.cy + side / 2 > maxY) maxY = r.cy + side / 2
+  })
+
+  return { minX, minY, maxX, maxY }
 }
 
 function roundGrid (x, gridStep) {

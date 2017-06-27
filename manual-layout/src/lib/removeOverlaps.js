@@ -86,9 +86,15 @@ function removeOverlaps (rectangles, options) {
 
         const childPos = getRect(otherNode.id)
         if (overlaps(rootPos, childPos)) {
-          const t = getOverlapFactor(rootPos, childPos)
-          const dx = (childPos.cx - rootPos.cx)
-          const dy = (childPos.cy - rootPos.cy)
+          let t = getOverlapFactor(rootPos, childPos)
+          let dx = (childPos.cx - rootPos.cx)
+          let dy = (childPos.cy - rootPos.cy)
+
+          if (!Number.isFinite(t)) {
+            t = 1
+            dx = 1e-3
+            dy = -1e-3
+          }
 
           if (canMove(otherNode.id)) {
             childPos.cx = rootPos.cx + t * dx
