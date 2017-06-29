@@ -13,6 +13,7 @@
     "lint": "eslint --ext .js,.vue src test/unit/specs"
   },
   "dependencies": {
+    "d3-voronoi": "^1.1.2",
     "delaunay-fast": "^1.0.1",
     "miserables": "^1.0.0",
     "ngraph.coarsen": "^1.2.0",

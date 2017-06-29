@@ -1,4 +1,5 @@
 const createLayout = require('ngraph.forcelayout')
+const getBounds = require('./lib/getBounds.js')
 
 module.exports = getInitialLayout
 
@@ -34,6 +35,8 @@ function getInitialLayout (graph) {
       fontSize: 4
     })
   })
+
+  rects.bounds = getBounds(rects)
 
   return rects
 }

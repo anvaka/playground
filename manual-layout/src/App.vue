@@ -8,10 +8,17 @@
         <g v-if='showTriangulation'>
           <path v-for='triangle in triangulation' :d='triangle.getPath()' stroke='rgba(255, 0, 0, 0.2)' fill='transparent'></path>
         </g>
-        <g v-if='showMst'>
-          <path v-for='edge in mst' :d='getPath(edge)' stroke='rgba(0, 0, 255, 1)'></path>
-        </g>
+        <path :d='vor' stroke='rgba(0, 0, 255, 1)' fill='transparent'></path>
+
         <g v-if='showNodes'>
+           <!--circle v-for='r in rects'
+           :cx='r.cx'
+       :fill='getFill(r)'
+                @mousedown='onMouseDown($event, r)'
+       :stroke='getStroke(r)'
+           :cy='r.cy'
+       :r='r.width/2'>
+           </circle-->
           <rect v-for='r in rects'
                 :title='r.id'
                 @mousedown='onMouseDown($event, r)'
@@ -32,7 +39,6 @@
     <div class='actions'>
       <button @click.prevent='toggleEdges'>{{(showEdges ? "Hide" : "Show") + " Edges"}}</button>
       <button @click.prevent='toggleTriangulation'>{{(showTriangulation ? "Stop" : "Start") + " overlaps removal"}}</button>
-      <button @click.prevent='toggleMST'>{{(showMst ? "Hide" : "Show") + " spanning tree"}}</button>
     </div>
   </div>
 </template>
@@ -40,18 +46,62 @@
 <script>
 const panzoom = require('panzoom')
 const miserables = require('miserables')
+// const anvakaGraph = require('./data/socialGraph.js')
 
 const getScore = require('./getScore.js')
 const NodeModel = require('./NodeModel.js')
 const getInitialLayout = require('./getInitialLayout.js')
+// const cityLayout = require('./lib/cityLayout.js')
 const EdgeModel = require('./lib/EdgeModel.js')
 const removeOverlaps = require('./lib/removeOverlaps.js')
+const voronoi = require('d3-voronoi').voronoi
 
 let graph = miserables
 let immovable = new Set()
 
-// import rgraph from './data/reddit-graph.js'
-const positions = getInitialLayout(graph)
+let positions = getInitialLayout(graph)
+// positions = cityLayout(graph)
+
+let v = voronoi()
+  .x(r => r.cx)
+  .y(r => r.cy)
+  .extent([[positions.bounds.minX, positions.bounds.minY], [
+    positions.bounds.maxX - positions.bounds.minX,
+    positions.bounds.maxY - positions.bounds.minY
+  ]])
+
+const corners = []
+positions.forEach(p => {
+  corners.push({
+    cx: p.cx,
+    cy: p.cy
+  }
+    // {
+    //   cx: p.left,
+    //   cy: p.top
+    // }, {
+    //   cx: p.right,
+    //   cy: p.top
+    // }, {
+    //   cx: p.right,
+    //   cy: p.bottom
+    // }, {
+    //   cx: p.left,
+    //   cy: p.bottom
+    // }
+  )
+})
+
+let p = v(corners).polygons()
+let pPath = ''
+for (let i = 0; i < p.length; ++i) {
+  pPath += drawCell(p[i]) + ' '
+}
+
+function drawCell (cell) {
+  if (!cell) return ''
+  return 'M' + point(cell[0]) + cell.slice(1).map(x => 'L' + point(x)).join(' ') + 'Z'
+}
 
 module.exports = {
   name: 'app',
@@ -82,10 +132,6 @@ module.exports = {
 
     toggleEdges () {
       this.showEdges = !this.showEdges
-    },
-
-    toggleMST () {
-      this.showMst = !this.showMst
     },
 
     toggleTriangulation () {
@@ -177,6 +223,7 @@ module.exports = {
     })
 
     graph.forEachLink(link => {
+      debugger
       edges.push(new EdgeModel(
         idToRect.get(link.fromId),
         idToRect.get(link.toId),
@@ -197,10 +244,13 @@ module.exports = {
       showTriangulation: false,
       triangulation: [],
 
-      showMst: false,
-      mst: []
+      vor: pPath
     }
   }
+}
+
+function point (a) {
+  return a[0] + ',' + a[1]
 }
 </script>
 
