@@ -1,5 +1,6 @@
 const createLayout = require('ngraph.forcelayout')
 const getBounds = require('./lib/getBounds.js')
+const Rect = require('./lib/rect.js')
 
 module.exports = getInitialLayout
 
@@ -26,14 +27,14 @@ function getInitialLayout (graph) {
     // const side = (5 + x * 2)
     const next = side // roundGrid(side, 5)
 
-    rects.push({
-      cx: roundGrid(pos.x, 5),
-      cy: roundGrid(pos.y, 5),
+    rects.push(new Rect({
+      top: roundGrid(pos.y, 5) - next / 2,
+      left: roundGrid(pos.x, 5) - next / 2,
       width: next,
       height: next,
       id: node.id,
       fontSize: 4
-    })
+    }))
   })
 
   rects.bounds = getBounds(rects)
