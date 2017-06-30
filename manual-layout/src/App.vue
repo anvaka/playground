@@ -8,7 +8,8 @@
         <g v-if='showTriangulation'>
           <path v-for='triangle in triangulation' :d='triangle.getPath()' stroke='rgba(255, 0, 0, 0.2)' fill='transparent'></path>
         </g>
-        <path :d='vor' stroke='rgba(0, 0, 255, 1)' fill='transparent'></path>
+        <!--path :d='vor' stroke='rgba(0, 0, 255, 1)' fill='transparent'></path-->
+        <path :d='del' stroke='rgba(0, 255, 0, 1)' fill='transparent'></path>
 
         <g v-if='showNodes'>
            <!--circle v-for='r in rects'
@@ -54,54 +55,13 @@ const getInitialLayout = require('./getInitialLayout.js')
 // const cityLayout = require('./lib/cityLayout.js')
 const EdgeModel = require('./lib/EdgeModel.js')
 const removeOverlaps = require('./lib/removeOverlaps.js')
-const voronoi = require('d3-voronoi').voronoi
+const computeVoronoiDetails = require('./lib/computeVoronoiDetails.js')
+const findShortestPaths = require('./lib/findShortestPaths')
 
 let graph = miserables
 let immovable = new Set()
-
 let positions = getInitialLayout(graph)
-// positions = cityLayout(graph)
-
-let v = voronoi()
-  .x(r => r.cx)
-  .y(r => r.cy)
-  .extent([[positions.bounds.minX, positions.bounds.minY], [
-    positions.bounds.maxX - positions.bounds.minX,
-    positions.bounds.maxY - positions.bounds.minY
-  ]])
-
-const corners = []
-positions.forEach(p => {
-  corners.push({
-    cx: p.cx,
-    cy: p.cy
-  }
-    // {
-    //   cx: p.left,
-    //   cy: p.top
-    // }, {
-    //   cx: p.right,
-    //   cy: p.top
-    // }, {
-    //   cx: p.right,
-    //   cy: p.bottom
-    // }, {
-    //   cx: p.left,
-    //   cy: p.bottom
-    // }
-  )
-})
-
-let p = v(corners).polygons()
-let pPath = ''
-for (let i = 0; i < p.length; ++i) {
-  pPath += drawCell(p[i]) + ' '
-}
-
-function drawCell (cell) {
-  if (!cell) return ''
-  return 'M' + point(cell[0]) + cell.slice(1).map(x => 'L' + point(x)).join(' ') + 'Z'
-}
+let voronoiDetails = computeVoronoiDetails(positions)
 
 module.exports = {
   name: 'app',
@@ -115,9 +75,19 @@ module.exports = {
         r.highlighted = false
       })
 
+      let voronoiGraph = voronoiDetails.graph
+      let tesselation = voronoiGraph.parentLookup
+
+      let fromTIds = tesselation.get(r.id)
+
+      let allPaths = ''
       graph.forEachLinkedNode(r.id, (other) => {
         this.idToRect.get(other.id).highlighted = true
+        let toTIds = tesselation.get(other.id)
+        let shortestPath = findShortestPaths(voronoiGraph, fromTIds, toTIds)
+        allPaths += ' M' + shortestPath[0] + ' ' + shortestPath.slice(1).join(' L')
       })
+      this.del = allPaths
     },
 
     getPath (edge) {
@@ -223,12 +193,23 @@ module.exports = {
     })
 
     graph.forEachLink(link => {
-      debugger
       edges.push(new EdgeModel(
         idToRect.get(link.fromId),
         idToRect.get(link.toId),
       ))
     })
+
+//    voronoiDetails.graph.forEachNode(n => {
+//      const r = new NodeModel({
+//        id: n.id,
+//        cx: n.data.pos[0],
+//        cy: n.data.pos[1],
+//        width: 2,
+//        height: 2,
+//        fontSize: 1
+//      })
+//      rects.push(r)
+//    })
 
     return {
       idToRect,
@@ -244,13 +225,10 @@ module.exports = {
       showTriangulation: false,
       triangulation: [],
 
-      vor: pPath
+      vor: voronoiDetails.polygonsPath,
+      del: voronoiDetails.delaunayPath
     }
   }
-}
-
-function point (a) {
-  return a[0] + ',' + a[1]
 }
 </script>
 
