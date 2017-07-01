@@ -1,5 +1,23 @@
 const Point = require('./Point.js');
 
+function anyIntersections(segments) {
+  let sortedEndpoints = [];
+  segments.forEach(s => {
+    sortedEndpoints.push({
+      point: s.start,
+      segment: s
+    });
+
+    sortedEndpoints.push({
+      point: s.end,
+      segment: s
+    });
+  });
+
+  sortedEndpoints.sort((a, b) => a.point.x - b.point.x)
+  console.log(sortedEndpoints);
+}
+
 /*
  * checks if interval [a, b] intersects interval [c, d]
  */
@@ -38,6 +56,7 @@ function onSegment(p, q, r) {
     q.y >= Math.min(p.y, r.y)
   );
 }
+
 /**
  * Finds orientation of an ordered triplet.
  * 
@@ -60,5 +79,14 @@ const p1 = new Point(0, 5);
 const q1 = new Point(10, 0);
 const p2 = new Point(1, 1);
 const q2 = new Point(10, 10);
+
+
+anyIntersections([{
+  start: p1,
+  end: q1
+}, {
+  start: p2,
+  end: q2
+}])
 
 console.log(doIntersect(p1, q1, p2, q2));
