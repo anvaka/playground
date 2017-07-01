@@ -3,8 +3,8 @@ class NodeModel {
     this.id = node.id
     this.cx = node.cx
     this.cy = node.cy
-    this.width = node.width
-    this.height = node.height
+    this.width = node.width * 0.5
+    this.height = node.height * 0.5
     this.highlighted = false
     this.selected = false
     this.fontSize = node.fontSize

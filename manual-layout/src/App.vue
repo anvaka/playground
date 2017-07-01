@@ -9,7 +9,7 @@
           <path v-for='triangle in triangulation' :d='triangle.getPath()' stroke='rgba(255, 0, 0, 0.2)' fill='transparent'></path>
         </g>
         <!--path :d='vor' stroke='rgba(0, 0, 255, 1)' fill='transparent'></path-->
-        <path :d='del' stroke='rgba(0, 255, 0, 1)' fill='transparent'></path>
+        <!--path :d='del' stroke='rgba(0, 255, 0, 1)' fill='transparent'></path-->
 
         <g v-if='showNodes'>
            <!--circle v-for='r in rects'
@@ -28,9 +28,9 @@
                 :height='r.height'
                 :fill='getFill(r)'
                 :stroke='getStroke(r)'></rect>
-          <text v-for='r in rects' :x='r.left + 2' :y='r.cy' :font-size='r.fontSize'>
+          <!--text v-for='r in rects' :x='r.left + 2' :y='r.cy' :font-size='r.fontSize'>
           {{r.id}}
-          </text>
+          </text-->
         </g>
       </g>
     </svg>
@@ -49,6 +49,7 @@ const panzoom = require('panzoom')
 const miserables = require('miserables')
 // const anvakaGraph = require('./data/socialGraph.js')
 
+const centrality = require('ngraph.centrality')
 const getScore = require('./getScore.js')
 const NodeModel = require('./NodeModel.js')
 const getInitialLayout = require('./getInitialLayout.js')
@@ -59,9 +60,26 @@ const computeVoronoiDetails = require('./lib/computeVoronoiDetails.js')
 const findShortestPaths = require('./lib/findShortestPaths')
 
 let graph = miserables
+let betweenness = centrality.betweenness(graph)
 let immovable = new Set()
 let positions = getInitialLayout(graph)
 let voronoiDetails = computeVoronoiDetails(positions)
+
+let maxValue = 0
+Object.keys(betweenness).forEach(k => {
+  let v = betweenness[k]
+  if (v > maxValue) maxValue = v
+})
+
+let weights = []
+graph.forEachLink(l => {
+  let fromLinks = graph.getNode(l.fromId).links.length
+  let toLinks = graph.getNode(l.toId).links.length
+  l.weight = betweenness[l.fromId] / fromLinks * betweenness[l.toId] / toLinks
+  weights.push(l.weight)
+})
+
+console.log(weights)
 
 module.exports = {
   name: 'app',
@@ -78,15 +96,21 @@ module.exports = {
       let voronoiGraph = voronoiDetails.graph
       let tesselation = voronoiGraph.parentLookup
 
-      let fromTIds = tesselation.get(r.id)
-
       let allPaths = ''
-      graph.forEachLinkedNode(r.id, (other) => {
-        this.idToRect.get(other.id).highlighted = true
-        let toTIds = tesselation.get(other.id)
+      graph.forEachLink(l => {
+        let fromTIds = tesselation.get(l.fromId)
+        let toTIds = tesselation.get(l.toId)
         let shortestPath = findShortestPaths(voronoiGraph, fromTIds, toTIds)
         allPaths += ' M' + shortestPath[0] + ' ' + shortestPath.slice(1).join(' L')
       })
+
+      // let fromTIds = tesselation.get(r.id)
+      // graph.forEachLinkedNode(r.id, (other) => {
+      //   this.idToRect.get(other.id).highlighted = true
+      //   let toTIds = tesselation.get(other.id)
+      //   let shortestPath = findShortestPaths(voronoiGraph, fromTIds, toTIds)
+      //   allPaths += ' M' + shortestPath[0] + ' ' + shortestPath.slice(1).join(' L')
+      // })
       this.del = allPaths
     },
 
@@ -126,8 +150,10 @@ module.exports = {
     },
 
     getFill (r) {
-      return r.highlighted ? 'rgba(0, 255, 255, 0.2)'
-        : 'rgba(255, 255, 255, 0.2)'
+      let opacity = betweenness[r.id] / maxValue
+      return 'rgba(0, 255, 255, ' + opacity + ')'
+      // return r.highlighted ? 'rgba(0, 255, 255, 0.2)'
+      //   : 'rgba(255, 255, 255, 0.2)'
     },
 
     onMouseDown (e, r) {
@@ -193,10 +219,12 @@ module.exports = {
     })
 
     graph.forEachLink(link => {
-      edges.push(new EdgeModel(
-        idToRect.get(link.fromId),
-        idToRect.get(link.toId),
-      ))
+      if (link.weight >= 0) {
+        edges.push(new EdgeModel(
+          idToRect.get(link.fromId),
+          idToRect.get(link.toId),
+        ))
+      }
     })
 
 //    voronoiDetails.graph.forEachNode(n => {

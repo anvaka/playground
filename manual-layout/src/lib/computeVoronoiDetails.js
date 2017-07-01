@@ -126,28 +126,47 @@ function convertPositionsToVoronoiPoints (positions) {
   let points = []
 
   positions.forEach(p => {
+    let dw = p.width * 0.25
+    let dh = p.height * 0.25
     points.push(
       {
         id: p.id,
         cx: p.cx,
         cy: p.cy
       },
+      // {
+      //   id: p.id,
+      //   cx: p.left,
+      //   cy: p.top
+      // }, {
+      //   id: p.id,
+      //   cx: p.right,
+      //   cy: p.top
+      // }, {
+      //   id: p.id,
+      //   cx: p.right,
+      //   cy: p.bottom
+      // }, {
+      //   id: p.id,
+      //   cx: p.left,
+      //   cy: p.bottom
+      // },
       {
         id: p.id,
-        cx: p.left,
-        cy: p.cy
+        cx: p.left - dw,
+        cy: p.top - dh
       }, {
         id: p.id,
-        cx: p.right,
-        cy: p.cy
+        cx: p.right + dw,
+        cy: p.top - dh
       }, {
         id: p.id,
-        cx: p.cx,
-        cy: p.bottom
+        cx: p.right + dw,
+        cy: p.bottom + dh
       }, {
         id: p.id,
-        cx: p.cx,
-        cy: p.top
+        cx: p.left - dw,
+        cy: p.bottom + dh
       }
     )
   })
