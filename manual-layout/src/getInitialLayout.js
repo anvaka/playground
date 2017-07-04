@@ -39,7 +39,10 @@ function getInitialLayout (graph) {
 
   rects.bounds = getBounds(rects)
 
-  return rects
+  return {
+    positions: rects,
+    layout: layout
+  }
 }
 
 function roundGrid (x, gridStep) {
