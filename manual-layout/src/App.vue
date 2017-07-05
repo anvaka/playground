@@ -19,7 +19,7 @@
                 @mousedown='onMouseDown($event, r)'
        stroke='RGB(218, 97, 97)'
            :cy='r.cy'
-       :r='r.width/1.5'>
+       :r='r.width/2'>
            </circle>
           <!--rect v-for='r in rects'
                 v-if='r.visible'
@@ -68,6 +68,17 @@ let immovable = new Set()
 let layoutInfo = getInitialLayout(graph)
 let positions = layoutInfo.positions
 let layout = layoutInfo.layout
+
+const rects = []
+const idToRect = new Map()
+positions.forEach(pos => {
+  const r = new NodeModel(pos)
+  r.visible = true
+  rects.push(r)
+  idToRect.set(r.id, r)
+})
+for (let i = 0; i < 20; ++i) removeOverlaps(idToRect)
+
 let voronoiDetails = computeVoronoiDetails(positions)
 
 let maxValue = 0
@@ -260,16 +271,7 @@ module.exports = {
   },
 
   data () {
-    const rects = []
-    const idToRect = new Map()
     const edges = []
-
-    positions.forEach(pos => {
-      const r = new NodeModel(pos)
-      r.visible = true
-      rects.push(r)
-      idToRect.set(r.id, r)
-    })
 
     graph.forEachLink(link => {
       edges.push(new EdgeModel(
