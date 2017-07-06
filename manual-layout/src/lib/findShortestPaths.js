@@ -24,7 +24,6 @@ function findShortestPaths (graph, from, to) {
   return points
 
   function findPath (from, to) {
-    let pathLength
     let info = new Map()
     let queue = []
 
