@@ -84,11 +84,11 @@ function getVoronoiGraph (polygons, corners, rectPositions) {
         smallestNodeId.push(toId)
       }
 
-      if (!g.hasLink(fromId, toId)) g.addLink(fromId, toId)
+      if (!g.hasLink(fromId, toId) && fromId !== toId) g.addLink(fromId, toId)
       fromId = toId
     }
 
-    if (!g.hasLink(fromId, start)) g.addLink(fromId, start)
+    if (!g.hasLink(fromId, start) && fromId !== start) g.addLink(fromId, start)
 
     smallestNodeId.forEach(s => {
       nearestEntryPoints.add(s)

@@ -1,41 +1,65 @@
-module.exports = findShortestPaths
+module.exports = shortestPaths
 
-function findShortestPaths (graph, from, to) {
-  let minLength = Number.POSITIVE_INFINITY
-  let minPath
+function shortestPaths (graph) {
+  let searchStateMemory = new Map()
 
-  from.forEach(src => {
-    to.forEach(dst => {
-      let p = findPath(src, dst)
-      if (p.distance < minLength) {
-        minLength = p.distance
-        minPath = p
-      }
+  return findShortestPaths
+
+  function findShortestPaths(from, to) {
+    let minLength = Number.POSITIVE_INFINITY
+    let minPath
+
+    from.forEach(src => {
+      to.forEach(dst => {
+        if (src === dst) return
+
+        let p = findPath(src, dst)
+        if (p.distance < minLength) {
+          minLength = p.distance
+          minPath = p
+        }
+      })
     })
-  })
 
-  let p = minPath
-  let points = []
-  while (p) {
-    points.push(p.id)
-    p = p.prev
+    let p = minPath
+    let points = []
+    while (p) {
+      points.push(p.id)
+      p = p.prev
+    }
+
+    return points
   }
 
-  return points
-
   function findPath (from, to) {
-    let info = new Map()
-    let queue = []
+    let searchState = searchStateMemory.get(from)
+    if (!searchState) {
+      let q = []
+      let i = new Map() 
 
-    graph.forEachNode(n => {
-      let queueItem = {
-        id: n.id,
-        distance: n.id === from ? 0 : Number.POSITIVE_INFINITY,
-        prev: undefined
+      graph.forEachNode(n => {
+        let queueItem = {
+          id: n.id,
+          distance: n.id === from ? 0 : Number.POSITIVE_INFINITY,
+          prev: undefined
+        }
+        i.set(n.id, queueItem)
+        q.push(queueItem)
+      })
+
+      searchState = {
+        info: i,
+        queue: q
       }
-      info.set(n.id, queueItem)
-      queue.push(queueItem)
-    })
+
+      searchStateMemory.set(from, searchState)
+    }
+
+    let info = searchState.info
+    let queue = searchState.queue
+    let lastResult = info.get(to)
+
+    if (lastResult && lastResult.prev) return lastResult
 
     let needSort = true
     while (queue.length) {
@@ -67,15 +91,15 @@ function findShortestPaths (graph, from, to) {
       })
     }
   }
+}
 
-  function length (a, b) {
-    let aPos = a.data.pos
-    let bPos = b.data.pos
-    let dx = aPos[0] - bPos[0]
-    let dy = aPos[1] - bPos[1]
+function length (a, b) {
+  let aPos = a.data.pos
+  let bPos = b.data.pos
+  let dx = aPos[0] - bPos[0]
+  let dy = aPos[1] - bPos[1]
 
-    return dx * dx + dy * dy
-  }
+  return dx * dx + dy * dy
 }
 
 function desc (a, b) {

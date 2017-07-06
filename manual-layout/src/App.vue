@@ -13,13 +13,13 @@
 
         <g v-if='showNodes'>
            <circle v-for='r in rects'
+                :key='r.id'
                 v-if='r.visible'
-           :cx='r.cx'
-            fill='RGB(218, 97, 97)'
+                :cx='r.cx'
+                fill='RGB(218, 97, 97)'
+                stroke='RGB(218, 97, 97)'
                 @mousedown='onMouseDown($event, r)'
-       stroke='RGB(218, 97, 97)'
-           :cy='r.cy'
-       :r='r.width/2'>
+                :cy='r.cy' :r='r.width/2'>
            </circle>
           <!--rect v-for='r in rects'
                 v-if='r.visible'
@@ -49,7 +49,7 @@
 <script>
 const panzoom = require('panzoom')
 const miserables = require('miserables')
-// const anvakaGraph = require('./data/socialGraph.js')
+const anvakaGraph = require('./data/socialGraph.js')
 
 const centrality = require('ngraph.centrality')
 const pagerank = require('ngraph.pagerank')
@@ -60,10 +60,11 @@ const getInitialLayout = require('./getInitialLayout.js')
 const EdgeModel = require('./lib/EdgeModel.js')
 const removeOverlaps = require('./lib/removeOverlaps.js')
 const computeVoronoiDetails = require('./lib/computeVoronoiDetails.js')
-const findShortestPaths = require('./lib/findShortestPaths')
+const shortestPath = require('./lib/findShortestPaths.js')
 
 let graph = miserables
 let rank = pagerank(graph)
+
 let immovable = new Set()
 let layoutInfo = getInitialLayout(graph)
 let positions = layoutInfo.positions
@@ -84,12 +85,17 @@ let voronoiDetails = computeVoronoiDetails(positions)
 let maxValue = 0
 
 let flatLinks = []
+let minLinkWeight = Number.POSITIVE_INFINITY
+let maxLinkWeight = Number.NEGATIVE_INFINITY
+
 graph.forEachLink(l => {
   let fromRank = rank[l.fromId]
   let toRank = rank[l.toId]
-  l.data = {
-    weight: fromRank + toRank
-  }
+  let weight = fromRank + toRank
+  if (weight < minLinkWeight) minLinkWeight = weight
+  if (weight > maxLinkWeight) maxLinkWeight = weight
+
+  l.data = { weight }
   flatLinks.push(l)
 })
 
@@ -99,23 +105,30 @@ flatLinks.sort((a, b) => {
 
 let flatNodes = []
 
+let minNodeWeight = Number.POSITIVE_INFINITY
+let maxNodeWeight = Number.NEGATIVE_INFINITY
 graph.forEachNode(n => {
   n.rank = rank[n.id]
+  if (n.rank < minNodeWeight) minNodeWeight = n.rank
+  if (n.rank > maxNodeWeight) maxNodeWeight = n.rank
   flatNodes.push(n)
 })
 
 flatNodes.sort((a, b) => b.rank - a.rank)
 
 let voronoiGraph = voronoiDetails.graph
+let findShortestPaths = shortestPath(voronoiGraph)
 let tesselation = voronoiGraph.parentLookup
 let voronoiLinks = new Map() // linkId => link shortest path on voronoi tesslation
 
+console.time('Shortest paths')
 graph.forEachLink(l => {
   let fromTIds = tesselation.get(l.fromId)
   let toTIds = tesselation.get(l.toId)
-  let shortestPath = findShortestPaths(voronoiGraph, fromTIds, toTIds)
+  let shortestPath = findShortestPaths(fromTIds, toTIds)
   voronoiLinks.set(getLinkId(l), shortestPath)
 })
+console.timeEnd('Shortest paths')
 
 function getLinkId (l) {
   return '' + l.fromId + ';' + l.toId
@@ -152,18 +165,31 @@ module.exports = {
       let linksCount = flatLinks.length
       let sliceSize = Math.min(Math.round(linksCount * zoomLevel / 4), linksCount)
 
+      let z = zoomLevel
+      if (zoomLevel < 1) {
+        z = -1/zoomLevel
+      }
+      z = Math.min(Math.max(-4, z), 4)
+      let visibleBin = 10 - Math.round(10 * (z + 4)/8)
+
       let edges = []
       let paths = []
+      let binsCount = 10
       let bandsCount = 4
       let bandSize = Math.floor(linksCount / bandsCount)
-      for (let i = 0; i < sliceSize; ++i) {
+      for (let i = 0; i < linksCount; ++i) {
         let l = flatLinks[i]
         let linkBand = Math.floor(i / bandSize)
-        paths.push({
-          d: getLinkPath(l),
-          width: 1.5 / Math.pow(2, linkBand)
-        })
+        let linkBin = Math.round(10 * (l.data.weight - minLinkWeight)/(maxLinkWeight - minLinkWeight))
+
+        if (linkBin >= visibleBin) {
+          paths.push({
+            d: getLinkPath(l),
+            width: 1.5 / Math.pow(2, linkBand)
+          })
+        }
       }
+
       this.voronoiPaths = paths
 
       let nodeCount = flatNodes.length
@@ -171,7 +197,10 @@ module.exports = {
       let lastVisibleRank = flatNodes[nodeSliceSize - 1].rank
       for (let i = 0; i < this.rects.length; ++i) {
         let r = this.rects[i]
-        r.visible = graph.getNode(r.id).rank >= lastVisibleRank
+        let nodeRank = graph.getNode(r.id).rank
+        let nodeBin = Math.round(10 * (nodeRank - minNodeWeight)/(maxNodeWeight - minNodeWeight))
+        // r.visible = nodeRank >= lastVisibleRank
+        r.visible = nodeBin >= visibleBin
       }
     },
 
