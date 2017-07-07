@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "ngraph.coarsen": "^1.2.0",
+    "ngraph.forcelayout": "^0.2.1",
+    "ngraph.graph": "0.0.12",
+    "ngraph.louvain": "^1.0.1",
+    "ngraph.random": "0.0.1"
+  }
+}
