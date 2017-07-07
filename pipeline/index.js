@@ -1,8 +1,10 @@
+const path = require('path');
 let pipeline = require('./lib/pipeline');
-let readGraph = require('./lib/steps/readGraph.js');
+let readJsonGraph = require('./lib/steps/readJsonGraph.js');
 let runLayout = require('./lib/steps/runLayout.js');
 let getLayoutDimensions = require('./lib/steps/getLayoutDimensions.js');
 let detectClusters = require('./lib/steps/detectClusters.js');
+let readRedditGraph = require('./lib/steps/readRedditGraph.js');
 
 const graphFileName = process.argv[2] || __dirname + '/../manual-layout/src/data/anvaka.json';
 
@@ -18,16 +20,16 @@ let layout = pipeline([
 ])
 
 pipeline([
-  readGraph,
-  layout,
-  // printStats,
-  detectClusters,
-  fanoutClusters,
+//  readRedditGraph,
+  readJsonGraph,
+  // layout,
+  printStats,
+  // detectClusters,
   // printClusterContext
-  // layoutGraphs,
-  // printSizes
+  // fanoutClusters,
 ])({
-  fileName: graphFileName
+  fileName: graphFileName,
+  redditFileName: path.join(__dirname, '..', 'collect-reddit', 'abouts.json')
 })
 
 function fanoutClusters(ctx) {
@@ -46,15 +48,16 @@ function fanoutClusters(ctx) {
 
 function printClusterContext(ctx) {
   console.log('Detected clusters #', ctx.clusterGraphs.length)
+  console.log('cluster_id, node_count, links_count');
   ctx.clusterGraphs.forEach((g, idx) => {
-    console.log('Cluster ' + idx + '. Nodes count: ' + g.getNodesCount() + '; Links count: ' + g.getLinksCount());
+    console.log([idx, g.getNodesCount(), g.getLinksCount()].join(','));
   });
 }
 
 function printStats(ctx) {
   const graph = ctx.graph;
   console.log('Links count:', graph.getLinksCount() + '; Nodes count: ' + graph.getNodesCount());
-  return graph
+  return ctx
 }
 
 function printLayoutDimensions(info) {
