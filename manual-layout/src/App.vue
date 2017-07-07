@@ -62,7 +62,7 @@ const removeOverlaps = require('./lib/removeOverlaps.js')
 const computeVoronoiDetails = require('./lib/computeVoronoiDetails.js')
 const shortestPath = require('./lib/findShortestPaths.js')
 
-let graph = miserables
+let graph = anvakaGraph; //miserables
 let rank = pagerank(graph)
 
 let immovable = new Set()
@@ -91,7 +91,7 @@ let maxLinkWeight = Number.NEGATIVE_INFINITY
 graph.forEachLink(l => {
   let fromRank = rank[l.fromId]
   let toRank = rank[l.toId]
-  let weight = fromRank + toRank
+  let weight = (fromRank + toRank)/2
   if (weight < minLinkWeight) minLinkWeight = weight
   if (weight > maxLinkWeight) maxLinkWeight = weight
 
@@ -134,17 +134,37 @@ function getLinkId (l) {
   return '' + l.fromId + ';' + l.toId
 }
 
-function getLinkPath (l) {
+function getLinkPath (l, topLeft, bottomRight) {
   const linkId = getLinkId(l)
   const shortestPath = voronoiLinks.get(linkId)
   if (shortestPath) {
     let start = layout.getNodePosition(l.fromId)
     let end = layout.getNodePosition(l.toId)
-    return 'M' + end.x + ',' + end.y + ' ' + shortestPath.slice(0).join(' L') +
-      'L' + start.x + ',' + start.y
+    let points = shortestPath.map(p => {
+      let pair = p.split(',')
+      return {
+        x: pair[0],
+        y: pair[1]
+      }
+    })
+
+    points.unshift(end);
+    points.push(start);
+
+    let newPaths = points.filter(insideRect)
+    if (newPaths.length > 1) {
+      return 'M' + newPaths[0].x + ',' + newPaths[0].y + ' ' +
+          points.slice(1).map(p => ' L' + p.x + ',' + p.y)
+    }
   }
+
   return ''
+
+  function insideRect(p) {
+    return p.x >= topLeft.x && p.x <= bottomRight.x && p.y >= topLeft.y && p.y <= bottomRight.y
+  }
 }
+
 console.log('done')
 
 module.exports = {
@@ -154,14 +174,23 @@ module.exports = {
       zoomSpeed: 0.008
     })
 
-    this.$refs.scene.addEventListener('zoom', e => {
+    let scene = this.$refs.scene
+    let topLeft = scene.ownerSVGElement.createSVGPoint()
+    let bottomRight = scene.ownerSVGElement.createSVGPoint()
+
+    scene.addEventListener('zoom', e => {
       let t = pz.getTransform().scale
-      this.updateVisibleEdges(t)
+      topLeft.x = 0;
+      topLeft.y = 0;
+      bottomRight.x = window.innerWidth
+      bottomRight.y = window.innerHeight
+      let inv = scene.getScreenCTM().inverse();
+      this.updateVisibleEdges(t, topLeft.matrixTransform(inv), bottomRight.matrixTransform(inv))
     })
   },
 
   methods: {
-    updateVisibleEdges (zoomLevel) {
+    updateVisibleEdges (zoomLevel, topLeft, bottomRight) {
       let linksCount = flatLinks.length
       let sliceSize = Math.min(Math.round(linksCount * zoomLevel / 4), linksCount)
 
@@ -183,10 +212,13 @@ module.exports = {
         let linkBin = Math.round(10 * (l.data.weight - minLinkWeight)/(maxLinkWeight - minLinkWeight))
 
         if (linkBin >= visibleBin) {
-          paths.push({
-            d: getLinkPath(l),
-            width: 1.5 / Math.pow(2, linkBand)
-          })
+          let d = getLinkPath(l, topLeft, bottomRight);
+          if (d) {
+            paths.push({
+              d,
+              width: 1.5 / Math.pow(2, linkBand)
+            })
+          }
         }
       }
 
@@ -200,7 +232,9 @@ module.exports = {
         let nodeRank = graph.getNode(r.id).rank
         let nodeBin = Math.round(10 * (nodeRank - minNodeWeight)/(maxNodeWeight - minNodeWeight))
         // r.visible = nodeRank >= lastVisibleRank
-        r.visible = nodeBin >= visibleBin
+        r.visible = (nodeBin >= visibleBin) && (
+          r.cx >= topLeft.x && r.cx <= bottomRight.x && r.cy >= topLeft.y && r.cy <= bottomRight.y
+        )
       }
     },
 
