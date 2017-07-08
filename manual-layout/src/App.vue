@@ -12,14 +12,14 @@
         <path v-for='p in voronoiPaths' :d='p.d' :stroke-width='p.width' stroke='RGB(234, 183, 114)' fill='transparent'></path>
 
         <g v-if='showNodes'>
-           <circle v-for='r in rects'
+           <!--circle v-for='r in rects'
                 :key='r.id'
                 v-if='r.visible'
                 :cx='r.cx'
                 fill='RGB(218, 97, 97)'
                 stroke='RGB(218, 97, 97)'
                 @mousedown='onMouseDown($event, r)'
-                :cy='r.cy' :r='r.width/2'>
+                :cy='r.cy' :r='r.width/4'-->
            </circle>
           <!--rect v-for='r in rects'
                 v-if='r.visible'
@@ -140,10 +140,10 @@ function getLinkPath (l, topLeft, bottomRight) {
     points.unshift(end);
     points.push(start);
 
-    let newPaths = points.filter(insideRect)
+    let newPaths = points; //points.filter(insideRect)
     if (newPaths.length > 1) {
       return 'M' + newPaths[0].x + ',' + newPaths[0].y + ' ' +
-          points.slice(1).map(p => ' L' + p.x + ',' + p.y)
+          newPaths.slice(1).map(p => ' L' + p.x + ',' + p.y)
     }
   }
 
@@ -200,7 +200,7 @@ module.exports = {
         let linkBand = Math.floor(i / bandSize)
         let linkBin = Math.round(10 * (l.data.weight - minLinkWeight)/(maxLinkWeight - minLinkWeight))
 
-        if (linkBin >= visibleBin) {
+        // if (linkBin >= visibleBin) {
           let d = getLinkPath(l, topLeft, bottomRight);
           if (d) {
             paths.push({
@@ -208,9 +208,8 @@ module.exports = {
               width: 1.5 / Math.pow(2, linkBand)
             })
           }
-        }
+        // }
       }
-
       this.voronoiPaths = paths
 
       let nodeCount = flatNodes.length
@@ -221,9 +220,10 @@ module.exports = {
         let nodeRank = graph.getNode(r.id).rank
         let nodeBin = Math.round(10 * (nodeRank - minNodeWeight)/(maxNodeWeight - minNodeWeight))
         // r.visible = nodeRank >= lastVisibleRank
-        r.visible = (nodeBin >= visibleBin) && (
-          r.cx >= topLeft.x && r.cx <= bottomRight.x && r.cy >= topLeft.y && r.cy <= bottomRight.y
-        )
+        r.visible = true
+          // (nodeBin >= visibleBin) && (
+          // r.cx >= topLeft.x && r.cx <= bottomRight.x && r.cy >= topLeft.y && r.cy <= bottomRight.y
+        // )
       }
     },
 
