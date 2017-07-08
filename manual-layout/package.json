@@ -13,6 +13,7 @@
     "lint": "eslint --ext .js,.vue src test/unit/specs"
   },
   "dependencies": {
+    "@tyriar/fibonacci-heap": "^1.0.10",
     "d3-voronoi": "^1.1.2",
     "delaunay-fast": "^1.0.1",
     "miserables": "^1.0.0",

@@ -41,6 +41,11 @@ function shortestPaths (graph) {
 
       graph.forEachNode(n => {
         let distance = n.id === from ? 0 : Number.POSITIVE_INFINITY
+        // let queueItem = {
+        //   id: n.id,
+        //   prev: undefined
+        // }
+        // q.push(queueItem)
         let node = fh.insert(distance, n.id)
         node.prevPath = undefined
 
@@ -79,8 +84,11 @@ function shortestPaths (graph) {
         let distance = srcInfo.key + length(graph.getNode(nodeId), otherNode)
         let otherInfo = info.get(otherNode.id)
         if (distance < otherInfo.key) {
+          // otherInfo.distance = distance
           otherInfo.prevPath = srcInfo
           heap.decreaseKey(otherInfo, distance);
+
+          // needSort = true
         }
       })
     }

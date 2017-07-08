@@ -60,9 +60,9 @@ const getInitialLayout = require('./getInitialLayout.js')
 const EdgeModel = require('./lib/EdgeModel.js')
 const removeOverlaps = require('./lib/removeOverlaps.js')
 const computeVoronoiDetails = require('./lib/computeVoronoiDetails.js')
-const shortestPath = require('./lib/findShortestPaths.js')
+const getVoronoiPath = require('./lib/voronoiPaths.js');
 
-let graph = anvakaGraph; //miserables
+let graph = miserables
 let rank = pagerank(graph)
 
 let immovable = new Set()
@@ -117,18 +117,7 @@ graph.forEachNode(n => {
 flatNodes.sort((a, b) => b.rank - a.rank)
 
 let voronoiGraph = voronoiDetails.graph
-let findShortestPaths = shortestPath(voronoiGraph)
-let tesselation = voronoiGraph.parentLookup
-let voronoiLinks = new Map() // linkId => link shortest path on voronoi tesslation
-
-console.time('Shortest paths')
-graph.forEachLink(l => {
-  let fromTIds = tesselation.get(l.fromId)
-  let toTIds = tesselation.get(l.toId)
-  let shortestPath = findShortestPaths(fromTIds, toTIds)
-  voronoiLinks.set(getLinkId(l), shortestPath)
-})
-console.timeEnd('Shortest paths')
+let voronoiLinks = getVoronoiPath(voronoiGraph, graph)
 
 function getLinkId (l) {
   return '' + l.fromId + ';' + l.toId
