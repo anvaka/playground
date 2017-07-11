@@ -5,11 +5,11 @@
         <path v-for='edge in edges' :d='getPath(edge)' stroke='rgba(234, 183, 114, 0.5)'></path>
         <circle v-for='r in nodes'
             :key='r.id'
-            :cx='r.cx'
+            :cx='r.x'
             fill='RGB(218, 97, 97)'
             stroke='RGB(218, 97, 97)'
             @mousedown='onMouseDown($event, r)'
-            :cy='r.cy' :r='1.5'>
+            :cy='r.y' :r='r.r'>
         </circle>
       </g>
     </svg>
@@ -45,12 +45,15 @@ export default {
 
   methods: {
     getPath (edge) {
-      return `M${edge.from.cx},${edge.from.cy} L${edge.to.cx},${edge.to.cy}`
+      return `M${edge.from.x},${edge.from.y} L${edge.to.x},${edge.to.y}`
     },
 
     onMouseDown (e, n) {
       e.preventDefault()
       e.stopPropagation()
+      layoutInfo.tighten(n.id);
+      this.nodes = layoutInfo.positions
+      this.edges = layoutInfo.edges
     }
   }
 }

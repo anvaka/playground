@@ -26,5 +26,26 @@ data.nodes.forEach(n => {
 })
 
 data.links.forEach(l => {
-  graph.addLink(l.fromId, l.toId)
+  if (!graph.hasLink(l.fromId, l.toId) &&
+    !graph.hasLink(l.toId, l.fromId)) {
+    graph.addLink(l.fromId, l.toId)
+  }
 })
+
+graph.addNode('anvaka', {
+  x: 0,
+  y: 0
+})
+
+graph.addNode('anvaka1', {
+  x: 45,
+  y: 45
+})
+
+graph.addNode('anvaka2', {
+  x: 10,
+  y: 80
+})
+
+graph.addLink('anvaka', 'anvaka1')
+graph.addLink('anvaka', 'anvaka2')
