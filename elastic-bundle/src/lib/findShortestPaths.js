@@ -12,30 +12,18 @@ function shortestPaths (graph) {
 
   return findShortestPaths
 
-  function findShortestPaths(from, to) {
-    let minLength = Number.POSITIVE_INFINITY
-    let minPath
+  function findShortestPaths(src, dst) {
+    if (src === dst) return
 
-    from.forEach(src => {
-      to.forEach(dst => {
-        if (src === dst) return
-
-        let p = findPath(src, dst)
-        if (p.key < minLength) {
-          minLength = p.distance
-          minPath = p
-        }
-      })
-    })
-
+    let minPath = findPath(src, dst)
     let p = minPath
     let points = []
     while (p) {
-      points.push(p.value)
-      let from = p
+      points.push(graph.getNode(p.value).data)
+      // let from = p
       p = p.prevPath
-      let to = p
-      rememberEdge(from, to);
+      // let to = p
+      // rememberEdge(from, to);
     }
 
     return points
@@ -128,10 +116,10 @@ function shortestPaths (graph) {
 }
 
 function length (a, b) {
-  let aPos = a.data.pos
-  let bPos = b.data.pos
-  let dx = aPos[0] - bPos[0]
-  let dy = aPos[1] - bPos[1]
+  let aPos = a.data
+  let bPos = b.data
+  let dx = aPos.x - bPos.x
+  let dy = aPos.y - bPos.y
 
   return dx * dx + dy * dy
 }

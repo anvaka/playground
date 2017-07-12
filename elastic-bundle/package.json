@@ -10,6 +10,9 @@
     "build": "node build/build.js"
   },
   "dependencies": {
+    "@tyriar/fibonacci-heap": "^1.0.10",
+    "d3-voronoi": "^1.1.2",
+    "delaunay-fast": "^1.0.1",
     "ngraph.graph": "0.0.12",
     "panzoom": "^2.5.0",
     "vue": "^2.3.3"

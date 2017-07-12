@@ -2,7 +2,11 @@
   <div id="app">
     <svg>
       <g ref='scene'>
-        <path v-for='edge in edges' :d='getPath(edge)' stroke='rgba(234, 183, 114, 0.5)'></path>
+        <path v-for='edge in edges' :d='getPath(edge)' stroke='rgba(130, 140, 130, 0.1)'
+       :stroke-width='0.1'
+        ></path>
+
+        <path v-for='p in paths' :d='p' stroke='rgba(234, 183, 114, 0.5)' :stroke-width='0.4' fill=transparent></path>
         <circle v-for='r in nodes'
             :key='r.id'
             :cx='r.x'
@@ -13,14 +17,58 @@
         </circle>
       </g>
     </svg>
+  <div class='actions'>
+    <button @click.prevent='tightenAll'>Tighten all edges</button>
+  </div>
   </div>
 </template>
 
 <script>
 const panzoom = require('panzoom')
-const airlines = require('./data/airlinesGraph.js')
-let graph = airlines;
-let layoutInfo = require('./lib/getAirlinesLayout.js')(graph);
+const getGraph = require('./data/airlinesGraph.js')
+let bundledGraph = getGraph();
+let graph = getGraph();
+// let layoutInfo = require('./lib/getAirlinesLayout.js')(bundledGraph);
+let layoutInfo = require('./lib/getTriangulated.js')(bundledGraph);
+const shortestPath = require('./lib/findShortestPaths.js')
+bundledGraph = layoutInfo.graph;
+// graph = layoutInfo.graph;
+
+// for (var i = 0; i < 1; ++i) {
+//   bundledGraph.forEachNode(node => {
+//     layoutInfo.tighten(node.id);
+//   })
+// }
+
+let nodes = [];
+let edges = [];
+let paths = [];
+graph.forEachNode(node => {
+  let pos = layoutInfo.getNodePosition(node.id)
+  nodes.push({
+    x: pos.x,
+    y: pos.y,
+    r: 1,
+    id: node.id
+  })
+})
+
+
+let findShortestPaths = shortestPath(bundledGraph)
+
+graph.forEachLink(l => {
+  let from = layoutInfo.getNodePosition(l.fromId);
+  let to = layoutInfo.getNodePosition(l.toId);
+  edges.push({ from, to, weight: 1 })
+  let shortestPath = findShortestPaths(l.fromId, l.toId)
+  if (shortestPath) {
+    let path = 'M' + point(shortestPath[0]) + shortestPath.slice(1).map(p => 'L' + point(p))
+    paths.push(path);
+  }
+})
+function point(p) {
+  return p.x + ',' + p.y
+}
 
 export default {
   name: 'app',
@@ -33,19 +81,31 @@ export default {
   },
 
   data () {
-    const edges = layoutInfo.edges
-    const nodes = layoutInfo.positions
-
+    // const edges = layoutInfo.edges
+    // const nodes = layoutInfo.positions
+    //
 
     return {
-      edges,
+      paths,
       nodes,
+      edges,
     }
   },
 
   methods: {
     getPath (edge) {
       return `M${edge.from.x},${edge.from.y} L${edge.to.x},${edge.to.y}`
+    },
+    tightenAll() {
+      graph.forEachNode(node => {
+        layoutInfo.tighten(node.id);
+      })
+      this.nodes = layoutInfo.positions
+      this.edges = layoutInfo.edges
+    },
+    getEdgeWeight(e) {
+      let weightRatio = layoutInfo.getWeight(e)
+      return 0.1 + 3 * weightRatio;
     },
 
     onMouseDown (e, n) {
@@ -82,5 +142,10 @@ body {
   overflow: hidden;
   padding: 0;
   margin: 0;
+}
+.actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
 }
 </style>

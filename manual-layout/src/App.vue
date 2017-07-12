@@ -3,7 +3,7 @@
     <svg>
       <g :transform='center()' ref='scene'>
         <g v-if='showEdges'>
-          <path v-for='edge in edges' :d='getPath(edge)' stroke='rgba(0, 0, 0, 0.2)'></path>
+          <path v-for='edge in edges' :d='getPath(edge)' stroke='rgba(234, 183, 114, 0.5)'></path>
         </g>
         <g v-if='showTriangulation'>
           <path v-for='triangle in triangulation' :d='triangle.getPath()' stroke='rgba(255, 0, 0, 0.2)' fill='transparent'></path>
@@ -12,14 +12,14 @@
         <path v-for='p in voronoiPaths' :d='p.d' :stroke-width='p.width' stroke='RGB(234, 183, 114)' fill='transparent'></path>
 
         <g v-if='showNodes'>
-           <!--circle v-for='r in rects'
+           <circle v-for='r in rects'
                 :key='r.id'
                 v-if='r.visible'
                 :cx='r.cx'
                 fill='RGB(218, 97, 97)'
                 stroke='RGB(218, 97, 97)'
                 @mousedown='onMouseDown($event, r)'
-                :cy='r.cy' :r='r.width/4'-->
+                :cy='r.cy' :r='r.width/4'>
            </circle>
           <!--rect v-for='r in rects'
                 v-if='r.visible'
@@ -50,23 +50,33 @@
 const panzoom = require('panzoom')
 const miserables = require('miserables')
 const anvakaGraph = require('./data/socialGraph.js')
+const airlines = require('./data/airlinesGraph.js')
 
 const centrality = require('ngraph.centrality')
 const pagerank = require('ngraph.pagerank')
 const getScore = require('./getScore.js')
 const NodeModel = require('./NodeModel.js')
-const getInitialLayout = require('./getInitialLayout.js')
 // const cityLayout = require('./lib/cityLayout.js')
 const EdgeModel = require('./lib/EdgeModel.js')
 const removeOverlaps = require('./lib/removeOverlaps.js')
 const computeVoronoiDetails = require('./lib/computeVoronoiDetails.js')
 const getVoronoiPath = require('./lib/voronoiPaths.js');
+const smoothPath = require('./lib/smoothPath.js');
 
-let graph = miserables
+let useAirlines = true;
+let graph = airlines; //  miserables
+let layoutInfo
+
+if (useAirlines) {
+  graph = airlines
+  layoutInfo = require('./lib/getAirlinesLayout.js')(graph);
+} else {
+  const getInitialLayout = require('./getInitialLayout.js')
+  layoutInfo = getInitialLayout(graph)
+}
+
 let rank = pagerank(graph)
-
 let immovable = new Set()
-let layoutInfo = getInitialLayout(graph)
 let positions = layoutInfo.positions
 let layout = layoutInfo.layout
 
@@ -117,7 +127,7 @@ graph.forEachNode(n => {
 flatNodes.sort((a, b) => b.rank - a.rank)
 
 let voronoiGraph = voronoiDetails.graph
-let voronoiLinks = getVoronoiPath(voronoiGraph, graph)
+let voronoiLinks = new Map() // getVoronoiPath(voronoiGraph, graph)
 
 function getLinkId (l) {
   return '' + l.fromId + ';' + l.toId
@@ -140,10 +150,15 @@ function getLinkPath (l, topLeft, bottomRight) {
     points.unshift(end);
     points.push(start);
 
-    let newPaths = points; //points.filter(insideRect)
+    let newPaths = points.map(p => ({
+      x: Number.parseFloat(p.x),
+      y: Number.parseFloat(p.y)
+    })); //points.filter(insideRect)
+
     if (newPaths.length > 1) {
-      return 'M' + newPaths[0].x + ',' + newPaths[0].y + ' ' +
-          newPaths.slice(1).map(p => ' L' + p.x + ',' + p.y)
+      return smoothPath(newPaths);
+      // return 'M' + newPaths[0].x + ',' + newPaths[0].y + ' ' +
+      //     newPaths.slice(1).map(p => ' L' + p.x + ',' + p.y)
     }
   }
 
