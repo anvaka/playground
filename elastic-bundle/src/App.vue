@@ -2,11 +2,11 @@
   <div id="app">
     <svg>
       <g ref='scene'>
-        <path v-for='edge in edges' :d='getPath(edge)' stroke='rgba(130, 140, 130, 0.1)'
+        <path v-for='edge in edges' :d='getPath(edge)' stroke='rgba(80, 0, 30, 0.3)'
        :stroke-width='0.1'
         ></path>
 
-        <path v-for='p in paths' :d='p' stroke='rgba(234, 183, 114, 0.5)' :stroke-width='0.4' fill=transparent></path>
+        <path v-for='p in paths' :d='p' stroke='rgba(90, 90, 90, 0.1)' :stroke-width='0.4' fill=transparent></path>
         <circle v-for='r in nodes'
             :key='r.id'
             :cx='r.x'
@@ -28,10 +28,9 @@ const panzoom = require('panzoom')
 const getGraph = require('./data/airlinesGraph.js')
 let bundledGraph = getGraph();
 let graph = getGraph();
-// let layoutInfo = require('./lib/getAirlinesLayout.js')(bundledGraph);
-let layoutInfo = require('./lib/getTriangulated.js')(bundledGraph);
+let layoutInfo = require('./lib/getAirlinesLayout.js')(bundledGraph);
 const shortestPath = require('./lib/findShortestPaths.js')
-bundledGraph = layoutInfo.graph;
+// bundledGraph = layoutInfo.graph;
 // graph = layoutInfo.graph;
 
 // for (var i = 0; i < 1; ++i) {
@@ -60,11 +59,14 @@ graph.forEachLink(l => {
   let from = layoutInfo.getNodePosition(l.fromId);
   let to = layoutInfo.getNodePosition(l.toId);
   edges.push({ from, to, weight: 1 })
-  let shortestPath = findShortestPaths(l.fromId, l.toId)
-  if (shortestPath) {
-    let path = 'M' + point(shortestPath[0]) + shortestPath.slice(1).map(p => 'L' + point(p))
-    paths.push(path);
-  }
+
+  let path = 'M' + point(from) + 'L' + point(to)
+  paths.push(path);
+  // let shortestPath = findShortestPaths(l.fromId, l.toId)
+  // if (shortestPath) {
+  //   let path = 'M' + point(shortestPath[0]) + shortestPath.slice(1).map(p => 'L' + point(p))
+  //   paths.push(path);
+  // }
 })
 function point(p) {
   return p.x + ',' + p.y
