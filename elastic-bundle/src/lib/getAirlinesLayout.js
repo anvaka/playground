@@ -27,13 +27,11 @@ function getAirlinesLayout(graph) {
     idToPos = new Map();
 
     graph.forEachNode(node => {
-      const side = 5
-      const next = side
       const pos = {
-        x: roundGrid(node.data.x, 5) - next / 2,
-        y: roundGrid(node.data.y, 5) - next / 2,
+        x: node.data.x,
+        y: node.data.y,
         id: node.id,
-        r: node.data.r || 1.5
+        r: node.data.r || 1
       }
       idToPos.set(node.id, pos);
       positions.push(pos)
@@ -154,12 +152,6 @@ function getAirlinesLayout(graph) {
     } while(true);
   }
 
-  function normalizeAngle(angle) {
-    if (angle < 0) {
-      return 360 + angle
-    }
-    return angle
-  }
 
   function getLength(from, to) {
     let dy = to.y - from.y;
@@ -182,11 +174,28 @@ function getMinMaxSequence(angles, maxAngle) {
   if (angles.length < 1) return; // no angles - no sequence
   let twoRounds = []
   let i = 0;
+  let lastAngle
   for (i = 0; i < angles.length; ++i) {
-    let angle = angles[i].angle
-    twoRounds[i] = angle
-    twoRounds[angles.length + i] = 360 + angle
+    lastAngle = angles[i].angle
+    twoRounds.push(lastAngle)
   }
+
+  let stopAt = normalizeAngle(lastAngle + maxAngle);
+
+  // add partial second round
+  for (i = 0; i < angles.length ; ++i) {
+    lastAngle = angles[i].angle
+
+    if (lastAngle > stopAt) {
+      // we partially extend the array to make sure we are not missing
+      // cones at the start/end
+      break;
+    }
+
+    lastAngle = angles[i].angle + 360
+    twoRounds.push(lastAngle);
+  }
+
 
   let runningSum = 0;
   let currentSequenceStart = 0;
@@ -217,5 +226,13 @@ function getMinMaxSequence(angles, maxAngle) {
 }
 
 function roundGrid (x, gridStep) {
-  return Math.round(x / gridStep) * gridStep
+  return x;
+  // return Math.round(x / gridStep) * gridStep
+}
+
+function normalizeAngle(angle) {
+  if (angle < 0) {
+    return 360 + angle
+  }
+  return angle
 }
