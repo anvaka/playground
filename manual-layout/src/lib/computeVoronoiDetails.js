@@ -51,7 +51,6 @@ function getVoronoiGraph (polygons, corners, rectPositions) {
     let start = fromId
 
     const parentNodeId = corners[i].id
-    console.log(parentNodeId);
     const parentPosition = rectPositions.get(parentNodeId)
     let nearestEntryPoints = parentNodeToVoronoiNodeLookup.get(parentNodeId)
     if (!nearestEntryPoints) {

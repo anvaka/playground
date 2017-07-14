@@ -21,10 +21,11 @@ function getGraph() {
   })
 
   data.nodes.forEach(n => {
-    graph.addNode(n.id, {
-      x: n.data.x - minX,
-      y: n.data.y - minY
-    })
+    let pos = {
+      x: Math.round(n.data.x - minX),
+      y: Math.round(n.data.y - minY)
+    }
+    graph.addNode(n.id, pos)
   })
 
   data.links.forEach(l => {
