@@ -8,8 +8,8 @@ function computeVoronoiDetails (positions) {
     .x(r => r.cx)
     .y(r => r.cy)
     .extent([[positions.bounds.minX, positions.bounds.minY], [
-      positions.bounds.maxX - positions.bounds.minX,
-      positions.bounds.maxY - positions.bounds.minY
+      positions.bounds.maxX,
+      positions.bounds.maxY
     ]])
 
   const corners = convertPositionsToVoronoiPoints(positions)
@@ -42,14 +42,16 @@ function getVoronoiGraph (polygons, corners, rectPositions) {
 
   g.parentLookup = parentNodeToVoronoiNodeLookup
 
-  for (let i = 0; i < polygons.length; ++i) {
-    let p = polygons[i]
+  var i;
+  for (i = 0; i < polygons.length; ++i) {
+    var p = polygons[i]
     if (!p) continue
 
     let fromId = point(p[0])
     let start = fromId
 
     const parentNodeId = corners[i].id
+    console.log(parentNodeId);
     const parentPosition = rectPositions.get(parentNodeId)
     let nearestEntryPoints = parentNodeToVoronoiNodeLookup.get(parentNodeId)
     if (!nearestEntryPoints) {

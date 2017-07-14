@@ -127,7 +127,7 @@ graph.forEachNode(n => {
 flatNodes.sort((a, b) => b.rank - a.rank)
 
 let voronoiGraph = voronoiDetails.graph
-let voronoiLinks = new Map() // getVoronoiPath(voronoiGraph, graph)
+let voronoiLinks = getVoronoiPath(voronoiGraph, graph)
 
 function getLinkId (l) {
   return '' + l.fromId + ';' + l.toId

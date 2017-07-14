@@ -11,6 +11,10 @@ function getVoronoiPath(voronoiGraph, srcGraph) {
   srcGraph.forEachLink(l => {
     let fromTIds = tesselation.get(l.fromId)
     let toTIds = tesselation.get(l.toId)
+    if (!fromTIds || !toTIds) {
+      // This can happen when a point didn't have a polygon
+      return;
+    }
     let shortestPath = findShortestPaths(fromTIds, toTIds)
     voronoiLinks.set(getLinkId(l), shortestPath)
   })
