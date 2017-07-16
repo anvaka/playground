@@ -24,6 +24,7 @@
     "ngraph.kruskal": "^1.0.0",
     "ngraph.louvain": "^1.0.1",
     "ngraph.pagerank": "^0.1.4",
+    "ngraph.random": "0.0.1",
     "panzoom": "^2.5.0",
     "vue": "^2.3.3"
   },

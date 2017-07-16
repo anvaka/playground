@@ -8,11 +8,12 @@
         <g v-if='showTriangulation'>
           <path v-for='triangle in triangulation' :d='triangle.getPath()' stroke='rgba(255, 0, 0, 0.2)' fill='transparent'></path>
         </g>
-        <!--path :d='vor' stroke='rgba(0, 0, 255, 1)' fill='transparent'></path-->
+        <path :d='vor' stroke='rgba(255, 0, 0, 0.4)' fill='transparent' stroke-width='0.65'></path>
+        <path :d='del' stroke='rgba(0, 0, 255, 0.4)' fill='transparent'></path>
         <path v-for='p in voronoiPaths' :d='p.d' :stroke-width='p.width' stroke='RGB(234, 183, 114)' fill='transparent'></path>
 
         <g v-if='showNodes'>
-           <circle v-for='r in rects'
+           <!--circle v-for='r in rects'
                 :key='r.id'
                 v-if='r.visible'
                 :cx='r.cx'
@@ -20,7 +21,7 @@
                 stroke='RGB(218, 97, 97)'
                 @mousedown='onMouseDown($event, r)'
                 :cy='r.cy' :r='r.width/4'>
-           </circle>
+           </circle-->
           <!--rect v-for='r in rects'
                 v-if='r.visible'
                 :title='r.id'
@@ -62,6 +63,10 @@ const removeOverlaps = require('./lib/removeOverlaps.js')
 const computeVoronoiDetails = require('./lib/computeVoronoiDetails.js')
 const getVoronoiPath = require('./lib/voronoiPaths.js');
 const smoothPath = require('./lib/smoothPath.js');
+const random = require('ngraph.random').random(42)
+
+const voronoi = require('d3-voronoi').voronoi
+const createGraph = require('ngraph.graph')
 
 let useAirlines = true;
 let graph = airlines; //  miserables
@@ -90,7 +95,149 @@ positions.forEach(pos => {
 })
 for (let i = 0; i < 20; ++i) removeOverlaps(idToRect)
 
-let voronoiDetails = computeVoronoiDetails(positions)
+function convertPositionsToVoronoiPoints (positions) {
+  let points = []
+
+  positions.forEach(p => {
+    let dw = p.width * 0.25
+    let dh = p.height * 0.25
+   // points.push({
+   //   cx: p.cx,
+   //   cy: p.cy,
+   //   id: p.id
+   // });
+   // return;
+    points.push(
+      {
+        id: p.id,
+        cx: p.cx,
+        cy: p.cy
+      },
+      // {
+      //   id: p.id,
+      //   cx: p.left,
+      //   cy: p.top
+      // }, {
+      //   id: p.id,
+      //   cx: p.right,
+      //   cy: p.top
+      // }, {
+      //   id: p.id,
+      //   cx: p.right,
+      //   cy: p.bottom
+      // }, {
+      //   id: p.id,
+      //   cx: p.left,
+      //   cy: p.bottom
+      // },
+      {
+        id: p.id,
+        cx: p.left - dw,
+        cy: p.top - dh
+      }, {
+        id: p.id,
+        cx: p.right + dw,
+        cy: p.top - dh
+      }, {
+        id: p.id,
+        cx: p.right + dw,
+        cy: p.bottom + dh
+      }, {
+        id: p.id,
+        cx: p.left - dw,
+        cy: p.bottom + dh
+      }
+    )
+  })
+
+  return points
+}
+const v = voronoi()
+  .x(r => r.cx)
+  .y(r => r.cy)
+  .extent([[positions.bounds.minX, positions.bounds.minY], [
+    positions.bounds.maxX,
+    positions.bounds.maxY
+  ]])
+
+
+function uniform(min, max) {
+  return random.nextDouble()* (max - min) + min;
+  //return Math.random() * (max - min) + min;
+}
+
+function gaussian(mu, sigma) {
+    // use the polar form of the Box-Muller transform
+    let r, x, y;
+    do {
+        x = uniform(-1.0, 1.0);
+        y = uniform(-1.0, 1.0);
+        r = x*x + y*y;
+    } while (r >= 1 || r === 0);
+    return mu + sigma * x * Math.sqrt(-2 * Math.log(r) / r);
+
+    // Remark:  y * Math.sqrt(-2 * Math.log(r) / r)
+    // is an independent random gaussian
+}
+
+const corners = convertPositionsToVoronoiPoints(positions)
+let computed = v(corners)
+let vor = computed.edges.map(x => edgePath(x)).join(' ')
+
+function addNoise(x0, y0, x1, y1, v, n, out) {
+  let start = [x0, y0]
+  let end = [x1, y1]
+
+  let dx = x1 - x0
+  let dy = y1 - y0
+  let l = Math.sqrt(dx * dx + dy * dy)
+
+  var variance = l * 0.5
+  var xmid = 0.5 * (x0 + x1) + gaussian(0, Math.sqrt(variance));
+  var ymid = 0.5 * (y0 + y1) + gaussian(0, Math.sqrt(variance));
+
+  if (n > 1 && l > 15) {
+    addNoise(x0, y0, xmid, ymid, v/2, n - 1, out)
+    addNoise(xmid, ymid, x1, y1, v/2, n - 1, out)
+  } else {
+    out.push(start, [xmid, ymid], end)
+  }
+}
+
+function edgePath(e) {
+  let x0 = e[0][0]
+  let x1 = e[1][0]
+  let y0 = e[0][1]
+  let y1 = e[1][1]
+  let points = []
+
+  let dx = x1 - x0
+  let dy = y1 - y0
+  let l = Math.sqrt(dx * dx + dy * dy)
+
+  var variance = l * 0.2
+  addNoise(x0, y0, x1, y1, variance, 4, points)
+
+  let newPoints = points.map(p => ({
+    x: p[0],
+    y: p[1]
+  }));
+
+  // return smoothPath(newPoints)
+  // return 'M' + point(points[0]) + points.slice(1).map(p => 'L' + point(p));
+  return 'M' + point(e[0]) + 'L' + point(e[1]);
+}
+
+let del = computed.links().map(l => {
+  return 'M' + point([l.source.cx, l.source.cy]) + 'L' + point([l.target.cx, l.target.cy])
+}).join('');
+del = '';
+
+function point(p) {
+  return p[0] + ',' + p[1]
+}
+
+// let voronoiDetails = computeVoronoiDetails(positions)
 
 let maxValue = 0
 
@@ -126,8 +273,8 @@ graph.forEachNode(n => {
 
 flatNodes.sort((a, b) => b.rank - a.rank)
 
-let voronoiGraph = voronoiDetails.graph
-let voronoiLinks = getVoronoiPath(voronoiGraph, graph)
+// let voronoiGraph = voronoiDetails.graph
+let voronoiLinks = null; // getVoronoiPath(voronoiGraph, graph)
 
 function getLinkId (l) {
   return '' + l.fromId + ';' + l.toId
@@ -195,6 +342,8 @@ module.exports = {
 
   methods: {
     updateVisibleEdges (zoomLevel, topLeft, bottomRight) {
+      return;
+
       let linksCount = flatLinks.length
       let sliceSize = Math.min(Math.round(linksCount * zoomLevel / 4), linksCount)
 
@@ -373,8 +522,10 @@ module.exports = {
       showTriangulation: false,
       triangulation: [],
 
-      vor: voronoiDetails.polygonsPath,
-      del: voronoiDetails.delaunayPath,
+      // vor: voronoiDetails.polygonsPath,
+//      del: voronoiDetails.delaunayPath,
+      del: del,
+      vor: vor,
       voronoiPaths: []
     }
   }
