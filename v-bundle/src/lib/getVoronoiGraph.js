@@ -56,7 +56,35 @@ function getVoronoiGraph(layout, srcGraph) {
   }
 
   function collectRoute(fromId, toId) {
-    const route = shortestPaths(fromId, toId)
+    let vshortestPaths = findShortestPaths(vGraph, getVoronoiEdgeLength);
+
+    function getVoronoiEdgeLength(a, b) {
+      let aPos = a.data
+      let bPos = b.data
+      if (aPos.src_id === aPos.id) {
+        // this means we are not in the auxilary cell.
+        // we don't want to enter there unless it's our destination
+        if (aPos.id !== fromId && aPos.id !== toId) {
+          return Number.POSITIVE_INFINITY;
+        }
+      }
+      if (bPos.src_id === bPos.id) {
+        // this means we are not in the auxilary cell.
+        // we don't want to enter there unless it's our destination
+        if (bPos.id !== fromId && bPos.id !== toId) {
+          return Number.POSITIVE_INFINITY;
+        }
+      }
+      let dx = aPos.x - bPos.x
+      let dy = aPos.y - bPos.y
+      let edgeKey = getEdgeMemoryId(aPos, bPos);
+      let seenCount = edgeIdToSeenCount.get(edgeKey) || 0;
+      let lengthReducer = seenCount === 0 ? 1 : (Math.exp(-0.8 * seenCount + Math.log(1 - 0.5)) + 0.5)
+
+      // TODO: Length reducer?
+      return Math.sqrt(dx * dx + dy * dy) * lengthReducer;
+    }
+    const route = vshortestPaths(fromId, toId)
     const routeGraph = createGraph({uniqueLinkIds: false});
 
     const cellPath = route.map(p => {
@@ -69,18 +97,22 @@ function getVoronoiGraph(layout, srcGraph) {
       return path
     })
 
-    const routeShortestPath = findShortestPaths(routeGraph, getEdgeLength);
-    let fromIdXY = pointXY(nodeIdToPolygon.get(fromId).data);
-    let toIdXY = pointXY(nodeIdToPolygon.get(toId).data);
-    const rp = routeShortestPath(fromIdXY, toIdXY)
-    rememberPath(rp);
+    // const routeShortestPath = findShortestPaths(routeGraph, getEdgeLength);
+    // let fromIdXY = pointXY(nodeIdToPolygon.get(fromId).data);
+    // let toIdXY = pointXY(nodeIdToPolygon.get(toId).data);
+    // const rp = routeShortestPath(fromIdXY, toIdXY)
+    // const shortestPath = 'M' + pointXY(rp[0]) + rp.slice(1).map(p => 'L' + pointXY(p)).join(' ');
+    // const shortestPathAsIs = rp;
+    const shortestPath = ''
+    const shortestPathAsIs = route;
+    rememberPath(route);
 
     return {
       route,
       cellPath,
-      edgePath:  'M' + pointXY(route[0]) + route.slice(1).map(p => 'L' + pointXY(p)).join(' '),
-      shortestPath: 'M' + pointXY(rp[0]) + rp.slice(1).map(p => 'L' + pointXY(p)).join(' '),
-      shortestPathAsIs: rp
+      edgePath: 'M' + pointXY(route[0]) + route.slice(1).map(p => 'L' + pointXY(p)).join(' '),
+      shortestPath,
+      shortestPathAsIs
     }
 
     function rememberPath(path) {
@@ -190,8 +222,8 @@ function getVoronoiGraph(layout, srcGraph) {
 
     srcGraph.forEachNode(n => {
       const pos = layout.getNodePosition(n.id);
-      let dw = 5;
-      let dh = 5;
+      let dw = 1;
+      let dh = 1;
       let x = pos.x;
       let y = pos.y;
       positions.push({

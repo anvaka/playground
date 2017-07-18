@@ -3,7 +3,7 @@
     <svg>
       <g ref='scene'>
         <g v-if='showGraphEdges'>
-          <path v-for='edge in edges' :d='getPath(edge)' stroke='rgba(90, 90, 90, 0.1)' :stroke-width='0.4'></path>
+          <path v-for='edge in edges' :d='getPath(edge)' stroke='RGB(184, 76, 40)' :stroke-width='0.4'></path>
         </g>
         <g v-if='showAllVoronoiCells'>
           <path :d='allVoronoiCells' stroke='rgba(00, 00, 180, 0.5)' :stroke-width='0.4'></path>
@@ -25,25 +25,26 @@
 
         <path :d='shortestPathVoronoiCells' stroke='rgba(00, 200, 0, 1)' :stroke-width='0.4' fill='transparent'></path>
         <path v-for='route in shortestPath'
-            :d='route.getPath()' stroke='rgba(10, 10, 10, 0.5)' :stroke-width='route.getWidth()' fill='transparent'></path>
+            :d='route.getPath()' stroke='RGBA(184, 76, 40, 0.8)' :stroke-width='route.getWidth() * 0.85' fill='transparent'></path>
 
         <g v-if='showGraphNodes'>
           <circle v-for='r in nodes'
               :key='r.id'
               :cx='r.x'
-              fill='RGB(218, 97, 97)'
-              stroke='RGB(218, 97, 97)'
+              fill='white'
+              stroke='black'
+              stroke-width='0.7'
               @mousedown='onMouseDown($event, r)'
               :cy='r.y' :r='r.r'></circle>
         </g>
       </g>
     </svg>
   <div class='actions'>
-    <a href='#' @click.prevet='showGraphEdges = !showGraphEdges'>Toggle edges</a>
-    <a href='#' @click.prevet='showGraphNodes = !showGraphNodes'>Toggle nodes</a>
-    <a href='#' @click.prevet='showAllVoronoiCells = !showAllVoronoiCells'>Toggle voronoi</a>
-    <a href='#' @click.prevet='showAllDelaunay = !showAllDelaunay'>Toggle Delaunay</a>
-    <a href='#' @click.prevet='showVoronoiGraphNodes = !showVoronoiGraphNodes'>Toggle Voronoi Graph</a>
+    <a href='#' @click.prevent='showGraphEdges = !showGraphEdges'>Toggle edges</a>
+    <a href='#' @click.prevent='showGraphNodes = !showGraphNodes'>Toggle nodes</a>
+    <a href='#' @click.prevent='showAllVoronoiCells = !showAllVoronoiCells'>Toggle voronoi</a>
+    <a href='#' @click.prevent='showAllDelaunay = !showAllDelaunay'>Toggle Delaunay</a>
+    <a href='#' @click.prevent='showVoronoiGraphNodes = !showVoronoiGraphNodes'>Toggle Voronoi Graph</a>
   </div>
   </div>
 </template>
@@ -51,6 +52,7 @@
 <script>
 const panzoom = require('panzoom')
 const getGraph = require('./data/airlinesGraph.js')
+//const getGraph = require('./data/socialGraph.js')
 const graph = getGraph();
 const layoutInfo = require('./lib/getAirlinesLayout.js')(graph);
 const voronoiGraph = require('./lib/getVoronoiGraph.js')(layoutInfo, graph);
@@ -148,7 +150,7 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  background: RGB(240, 237, 229);
+  background: RGB(243, 241, 237);
   position: absolute;
   width: 100%;
   height: 100%;
