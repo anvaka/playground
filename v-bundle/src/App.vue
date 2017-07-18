@@ -24,6 +24,8 @@
         </g>
 
         <path :d='shortestPathVoronoiCells' stroke='rgba(00, 200, 0, 1)' :stroke-width='0.4' fill='transparent'></path>
+        <path v-for='route in shortestPath'
+            :d='route.getPath()' stroke='rgba(10, 10, 10, 0.5)' :stroke-width='route.getWidth()' fill='transparent'></path>
 
         <g v-if='showGraphNodes'>
           <circle v-for='r in nodes'
@@ -49,9 +51,10 @@
 <script>
 const panzoom = require('panzoom')
 const getGraph = require('./data/airlinesGraph.js')
-let graph = getGraph();
+const graph = getGraph();
 const layoutInfo = require('./lib/getAirlinesLayout.js')(graph);
 const voronoiGraph = require('./lib/getVoronoiGraph.js')(layoutInfo, graph);
+const linkRenderer = require('./lib/linkRenderer.js')();
 let nodes = [];
 let edges = [];
 
@@ -90,10 +93,9 @@ export default {
     const allVoronoiCells = voronoiGraph.getCells();
     const delaunay = voronoiGraph.getDelaunay();
     const voronoiGraphGeometry = voronoiGraph.getVoronoiGraphGeometry();
-    debugger;
 
     return {
-      showGraphEdges: true,
+      showGraphEdges: false,
       showGraphNodes: true,
       showAllVoronoiCells: false,
 			showAllDelaunay: false,
@@ -101,6 +103,7 @@ export default {
       voronoiNodes: voronoiGraphGeometry.nodes,
       voronoiEdges: voronoiGraphGeometry.edges,
       shortestPathVoronoiCells: '',
+      shortestPath: [],
       allVoronoiCells,
       delaunay,
       nodes,
@@ -114,12 +117,25 @@ export default {
     },
     onMouseDown (e, n) {
       let shortesPaths = []
-      graph.forEachLinkedNode(n.id, (other) => {
-        const route = voronoiGraph.collectRoute(n.id, other.id);
+      let cellPath = [];
+
+      linkRenderer.reset();
+      graph.forEachLink((l) => {
+        const route = voronoiGraph.collectRoute(l.fromId, l.toId);
+//       graph.forEachLinkedNode(n.id, (other) => {
+//         const route = voronoiGraph.collectRoute(n.id, other.id);
 //        shortesPaths.push(route.edgePath)
-        shortesPaths.push(route.cellPath)
+//        shortesPaths.push(route.cellPath)
+        shortesPaths.push(route.shortestPath);
+        cellPath.push(route.cellPath);
+        const {shortestPathAsIs} = route;
+        shortestPathAsIs.forEach((pt, idx) => {
+          if (idx > 0) linkRenderer.draw(shortestPathAsIs[idx - 1], shortestPathAsIs[idx])
+        });
       })
-      this.shortestPathVoronoiCells = shortesPaths.join(' ')
+
+      // this.shortestPathVoronoiCells = cellPath.join(' ');
+      this.shortestPath = linkRenderer.getRoutes();
     }
   }
 }

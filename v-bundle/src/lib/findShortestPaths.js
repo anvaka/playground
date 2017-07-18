@@ -2,13 +2,11 @@ var FibonacciHeap = require('@tyriar/fibonacci-heap');
 
 module.exports = shortestPaths
 
-function shortestPaths (graph) {
+function shortestPaths (graph, getEdgeLength) {
   // maps from node id to shortest path algorithm state.
   let searchStateMemory = new Map()
 
-  // remembers how many times each edge appeared in a shortest path
-  let edgeMemory = new Map();
-  let maxEdgeWeight = 1;
+  let length = getEdgeLength || euclidLength
 
   return findShortestPaths
 
@@ -27,32 +25,6 @@ function shortestPaths (graph) {
     }
 
     return points
-  }
-
-  function rememberEdge(a, b) {
-    if (!a || !b) return;
-
-    let from = a.value;
-    let to = b.value;
-    let edgeId = getEdgeId(from, to);
-    let edgeWeight = getEdgeWeight(edgeId) + 1
-    if (edgeWeight > maxEdgeWeight) maxEdgeWeight = edgeWeight
-    edgeMemory.set(edgeId, edgeWeight)
-  }
-
-  function getEdgeWeight(edgeId) {
-    return edgeMemory.get(edgeId) || 0
-  }
-
-  function getEdgeId(from, to) {
-    if (from > to) {
-      // edges are undirected
-      let t = from;
-      from = to;
-      to = t;
-    }
-
-    return from + to
   }
 
   function findPath (from, to) {
@@ -99,12 +71,7 @@ function shortestPaths (graph) {
       let srcInfo = nodeIdToHeapNode.get(nodeId)
 
       graph.forEachLinkedNode(nodeId, otherNode => {
-        let seenNumberOfTimes = getEdgeWeight(getEdgeId(nodeId, otherNode.id))
-        // let weightReducer = 1 - 0.5 * (seenNumberOfTimes/maxEdgeWeight)
-
-        let weightReducer = 1; // 1 / ( seenNumberOfTimes || 1)
-
-        let distance = srcInfo.key + length(graph.getNode(nodeId), otherNode) * weightReducer
+        let distance = srcInfo.key + length(graph.getNode(nodeId), otherNode)
         let otherInfo = nodeIdToHeapNode.get(otherNode.id)
         if (distance < otherInfo.key) {
           otherInfo.prevPath = srcInfo
@@ -115,7 +82,7 @@ function shortestPaths (graph) {
   }
 }
 
-function length (a, b) {
+function euclidLength (a, b) {
   let aPos = a.data
   let bPos = b.data
   let dx = aPos.x - bPos.x

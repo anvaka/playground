@@ -6,6 +6,7 @@ module.exports = getVoronoiGraph;
 
 function getVoronoiGraph(layout, srcGraph) {
   let positions = getPositions();
+  let edgeIdToSeenCount = new Map();
 
   const v = voronoi()
     .x(r => r.x)
@@ -24,7 +25,6 @@ function getVoronoiGraph(layout, srcGraph) {
   polygons.forEach(p => {
     nodeIdToPolygon.set(p.data.id, p);
   });
-  console.log(polygons);
 
   return {
     getCells,
@@ -57,18 +57,104 @@ function getVoronoiGraph(layout, srcGraph) {
 
   function collectRoute(fromId, toId) {
     const route = shortestPaths(fromId, toId)
+    const routeGraph = createGraph({uniqueLinkIds: false});
+
     const cellPath = route.map(p => {
       let polygon =  nodeIdToPolygon.get(p.id)
       let path = 'M' + point(polygon[0]) + polygon.slice(1).map(p => 'L' + point(p)).join(' ')
         + 'L' + point(polygon[0]);
 
+      appendPolygonToRouteGraph(polygon);
+
       return path
     })
+
+    const routeShortestPath = findShortestPaths(routeGraph, getEdgeLength);
+    let fromIdXY = pointXY(nodeIdToPolygon.get(fromId).data);
+    let toIdXY = pointXY(nodeIdToPolygon.get(toId).data);
+    const rp = routeShortestPath(fromIdXY, toIdXY)
+    rememberPath(rp);
 
     return {
       route,
       cellPath,
-      edgePath:  'M' + pointXY(route[0]) + route.slice(1).map(p => 'L' + pointXY(p)).join(' ')
+      edgePath:  'M' + pointXY(route[0]) + route.slice(1).map(p => 'L' + pointXY(p)).join(' '),
+      shortestPath: 'M' + pointXY(rp[0]) + rp.slice(1).map(p => 'L' + pointXY(p)).join(' '),
+      shortestPathAsIs: rp
+    }
+
+    function rememberPath(path) {
+      for (let i = 1; i < path.length; ++i) {
+        let key = getEdgeMemoryId(path[i], path[i - 1]);
+        edgeIdToSeenCount.set(key, (edgeIdToSeenCount.get(key) || 0) + 1)
+      }
+    }
+
+    function getEdgeLength(a, b) {
+      let aPos = a.data
+      let bPos = b.data
+      let dx = aPos.x - bPos.x
+      let dy = aPos.y - bPos.y
+      let edgeKey = getEdgeMemoryId(aPos, bPos);
+      let seenCount = edgeIdToSeenCount.get(edgeKey) || 0;
+      let lengthReducer = seenCount === 0 ? 1 : 1/(seenCount + 1)
+
+      return Math.sqrt(dx * dx + dy * dy) * lengthReducer
+    }
+
+    function getEdgeMemoryId(from, to) {
+      let fromId = pointXY(from);
+      let toId = pointXY(to);
+      if (fromId < toId) {
+        let t = fromId;
+        fromId = toId;
+        toId = t;
+      }
+      return fromId + '_' + toId;
+    }
+
+    function appendPolygonToRouteGraph(polygon) {
+      let start = polygon[0]
+      let isStartSink = polygon.data.id === fromId;
+      let isEndSink = polygon.data.id === toId
+
+      for (let i = 1; i < polygon.length; ++i) {
+        let end = polygon[i]
+        addPolyLink(start, end);
+        start = end;
+      }
+
+      // complete the circle
+      addPolyLink(start, polygon[0])
+
+      let sinkNode;
+      if (isStartSink || isEndSink) {
+        sinkNode = [polygon.data.x, polygon.data.y]
+        for (let i = 0; i < polygon.length; ++i) {
+          // connect all corners from the center. TODO: Should we consider connecting delaunay intersection as well?
+          addPolyLink(sinkNode, polygon[i]);
+        }
+      }
+    }
+
+    function addPolyLink(start, end) {
+      let polyStartId = point(start);
+      let polyEndId = point(end)
+
+      if (routeGraph.hasLink(polyStartId, polyEndId) ||
+        routeGraph.hasLink(polyEndId, polyStartId)) return;
+
+      routeGraph.addNode(polyStartId, {
+        x: start[0],
+        y: start[1]
+      });
+
+      routeGraph.addNode(polyEndId, {
+        x: end[0],
+        y: end[1]
+      })
+
+      routeGraph.addLink(polyStartId, polyEndId);
     }
   }
 
@@ -114,7 +200,7 @@ function getVoronoiGraph(layout, srcGraph) {
         src_id: n.id,
         id: n.id
       });
-      const extended = false;
+      const extended = true;
       if (extended) {
         positions.push({
           id: n.id + '_0',
