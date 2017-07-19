@@ -51,8 +51,8 @@
 
 <script>
 const panzoom = require('panzoom')
-const getGraph = require('./data/airlinesGraph.js')
-//const getGraph = require('./data/socialGraph.js')
+// const getGraph = require('./data/airlinesGraph.js')
+const getGraph = require('./data/socialGraph.js')
 const graph = getGraph();
 const layoutInfo = require('./lib/getAirlinesLayout.js')(graph);
 const voronoiGraph = require('./lib/getVoronoiGraph.js')(layoutInfo, graph);

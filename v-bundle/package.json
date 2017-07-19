@@ -12,6 +12,7 @@
   "dependencies": {
     "@tyriar/fibonacci-heap": "^1.0.10",
     "d3-voronoi": "^1.1.2",
+    "miserables": "^1.0.0",
     "ngraph.forcelayout": "^0.2.1",
     "ngraph.graph": "0.0.12",
     "panzoom": "^2.5.0",
