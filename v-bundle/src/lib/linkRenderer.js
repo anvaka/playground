@@ -84,8 +84,16 @@ function linkRenderer() {
   return {
     reset,
     draw,
-    getRoutes
+    getRoutes,
+    forEachEdge,
   };
+
+  function forEachEdge(cb) {
+    links.forEach(link => {
+      const size = Math.round((link.seenCount / maxSeenCount) * bucketsCount) + 1;
+      cb(new Edge(link.from, link.to, size));
+    });
+  }
 
   function reset() {
     maxSeenCount = 0;
@@ -105,10 +113,7 @@ function linkRenderer() {
 
   function getRoutes() {
     let routes = [];
-    links.forEach(link => {
-      const size = Math.round((link.seenCount / maxSeenCount) * bucketsCount) + 1;
-      routes.push(new Edge(link.from, link.to, size));
-    });
+    forEachEdge(edge => { routes.push(edge); })
     return routes;
   }
 

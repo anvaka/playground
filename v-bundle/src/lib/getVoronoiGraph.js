@@ -19,7 +19,7 @@ function getVoronoiGraph(layout, srcGraph) {
   let computed = v(positions)
   let vGraph = constructDualGraph(computed);
   console.log('Voronoi graph. Nodes: ' + vGraph.getNodesCount() + '; Edges: ' + vGraph.getLinksCount());
-  let shortestPaths = findShortestPaths(vGraph);
+  // let shortestPaths = findShortestPaths(vGraph);
   let polygons = computed.polygons()
   let nodeIdToPolygon = new Map();
   polygons.forEach(p => {

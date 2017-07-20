@@ -57,6 +57,7 @@ const graph = getGraph();
 const layoutInfo = require('./lib/getAirlinesLayout.js')(graph);
 const voronoiGraph = require('./lib/getVoronoiGraph.js')(layoutInfo, graph);
 const linkRenderer = require('./lib/linkRenderer.js')();
+const computeCost = require('./lib/computeCost.js');
 let nodes = [];
 let edges = [];
 
@@ -69,7 +70,6 @@ graph.forEachNode(node => {
     id: node.id
   })
 })
-
 
 graph.forEachLink(l => {
   let from = layoutInfo.getNodePosition(l.fromId);
@@ -138,6 +138,8 @@ export default {
 
       // this.shortestPathVoronoiCells = cellPath.join(' ');
       this.shortestPath = linkRenderer.getRoutes();
+      let cost = computeCost(graph, linkRenderer);
+      console.log(cost);
     }
   }
 }
