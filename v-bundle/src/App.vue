@@ -56,7 +56,7 @@ const getGraph = require('./data/socialGraph.js')
 const graph = getGraph();
 const layoutInfo = require('./lib/getAirlinesLayout.js')(graph);
 const voronoiGraph = require('./lib/getVoronoiGraph.js')(layoutInfo, graph);
-const linkRenderer = require('./lib/linkRenderer.js')();
+const linkRenderer = require('./lib/link-renderer/linkRenderer.js')();
 const computeCost = require('./lib/computeCost.js');
 let nodes = [];
 let edges = [];
@@ -131,9 +131,14 @@ export default {
         shortesPaths.push(route.shortestPath);
         cellPath.push(route.cellPath);
         const {shortestPathAsIs} = route;
+        const edgeStops = []
         shortestPathAsIs.forEach((pt, idx) => {
-          if (idx > 0) linkRenderer.draw(shortestPathAsIs[idx - 1], shortestPathAsIs[idx])
+          if (idx > 0) {
+            let segmentId = linkRenderer.draw(shortestPathAsIs[idx - 1], shortestPathAsIs[idx])
+            edgeStops.push(segmentId);
+          }
         });
+
       })
 
       // this.shortestPathVoronoiCells = cellPath.join(' ');

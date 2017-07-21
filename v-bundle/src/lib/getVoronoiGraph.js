@@ -81,7 +81,6 @@ function getVoronoiGraph(layout, srcGraph) {
       let seenCount = edgeIdToSeenCount.get(edgeKey) || 0;
       let lengthReducer = seenCount === 0 ? 1 : (Math.exp(-0.8 * seenCount + Math.log(1 - 0.5)) + 0.5)
 
-      // TODO: Length reducer?
       return Math.sqrt(dx * dx + dy * dy) * lengthReducer;
     }
     const route = vshortestPaths(fromId, toId)
@@ -97,12 +96,6 @@ function getVoronoiGraph(layout, srcGraph) {
       return path
     })
 
-    // const routeShortestPath = findShortestPaths(routeGraph, getEdgeLength);
-    // let fromIdXY = pointXY(nodeIdToPolygon.get(fromId).data);
-    // let toIdXY = pointXY(nodeIdToPolygon.get(toId).data);
-    // const rp = routeShortestPath(fromIdXY, toIdXY)
-    // const shortestPath = 'M' + pointXY(rp[0]) + rp.slice(1).map(p => 'L' + pointXY(p)).join(' ');
-    // const shortestPathAsIs = rp;
     const shortestPath = ''
     const shortestPathAsIs = route;
     rememberPath(route);
@@ -120,18 +113,6 @@ function getVoronoiGraph(layout, srcGraph) {
         let key = getEdgeMemoryId(path[i], path[i - 1]);
         edgeIdToSeenCount.set(key, (edgeIdToSeenCount.get(key) || 0) + 1)
       }
-    }
-
-    function getEdgeLength(a, b) {
-      let aPos = a.data
-      let bPos = b.data
-      let dx = aPos.x - bPos.x
-      let dy = aPos.y - bPos.y
-      let edgeKey = getEdgeMemoryId(aPos, bPos);
-      let seenCount = edgeIdToSeenCount.get(edgeKey) || 0;
-      let lengthReducer = seenCount === 0 ? 1 : 1/(seenCount + 1)
-
-      return Math.sqrt(dx * dx + dy * dy) * lengthReducer
     }
 
     function getEdgeMemoryId(from, to) {
