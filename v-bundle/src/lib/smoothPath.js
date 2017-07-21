@@ -30,7 +30,6 @@ function smoothPath(path) {
 
   return svg_path;
 
-
   function isSame(p0, p1) {
     return p0.x === p1.x && p0.y === p1.y;
   }
@@ -41,6 +40,7 @@ function smoothPath(path) {
     }
     return p.x + ',' + p.y
   }
+
   function segment(from, to) {
     return {
       from: from,

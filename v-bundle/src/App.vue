@@ -24,7 +24,7 @@
         </g>
 
         <path :d='shortestPathVoronoiCells' stroke='rgba(00, 200, 0, 1)' :stroke-width='0.4' fill='transparent'></path>
-        <path v-for='route in shortestPath'
+        <path v-for='route in bundledRoutes'
             :d='route.getPath()' stroke='RGBA(184, 76, 40, 0.8)' :stroke-width='route.getWidth() * 0.85' fill='transparent'></path>
 
         <g v-if='showGraphNodes'>
@@ -105,7 +105,7 @@ export default {
       voronoiNodes: voronoiGraphGeometry.nodes,
       voronoiEdges: voronoiGraphGeometry.edges,
       shortestPathVoronoiCells: '',
-      shortestPath: [],
+      bundledRoutes: [],
       allVoronoiCells,
       delaunay,
       nodes,
@@ -137,7 +137,7 @@ export default {
       })
 
       // this.shortestPathVoronoiCells = cellPath.join(' ');
-      this.shortestPath = linkRenderer.getRoutes();
+      this.bundledRoutes = linkRenderer.getRoutes();
       let cost = computeCost(graph, linkRenderer);
       console.log(cost);
     }
