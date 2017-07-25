@@ -1,13 +1,14 @@
 const smoothPath = require('./smoothPath.js');
 const addNoise = require('./addNoise.js');
-const pointXY = require('./pointXY.js')
+const getLength = require('./length');
 
 class Edge {
-  constructor(from, to, width) {
+  constructor(from, to, seenCount) {
     this.from = from;
     this.to = to;
-    this.width = width;
-    this.noisy = true;
+    this.seenCount = seenCount;
+    this.width = 1;
+    this.points = getPoints(from, to, /* noisy = */ true);
   }
 
   getWidth() {
@@ -15,18 +16,20 @@ class Edge {
   }
 
   getPath() {
-    if (this.noisy) {
-      let dx = this.from.x - this.to.x
-      let dy = this.from.y - this.to.y
-      let l = Math.sqrt(dx * dx + dy * dy)
-      const variance = l * 0.2
-      let points = []
-      addNoise(this.from.x, this.from.y, this.to.x, this.to.y, variance, 4, points)
-      // return 'M' + pointXY(points[0]) + points.slice(1).map(p => 'L' + pointXY(p));
-      return smoothPath(points); //'M' + pointXY(points[0]) + points.slice(1).map(p => 'L' + pointXY(p));
-    }
-    return 'M' + pointXY(this.from) + 'L' + pointXY(this.to);
+    return smoothPath(this.points);
   }
 }
 
 module.exports = Edge;
+
+function getPoints(from, to, noisy) {
+  let points = []
+  if (noisy) {
+    const variance = getLength(from, to) * 0.2
+    addNoise(from.x, from.y, to.x, to.y, variance, 4, points)
+  } else {
+    points.push(from, to);
+  }
+
+  return points;
+}
