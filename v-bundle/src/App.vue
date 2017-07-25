@@ -24,8 +24,10 @@
         </g>
 
         <path :d='shortestPathVoronoiCells' stroke='rgba(00, 200, 0, 1)' :stroke-width='0.4' fill='transparent'></path>
-        <path v-for='route in bundledRoutes'
-            :d='route.getPath()' stroke='RGBA(184, 76, 40, 0.8)' :stroke-width='route.getWidth() * 0.85' fill='transparent'></path>
+        <!--path v-for='route in bundledRoutes'
+            :d='route.getPath()' stroke='RGBA(184, 76, 40, 0.8)' :stroke-width='route.getWidth() * 0.85' fill='transparent'></path-->
+        <path v-for='route in edgesToAnimate'
+            :d='route.getPath()' stroke='RGBA(184, 76, 40, 0.8)' :stroke-width='1' fill='transparent'></path>
 
         <g v-if='showGraphNodes'>
           <circle v-for='r in nodes'
@@ -58,6 +60,8 @@ const layoutInfo = require('./lib/getAirlinesLayout.js')(graph);
 const voronoiGraph = require('./lib/getVoronoiGraph.js')(layoutInfo, graph);
 const linkRenderer = require('./lib/link-renderer/linkRenderer.js')();
 const computeCost = require('./lib/computeCost.js');
+const AnimationEdge = require('./lib/AnimationEdge');
+const edgeAnimator = require('./lib/edgeAnimator');
 let nodes = [];
 let edges = [];
 
@@ -72,10 +76,16 @@ graph.forEachNode(node => {
 })
 
 graph.forEachLink(l => {
+  let edgePosition = getEdgePosition(l);
+  edgePosition.weight = 1;
+  edges.push(edgePosition);
+})
+
+function getEdgePosition(l) {
   let from = layoutInfo.getNodePosition(l.fromId);
   let to = layoutInfo.getNodePosition(l.toId);
-  edges.push({ from, to, weight: 1 })
-})
+  return { from, to };
+}
 
 function point(p) {
   return p.x + ',' + p.y
@@ -106,6 +116,7 @@ export default {
       voronoiEdges: voronoiGraphGeometry.edges,
       shortestPathVoronoiCells: '',
       bundledRoutes: [],
+      edgesToAnimate: [],
       allVoronoiCells,
       delaunay,
       nodes,
@@ -122,6 +133,7 @@ export default {
       let cellPath = [];
 
       linkRenderer.reset();
+      let edgesToAnimate = [];
       graph.forEachLink((l) => {
         const route = voronoiGraph.collectRoute(l.fromId, l.toId);
 //       graph.forEachLinkedNode(n.id, (other) => {
@@ -131,18 +143,28 @@ export default {
         shortesPaths.push(route.shortestPath);
         cellPath.push(route.cellPath);
         const {shortestPathAsIs} = route;
-        const edgeStops = []
+
+        let edgePosition = getEdgePosition(l);
+        let routes = [];
         shortestPathAsIs.forEach((pt, idx) => {
           if (idx > 0) {
-            let segmentId = linkRenderer.draw(shortestPathAsIs[idx - 1], shortestPathAsIs[idx])
-            edgeStops.push(segmentId);
+            let routePart = linkRenderer.addEdge(shortestPathAsIs[idx - 1], shortestPathAsIs[idx])
+            routes.push(routePart);
           }
         });
-
+        const animationEdge = new AnimationEdge(edgePosition, routes);
+        edgesToAnimate.push(animationEdge);
       })
 
+      linkRenderer.updateWidths();
       // this.shortestPathVoronoiCells = cellPath.join(' ');
-      this.bundledRoutes = linkRenderer.getRoutes();
+      let routes = linkRenderer.getRoutes();
+      this.bundledRoutes = routes;
+      let foo = [];
+      edgesToAnimate.forEach(ea => {
+        ea.getPaths().forEach(p => foo.push(p));
+      });
+      this.edgesToAnimate = foo;
       let cost = computeCost(graph, linkRenderer);
       console.log(cost);
     }
