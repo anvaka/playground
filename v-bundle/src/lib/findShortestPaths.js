@@ -17,7 +17,7 @@ function shortestPaths (graph, getEdgeLength) {
     let p = minPath
     let points = []
     while (p) {
-      points.push(graph.getNode(p.value).data)
+      points.unshift(graph.getNode(p.value).data)
       // let from = p
       p = p.prevPath
       // let to = p
