@@ -31,7 +31,7 @@ function smoothPath(path) {
   return svg_path;
 
   function isSame(p0, p1) {
-    return p0.x === p1.x && p0.y === p1.y;
+    return Math.abs(p0.x - p1.x) < 1e-5 && Math.abs(p0.y - p1.y) < 1e-5;
   }
 
   function point(p) {
