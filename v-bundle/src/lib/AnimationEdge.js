@@ -1,30 +1,60 @@
 const smoothPath = require('./link-renderer/smoothPath')
-var animate = require('amator')
+const sivg = require('simplesvg');
+
+let pathId = 0;
 
 class AnimatedPoint {
   constructor({src, dst}) {
     this.src = src;
     this.dst = dst;
-    animate(this.src, this.dst);
+    this.diff = {
+      x: dst.x - src.x,
+      y: dst.y - src.y,
+    }
+    this.start = {
+      x: src.x,
+      y: src.y
+    }
   }
 
   getPath() {
     return this.src.x + ',' + this.src.y
   }
+
+  step(t) {
+    this.src.x = this.diff.x * t + this.start.x
+    this.src.y = this.diff.y * t + this.start.y
+  }
 }
 
 class AnimatedPath {
-  constructor(points) {
+  constructor(points, scene) {
     this.points = points;
+    this.pathId = pathId++;
+    this.path = sivg('path', {
+      stroke: 'RGBA(184, 76, 40, 0.8)',
+      'stroke-width': '1',
+      d: this.getPath(),
+       fill:'transparent'
+    });
+    scene.appendChild(this.path);
+  }
+  refresh() {
+    this.path.attr('d', this.getPath())
   }
   getPath() {
-    return 'M' + this.points.map(p => p.getPath()).join(' '); 
-    // return smoothPath(this.points.map(x => x.src)); // 'M' + this.points.map(p => p.getPath()).join(' '); 
+    return smoothPath(this.points.map(x => x.src)); // 'M' + this.points.map(p => p.getPath()).join(' '); 
+    return 'M' + this.points.map(p => p.getPath()).join(' ')
+  }
+
+  step(t) {
+    this.points.forEach(p => p.step(t));
+    this.refresh();
   }
 }
 
 class AnimationEdge {
-  constructor(edgePosition, parts) {
+  constructor(edgePosition, parts, scene) {
     this.edgePosition = edgePosition;
     this.allRouteParts = parts;
     let subParts = splitInChunks(edgePosition.from, edgePosition.to, parts.length)
@@ -40,22 +70,13 @@ class AnimationEdge {
           dst: part.points[i]
         }));
       }
-      let animatedPath = new AnimatedPath(pointsToAnimate);
+      let animatedPath = new AnimatedPath(pointsToAnimate, scene);
       paths.push(animatedPath);
     })
     this.paths = paths;
   }
-
-  getPaths() {
-    return this.paths;
-  }
-
   step(t) {
-    this.paths.forEach(path => {
-      path.forEach(p => {
-        p.src.x += 0.1;
-      })
-    })
+    this.paths.forEach(p => p.step(t));
   }
 }
 

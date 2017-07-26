@@ -26,8 +26,8 @@
         <path :d='shortestPathVoronoiCells' stroke='rgba(00, 200, 0, 1)' :stroke-width='0.4' fill='transparent'></path>
         <!--path v-for='route in bundledRoutes'
             :d='route.getPath()' stroke='RGBA(184, 76, 40, 0.8)' :stroke-width='route.getWidth() * 0.85' fill='transparent'></path-->
-        <path v-for='route in edgesToAnimate'
-            :d='route.getPath()' stroke='RGBA(184, 76, 40, 0.8)' :stroke-width='1' fill='transparent'></path>
+        <!--path v-for='route in edgesToAnimate'
+            :d='route.getPath($refs)' stroke='RGBA(184, 76, 40, 0.8)' :stroke-width='1' fill='transparent'></path-->
 
         <g v-if='showGraphNodes'>
           <circle v-for='r in nodes'
@@ -53,8 +53,8 @@
 
 <script>
 const panzoom = require('panzoom')
-// const getGraph = require('./data/airlinesGraph.js')
-const getGraph = require('./data/socialGraph.js')
+const getGraph = require('./data/airlinesGraph.js')
+//const getGraph = require('./data/socialGraph.js')
 const graph = getGraph();
 const layoutInfo = require('./lib/getAirlinesLayout.js')(graph);
 const voronoiGraph = require('./lib/getVoronoiGraph.js')(layoutInfo, graph);
@@ -97,8 +97,6 @@ export default {
     const pz = panzoom(this.$refs.scene, {
       zoomSpeed: 0.008
     })
-
-    let scene = this.$refs.scene
   },
 
   data () {
@@ -134,6 +132,7 @@ export default {
 
       linkRenderer.reset();
       let edgesToAnimate = [];
+      let scene = this.$refs.scene
       graph.forEachLink((l) => {
         const route = voronoiGraph.collectRoute(l.fromId, l.toId);
 //       graph.forEachLinkedNode(n.id, (other) => {
@@ -152,7 +151,7 @@ export default {
             routes.push(routePart);
           }
         });
-        const animationEdge = new AnimationEdge(edgePosition, routes);
+        const animationEdge = new AnimationEdge(edgePosition, routes, scene);
         edgesToAnimate.push(animationEdge);
       })
 
@@ -160,11 +159,12 @@ export default {
       // this.shortestPathVoronoiCells = cellPath.join(' ');
       let routes = linkRenderer.getRoutes();
       this.bundledRoutes = routes;
-      let foo = [];
-      edgesToAnimate.forEach(ea => {
-        ea.getPaths().forEach(p => foo.push(p));
-      });
-      this.edgesToAnimate = foo;
+      edgeAnimator(edgesToAnimate);
+      // let foo = [];
+      // edgesToAnimate.forEach(ea => {
+      //   ea.getPaths().forEach(p => foo.push(p));
+      // });
+      // this.edgesToAnimate = foo;
       let cost = computeCost(graph, linkRenderer);
       console.log(cost);
     }
