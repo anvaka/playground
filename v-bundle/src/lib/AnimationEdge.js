@@ -1,5 +1,6 @@
 const smoothPath = require('./link-renderer/smoothPath')
 const sivg = require('simplesvg');
+const isSamePoint = require('./link-renderer/isSamePoint');
 
 let pathId = 0;
 
@@ -55,14 +56,23 @@ class AnimatedPath {
 
 class AnimationEdge {
   constructor(edgePosition, parts, scene) {
+    if (!isSamePoint(edgePosition.from, parts[0].from)) {
+      // TODO: make the same direction.
+      // let t = {
+      //   x: edgePosition.from.x,
+      //   y: edgePosition.from.y,
+      // }
+      // edgePosition.from = edgePosition.to;
+      // edgePosition.to = t;
+    }
     this.edgePosition = edgePosition;
     this.allRouteParts = parts;
     let subParts = splitInChunks(edgePosition.from, edgePosition.to, parts.length)
     // each part has its own width and is represented as individual path element
     let paths = [];
     parts.forEach((part, index) => {
-      let subPart = subParts[index];
       let pointsToAnimate = [];
+      let subPart = subParts[index];
       let subPoints = splitInPoints(subPart.from, subPart.to, part.points.length);
       for(let i = 0; i < subPoints.length; ++i) {
         pointsToAnimate.push(new AnimatedPoint({

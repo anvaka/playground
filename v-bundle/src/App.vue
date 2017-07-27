@@ -26,8 +26,6 @@
         <path :d='shortestPathVoronoiCells' stroke='rgba(00, 200, 0, 1)' :stroke-width='0.4' fill='transparent'></path>
         <!--path v-for='route in bundledRoutes'
             :d='route.getPath()' stroke='RGBA(184, 76, 40, 0.8)' :stroke-width='route.getWidth() * 0.85' fill='transparent'></path-->
-        <!--path v-for='route in edgesToAnimate'
-            :d='route.getPath($refs)' stroke='RGBA(184, 76, 40, 0.8)' :stroke-width='1' fill='transparent'></path-->
 
         <g v-if='showGraphNodes'>
           <circle v-for='r in nodes'
@@ -160,11 +158,6 @@ export default {
       let routes = linkRenderer.getRoutes();
       this.bundledRoutes = routes;
       edgeAnimator(edgesToAnimate);
-      // let foo = [];
-      // edgesToAnimate.forEach(ea => {
-      //   ea.getPaths().forEach(p => foo.push(p));
-      // });
-      // this.edgesToAnimate = foo;
       let cost = computeCost(graph, linkRenderer);
       console.log(cost);
     }

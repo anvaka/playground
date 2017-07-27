@@ -1,4 +1,5 @@
 module.exports = smoothPath;
+let isSamePoint = require('./isSamePoint');
 
 function smoothPath(path) {
   let prevSegment = segment(path[0], path[1]);
@@ -9,7 +10,7 @@ function smoothPath(path) {
     let prevSplit = splitSegment(prevSegment, splitRatio)
     svg_path += 'L' + point(prevSplit[1]) + ' '
 
-    if (isSame(path[i], path[i + 1])) continue;
+    if (isSamePoint(path[i], path[i + 1])) continue;
 
     let nextSegment = segment(path[i], path[i + 1])
     let lastControlPointSegment = segment(prevSplit[1], prevSplit[2])
@@ -30,9 +31,6 @@ function smoothPath(path) {
 
   return svg_path;
 
-  function isSame(p0, p1) {
-    return Math.abs(p0.x - p1.x) < 1e-5 && Math.abs(p0.y - p1.y) < 1e-5;
-  }
 
   function point(p) {
     if (Number.isNaN(p.x) || Number.isNaN(p.y)) {

@@ -8,17 +8,28 @@ function edgeAnimator(animatedEdges) {
   var durationInFrames = Math.max(1, durationInMs * 0.06) // 0.06 because 60 frames pers 1,000 ms
 
   var previousAnimationId = requestAnimationFrame(loop);
+  let phase = 'expand';
 
   function loop() {
     var t = easing(frame/durationInFrames)
-    frame += 1
-    animatedEdges.forEach(e => e.step(t));
+    var shouldContinue = true;
 
-    if (frame <= durationInFrames) {
-      previousAnimationId = requestAnimationFrame(loop)
-    } else {
-      previousAnimationId = 0
+    if (phase === 'expand') {
+      frame += 1
+      if (frame > durationInFrames) {
+        phase = 'collapse'
+      }
+    } else if (phase === 'collapse') {
+      frame -= 1
+      if (frame < 0) {
+        shouldContinue = false;
+      }
     }
+
+    if (shouldContinue) {
+      previousAnimationId = requestAnimationFrame(loop)
+    }
+    animatedEdges.forEach(e => e.step(t));
   }
 }
 
