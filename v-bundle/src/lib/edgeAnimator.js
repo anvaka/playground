@@ -7,7 +7,7 @@ function edgeAnimator(animatedEdges) {
   var durationInMs = 4000;
   var durationInFrames = Math.max(1, durationInMs * 0.06) // 0.06 because 60 frames pers 1,000 ms
 
-  var previousAnimationId = requestAnimationFrame(loop);
+  requestAnimationFrame(loop);
   let phase = 'expand';
 
   function loop() {
@@ -27,7 +27,7 @@ function edgeAnimator(animatedEdges) {
     }
 
     if (shouldContinue) {
-      previousAnimationId = requestAnimationFrame(loop)
+      requestAnimationFrame(loop)
     }
     animatedEdges.forEach(e => e.step(t));
   }
