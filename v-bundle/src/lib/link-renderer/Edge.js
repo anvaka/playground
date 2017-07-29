@@ -8,11 +8,15 @@ class Edge {
     this.to = to;
     this.seenCount = seenCount;
     this.width = 1;
-    this.points = getPoints(from, to, /* noisy = */ true);
+    this.points = getPoints(from, to, /* noisy = */ false);
   }
 
   getWidth() {
     return this.width;
+  }
+
+  getLength() {
+    return getLength(this.from, this.to);
   }
 
   getPath() {

@@ -24,8 +24,8 @@
         </g>
 
         <path :d='shortestPathVoronoiCells' stroke='rgba(00, 200, 0, 1)' :stroke-width='0.4' fill='transparent'></path>
-        <!--path v-for='route in bundledRoutes'
-            :d='route.getPath()' stroke='RGBA(184, 76, 40, 0.8)' :stroke-width='route.getWidth() * 0.85' fill='transparent'></path-->
+        <path v-for='route in bundledRoutes'
+            :d='route.getPath()' stroke='RGBA(184, 76, 40, 0.8)' :stroke-width='route.getWidth() * 0.85' fill='transparent'></path>
 
         <g v-if='showGraphNodes'>
           <circle v-for='r in nodes'
@@ -51,6 +51,7 @@
 
 <script>
 const panzoom = require('panzoom')
+const createGraph = require('ngraph.graph')
 const getGraph = require('./data/airlinesGraph.js')
 //const getGraph = require('./data/socialGraph.js')
 const graph = getGraph();
@@ -131,6 +132,7 @@ export default {
       linkRenderer.reset();
       let edgesToAnimate = [];
       let scene = this.$refs.scene
+      let bundledGraph = createGraph({uniqueLinkIds: false});
       graph.forEachLink((l) => {
         const route = voronoiGraph.collectRoute(l.fromId, l.toId);
 //       graph.forEachLinkedNode(n.id, (other) => {
@@ -143,14 +145,17 @@ export default {
 
         let edgePosition = getEdgePosition(l);
         let routes = [];
+        let totalEdgeLength = 0;
         shortestPathAsIs.forEach((pt, idx) => {
           if (idx > 0) {
             let routePart = linkRenderer.addEdge(shortestPathAsIs[idx - 1], shortestPathAsIs[idx])
             routes.push(routePart);
+            totalEdgeLength += routePart.getLength();
           }
         });
-        const animationEdge = new AnimationEdge(edgePosition, routes, scene);
-        edgesToAnimate.push(animationEdge);
+        bundledGraph.addLink(l.fromId, l.toId, totalEdgeLength);
+        // const animationEdge = new AnimationEdge(edgePosition, routes, scene);
+        // edgesToAnimate.push(animationEdge);
       })
 
       linkRenderer.updateWidths();
@@ -158,7 +163,7 @@ export default {
       let routes = linkRenderer.getRoutes();
       this.bundledRoutes = routes;
       edgeAnimator(edgesToAnimate);
-      let cost = computeCost(graph, linkRenderer);
+      let cost = computeCost(graph, linkRenderer, bundledGraph);
       console.log(cost);
     }
   }
