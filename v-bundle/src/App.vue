@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+    <canvas ref='cnvscene'></canvas>
     <svg>
       <g ref='scene'>
         <g v-if='showGraphEdges'>
@@ -24,8 +25,8 @@
         </g>
 
         <path :d='shortestPathVoronoiCells' stroke='rgba(00, 200, 0, 1)' :stroke-width='0.4' fill='transparent'></path>
-        <path v-for='route in bundledRoutes'
-            :d='route.getPath()' stroke='RGBA(184, 76, 40, 0.8)' :stroke-width='route.getWidth() * 0.85' fill='transparent'></path>
+        <!--path v-for='route in bundledRoutes'
+            :d='route.getPath()' stroke='RGBA(184, 76, 40, 0.8)' :stroke-width='route.getWidth() * 0.85' fill='transparent'></path-->
 
         <g v-if='showGraphNodes'>
           <circle v-for='r in nodes'
@@ -52,8 +53,8 @@
 <script>
 const panzoom = require('panzoom')
 const createGraph = require('ngraph.graph')
-const getGraph = require('./data/airlinesGraph.js')
-//const getGraph = require('./data/socialGraph.js')
+// const getGraph = require('./data/airlinesGraph.js')
+const getGraph = require('./data/socialGraph.js')
 const graph = getGraph();
 const layoutInfo = require('./lib/getAirlinesLayout.js')(graph);
 const voronoiGraph = require('./lib/getVoronoiGraph.js')(layoutInfo, graph);
@@ -154,8 +155,8 @@ export default {
           }
         });
         bundledGraph.addLink(l.fromId, l.toId, totalEdgeLength);
-        // const animationEdge = new AnimationEdge(edgePosition, routes, scene);
-        // edgesToAnimate.push(animationEdge);
+        const animationEdge = new AnimationEdge(edgePosition, routes, scene);
+        edgesToAnimate.push(animationEdge);
       })
 
       linkRenderer.updateWidths();
@@ -198,5 +199,12 @@ body {
   position: absolute;
   bottom: 0;
   left: 0;
+}
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 </style>

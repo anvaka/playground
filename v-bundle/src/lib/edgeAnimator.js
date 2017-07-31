@@ -12,23 +12,22 @@ function edgeAnimator(animatedEdges) {
 
   function loop() {
     var t = easing(frame/durationInFrames)
-    var shouldContinue = true;
 
     if (phase === 'expand') {
       frame += 1
       if (frame > durationInFrames) {
         phase = 'collapse'
+        setTimeout(() => requestAnimationFrame(loop), 1000);
+      } else {
+        requestAnimationFrame(loop)
       }
     } else if (phase === 'collapse') {
       frame -= 1
-      if (frame < 0) {
-        shouldContinue = false;
+      if (frame >= 0) {
+        requestAnimationFrame(loop)
       }
     }
 
-    if (shouldContinue) {
-      requestAnimationFrame(loop)
-    }
     animatedEdges.forEach(e => e.step(t));
   }
 }

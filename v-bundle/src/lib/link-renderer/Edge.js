@@ -20,7 +20,7 @@ class Edge {
   }
 
   getPath() {
-    return smoothPath(this.points);
+    return smoothPath(this.points).toSVG();
   }
 }
 

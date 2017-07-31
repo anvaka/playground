@@ -18,10 +18,6 @@ class AnimatedPoint {
     }
   }
 
-  getPath() {
-    return this.src.x + ',' + this.src.y
-  }
-
   step(t) {
     this.src.x = this.diff.x * t + this.start.x
     this.src.y = this.diff.y * t + this.start.y
@@ -29,23 +25,24 @@ class AnimatedPoint {
 }
 
 class AnimatedPath {
-  constructor(points, scene) {
+  constructor(points, scene, ctx) {
     this.points = points;
     this.pathId = pathId++;
     this.path = sivg('path', {
       stroke: 'RGBA(184, 76, 40, 0.8)',
       'stroke-width': '1',
-      d: this.getPath(),
+      d: this.getPath().toSVG(),
        fill:'transparent'
     });
     scene.appendChild(this.path);
   }
+
   refresh() {
-    this.path.attr('d', this.getPath())
+    this.path.attr('d', this.getPath().toSVG())
   }
+
   getPath() {
-    return smoothPath(this.points.map(x => x.src)); // 'M' + this.points.map(p => p.getPath()).join(' '); 
-    return 'M' + this.points.map(p => p.getPath()).join(' ')
+    return smoothPath(this.points.map(x => x.src)); 
   }
 
   step(t) {

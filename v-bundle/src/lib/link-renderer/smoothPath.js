@@ -1,14 +1,74 @@
 module.exports = smoothPath;
+
 let isSamePoint = require('./isSamePoint');
+
+class MoveTo {
+  constructor(pt) {
+    assertNumber(pt.x, pt.y)
+    this.x = pt.x;
+    this.y = pt.y;
+  }
+
+  toSVG() {
+    return 'M' + this.x + ',' + this.y;
+  }
+}
+
+class LineTo {
+  constructor(pt) {
+    assertNumber(pt.x, pt.y)
+    this.x = pt.x;
+    this.y = pt.y;
+  }
+
+  toSVG() {
+    return 'L' + this.x + ',' + this.y;
+  }
+}
+
+class BezierCurveTo {
+  constructor(cp1, cp2, end) {
+    assertNumber(cp1.x, cp1.y, cp2.x, cp2.y, end.x, end.y)
+
+    this.cp1x = cp1.x;
+    this.cp1y = cp1.y;
+    this.cp2x = cp2.x;
+    this.cp2y = cp2.y;
+    this.x = end.x;
+    this.y = end.y;
+  }
+
+  toSVG() {
+    return 'C' + this.cp1x + ',' + this.cp1y + ' ' +
+           this.cp2x + ',' + this.cp2y + ' ' +
+           this.x + ',' + this.y;
+  }
+}
+
+class Path {
+  constructor() {
+    this.instructions = [];
+  }
+
+  add(instruction) {
+    this.instructions.push(instruction)
+  }
+
+  toSVG() {
+    let path = this.instructions.reduce((path, instruction) => path + instruction.toSVG() , '');
+    return path;
+  }
+}
 
 function smoothPath(path) {
   let prevSegment = segment(path[0], path[1]);
-  let svg_path = 'M' + point(path[0])
+  let svg_path = new Path();
+  svg_path.add(new MoveTo(path[0]))
   let splitRatio = 0.55
 
   for (var i = 1; i < path.length - 1; i++) {
     let prevSplit = splitSegment(prevSegment, splitRatio)
-    svg_path += 'L' + point(prevSplit[1]) + ' '
+    svg_path.add(new LineTo(prevSplit[1])); 
 
     if (isSamePoint(path[i], path[i + 1])) continue;
 
@@ -20,24 +80,16 @@ function smoothPath(path) {
     let nextControlPointSegment = segment(nextSplit[0], nextSplit[1]);
     let nextControlPointSplit = splitSegment(nextControlPointSegment, 0.5)
 
-    svg_path += 'C ' + point(lastControlPointSplit[1]) + ' ' +
-      point(nextControlPointSplit[1]) + ' ' +
-      point(nextControlPointSplit[2]) + ' '
+    svg_path.add(
+      new BezierCurveTo(lastControlPointSplit[1], nextControlPointSplit[1], nextControlPointSplit[2])
+    );
 
     prevSegment = nextSegment
   }
 
-  if (path.length > 1) svg_path += 'L' + point(path[path.length - 1])
+  if (path.length > 1) svg_path.add(new LineTo(path[path.length - 1]))
 
   return svg_path;
-
-
-  function point(p) {
-    if (Number.isNaN(p.x) || Number.isNaN(p.y)) {
-      throw new Error('Nan')
-    }
-    return p.x + ',' + p.y
-  }
 
   function segment(from, to) {
     return {
@@ -68,4 +120,10 @@ function smoothPath(path) {
 
     return points
   }
+}
+
+function assertNumber(...params) {
+  params.forEach(x => {
+    if (Number.isNaN(x)) throw new Error('Nan')
+  })
 }

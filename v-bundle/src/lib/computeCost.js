@@ -12,7 +12,6 @@ function computeCost(graph, linkRenderer, bundledGraph) {
     unbundledDistance += getLength(from, to);
     boundv2 += bundledGraph.getLink(l.fromId, l.toId).data
   });
-
   // Compute all shortest paths in the original graph, and
   // then compute all shortest paths in the bundled graph.
 
@@ -30,7 +29,7 @@ function computeCost(graph, linkRenderer, bundledGraph) {
   let bundledStats = getDistanceStats(bundledlGraphDistance);
   printStats({
     original: srcStats,
-    bundled: bundledStats
+    bundled: bundledStats,
   });
 
   let routedLength = 0;
