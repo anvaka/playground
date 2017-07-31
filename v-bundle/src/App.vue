@@ -94,8 +94,18 @@ function point(p) {
 export default {
   name: 'app',
   mounted () {
-    const pz = panzoom(this.$refs.scene, {
+    let scene = this.$refs.scene;
+    const pz = panzoom(scene, {
       zoomSpeed: 0.008
+    })
+    let canvas = this.$refs.cnvscene;
+    let ctx = canvas.getContext('2d');
+    this.ctx = ctx;
+    canvas.width = scene.ownerSVGElement.clientWidth
+    canvas.height = scene.ownerSVGElement.clientHeight
+    scene.addEventListener('beforeTransform', () => {
+      let transform = pz.getTransform();
+      ctx.setTransform(transform.scale, 0, 0, transform.scale, transform.x, transform.y);
     })
   },
 
@@ -155,7 +165,7 @@ export default {
           }
         });
         bundledGraph.addLink(l.fromId, l.toId, totalEdgeLength);
-        const animationEdge = new AnimationEdge(edgePosition, routes, scene);
+        const animationEdge = new AnimationEdge(edgePosition, routes, scene, this.ctx);
         edgesToAnimate.push(animationEdge);
       })
 
@@ -163,7 +173,7 @@ export default {
       // this.shortestPathVoronoiCells = cellPath.join(' ');
       let routes = linkRenderer.getRoutes();
       this.bundledRoutes = routes;
-      edgeAnimator(edgesToAnimate);
+      edgeAnimator(edgesToAnimate, this.ctx);
       let cost = computeCost(graph, linkRenderer, bundledGraph);
       console.log(cost);
     }

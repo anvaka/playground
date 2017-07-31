@@ -8,7 +8,9 @@ class MoveTo {
     this.x = pt.x;
     this.y = pt.y;
   }
-
+  onCanvas(ctx) {
+    ctx.moveTo(this.x, this.y);
+  }
   toSVG() {
     return 'M' + this.x + ',' + this.y;
   }
@@ -20,7 +22,9 @@ class LineTo {
     this.x = pt.x;
     this.y = pt.y;
   }
-
+  onCanvas(ctx) {
+    ctx.lineTo(this.x, this.y);
+  }
   toSVG() {
     return 'L' + this.x + ',' + this.y;
   }
@@ -43,6 +47,10 @@ class BezierCurveTo {
            this.cp2x + ',' + this.cp2y + ' ' +
            this.x + ',' + this.y;
   }
+
+  onCanvas(ctx) {
+    ctx.bezierCurveTo(this.cp1x, this.cp1y, this.cp2x, this.cp2y, this.x, this.y);
+  }
 }
 
 class Path {
@@ -53,7 +61,9 @@ class Path {
   add(instruction) {
     this.instructions.push(instruction)
   }
-
+  onCanvas(ctx) {
+    this.instructions.forEach(i => i.onCanvas(ctx));
+  }
   toSVG() {
     let path = this.instructions.reduce((path, instruction) => path + instruction.toSVG() , '');
     return path;

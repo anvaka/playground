@@ -28,17 +28,24 @@ class AnimatedPath {
   constructor(points, scene, ctx) {
     this.points = points;
     this.pathId = pathId++;
+    this.ctx = ctx;
     this.path = sivg('path', {
       stroke: 'RGBA(184, 76, 40, 0.8)',
       'stroke-width': '1',
       d: this.getPath().toSVG(),
        fill:'transparent'
     });
-    scene.appendChild(this.path);
+    // scene.appendChild(this.path);
   }
 
   refresh() {
-    this.path.attr('d', this.getPath().toSVG())
+    // this.path.attr('d', this.getPath().toSVG())
+    let ctx = this.ctx;
+    let path = this.getPath();
+
+    ctx.beginPath();
+    path.onCanvas(ctx);
+    ctx.stroke();
   }
 
   getPath() {
@@ -52,7 +59,7 @@ class AnimatedPath {
 }
 
 class AnimationEdge {
-  constructor(edgePosition, parts, scene) {
+  constructor(edgePosition, parts, scene, ctx) {
     if (!isSamePoint(edgePosition.from, parts[0].from)) {
       // TODO: make the same direction.
       // let t = {
@@ -77,11 +84,13 @@ class AnimationEdge {
           dst: part.points[i]
         }));
       }
-      let animatedPath = new AnimatedPath(pointsToAnimate, scene);
+      let animatedPath = new AnimatedPath(pointsToAnimate, scene, ctx);
       paths.push(animatedPath);
     })
     this.paths = paths;
+    this.ctx = ctx;
   }
+
   step(t) {
     this.paths.forEach(p => p.step(t));
   }

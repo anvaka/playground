@@ -16,6 +16,7 @@
     "miserables": "^1.0.0",
     "ngraph.centrality": "^0.2.0",
     "ngraph.forcelayout": "^0.2.1",
+    "ngraph.generators": "0.0.17",
     "ngraph.graph": "0.0.12",
     "panzoom": "^2.5.0",
     "simplesvg": "^0.1.1",
