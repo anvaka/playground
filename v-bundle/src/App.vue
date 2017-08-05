@@ -103,7 +103,7 @@ export default {
     this.ctx = ctx;
     canvas.width = scene.ownerSVGElement.clientWidth
     canvas.height = scene.ownerSVGElement.clientHeight
-    scene.addEventListener('beforeTransform', () => {
+    scene.addEventListener('transform', () => {
       let transform = pz.getTransform();
       ctx.setTransform(transform.scale, 0, 0, transform.scale, transform.x, transform.y);
     })
