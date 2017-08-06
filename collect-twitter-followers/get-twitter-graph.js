@@ -1,3 +1,6 @@
+/**
+ * Dumps the followers.json file into dot file.
+ */
 const forEach = require('./lib/forEach.js');
 
 const pagerank = require('ngraph.pagerank');
@@ -9,7 +12,7 @@ if (!fs.existsSync(inFileName)) {
   return;
 }
 
-forEach(process.argv[2], row => {
+forEach(inFileName, row => {
   const toId = row.id;
   graph.addNode(toId);
   let followers = row.followers && row.followers.accumulator;
@@ -21,10 +24,10 @@ forEach(process.argv[2], row => {
   // console.log('Nodes count: ', graph.getNodesCount());
   // console.log('Edges count: ', graph.getLinksCount());
 
-  const rank = pagerank(graph);
-  const sortedKeys = Object.keys(rank).sort((x, y) => rank[y] - rank[x]).map(x => {
-    return [x, rank[x]];
-  }).slice(0, 10);
+  // const rank = pagerank(graph);
+  // const sortedKeys = Object.keys(rank).sort((x, y) => rank[y] - rank[x]).map(x => {
+  //   return [x, rank[x]];
+  // }).slice(0, 10);
   //console.log(sortedKeys);
   var toDot = require('ngraph.todot');
   console.log(toDot(graph));

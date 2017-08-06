@@ -10,6 +10,39 @@ const MAX_FOLLOWERS = 50000;
 module.exports = {
   getAllFollowersByScreenName,
   getAllFollowersByUserId,
+  convertIdsToUser
+}
+
+function convertIdsToUser(ids, visitor) {
+  let currentIndex = 0;
+
+  return processNext();
+
+  function processNext() {
+    if (currentIndex < ids.length) {
+      let slice = ids.slice(currentIndex, currentIndex + 100)
+      currentIndex += 100;
+      return schedule(slice).then(processNext);
+    } 
+  }
+
+  function schedule(user_id) {
+    let request = { user_id };
+    return T.get('users/lookup', request)
+      .then(resp => {
+        const { data } = resp;
+        if (data.errors) {
+          // todo: this may need more handling
+          const error = data.errors[0];
+          if (error.code === RATE_LIMIT_EXCEEDED) {
+            console.log('Rate limit exceeded at', new Date());
+            let waitTime = getWaitTime(resp.resp.headers);
+            return wait(waitTime).then(() => schedule(user_id));
+          }
+        }
+        data.forEach(user => visitor(user));
+      });
+  }
 }
 
 function getAllFollowersByUserId(user_id) {
