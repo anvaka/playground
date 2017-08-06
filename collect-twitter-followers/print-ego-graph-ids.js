@@ -1,6 +1,8 @@
 /**
- * Returns list of followers for the first level and connections between them
+ * Returns list of followers for the first level and connections between them.
  * Unlike get-twitter-graph this script does not include friends of friends level.
+ * 
+ * Prints only ids. If you need a graph - use  print-ego-graph
  */
 const getEgoGraph = require('./lib/getEgoGraph.js');
 

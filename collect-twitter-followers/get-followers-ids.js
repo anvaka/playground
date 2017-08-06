@@ -18,7 +18,7 @@ const path = require('path');
 const JSONStream = require('JSONStream');
 const forEach = require('./lib/forEach.js');
 
-const { getAllFollowersByScreenName, getAllFollowersByUserId } = require('./lib/getAllFollowers.js');
+const { getAllFollowersByScreenName, getAllFollowersByUserId } = require('./lib/twitter-client.js');
 
 const argv = yargs.argv;
 const queueFile = path.join(argv.out, 'queue.json');

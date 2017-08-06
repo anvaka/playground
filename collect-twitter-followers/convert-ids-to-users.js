@@ -22,7 +22,7 @@ const processedFile = path.join(dirname, path.basename(inputFileName) + '.users'
 
 const outStream = createOutStream(processedFile);
 
-const { convertIdsToUser } = require('./lib/getAllFollowers.js');
+const { convertIdsToUser } = require('./lib/twitter-client.js');
 
 readProcessedFile(processedFile)
   .then(readInputFile)
