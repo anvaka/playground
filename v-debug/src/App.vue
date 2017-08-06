@@ -1,17 +1,17 @@
 <template>
   <div id="app">
-    <img src="./assets/logo.png">
-    <hello></hello>
+    <svg>
+      <g ref='scene'>
+      </g>
+    </svg>
   </div>
 </template>
 
 <script>
-import Hello from './components/Hello'
 
 export default {
   name: 'app',
   components: {
-    Hello
   }
 }
 </script>
@@ -23,6 +23,33 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+  background: RGB(243, 241, 237);
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+svg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+body {
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+}
+.actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 </style>
