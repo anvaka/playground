@@ -4,6 +4,7 @@
     "event-stream": "^3.3.4",
     "ngraph.graph": "0.0.12",
     "ngraph.pagerank": "^0.1.4",
+    "ngraph.tojson": "^0.1.4",
     "twit": "^2.2.5",
     "yargs": "^8.0.1"
   }
