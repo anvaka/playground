@@ -4,14 +4,21 @@
       <g ref='scene'>
       </g>
     </svg>
+    <scene></scene>
   </div>
 </template>
 
 <script>
+const Scene = require('./components/Scene');
+// const getGraph = require('./lib/getGraph.js');
+
+// const graph = getGraph();
+// console.log('Grpah loaded. Links count: ' + graph.getLinksCount() + '; nodes count: ' + graph.getNodesCount());
 
 export default {
   name: 'app',
   components: {
+    Scene
   }
 }
 </script>
