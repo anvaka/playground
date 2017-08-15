@@ -49,12 +49,14 @@ function makePointsProgram(gl, data, screen) {
   };
   return api;
 
-  function draw() {
+  function draw(transform) {
     gl.useProgram(vertexProgram);
 
     var bpe = data.BYTES_PER_ELEMENT;
 
-    gl.uniformMatrix4fv(locations.uniforms.uTransform, false, screen.transform);
+    if (transform) {
+      gl.uniformMatrix4fv(locations.uniforms.uTransform, false, transform.getArray());
+    }
     gl.uniform2f(locations.uniforms.uScreenSize, screen.width, screen.height);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);

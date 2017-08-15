@@ -24,6 +24,18 @@ export default {
     }
 
     scene.add(nodes);
+
+    let nodes2 = new wgl.Points(nodeCount);
+    nodes2.transform.dx = 0.5;
+
+    for (var i = 0; i < nodeCount; ++i) {
+      nodes2.add(new wgl.Point(
+        /* x = */ r * Math.cos(i * step),
+        /* y = */ r * Math.sin(i * step)
+      ));
+    }
+
+    scene.add(nodes2);
   }
 }
 </script>
@@ -34,5 +46,3 @@ export default {
     height: 100%;
   }
 </style>
-
-

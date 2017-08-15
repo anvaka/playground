@@ -1,5 +1,7 @@
 const makePanzoom = require('panzoom');
-const BBox = require('./BBox')
+const BBox = require('./BBox');
+const Element = require('./Element');
+
 // const makeLineProgram = require('./lines.js');
 
 module.exports = makeScene;
@@ -8,8 +10,6 @@ function makeScene(canvas) {
   canvas.width = canvas.offsetWidth;
   canvas.height = canvas.offsetHeight;
 
-  let children = [];
-
   let gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   gl.enable(gl.BLEND);
@@ -17,22 +17,21 @@ function makeScene(canvas) {
   gl.clear(gl.COLOR_BUFFER_BIT)
   gl.viewport(0, 0, canvas.offsetWidth, canvas.offsetHeight);
   
-  var bbox = new BBox();
-  bbox.maxX = 1;
-  bbox.maxY = 1;
-  var transform = [
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 1, 0,
-    0, 0, 0, 1
-  ];
-
-
+  var sceneRoot = new Element();
+  sceneRoot.bbox.minX = -1000;
+  sceneRoot.bbox.minY = -1000;
+  sceneRoot.bbox.maxX = 1000;
+  sceneRoot.bbox.maxY = 1000;
   var screen = {
     width: canvas.width,
     height: canvas.height,
-    transform: transform
   };
+
+  var panzoom = makePanzoom(canvas, {
+    autocenter: true,
+    bounds: true,
+    controller: wglPanZoom(canvas, sceneRoot.bbox, sceneRoot.transform)
+  });
 //  var nodeProgram = makeNodeProgram(gl, nodesData, screen)
 
   // var linesCount = nodeCount * (nodeCount - 1);
@@ -60,34 +59,18 @@ function makeScene(canvas) {
   var api = {
     add
   };
-  var running = false;
 
+  requestAnimationFrame(frame);
   return api;
 
   function frame() {
     gl.clear(gl.COLOR_BUFFER_BIT)
-    children.forEach(child => child.draw(gl, screen));
+    sceneRoot.draw(gl, screen);
     requestAnimationFrame(frame);
   }
 
   function add(object) {
-    children.push(object);
-    if (object.bbox) {
-      // TODO: this is fragile, as we wouldn't know when child bbox updates.
-      bbox.merge(object.bbox)
-    }
-    // TODO: this is very fragile. Need to do something better than this.
-    if (!running) run()
-  }
-
-  function run() {
-    running = true;
-    makePanzoom(canvas, {
-      autocenter: true,
-      bounds: true,
-      controller: wglPanZoom(canvas, bbox, transform)
-    });
-    requestAnimationFrame(frame);
+    sceneRoot.appendChild(object);
   }
 }
 
@@ -101,11 +84,10 @@ function wglPanZoom(canvas, bbox, transform) {
         var width = canvas.width
         var height = canvas.height
 
-        transform[12] = (2 * newT.x / width) - 1;
-        transform[13] = 1 - (2 * newT.y / height);
+        transform.dx = (2 * newT.x / width) - 1;
+        transform.dy = 1 - (2 * newT.y / height);
 
-        transform[0] = newT.scale
-        transform[5] = newT.scale
+        transform.scale = newT.scale
       },
 
       getOwner() {
