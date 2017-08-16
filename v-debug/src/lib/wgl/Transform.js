@@ -11,11 +11,16 @@ class Transform {
     ]
   }
 
-  applyTransform(other) {
-    var scale = this.scale * other.scale;
-    var dx = this.scale * other.dx + this.dx;
-    var dy = this.scale * other.dy + this.dy;
-    return new Transform(scale, dx, dy);
+  multiply(a, b) {
+    var scale = a.scale * b.scale;
+    var dx = a.scale * b.dx + a.dx;
+    var dy = a.scale * b.dy + a.dy;
+
+    this.scale = scale;
+    this.dx = dx;
+    this.dy = dy;
+
+    return this;
   }
 
   get scale() {
@@ -43,6 +48,10 @@ class Transform {
     this._array[5] = newScale;
   }
 
+  copyTo(dst) {
+    copyArray(this._array, dst._array);
+    return this;
+  }
 
   getArray() {
     return this._array;
@@ -50,3 +59,13 @@ class Transform {
 }
 
 module.exports = Transform;
+
+function copyArray(from, to) {
+  if (from.length !== to.length) {
+    throw new Error('Array length mismatch');
+  }
+
+  for(var i = 0; i < from.length; ++i) {
+    to[i] = from[i];
+  }
+}

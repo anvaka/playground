@@ -9,6 +9,11 @@ class Element {
     this.bbox = new BBox();
     this.children = [];
     this.transform = new Transform();
+
+    // Stores transformation to the "world" coordinates. If this element has
+    // no parent, this object is equal to `this.transform`
+    this.worldTransform = new Transform();
+    this.worldTransformNeedsUpdate = false;
   }
 
   appendChild(child) {
@@ -22,6 +27,24 @@ class Element {
     this.children.splice(childIdx, 1);
   }
 
+  updateWorldTransform(force) {
+    if (this.worldTransformNeedsUpdate || force) {
+      if (!this.parent) {
+        this.transform.copyTo(this.worldTransform);
+      } else {
+        this.worldTransform.multiply(this.parent.worldTransform, this.transform)
+      }
+
+      this.worldTransformNeedsUpdate = false;
+      force = true; // We have to update children now.
+    }
+
+    var children = this.children;
+    for (var i = 0; i < children.length; i++ ) {
+       children[i].updateWorldTransform(force);
+    }
+  }
+
   updateBBox(childBbox) {
     // TODO: This should use transform.
     this.bbox.merge(childBbox);
@@ -30,16 +53,10 @@ class Element {
     }
   }
 
-  draw(gl, screen, parentTransform) {
-    if (!parentTransform) {
-      parentTransform = new Transform(1, 0, 0);
-    } 
-
-    var currentTransform = parentTransform.applyTransform(this.transform);
-
+  draw(gl, screen) {
     for (var i = 0; i < this.children.length; ++i) {
       var child = this.children[i];
-      child.draw(gl, screen, currentTransform);
+      child.draw(gl, screen);
     }
   }
 }

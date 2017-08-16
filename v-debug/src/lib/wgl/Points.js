@@ -12,15 +12,12 @@ class Points extends Element {
     this._program = null;
   }
 
-  draw(gl, screen, transform) {
+  draw(gl, screen) {
     if (!this._program) {
       this._program = makeNodeProgram(gl, this.points, screen);
     }
 
-    if (transform) {
-      transform = transform.applyTransform(this.transform);
-    }
-    this._program.draw(transform);
+    this._program.draw(this.worldTransform);
   }
 
   add(point) {
@@ -35,7 +32,7 @@ class Points extends Element {
     points[offset + 0] = point.x
     points[offset + 1] = point.y
     points[offset + 2] = point.size
-    // TODO: This is waste
+    // TODO: This is waste, we can store rgba in 32 bits, not in the 3 * 3 * 8 bits.
     var color = point.color;
     points[offset + 3] = color.r
     points[offset + 4] = color.g

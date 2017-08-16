@@ -27,6 +27,7 @@ export default {
 
     let nodes2 = new wgl.Points(nodeCount);
     nodes2.transform.dx = 0.5;
+    nodes2.worldTransformNeedsUpdate = true;
 
     for (var i = 0; i < nodeCount; ++i) {
       nodes2.add(new wgl.Point(

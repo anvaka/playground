@@ -30,7 +30,7 @@ function makeScene(canvas) {
   var panzoom = makePanzoom(canvas, {
     autocenter: true,
     bounds: true,
-    controller: wglPanZoom(canvas, sceneRoot.bbox, sceneRoot.transform)
+    controller: wglPanZoom(canvas, sceneRoot)
   });
 //  var nodeProgram = makeNodeProgram(gl, nodesData, screen)
 
@@ -65,6 +65,8 @@ function makeScene(canvas) {
 
   function frame() {
     gl.clear(gl.COLOR_BUFFER_BIT)
+    sceneRoot.updateWorldTransform();
+
     sceneRoot.draw(gl, screen);
     requestAnimationFrame(frame);
   }
@@ -74,20 +76,22 @@ function makeScene(canvas) {
   }
 }
 
-function wglPanZoom(canvas, bbox, transform) {
+function wglPanZoom(canvas, sceneRoot) {
   return {
       getBBox() {
-        return bbox 
+        return sceneRoot.bbox 
       },
 
       applyTransform(newT) {
         var width = canvas.width
         var height = canvas.height
+        var transform = sceneRoot.transform;
 
         transform.dx = (2 * newT.x / width) - 1;
         transform.dy = 1 - (2 * newT.y / height);
 
-        transform.scale = newT.scale
+        transform.scale = newT.scale;
+        sceneRoot.worldTransformNeedsUpdate = true;
       },
 
       getOwner() {
