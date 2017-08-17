@@ -1,12 +1,11 @@
-var BBox = require('./BBox');
 var Transform = require('./Transform')
+var BBox = require('./BBox')
 
 /**
  * represents a single element in the scene tree
  */
 class Element {
   constructor() {
-    this.bbox = new BBox();
     this.children = [];
     this.transform = new Transform();
 
@@ -45,19 +44,28 @@ class Element {
     }
   }
 
-  updateBBox(childBbox) {
-    // TODO: This should use transform.
-    this.bbox.merge(childBbox);
-    if (this.parent) {
-      this.parent.updateBBox(this.bbox);
-    }
-  }
-
   draw(gl, screen) {
     for (var i = 0; i < this.children.length; ++i) {
       var child = this.children[i];
       child.draw(gl, screen);
     }
+  }
+
+  computeBoundingBox() {
+    // TODO This should probably compute bbox in the world coordinates, and then
+    // transform it back?
+    var bbox = new BBox()
+    if (this.bbox) {
+      bbox.merge()
+    }
+
+    for (var i = 0; i < this.children.length; ++i) {
+      var child = this.children[i];
+      var childBBox = child.computeBoundingBox();
+      bbox.merge(childBBox)
+    }
+
+    return bbox;
   }
 }
 

@@ -1,11 +1,13 @@
 const ITEMS_PER_POINT = 6;  // x, y, size, r, g, b
 var makeNodeProgram = require('./makePointsProgram');
 var Element = require('./Element');
+var BBox = require('./BBox')
 
 class Points extends Element {
   constructor(capacity) {
     super();
 
+    this.bbox = new BBox();
     this.capacity = capacity;
     this.points = new Float32Array(capacity * ITEMS_PER_POINT);
     this.count = 0;
@@ -38,8 +40,8 @@ class Points extends Element {
     points[offset + 4] = color.g
     points[offset + 5] = color.b
 
-    this.bbox.addPoint(point);
     this.count += 1;
+    this.bbox.addPoint(point);
 
     if (this.parent) {
       this.parent.updateBBox(this.bbox);

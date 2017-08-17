@@ -1,5 +1,4 @@
 const makePanzoom = require('panzoom');
-const BBox = require('./BBox');
 const Element = require('./Element');
 
 // const makeLineProgram = require('./lines.js');
@@ -18,18 +17,12 @@ function makeScene(canvas) {
   gl.viewport(0, 0, canvas.offsetWidth, canvas.offsetHeight);
   
   var sceneRoot = new Element();
-  sceneRoot.bbox.minX = -1000;
-  sceneRoot.bbox.minY = -1000;
-  sceneRoot.bbox.maxX = 1000;
-  sceneRoot.bbox.maxY = 1000;
   var screen = {
     width: canvas.width,
     height: canvas.height,
   };
 
   var panzoom = makePanzoom(canvas, {
-    autocenter: true,
-    bounds: true,
     controller: wglPanZoom(canvas, sceneRoot)
   });
 //  var nodeProgram = makeNodeProgram(gl, nodesData, screen)
@@ -57,11 +50,16 @@ function makeScene(canvas) {
   // lineProgram.draw();
 
   var api = {
-    add
+    add,
+    showRectangle
   };
 
   requestAnimationFrame(frame);
   return api;
+
+  function showRectangle(rect) {
+    panzoom.showRectangle(rect)
+  }
 
   function frame() {
     gl.clear(gl.COLOR_BUFFER_BIT)
@@ -78,10 +76,6 @@ function makeScene(canvas) {
 
 function wglPanZoom(canvas, sceneRoot) {
   return {
-      getBBox() {
-        return sceneRoot.bbox 
-      },
-
       applyTransform(newT) {
         var width = canvas.width
         var height = canvas.height

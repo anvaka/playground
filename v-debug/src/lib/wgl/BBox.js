@@ -14,6 +14,14 @@ class BBox {
     return this.minY;
   }
 
+  get right() {
+    return this.maxX;
+  }
+
+  get bottom() {
+    return this.maxY;
+  }
+
   get width() {
     return this.maxX - this.minX;
   }
@@ -31,11 +39,11 @@ class BBox {
     if (point.y > this.maxY) this.maxY = point.y;
   }
 
-  merge(other) {
-    if (other.minX < this.minX) this.minX = other.minX;
-    if (other.minY < this.minY) this.minY = other.minY;
-    if (other.maxX > this.maxX) this.maxX = other.maxX;
-    if (other.maxY > this.maxY) this.maxY = other.maxY;
+  merge(otherBBox) {
+    if (otherBBox.minX < this.minX) this.minX = otherBBox.minX;
+    if (otherBBox.minY < this.minY) this.minY = otherBBox.minY;
+    if (otherBBox.maxX > this.maxX) this.maxX = otherBBox.maxX;
+    if (otherBBox.maxY > this.maxY) this.maxY = otherBBox.maxY;
   }
 }
 
