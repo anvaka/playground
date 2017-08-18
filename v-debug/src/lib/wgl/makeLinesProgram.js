@@ -22,10 +22,17 @@ void main() {
 }
 `;
 
+// TODO: this needs to be in a separate file, with proper resource management
+let lineProgramCache = new Map(); // maps from GL context to program
+
 function makeLineProgram(gl, data, options) {
-  let lineVSShader = gl_utils.compile(gl, gl.VERTEX_SHADER, lineVSSrc);
-  let lineFSShader = gl_utils.compile(gl, gl.FRAGMENT_SHADER, lineFSSrc);
-  let lineProgram = gl_utils.link(gl, lineVSShader, lineFSShader);
+  let lineProgram = lineProgramCache.get(gl)
+  if (!lineProgram) {
+    let lineVSShader = gl_utils.compile(gl, gl.VERTEX_SHADER, lineVSSrc);
+    let lineFSShader = gl_utils.compile(gl, gl.FRAGMENT_SHADER, lineFSSrc);
+    lineProgram = gl_utils.link(gl, lineVSShader, lineFSShader);
+    lineProgramCache.set(gl, lineProgram);
+  }
 
   let locations = gl_utils.getLocations(gl, lineProgram);
   var linesCount = data.length / 4;
@@ -35,10 +42,17 @@ function makeLineProgram(gl, data, options) {
 
   var api = {
     draw,
+    dispose
   }
 
   return api;
-  
+
+  function dispose() {
+    gl.deleteBuffer(lineBuffer);
+    gl.deleteProgram(lineProgram);
+    lineProgramCache.delete(gl);
+  }
+
   function draw(transform, color) {
     gl.useProgram(lineProgram);
 
@@ -49,6 +63,6 @@ function makeLineProgram(gl, data, options) {
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
     gl.vertexAttribPointer(locations.attributes.aPosition, 2, gl.FLOAT, false, bpe * 2, 0)
     gl.enableVertexAttribArray(locations.attributes.aPosition)
-    gl.drawArrays(gl.LINES, 0, linesCount * 2);
+    gl.drawArrays(gl.TRIANGLES, 0, linesCount * 2);
   }
 }

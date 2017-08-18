@@ -54,6 +54,13 @@ class Lines extends Element {
     return lineAccessor;
   }
 
+  dispose() {
+    if (this._program) {
+      this._program.dispose();
+      this._program = null;
+    }
+  }
+
   _extendArray() {
     // Every time we run out of space create new array twice bigger.
     var newCapacity = this.capacity * ITEMS_PER_LINE * 2;

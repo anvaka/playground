@@ -67,6 +67,13 @@ class Element {
 
     return bbox;
   }
+
+  dispose() {
+    for (var i = 0; i < this.children.length; ++i) {
+      var child = this.children[i];
+      child.dispose();
+    }
+  }
 }
 
 module.exports = Element;

@@ -38,10 +38,7 @@ function makeScene(canvas) {
 
   function dispose() {
     panzoom.dispose();
-    
-    if (gl.getExtension('WEBGL_lose_context')) {
-      gl.getExtension('WEBGL_lose_context').loseContext();
-    }
+    sceneRoot.dispose();
   }
 
   function setViewBox(rect) {

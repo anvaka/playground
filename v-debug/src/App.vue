@@ -1,11 +1,13 @@
 <template>
   <div id="app">
-    <scene :graph='graph'></scene>
+    <scene :graph='graph' :settings='settings'></scene>
+    <graph-settings :settings='settings'></graph-settings>
   </div>
 </template>
 
 <script>
 const Scene = require('./components/Scene');
+const GraphSettings = require('./components/GraphSettings');
 const getGraph = require('./lib/getGraph.js');
 
 const graph = getGraph();
@@ -14,11 +16,20 @@ console.log('Graph loaded. Links count: ' + graph.getLinksCount() + '; nodes cou
 export default {
   name: 'app',
   components: {
-    Scene
+    Scene,
+    GraphSettings
   },
   data() {
     return {
-      graph: graph
+      graph: graph,
+      settings: {
+        springLength: 30,
+        springCoeff: 0.0008,
+        gravity: -1.2,
+        theta: 0.8,
+        dragCoeff: 0.02,
+        timeStep: 20
+      }
     }
   }
 }

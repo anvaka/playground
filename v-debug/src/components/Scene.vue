@@ -8,25 +8,63 @@ const makeLayout = require('ngraph.forcelayout');
 
 export default {
   name: 'Scene',
-  props: ['graph'],
+  props: ['graph', 'settings'],
   mounted() {
-    var graph = this.graph;
-    let canvas = this.$el;
-    let scene = wgl.scene(canvas);
-    let useGraph = true;
-    if (useGraph) {
-      this.graphScene = renderGraph(graph, scene);
+    this.createScene();
+  },
+  watch: {
+    settings: {
+      handler(newValue) {
+        this.createScene();
+      },
+      deep: true
+    }
+  },
+  methods: {
+    destroyScene() {
+      if (this.graphScene) {
+        this.graphScene.dispose();
+        this.graphScene = null;
+      }
+    },
+    createScene() {
+      if (this.graphScene) {
+        this.destroyScene();
+      }
+
+      var graph = this.graph;
+      let canvas = this.$el;
+      let scene = wgl.scene(canvas);
+      let useGraph = true;
+      if (useGraph) {
+        this.graphScene = renderGraph(graph, scene, getPhysicSettings(this.settings));
+      }
     }
   },
   beforeDestroy() {
-    if (this.graphScene) {
-      this.graphScene.dispose();
-    }
+    this.destroyScene()
   }
 }
 
-function renderGraph(graph, scene) {
-    var layout = makeLayout(graph);
+function getPhysicSettings(settings) {
+  return {
+    springLength: getFloatOrDefault(settings.springLength,  30),
+    springCoeff:  getFloatOrDefault(settings.springCoeff,   0.0008),
+    gravity:      getFloatOrDefault(settings.gravity,       -1.2),
+    theta:        getFloatOrDefault(settings.theta,         0.8),
+    dragCoeff:    getFloatOrDefault(settings.dragCoeff,     0.02),
+    timeStep:     getFloatOrDefault(settings.timeStep,      20)
+  }
+}
+
+function getFloatOrDefault(x, defaultValue) {
+  var value = Number.parseFloat(x);
+  if (Number.isNaN(value)) return defaultValue;
+  return value;
+}
+
+function renderGraph(graph, scene, layoutSettings) {
+    var layout = makeLayout(graph, layoutSettings);
     let nodeCount = graph.getNodesCount();
     let nodes = new wgl.Points(nodeCount);
     let nodeIdToUI = new Map();
@@ -38,15 +76,19 @@ function renderGraph(graph, scene) {
       nodeIdToUI.set(node.id, ui)
     })
 
+    let initialSceneSize = 350;
     scene.setViewBox({
-      left: -1000,
-      top: -1000,
-      right: 1000,
-      bottom:1000,
+      left:  -initialSceneSize,
+      top:   -initialSceneSize,
+      right:  initialSceneSize,
+      bottom: initialSceneSize,
     })
     scene.add(nodes);
 
     let lines = new wgl.Lines(graph.getLinksCount());
+
+    lines.color.r = 0.04
+    lines.color.a = 0.015
 
     graph.forEachLink(link => {
       var fromPos = layout.getNodePosition(link.fromId);

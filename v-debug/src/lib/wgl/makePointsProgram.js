@@ -46,8 +46,15 @@ function makePointsProgram(gl, data, screen) {
 
   var api = {
     draw,
+    dispose
   };
   return api;
+
+  function dispose() {
+    gl.deleteBuffer(buffer);
+    gl.deleteProgram(vertexProgram);
+    vertexProgramCache.delete(gl);
+  }
 
   function draw(transform) {
     gl.useProgram(vertexProgram);

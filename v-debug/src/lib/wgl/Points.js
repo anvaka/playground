@@ -48,6 +48,13 @@ class Points extends Element {
     this._program.draw(this.worldTransform);
   }
 
+  dispose() {
+    if (this._program) {
+      this._program.dispose();
+      this._program = null;
+    }
+  }
+
   add(point) {
     if (!point) throw new Error('Point is required');
 
