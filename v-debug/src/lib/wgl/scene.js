@@ -28,13 +28,23 @@ function makeScene(canvas) {
 
   var api = {
     add,
-    showRectangle
+    setViewBox,
+    dispose,
   };
 
   requestAnimationFrame(frame);
+
   return api;
 
-  function showRectangle(rect) {
+  function dispose() {
+    panzoom.dispose();
+    
+    if (gl.getExtension('WEBGL_lose_context')) {
+      gl.getExtension('WEBGL_lose_context').loseContext();
+    }
+  }
+
+  function setViewBox(rect) {
     panzoom.showRectangle(rect)
   }
 

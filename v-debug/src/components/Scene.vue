@@ -15,7 +15,12 @@ export default {
     let scene = wgl.scene(canvas);
     let useGraph = true;
     if (useGraph) {
-      renderGraph(graph, scene);
+      this.graphScene = renderGraph(graph, scene);
+    }
+  },
+  beforeDestroy() {
+    if (this.graphScene) {
+      this.graphScene.dispose();
     }
   }
 }
@@ -33,7 +38,7 @@ function renderGraph(graph, scene) {
       nodeIdToUI.set(node.id, ui)
     })
 
-    scene.showRectangle({
+    scene.setViewBox({
       left: -1000,
       top: -1000,
       right: 1000,
@@ -52,14 +57,26 @@ function renderGraph(graph, scene) {
 
     scene.add(lines);
     var layoutStepsCount = 0;
-    requestAnimationFrame(frame)
+    var animationHandle = requestAnimationFrame(frame)
+
+    return {
+      dispose
+    };
+
+    function dispose() {
+      if (animationHandle) {
+        cancelAnimationFrame(animationHandle);
+        animationHandle = null;
+      }
+      scene.dispose();
+    }
 
     function frame() {
       layout.step();
       layoutStepsCount += 1;
       updatePositions();
       if (layoutStepsCount < 1000) {
-        requestAnimationFrame(frame);
+        animationHandle = requestAnimationFrame(frame);
       }
     }
 
