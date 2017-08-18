@@ -10,33 +10,37 @@ export default {
   mounted() {
     let canvas = this.$el;
 
-    let nodeCount = 300;
+    let nodeCount = 30;
     let scene = wgl.scene(canvas);
     let nodes = new wgl.Points(nodeCount);
 
     let r = 500;
     let step = 2 * Math.PI/nodeCount;
+    let points = [];
     for (var i = 0; i < nodeCount; ++i) {
-      nodes.add(new wgl.Point(
+      let p = new wgl.Point(
         /* x = */ r * Math.cos(i * step),
         /* y = */ r * Math.sin(i * step)
-      ));
+      );
+
+      nodes.add(p);
+      points.push(p);
     }
 
     scene.add(nodes);
 
-    let nodes2 = new wgl.Points(nodeCount);
-    nodes2.transform.dx = 0.5;
-    nodes2.worldTransformNeedsUpdate = true;
+    let lines = new wgl.Lines(nodeCount * (nodeCount - 1));
 
     for (var i = 0; i < nodeCount; ++i) {
-      nodes2.add(new wgl.Point(
-        /* x = */ r * Math.cos(i * step),
-        /* y = */ r * Math.sin(i * step)
-      ));
+      for (var j = (i + 1); j < nodeCount; ++j) {
+        lines.add(new wgl.Line(
+          points[i],
+          points[j]
+        ));
+      }
     }
 
-    scene.add(nodes2);
+    scene.add(lines);
   }
 }
 </script>

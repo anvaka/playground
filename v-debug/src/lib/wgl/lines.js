@@ -1,53 +1,55 @@
-const gl_utils = require('./glUtils');
+const ITEMS_PER_LINE = 4;  // x0, y0, x1, y1
+var makeLinesProgram = require('./makeLinesProgram');
+var Color = require('./Color');
+var Element = require('./Element');
 
-module.exports = makeLineProgram;
+const DEFAULT_COLOR =  new Color(1, 1, 1, 1);
 
-const lineVSSrc = `
-attribute vec2 aPosition;
-uniform vec2 uScreenSize;
-uniform mat4 uTransform;
-varying vec4 vColor;
+class Lines extends Element {
+  constructor(capacity) {
+    super();
 
-void main() {
-  gl_Position = uTransform * vec4(aPosition/uScreenSize, 0.0, 1.0);
-}
-`;
-
-const lineFSSrc = `
-precision mediump float;
-varying vec4 vColor;
-
-void main() {
-  gl_FragColor = vec4(0.8, 0.2, 0.9, 1.);
-}
-`;
-
-function makeLineProgram(gl, data, options) {
-  let lineVSShader = gl_utils.compile(gl, gl.VERTEX_SHADER, lineVSSrc);
-  let lineFSShader = gl_utils.compile(gl, gl.FRAGMENT_SHADER, lineFSSrc);
-  let lineProgram = gl_utils.link(gl, lineVSShader, lineFSShader);
-
-  let locations = gl_utils.getLocations(gl, lineProgram);
-  var linesCount = data.length / 4;
-  var lineBuffer = gl.createBuffer();
-  var bpe = data.BYTES_PER_ELEMENT;
-  gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer)
-
-  var api = {
-    draw,
+    this.capacity = capacity;
+    this.buffer = new Float32Array(capacity * ITEMS_PER_LINE);
+    this.count = 0;
+    this._program = null;
+    this.color = DEFAULT_COLOR;
   }
 
-  return api;
-  
-  function draw() {
-    gl.useProgram(lineProgram);
+  draw(gl, screen) {
+    if (!this._program) {
+      this._program = makeLinesProgram(gl, this.buffer, screen);
+    }
 
-    gl.uniformMatrix4fv(locations.uniforms.uTransform, false, options.transform);
-    gl.uniform2f(locations.uniforms.uScreenSize, options.width, options.height);
+    this._program.draw(this.worldTransform, this.color);
+  }
 
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-    gl.vertexAttribPointer(locations.attributes.aPosition, 2, gl.FLOAT, false, bpe * 2, 0)
-    gl.enableVertexAttribArray(locations.attributes.aPosition)
-    gl.drawArrays(gl.LINES, 0, linesCount * 2);
+  add(line) {
+    if (!line) throw new Error('Line is required');
+
+    if (this.count >= this.capacity)  {
+      this._extendArray();
+    }
+    let buffer = this.buffer;
+    let offset = this.count * ITEMS_PER_LINE;
+
+    buffer[offset + 0] = line.from.x
+    buffer[offset + 1] = line.from.y
+    buffer[offset + 2] = line.to.x
+    buffer[offset + 3] = line.to.y
+
+    this.count += 1;
+  }
+
+  _extendArray() {
+    // Every time we run out of space create new array twice bigger.
+    var newCapacity = this.capacity * ITEMS_PER_LINE * 2;
+    var extendedArray = new Float32Array(newCapacity);
+    extendedArray.set(this.points);
+
+    this.points = extendedArray;
+    this.capacity = newCapacity;
   }
 }
+
+module.exports = Lines;

@@ -25,29 +25,6 @@ function makeScene(canvas) {
   var panzoom = makePanzoom(canvas, {
     controller: wglPanZoom(canvas, sceneRoot)
   });
-//  var nodeProgram = makeNodeProgram(gl, nodesData, screen)
-
-  // var linesCount = nodeCount * (nodeCount - 1);
-  // var itemsPerLine = 2 + 2;
-  // var lines = new Float32Array(linesCount * itemsPerLine);
-  // for (var i = 0; i < nodeCount; ++i) {
-  //   for (var j = 0; j < nodeCount; ++j) {
-  //     if (i === j) continue
-
-  //     var offset = (i * nodeCount + j) * itemsPerLine;
-  //     var from = i * itemsPerNode;
-  //     var to = j * itemsPerNode;
-  //     lines[offset + 0] = nodesData[from + 0];
-  //     lines[offset + 1] = nodesData[from + 1];
-  //     lines[offset + 2] = nodesData[to + 0];
-  //     lines[offset + 3] = nodesData[to + 1];
-  //   }
-  // }
-
-  // var lineProgram = makeLineProgram(gl, lines, screen)
-
-  // nodeProgram.draw();
-  // lineProgram.draw();
 
   var api = {
     add,
