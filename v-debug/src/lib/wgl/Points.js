@@ -1,6 +1,7 @@
 const ITEMS_PER_POINT = 6;  // x, y, size, r, g, b
 var makeNodeProgram = require('./makePointsProgram');
 var Element = require('./Element');
+var Color = require('./Color');
 
 class Points extends Element {
   constructor(capacity) {
@@ -10,6 +11,8 @@ class Points extends Element {
     this.points = new Float32Array(capacity * ITEMS_PER_POINT);
     this.count = 0;
     this._program = null;
+    this.color = new Color(1, 1, 1, 1);
+    this.size = 1;
   }
 
   draw(gl, screen) {
@@ -31,9 +34,9 @@ class Points extends Element {
 
     points[offset + 0] = point.x
     points[offset + 1] = point.y
-    points[offset + 2] = point.size
+    points[offset + 2] = typeof point.size === 'number' ? point.size : this.size;
     // TODO: This is waste, we can store rgba in 32 bits, not in the 3 * 3 * 8 bits.
-    var color = point.color;
+    var color = point.color || this.color;
     points[offset + 3] = color.r
     points[offset + 4] = color.g
     points[offset + 5] = color.b

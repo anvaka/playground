@@ -10,6 +10,7 @@
     "build": "node build/build.js"
   },
   "dependencies": {
+    "ngraph.forcelayout": "^0.2.1",
     "ngraph.fromjson": "^0.1.8",
     "panzoom": "^2.6.0",
     "vue": "^2.3.3"

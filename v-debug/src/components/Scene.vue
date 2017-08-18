@@ -3,43 +3,38 @@
 </template>
 
 <script>
-const wgl = require('../lib/wgl/index')
+const wgl = require('../lib/wgl/index');
+const makeLayout = require('ngraph.forcelayout');
 
 export default {
   name: 'Scene',
+  props: ['graph'],
   mounted() {
+    var graph = this.graph;
+    var layout = makeLayout(graph);
+    for (var i = 0; i < 100; ++i) {
+      layout.step();
+    }
     let canvas = this.$el;
 
-    let nodeCount = 30;
+    let nodeCount = graph.getNodesCount();
     let scene = wgl.scene(canvas);
     let nodes = new wgl.Points(nodeCount);
-
-    let r = 500;
-    let step = 2 * Math.PI/nodeCount;
-    let points = [];
-    for (var i = 0; i < nodeCount; ++i) {
-      let p = new wgl.Point(
-        /* x = */ r * Math.cos(i * step),
-        /* y = */ r * Math.sin(i * step)
-      );
-
-      nodes.add(p);
-      points.push(p);
-    }
+    graph.forEachNode(node => {
+      var node = layout.getNodePosition(node.id);
+      nodes.add(node)
+    })
 
     scene.add(nodes);
 
-    let lines = new wgl.Lines(nodeCount * (nodeCount - 1));
+    let lines = new wgl.Lines(graph.getLinksCount());
+    lines.color.a = 0.1
 
-    for (var i = 0; i < nodeCount; ++i) {
-      for (var j = (i + 1); j < nodeCount; ++j) {
-        lines.add(new wgl.Line(
-          points[i],
-          points[j]
-        ));
-      }
-    }
-
+    graph.forEachLink(link => {
+      var fromPos = layout.getNodePosition(link.fromId);
+      var toPos = layout.getNodePosition(link.toId);
+      lines.add(new wgl.Line(fromPos, toPos));
+    })
     scene.add(lines);
   }
 }

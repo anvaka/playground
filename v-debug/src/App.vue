@@ -1,24 +1,25 @@
 <template>
   <div id="app">
-    <svg>
-      <g ref='scene'>
-      </g>
-    </svg>
-    <scene></scene>
+    <scene :graph='graph'></scene>
   </div>
 </template>
 
 <script>
 const Scene = require('./components/Scene');
-// const getGraph = require('./lib/getGraph.js');
+const getGraph = require('./lib/getGraph.js');
 
-// const graph = getGraph();
-// console.log('Grpah loaded. Links count: ' + graph.getLinksCount() + '; nodes count: ' + graph.getNodesCount());
+const graph = getGraph();
+console.log('Graph loaded. Links count: ' + graph.getLinksCount() + '; nodes count: ' + graph.getNodesCount());
 
 export default {
   name: 'app',
   components: {
     Scene
+  },
+  data() {
+    return {
+      graph: graph
+    }
   }
 }
 </script>

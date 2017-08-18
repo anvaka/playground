@@ -42,7 +42,6 @@ function makeLineProgram(gl, data, options) {
   function draw(transform, color) {
     gl.useProgram(lineProgram);
 
-
     gl.uniformMatrix4fv(locations.uniforms.uTransform, false, transform.getArray());
     gl.uniform2f(locations.uniforms.uScreenSize, options.width, options.height);
     gl.uniform4f(locations.uniforms.uColor, color.r, color.g, color.b, color.a);
