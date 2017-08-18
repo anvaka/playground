@@ -3,6 +3,31 @@ var makeNodeProgram = require('./makePointsProgram');
 var Element = require('./Element');
 var Color = require('./Color');
 
+class PointAccessor {
+  constructor(buffer, offset) {
+    this.offset = offset;
+    this.buffer = buffer;
+  }
+
+  update(point, defaults) {
+    var offset = this.offset;
+    var points = this.buffer;
+
+    points[offset + 0] = point.x
+    points[offset + 1] = point.y
+    if (point.size || defaults) {
+      points[offset + 2] = typeof point.size === 'number' ? point.size : defaults.size;
+    }
+    // TODO: This is waste, we can store rgba in 32 bits, not in the 3 * 3 * 8 bits.
+    if (point.color || defaults) {
+      var color = point.color || defaults.color;
+      points[offset + 3] = color.r
+      points[offset + 4] = color.g
+      points[offset + 5] = color.b
+    }
+  }
+}
+
 class Points extends Element {
   constructor(capacity) {
     super();
@@ -30,18 +55,12 @@ class Points extends Element {
       this._extendArray();
     }
     let points = this.points;
-    let offset = this.count * ITEMS_PER_POINT;
-
-    points[offset + 0] = point.x
-    points[offset + 1] = point.y
-    points[offset + 2] = typeof point.size === 'number' ? point.size : this.size;
-    // TODO: This is waste, we can store rgba in 32 bits, not in the 3 * 3 * 8 bits.
-    var color = point.color || this.color;
-    points[offset + 3] = color.r
-    points[offset + 4] = color.g
-    points[offset + 5] = color.b
-
+    let internalNodeId = this.count;
+    let offset = internalNodeId * ITEMS_PER_POINT;
+    let pointAccessor = new PointAccessor(points, offset);
+    pointAccessor.update(point, this)
     this.count += 1;
+    return pointAccessor
   }
 
   _extendArray() {

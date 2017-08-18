@@ -5,6 +5,22 @@ var Element = require('./Element');
 
 const DEFAULT_COLOR =  new Color(1, 1, 1, 1);
 
+class LineAccessor {
+  constructor(buffer, offset) {
+    this.offset = offset;
+    this.buffer = buffer;
+  }
+
+  update(from, to) {
+    var buffer = this.buffer;
+    var offset = this.offset;
+    buffer[offset + 0] = from.x
+    buffer[offset + 1] = from.y
+    buffer[offset + 2] = to.x
+    buffer[offset + 3] = to.y
+  }
+}
+
 class Lines extends Element {
   constructor(capacity) {
     super();
@@ -30,15 +46,12 @@ class Lines extends Element {
     if (this.count >= this.capacity)  {
       this._extendArray();
     }
-    let buffer = this.buffer;
     let offset = this.count * ITEMS_PER_LINE;
-
-    buffer[offset + 0] = line.from.x
-    buffer[offset + 1] = line.from.y
-    buffer[offset + 2] = line.to.x
-    buffer[offset + 3] = line.to.y
+    let lineAccessor = new LineAccessor(this.buffer, offset);
+    lineAccessor.update(line.from, line.to)
 
     this.count += 1;
+    return lineAccessor;
   }
 
   _extendArray() {
