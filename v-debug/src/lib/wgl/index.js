@@ -5,8 +5,8 @@ module.exports = {
   Points: require('./Points'),
   Point: require('./Point'),
   
-  Lines: require('./Lines'),
-  Line: require('./Line'),
+  Lines: require('./lines/Lines'),
+  Wires: require('./lines/Wires'),
 
   Element: require('./Element'),
 }

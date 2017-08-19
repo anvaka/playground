@@ -1,5 +1,6 @@
 <template>
   <div class='graph-settings'>
+    <h5>Layout Settings</h5>
     <div class='row'>
       <div class='label'>Spring length</div>
       <div class='value'><input v-model='settings.springLength'></input></div>
@@ -49,6 +50,9 @@ export default {
 
 .label {
   padding-right: 8px;
+}
+.graph-settings h5 {
+  margin: 2px;
 }
 
 

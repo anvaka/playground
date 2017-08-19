@@ -87,13 +87,16 @@ function renderGraph(graph, scene, layoutSettings) {
 
     let lines = new wgl.Lines(graph.getLinksCount());
 
-    lines.color.r = 0.04
-    lines.color.a = 0.015
+    // lines.color.r = 0.04
+    lines.color.a = 1; //0.15
 
     graph.forEachLink(link => {
-      var fromPos = layout.getNodePosition(link.fromId);
-      var toPos = layout.getNodePosition(link.toId);
-      var ui = lines.add(new wgl.Line(fromPos, toPos));
+      var from = layout.getNodePosition(link.fromId);
+      var to = layout.getNodePosition(link.toId);
+      var line = { from, to };
+      var ui = lines.add(line);
+      ui.setWidth(Math.random() * 3 + 0.1)
+
       linkIdToUI.set(link.id, ui);
     })
 

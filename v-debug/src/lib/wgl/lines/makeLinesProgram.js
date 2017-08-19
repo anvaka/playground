@@ -1,4 +1,4 @@
-const gl_utils = require('./glUtils');
+const gl_utils = require('../glUtils');
 
 module.exports = makeLineProgram;
 
@@ -25,19 +25,20 @@ void main() {
 // TODO: this needs to be in a separate file, with proper resource management
 let lineProgramCache = new Map(); // maps from GL context to program
 
-function makeLineProgram(gl, data, options) {
+function makeLineProgram(gl, data, drawTriangles) {
   let lineProgram = lineProgramCache.get(gl)
   if (!lineProgram) {
-    let lineVSShader = gl_utils.compile(gl, gl.VERTEX_SHADER, lineVSSrc);
-    let lineFSShader = gl_utils.compile(gl, gl.FRAGMENT_SHADER, lineFSSrc);
+    var lineVSShader = gl_utils.compile(gl, gl.VERTEX_SHADER, lineVSSrc);
+    var lineFSShader = gl_utils.compile(gl, gl.FRAGMENT_SHADER, lineFSSrc);
     lineProgram = gl_utils.link(gl, lineVSShader, lineFSShader);
     lineProgramCache.set(gl, lineProgram);
   }
 
-  let locations = gl_utils.getLocations(gl, lineProgram);
-  var linesCount = data.length / 4;
+  var locations = gl_utils.getLocations(gl, lineProgram);
+
   var lineBuffer = gl.createBuffer();
   var bpe = data.BYTES_PER_ELEMENT;
+  var drawType = drawTriangles ? gl.TRIANGLES : gl.LINES;
   gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer)
 
   var api = {
@@ -53,16 +54,17 @@ function makeLineProgram(gl, data, options) {
     lineProgramCache.delete(gl);
   }
 
-  function draw(transform, color) {
+  function draw(transform, color, screen) {
     gl.useProgram(lineProgram);
 
     gl.uniformMatrix4fv(locations.uniforms.uTransform, false, transform.getArray());
-    gl.uniform2f(locations.uniforms.uScreenSize, options.width, options.height);
+    gl.uniform2f(locations.uniforms.uScreenSize, screen.width, screen.height);
     gl.uniform4f(locations.uniforms.uColor, color.r, color.g, color.b, color.a);
 
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
     gl.vertexAttribPointer(locations.attributes.aPosition, 2, gl.FLOAT, false, bpe * 2, 0)
     gl.enableVertexAttribArray(locations.attributes.aPosition)
-    gl.drawArrays(gl.TRIANGLES, 0, linesCount * 2);
+
+    gl.drawArrays(drawType, 0, data.length / 2);
   }
 }

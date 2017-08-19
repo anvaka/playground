@@ -28,7 +28,7 @@ export default {
         gravity: -1.2,
         theta: 0.8,
         dragCoeff: 0.02,
-        timeStep: 20
+        timeStep: 10
       }
     }
   }
