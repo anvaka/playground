@@ -13,6 +13,7 @@ export default {
   mounted() {
     this.createScene();
     bus.on('restart-layout', this.createScene, this);
+    bus.on('clusters-ready', this.showClusters, this);
   },
   methods: {
     destroyScene() {
@@ -33,6 +34,11 @@ export default {
       let useGraph = true;
       if (useGraph) {
         this.graphScene = renderGraph(graph, scene, this.settings);
+      }
+    },
+    showClusters(clustersGraph) {
+      if (this.graphScene) {
+        this.graphScene.showClusters(clustersGraph);
       }
     }
   },

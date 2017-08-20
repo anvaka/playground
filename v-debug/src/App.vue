@@ -23,6 +23,7 @@ export default {
     return {
       graph: graph,
       settings: {
+        steps: 100,
         selectedLayout: 'ngraph',
         springLength: 30,
         springCoeff: 0.0008,

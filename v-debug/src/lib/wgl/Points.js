@@ -4,9 +4,10 @@ var Element = require('./Element');
 var Color = require('./Color');
 
 class PointAccessor {
-  constructor(buffer, offset) {
+  constructor(buffer, offset, color) {
     this.offset = offset;
     this.buffer = buffer;
+    this.color = color || new Color(1, 1, 1, 1); 
   }
 
   update(point, defaults) {
@@ -18,13 +19,16 @@ class PointAccessor {
     if (point.size || defaults) {
       points[offset + 2] = typeof point.size === 'number' ? point.size : defaults.size;
     }
-    // TODO: This is waste, we can store rgba in 32 bits, not in the 3 * 3 * 8 bits.
-    if (point.color || defaults) {
-      var color = point.color || defaults.color;
-      points[offset + 3] = color.r
-      points[offset + 4] = color.g
-      points[offset + 5] = color.b
-    }
+
+    this.setColor(this.color);
+  }
+
+  setColor(color) {
+    this.color = color;
+    // TODO: This is waste, we can store rgba in 32 bits, not in the 3 * 3 * 8 bits?
+    this.buffer[this.offset + 3] = color.r
+    this.buffer[this.offset + 4] = color.g
+    this.buffer[this.offset + 5] = color.b
   }
 }
 
@@ -64,7 +68,7 @@ class Points extends Element {
     let points = this.points;
     let internalNodeId = this.count;
     let offset = internalNodeId * ITEMS_PER_POINT;
-    let pointAccessor = new PointAccessor(points, offset);
+    let pointAccessor = new PointAccessor(points, offset, this.color);
     pointAccessor.update(point, this)
     this.count += 1;
     return pointAccessor

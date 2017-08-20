@@ -1,6 +1,6 @@
 var wgl = require('./wgl/index');
 var makeLayout = require('./makeLayout');
-var layoutSteps = 100;
+var getFloatOrDefault = require('./getFloatOrDefault');
 
 module.exports = renderGraph;
 
@@ -11,9 +11,11 @@ function renderGraph(graph, scene, layoutSettings) {
     let nodeIdToUI = new Map();
     let linkIdToUI = new Map();
 
+    var layoutSteps = getFloatOrDefault(layoutSettings.steps, 100);
+
     graph.forEachNode(node => {
       var point = layout.getNodePosition(node.id);
-      point.size = 1; // Math.random() * 10 + 1;
+      point.size = 10; // Math.random() * 10 + 1;
       point.color = {
         r: 0.99, // (1 + Math.random()) * 0.5,
         g: 0.93, // (1 + Math.random()) * 0.5,
@@ -37,7 +39,7 @@ function renderGraph(graph, scene, layoutSettings) {
     lines.color.r = 83/256
     lines.color.g = 82/256
     lines.color.b = 139/256
-    lines.color.a = 0.15
+    lines.color.a = 0.05
 
     graph.forEachLink(link => {
       var from = layout.getNodePosition(link.fromId);
@@ -54,8 +56,30 @@ function renderGraph(graph, scene, layoutSettings) {
     var animationHandle = requestAnimationFrame(frame)
 
     return {
-      dispose
+      dispose,
+      showClusters
     };
+
+    function showClusters(clusterGraph) {
+      var colors = [ "#0074D9", "#7FDBFF", "#39CCCC", "#3D9970", "#2ECC40", "#01FF70", "#FFDC00", "#FF851B", "#FF4136", "#85144b", "#F012BE", "#B10DC9"]
+      .map(str => {
+        return {
+          r: Number.parseInt(str.substr(1, 2), 16)/256,
+          g: Number.parseInt(str.substr(3, 2), 16)/256,
+          b: Number.parseInt(str.substr(5, 2), 16)/256
+        };
+      });
+      var idx = 0;
+      clusterGraph.forEachNode(clusterNode => {
+        var clusterColor = colors[idx % colors.length];
+
+        clusterNode.data.forEach(nodeId => {
+          var ui = nodeIdToUI.get(nodeId);
+          ui.setColor(clusterColor);
+        })
+        idx += 1;
+      })
+    }
 
     function dispose() {
       if (animationHandle) {

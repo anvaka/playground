@@ -5,6 +5,11 @@
       <option value='ngraph' selected>NGraph</option>
       <option value='d3force'>D3 Force</option>
     </select>
+
+    <div class='row'>
+      <div class='label'>Steps count</div>
+      <div class='value'><input v-model='settings.steps'></input></div>
+    </div>
     <NLayoutSettings :settings='settings' v-if='isNGraph'></NLayoutSettings>
     <D3LayoutSettings :settings='settings' v-if='!isNGraph'></D3LayoutSettings>
     <button @click.prevent='restartLayout()'>Restart Layout</button>
