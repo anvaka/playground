@@ -1,3 +1,8 @@
+/**
+ * Wire accessor provides access to the buffer that stores wires.
+ * 
+ * Wires are "lines" with 1.0 width.
+ */
 class WireAccessor {
   constructor(buffer, offset) {
     this.offset = offset;

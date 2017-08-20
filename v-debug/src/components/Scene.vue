@@ -72,8 +72,14 @@ function renderGraph(graph, scene, layoutSettings) {
 
     graph.forEachNode(node => {
       var point = layout.getNodePosition(node.id);
-      var ui = nodes.add(point)
-      nodeIdToUI.set(node.id, ui)
+      point.size = Math.random() * 10 + 1;
+      point.color = {
+        r: (1 + Math.random()) * 0.5,
+        g: (1 + Math.random()) * 0.5,
+        b: (1 + Math.random()) * 0.5
+      }
+      var ui = nodes.add(point);
+      nodeIdToUI.set(node.id, ui);
     })
 
     let initialSceneSize = 350;
@@ -83,24 +89,23 @@ function renderGraph(graph, scene, layoutSettings) {
       right:  initialSceneSize,
       bottom: initialSceneSize,
     })
-    scene.add(nodes);
 
-    let lines = new wgl.Lines(graph.getLinksCount());
+    let lines = new wgl.Wires(graph.getLinksCount());
 
-    // lines.color.r = 0.04
-    lines.color.a = 1; //0.15
+    lines.color.r = 0.04
+    lines.color.a = 0.15
 
     graph.forEachLink(link => {
       var from = layout.getNodePosition(link.fromId);
       var to = layout.getNodePosition(link.toId);
       var line = { from, to };
       var ui = lines.add(line);
-      ui.setWidth(Math.random() * 3 + 0.1)
 
       linkIdToUI.set(link.id, ui);
     })
 
     scene.add(lines);
+    scene.add(nodes);
     var layoutStepsCount = 0;
     var animationHandle = requestAnimationFrame(frame)
 
@@ -120,7 +125,7 @@ function renderGraph(graph, scene, layoutSettings) {
       layout.step();
       layoutStepsCount += 1;
       updatePositions();
-      if (layoutStepsCount < 1000) {
+      if (layoutStepsCount < 100) {
         animationHandle = requestAnimationFrame(frame);
       }
     }

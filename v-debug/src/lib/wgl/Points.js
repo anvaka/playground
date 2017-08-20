@@ -42,10 +42,10 @@ class Points extends Element {
 
   draw(gl, screen) {
     if (!this._program) {
-      this._program = makeNodeProgram(gl, this.points, screen);
+      this._program = makeNodeProgram(gl, this.points);
     }
 
-    this._program.draw(this.worldTransform);
+    this._program.draw(this.worldTransform, screen);
   }
 
   dispose() {
