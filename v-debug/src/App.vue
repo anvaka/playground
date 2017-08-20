@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <scene :graph='graph' :settings='settings'></scene>
-    <graph-settings :settings='settings'></graph-settings>
+    <graph-settings :graph='graph' :settings='settings'></graph-settings>
   </div>
 </template>
 
@@ -23,6 +23,7 @@ export default {
     return {
       graph: graph,
       settings: {
+        selectedLayout: 'ngraph',
         springLength: 30,
         springCoeff: 0.0008,
         gravity: -1.2,

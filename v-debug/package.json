@@ -10,8 +10,13 @@
     "build": "node build/build.js"
   },
   "dependencies": {
+    "d3-force": "^1.0.6",
+    "ngraph.coarsen": "^1.4.0",
+    "ngraph.events": "0.0.4",
     "ngraph.forcelayout": "^0.2.1",
     "ngraph.fromjson": "^0.1.8",
+    "ngraph.louvain": "^1.0.1",
+    "ngraph.random": "0.0.1",
     "panzoom": "^2.6.0",
     "vue": "^2.3.3"
   },

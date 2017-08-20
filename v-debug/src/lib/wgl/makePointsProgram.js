@@ -48,7 +48,6 @@ function makePointsProgram(gl, data) {
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
 
   var pointTexture = createCircleTexture(gl);
-  debugger;
 
   var api = {
     draw,
@@ -74,8 +73,8 @@ function makePointsProgram(gl, data) {
     gl.uniform2f(locations.uniforms.uScreenSize, screen.width, screen.height);
     // gl.bindTexture(gl.TEXTURE_2D, pointTexture);
 
-    // gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
 
     gl.vertexAttribPointer(locations.attributes.aPosition, 2, gl.FLOAT, false, bpe * 6, 0)
     gl.enableVertexAttribArray(locations.attributes.aPosition)

@@ -61,7 +61,8 @@ function makeLineProgram(gl, data, drawTriangles) {
     gl.uniform2f(locations.uniforms.uScreenSize, screen.width, screen.height);
     gl.uniform4f(locations.uniforms.uColor, color.r, color.g, color.b, color.a);
 
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
     gl.vertexAttribPointer(locations.attributes.aPosition, 2, gl.FLOAT, false, bpe * 2, 0)
     gl.enableVertexAttribArray(locations.attributes.aPosition)
 

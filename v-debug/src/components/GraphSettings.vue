@@ -1,40 +1,52 @@
 <template>
   <div class='graph-settings'>
     <h5>Layout Settings</h5>
-    <div class='row'>
-      <div class='label'>Spring length</div>
-      <div class='value'><input v-model='settings.springLength'></input></div>
-    </div>
-    <div class='row'>
-      <div class='label'>Spring Coeff</div>
-      <div class='value'><input v-model='settings.springCoeff'></input></div>
-    </div>
-    <div class='row'>
-      <div class='label'>Gravity</div>
-      <div class='value'><input v-model='settings.gravity'></input></div>
-    </div>
-    <div class='row'>
-      <div class='label'>Theta</div>
-      <div class='value'><input v-model='settings.theta'></input></div>
-    </div>
-    <div class='row'>
-      <div class='label'>Drag coefficient</div>
-      <div class='value'><input v-model='settings.dragCoeff'></input></div>
-    </div>
-    <div class='row'>
-      <div class='label'>Time step</div>
-      <div class='value'><input v-model='settings.timeStep'></input></div>
-    </div>
+    <select @change='changeLayout'>
+      <option value='ngraph' selected>NGraph</option>
+      <option value='d3force'>D3 Force</option>
+    </select>
+    <NLayoutSettings :settings='settings' v-if='isNGraph'></NLayoutSettings>
+    <D3LayoutSettings :settings='settings' v-if='!isNGraph'></D3LayoutSettings>
+    <button @click.prevent='restartLayout()'>Restart Layout</button>
+    <hr>
+    <button @click.prevent='detectClusters()'>Detect clusters</button>
   </div>
 </template>
 
 <script>
+var bus = require('../lib/bus');
+var NLayoutSettings = require('./NLayoutSettings');
+var D3LayoutSettings = require('./D3LayoutSettings');
+
 export default {
-  props: ['settings']
+  props: ['settings', 'graph'],
+  components: {
+    NLayoutSettings,
+    D3LayoutSettings,
+  },
+  computed: {
+    isNGraph() {
+      return this.settings.selectedLayout === "ngraph";
+    }
+  },
+  methods: {
+    detectClusters() {
+      bus.fire('detect-clusters', this.graph);
+    },
+    restartLayout() {
+      bus.fire('restart-layout', this.settings);
+    },
+    changeLayout(e) {
+      this.settings.selectedLayout = e.target.value;
+      this.restartLayout();
+    }
+  }
 }
+
 </script>
 <style>
 .graph-settings {
+  width: 260px;
   position: absolute;
   background: white;
   top: 0;
