@@ -1,5 +1,6 @@
 <template>
-  <div class='graph-settings'>
+  <div class='graph-settings' :class='{hidden: !expanded}'>
+    <a class='hide' @click.prevent='expanded = !expanded' href='#'>{{expanded ? "hide" : "show"}}</a>
     <h5>Layout Settings</h5>
     <select @change='changeLayout'>
       <option value='ngraph' selected>NGraph</option>
@@ -34,6 +35,12 @@ export default {
       return this.settings.selectedLayout === "ngraph";
     }
   },
+  data() {
+    return {
+      expanded: true
+    }
+  },
+
   methods: {
     detectClusters() {
       bus.fire('detect-clusters', this.graph);
@@ -56,6 +63,18 @@ export default {
   background: white;
   top: 0;
   padding: 7px;
+}
+
+.hidden {
+  height: 16px;
+  overflow: hidden;
+}
+
+.hide {
+  position: absolute;
+  font-size: 8px;
+  top: 12px;
+  right: 10px;
 }
 
 .row {
