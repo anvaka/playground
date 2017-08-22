@@ -10,7 +10,6 @@ function initDetecClusters(bus) {
   function detectClusters(srcGraph) {
     var clusters = louvain(srcGraph);
     var clusterGraph = coarsen(srcGraph, clusters);
-    console.log(clusterGraph);
 
     bus.fire('clusters-ready', clusterGraph);
   }
