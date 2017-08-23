@@ -1,3 +1,4 @@
+var eventify = require('ngraph.events');
 var wgl = require('./wgl/index');
 var makeLayout = require('./makeLayout');
 var getFloatOrDefault = require('./getFloatOrDefault');
@@ -39,7 +40,7 @@ function renderGraph(graph, scene, layoutSettings) {
     lines.color.r = 83/256
     lines.color.g = 82/256
     lines.color.b = 139/256
-    lines.color.a = 0.05
+    lines.color.a = 0.5
 
     graph.forEachLink(link => {
       var from = layout.getNodePosition(link.fromId);
@@ -55,10 +56,11 @@ function renderGraph(graph, scene, layoutSettings) {
     var layoutStepsCount = 0;
     var animationHandle = requestAnimationFrame(frame)
 
-    return {
+    let api = eventify({
       dispose,
       showClusters
-    };
+    });
+    return api;
 
     function showClusters(clusterGraph) {
       var colors = [ "#0074D9", "#7FDBFF", "#39CCCC", "#3D9970", "#2ECC40", "#01FF70", "#FFDC00", "#FF851B", "#FF4136", "#85144b", "#F012BE", "#B10DC9"]

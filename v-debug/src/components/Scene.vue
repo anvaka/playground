@@ -34,6 +34,13 @@ export default {
       let useGraph = true;
       if (useGraph) {
         this.graphScene = renderGraph(graph, scene, this.settings);
+        // TODO: I need some notion of "tools". Each tool can be active/inactive.
+        // Once tool is active it can participate in canvas events.
+        // Tools should fire events, and their UI parts would respond to events.
+        // Which means when tools are initialized they need to have "context"
+        this.graphScene.on('node-move', (node) => {
+          console.log('moving node')
+        })
       }
     },
     showClusters(clustersGraph) {

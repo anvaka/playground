@@ -24,7 +24,6 @@ function extractSettings(settings) {
   };
 }
 
-
 function d3Layout(graph, settings) {
   var api = {
     getNodePosition,
@@ -52,7 +51,7 @@ function d3Layout(graph, settings) {
   var springLength = getFloatOrDefault(settings.springLength,  30);
   var link = d3.forceLink(links).distance(function() {
     return springLength;
-  })
+  });
   var gravity = getFloatOrDefault(settings.gravity, -30);
   var nbody = d3.forceManyBody()
     .theta(getFloatOrDefault(settings.theta, 0.8))
