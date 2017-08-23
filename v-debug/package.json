@@ -17,7 +17,7 @@
     "ngraph.fromjson": "^0.1.8",
     "ngraph.louvain": "^1.0.1",
     "ngraph.random": "0.0.1",
-    "panzoom": "^2.6.0",
+    "panzoom": "^3.0.0",
     "vue": "^2.3.3"
   },
   "devDependencies": {
