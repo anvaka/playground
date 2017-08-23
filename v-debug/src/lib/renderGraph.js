@@ -62,7 +62,8 @@ function renderGraph(graph, scene, layoutSettings) {
     });
     return api;
 
-    function showClusters(clusterGraph) {
+    function showClusters(e) {
+      var clusterGraph = e.clusterGraph;
       var colors = [ "#0074D9", "#7FDBFF", "#39CCCC", "#3D9970", "#2ECC40", "#01FF70", "#FFDC00", "#FF851B", "#FF4136", "#85144b", "#F012BE", "#B10DC9"]
       .map(str => {
         return {
@@ -75,10 +76,15 @@ function renderGraph(graph, scene, layoutSettings) {
       clusterGraph.forEachNode(clusterNode => {
         var clusterColor = colors[idx % colors.length];
 
-        clusterNode.data.forEach(nodeId => {
+        var nodes = e.getAllSrcNodesInCluster(clusterNode.data);
+        nodes.forEach(nodeId => {
           var ui = nodeIdToUI.get(nodeId);
           ui.setColor(clusterColor);
         })
+        // clusterNode.data.forEach(nodeId => {
+        //   var ui = nodeIdToUI.get(nodeId);
+        //   ui.setColor(clusterColor);
+        // })
         idx += 1;
       })
     }

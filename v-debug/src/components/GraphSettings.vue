@@ -15,7 +15,7 @@
     <D3LayoutSettings :settings='settings' v-if='!isNGraph'></D3LayoutSettings>
     <button @click.prevent='restartLayout()'>Restart Layout</button>
     <hr>
-    <button @click.prevent='detectClusters()'>Detect clusters</button>
+    <ClusterTool :graph='graph'></ClusterTool>
   </div>
 </template>
 
@@ -23,12 +23,14 @@
 var bus = require('../lib/bus');
 var NLayoutSettings = require('./NLayoutSettings');
 var D3LayoutSettings = require('./D3LayoutSettings');
+var ClusterTool = require('./ClusterTool');
 
 export default {
   props: ['settings', 'graph'],
   components: {
     NLayoutSettings,
     D3LayoutSettings,
+    ClusterTool,
   },
   computed: {
     isNGraph() {
@@ -42,9 +44,6 @@ export default {
   },
 
   methods: {
-    detectClusters() {
-      bus.fire('detect-clusters', this.graph);
-    },
     restartLayout() {
       bus.fire('restart-layout', this.settings);
     },
