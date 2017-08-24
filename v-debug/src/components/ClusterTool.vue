@@ -8,6 +8,7 @@
 <script>
 const bus = require('../lib/bus');
 const ClusterInfo = require('./ClusterInfo');
+const initClusterModel = require('../lib/clusterModel');
 
 export default {
   props: ['graph'],
@@ -22,7 +23,7 @@ export default {
 
   mounted() {
       bus.on('restart-layout', this.resetState, this);
-      bus.on('clusters-ready', this.clusterReady, this);
+      this.clusterModel = initClusterModel(this.graph);
   },
 
   beforeDestroy() {
@@ -33,37 +34,10 @@ export default {
     resetState() {
       this.levels = [];
     },
-
     detectClusters() {
-      let levels = this.levels;
-      let levelsCount = levels.length
-      let graph = levelsCount ? levels[levelsCount - 1].clusterGraph : this.graph;
-
-      bus.fire('detect-clusters', {
-        graph,
-        getAllSrcNodesInCluster,
-        requestId: levelsCount,
-      });
-
-      function getAllSrcNodesInCluster(clusterData) {
-      if (levelsCount === 0) {
-          return Array.from(clusterData);
-        } else {
-          let allNodes = [];
-          let prevLayer = levels[levelsCount - 1];
-
-          clusterData.forEach(nodeId => {
-            let prevData = prevLayer.clusterGraph.getNode(nodeId).data;
-            let nodes = prevLayer.getAllSrcNodesInCluster(prevData);
-            allNodes = allNodes.concat(nodes);
-          })
-          return allNodes;
-        }
-      }
-    },
-
-    clusterReady(e) {
+      let e = this.clusterModel.detectNextClusterLevel()
       this.levels.push(e);
+      bus.fire('clusters-ready', e);
     }
   }
 }

@@ -2,10 +2,6 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
 import App from './App'
-import initDetectClusters from './lib/algorithms/detectClusters';
-import bus from './lib/bus'
-
-initDetectClusters(bus);
 
 Vue.config.productionTip = false
 
