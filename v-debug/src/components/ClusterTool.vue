@@ -49,7 +49,6 @@ export default {
       if (levelsCount === 0) {
           return Array.from(clusterData);
         } else {
-          debugger;
           let allNodes = [];
           let prevLayer = levels[levelsCount - 1];
 
