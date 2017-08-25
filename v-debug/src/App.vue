@@ -1,7 +1,7 @@
 <template>
   <div id="app">
-    <scene :graph='graph' :settings='settings'></scene>
-    <graph-settings :graph='graph' :settings='settings'></graph-settings>
+    <scene :model='model'></scene>
+    <graph-settings :model='model'></graph-settings>
   </div>
 </template>
 
@@ -9,6 +9,8 @@
 const Scene = require('./components/Scene');
 const GraphSettings = require('./components/GraphSettings');
 const getGraph = require('./lib/getGraph.js');
+const initClusterModel = require('./lib/clusterModel.js');
+const bus = require('./lib/bus');
 
 const graph = getGraph();
 console.log('Graph loaded. Links count: ' + graph.getLinksCount() + '; nodes count: ' + graph.getNodesCount());
@@ -19,18 +21,24 @@ export default {
     Scene,
     GraphSettings
   },
+  mounted() {
+    bus.on('request-split', this.onSplit, this);
+  },
+  beforeDestroy() {
+    bus.off('request-split', this.onSplit);
+  },
+
   data() {
+    let model = initClusterModel(graph);
     return {
-      graph: graph,
-      settings: {
-        steps: 100,
-        selectedLayout: 'ngraph',
-        springLength: 30,
-        springCoeff: 0.0008,
-        gravity: -1.2,
-        theta: 0.8,
-        dragCoeff: 0.02,
-        timeStep: 10
+      model,
+    }
+  },
+  methods: {
+    onSplit(cluster) {
+      if (!cluster.parent) {
+        this.model.root = cluster.split();
+        bus.fire('restart-layout');
       }
     }
   }

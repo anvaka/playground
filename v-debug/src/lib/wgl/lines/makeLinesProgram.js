@@ -9,7 +9,13 @@ uniform mat4 uTransform;
 varying vec4 vColor;
 
 void main() {
-  gl_Position = uTransform * vec4(aPosition/uScreenSize, 0.0, 1.0);
+
+  mat4 transformed = mat4(uTransform);
+  // Translate screen coordinates to webgl space
+  vec2 vv = 2.0 * uTransform[3].xy/uScreenSize;
+  transformed[3][0] = vv.x - 1.0;
+  transformed[3][1] = 1.0 - vv.y;
+  gl_Position = transformed * vec4(aPosition/uScreenSize, 0.0, 1.0);
 }
 `;
 
@@ -63,8 +69,10 @@ function makeLineProgram(gl, data, drawTriangles) {
 
     gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+
     gl.vertexAttribPointer(locations.attributes.aPosition, 2, gl.FLOAT, false, bpe * 2, 0)
     gl.enableVertexAttribArray(locations.attributes.aPosition)
+    gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
 
     gl.drawArrays(drawType, 0, data.length / 2);
   }

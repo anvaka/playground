@@ -9,7 +9,7 @@ const bus = require('../lib/bus');
 
 export default {
   name: 'Scene',
-  props: ['graph', 'settings'],
+  props: ['model'],
   mounted() {
     this.createScene();
     bus.on('restart-layout', this.createScene, this);
@@ -27,13 +27,11 @@ export default {
       if (this.graphScene) {
         this.destroyScene();
       }
-
-      var graph = this.graph;
       let canvas = this.$el;
-      let scene = wgl.scene(canvas);
       let useGraph = true;
       if (useGraph) {
-        this.graphScene = renderGraph(graph, scene, this.settings);
+        this.graphScene = renderGraph(this.model, canvas);
+
         // TODO: I need some notion of "tools". Each tool can be active/inactive.
         // Once tool is active it can participate in canvas events.
         // Tools should fire events, and their UI parts would respond to events.
@@ -54,7 +52,6 @@ export default {
     bus.off('restart-layout', this.createScene, this);
   }
 }
-
 </script>
 
 <style>

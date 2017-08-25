@@ -11,9 +11,14 @@ uniform mat4 uTransform;
 varying vec4 vColor;
 
 void main() {
-  gl_Position = uTransform * vec4(aPosition/uScreenSize, 0.0, 1.0);
+  mat4 transformed = mat4(uTransform);
+  // Translate screen coordinates to webgl space
+  vec2 vv = 2.0 * uTransform[3].xy/uScreenSize;
+  transformed[3][0] = vv.x - 1.0;
+  transformed[3][1] = 1.0 - vv.y;
+  gl_Position = transformed * vec4(aPosition/uScreenSize, 0.0, 1.0);
 
-  gl_PointSize = aPointSize * uTransform[0][0];
+  gl_PointSize = aPointSize * transformed[0][0];
   vColor = aColor;
 }
 `;
@@ -71,7 +76,7 @@ function makePointsProgram(gl, data) {
       gl.uniformMatrix4fv(locations.uniforms.uTransform, false, transform.getArray());
     }
     gl.uniform2f(locations.uniforms.uScreenSize, screen.width, screen.height);
-    // gl.bindTexture(gl.TEXTURE_2D, pointTexture);
+    gl.bindTexture(gl.TEXTURE_2D, pointTexture);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);

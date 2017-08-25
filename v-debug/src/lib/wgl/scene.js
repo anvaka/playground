@@ -27,18 +27,22 @@ function makeScene(canvas) {
   });
 
   var api = {
-    add,
+    appendChild,
     setViewBox,
     dispose,
   };
 
-  requestAnimationFrame(frame);
+  var frameToken = requestAnimationFrame(frame);
 
   return api;
 
   function dispose() {
     panzoom.dispose();
     sceneRoot.dispose();
+    if (frameToken) {
+      cancelAnimationFrame(frameToken)
+      frameToken = null;
+    }
   }
 
   function setViewBox(rect) {
@@ -50,10 +54,10 @@ function makeScene(canvas) {
     sceneRoot.updateWorldTransform();
 
     sceneRoot.draw(gl, screen);
-    requestAnimationFrame(frame);
+    frameToken = requestAnimationFrame(frame);
   }
 
-  function add(object) {
+  function appendChild(object) {
     sceneRoot.appendChild(object);
   }
 }
@@ -61,13 +65,9 @@ function makeScene(canvas) {
 function wglPanZoom(canvas, sceneRoot) {
   return {
       applyTransform(newT) {
-        var width = canvas.width
-        var height = canvas.height
         var transform = sceneRoot.transform;
-
-        transform.dx = (2 * newT.x / width) - 1;
-        transform.dy = 1 - (2 * newT.y / height);
-
+        transform.dx = newT.x;
+        transform.dy = newT.y; 
         transform.scale = newT.scale;
         sceneRoot.worldTransformNeedsUpdate = true;
       },

@@ -1,6 +1,6 @@
 <template>
 <div>
-    <h5>Clusters</h5>
+    <h5>Settings</h5>
     <button @click.prevent='detectClusters()'>Detect clusters</button>
     <ClusterInfo v-for='clusterLevel in levels' :key='clusterLevel.requestId' :cluster='clusterLevel'></ClusterInfo>
 </div>
@@ -16,6 +16,7 @@ export default {
     ClusterInfo
   },
   data() {
+    let model = initClusterModel(this.graph);
     return {
       levels: []
     };
@@ -32,12 +33,15 @@ export default {
 
   methods: {
     resetState() {
-      this.levels = [];
+      if (this.model) {
+        // todo: dispose
+      }
+      this.model = initClusterModel(this.graph);
     },
     detectClusters() {
       let e = this.clusterModel.detectNextClusterLevel()
       this.levels.push(e);
-      bus.fire('clusters-ready', e);
+      bus.fire()
     }
   }
 }
