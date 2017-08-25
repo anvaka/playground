@@ -15,6 +15,9 @@ class LineAccessor {
 
     var dx = to.x - from.x
     var dy = to.y - from.y
+    if (dx === 0) dx = 1e-4;
+    if (dy === 0) dy = 1e-4;
+
     var norm = Math.sqrt(dx * dx + dy * dy);
     var u = dx/norm;
     var v = dy/norm;

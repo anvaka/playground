@@ -16,7 +16,8 @@ void main() {
   vec2 vv = 2.0 * uTransform[3].xy/uScreenSize;
   transformed[3][0] = vv.x - 1.0;
   transformed[3][1] = 1.0 - vv.y;
-  gl_Position = transformed * vec4(aPosition/uScreenSize, 0.0, 1.0);
+  vec2 xy = aPosition/uScreenSize;
+  gl_Position = transformed * vec4(xy.x, -xy.y, 0.0, 1.0);
 
   gl_PointSize = aPointSize * transformed[0][0];
   vColor = aColor;
@@ -46,7 +47,6 @@ function makePointsProgram(gl, data) {
   }
 
   let locations = gl_utils.getLocations(gl, vertexProgram);
-  var count = data.length / 6;
 
   var buffer = gl.createBuffer();
   if (!buffer) throw new Error('failed to create a nodesBuffer');
@@ -56,9 +56,14 @@ function makePointsProgram(gl, data) {
 
   var api = {
     draw,
+    updateData,
     dispose
   };
   return api;
+
+  function updateData(newData) {
+    data = newData;
+  }
 
   function dispose() {
     gl.deleteBuffer(buffer);
@@ -67,7 +72,7 @@ function makePointsProgram(gl, data) {
     vertexProgramCache.delete(gl);
   }
 
-  function draw(transform, screen) {
+  function draw(transform, screen, count) {
     gl.useProgram(vertexProgram);
 
     var bpe = data.BYTES_PER_ELEMENT;

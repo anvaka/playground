@@ -15,7 +15,8 @@ void main() {
   vec2 vv = 2.0 * uTransform[3].xy/uScreenSize;
   transformed[3][0] = vv.x - 1.0;
   transformed[3][1] = 1.0 - vv.y;
-  gl_Position = transformed * vec4(aPosition/uScreenSize, 0.0, 1.0);
+  vec2 xy = aPosition/uScreenSize;
+  gl_Position = transformed * vec4(xy.x, -xy.y, 0.0, 1.0);
 }
 `;
 
@@ -61,6 +62,8 @@ function makeLineProgram(gl, data, drawTriangles) {
   }
 
   function draw(transform, color, screen) {
+    if (data.length === 0) return;
+
     gl.useProgram(lineProgram);
 
     gl.uniformMatrix4fv(locations.uniforms.uTransform, false, transform.getArray());
@@ -72,7 +75,6 @@ function makeLineProgram(gl, data, drawTriangles) {
 
     gl.vertexAttribPointer(locations.attributes.aPosition, 2, gl.FLOAT, false, bpe * 2, 0)
     gl.enableVertexAttribArray(locations.attributes.aPosition)
-    gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
 
     gl.drawArrays(drawType, 0, data.length / 2);
   }

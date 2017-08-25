@@ -49,7 +49,7 @@ class Points extends Element {
       this._program = makeNodeProgram(gl, this.points);
     }
 
-    this._program.draw(this.worldTransform, screen);
+    this._program.draw(this.worldTransform, screen, this.count);
   }
 
   dispose() {
@@ -70,18 +70,14 @@ class Points extends Element {
     let offset = internalNodeId * ITEMS_PER_POINT;
     let pointAccessor = new PointAccessor(points, offset, this.color);
     pointAccessor.update(point, this)
+
     this.count += 1;
     return pointAccessor
   }
 
   _extendArray() {
-    // Every time we run out of space create new array twice bigger.
-    var newCapacity = this.capacity * ITEMS_PER_POINT * 2;
-    var extendedArray = new Float32Array(newCapacity);
-    extendedArray.set(this.points);
-
-    this.points = extendedArray;
-    this.capacity = newCapacity;
+    // This is because we would have to track every created point accessor
+    throw new Error('Cannot extend array at the moment :(')
   }
 }
 
