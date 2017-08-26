@@ -30,6 +30,8 @@ export default {
 
   data() {
     let model = initClusterModel(graph);
+
+    window.c0 = model.root;
     return {
       model,
     }
@@ -38,6 +40,7 @@ export default {
     onSplit(cluster) {
       if (!cluster.parent) {
         this.model.root = cluster.split();
+        window.c0 = this.model.root;
         bus.fire('restart-layout');
       }
     }
