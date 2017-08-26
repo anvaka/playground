@@ -68,7 +68,7 @@ class Points extends Element {
     let points = this.points;
     let internalNodeId = this.count;
     let offset = internalNodeId * ITEMS_PER_POINT;
-    let pointAccessor = new PointAccessor(points, offset, this.color);
+    let pointAccessor = new PointAccessor(points, offset, point.color || this.color);
     pointAccessor.update(point, this)
 
     this.count += 1;
