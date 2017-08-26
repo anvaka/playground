@@ -5,6 +5,8 @@
     <button @click.prevent='restartLayout()' class='restart'>Restart layout</button>
 
     <ClusterInfo :cluster='model.root'></ClusterInfo>
+
+    <button @click.prevent='showLinks'>Show original links</button>
   </div>
 </template>
 
@@ -29,6 +31,9 @@ export default {
       this.model.root.reset(true);
       bus.fire('restart-layout');
     },
+    showLinks() {
+      bus.fire('show-links');
+    }
   }
 }
 

@@ -1,6 +1,6 @@
 var louvain = require('ngraph.louvain');
 var coarsen = require('ngraph.coarsen');
-var centrality = require('ngraph.centrality');
+var buildNodeMassFunction = require('./buildNodeMassFunction');
 // var eventify = require('ngraph.events');
 var makeLayout = require('./makeLayout');
 // var getFloatOrDefault = require('./getFloatOrDefault');
@@ -25,28 +25,22 @@ class GraphLayer {
     this.settings = {
       steps: 200 + level * 200,
       selectedLayout: 'ngraph',
-      springLength: 30 + level * 400,
+      springLength: 30,// + level * 200,
       springCoeff: 0.0008,
-      gravity: -10.2 - level * 12,
+      gravity: -1.2, // - level * 6,
       theta: 0.8,
       dragCoeff: 0.02,
       timeStep: 10,
     }
 
-    let self = this;
-    if (this.level > 0) {
-      // TODO: Need to normalize this.
-      this.settings.nodeMass = function nodeMass(nodeId) {
-        let child = self.childrenLookup.get(nodeId);
-        return child.graph.getNodesCount();
-      }
-    } else {
-      this.settings.nodeMass = function nodeMass(nodeId) {
-        let node = graph.getNode(nodeId);
-        if (node.links) return node.links.length;
-        return 1;
-      }
-    }
+    this.settings.nodeMass = buildNodeMassFunction(this)
+  }
+
+  freeze() {
+    // this is mostly to preven vue from monitoringn some properties.
+    Object.freeze(this.layout);
+    Object.freeze(this.childrenLookup);
+    Object.freeze(this.graph);
   }
 
   reset(deep) {
@@ -57,7 +51,14 @@ class GraphLayer {
   }
 
   makeLayout() {
-    let layout = makeLayout(this.graph, this.settings);
+    let graph = this.graph;
+    let layout = makeLayout(graph, this.settings);
+    if (this.level > 0) {
+      // graph.forEachLink(link => {
+      //   let spring = layout.getSpring(link.id);
+      //   spring.weight = link.data * 0.3;
+      // });
+    }
     // let initialPositions = this.initialPositions;
     // if (initialPositions && layout.setNodePosition) {
     //   this.graph.forEachNode(node => {
@@ -66,6 +67,19 @@ class GraphLayer {
     //   })
     // }
     return layout;
+  }
+
+  getMass() {
+    if (this.mass) return this.mass;
+
+    let mass = 0;
+    let self = this;
+    this.graph.forEachNode(node => {
+      mass += self.settings.nodeMass(node.id);
+    })
+
+    this.mass = mass;
+    return mass;
   }
 
   step() {
@@ -81,7 +95,12 @@ class GraphLayer {
     }
 
     this.stepsCount += 1;
+    let t = (this.settings.steps - this.stepsCount) / this.settings.steps;
+    let ts = this.settings.timeStep * t;
+    this.layout.simulator.timeStep(ts);
     this.layout.step();
+    // TODO: This might be very slow.
+    normalizePositions(this.graph, this.layout);
   }
 
   addChild(child) {
@@ -89,6 +108,7 @@ class GraphLayer {
       this.children = [];
     }
     if (!('id' in child)) throw new Error('child id is required');
+    child.parent = this;
     this.children.push(child);
     this.childrenLookup.set(child.id, child)
   }
@@ -128,8 +148,42 @@ class GraphLayer {
     })
 
     parent.reset(true);
+    parent.freeze();
     return parent;
   }
+
+  buildNodePositions(result, dx, dy) {
+    dx = dx || 0;
+    dy = dy || 0;
+    result = result || new Map();
+    let layout = this.layout;
+    if (this.children) {
+      this.children.forEach(child => {
+        let childPos = layout.getNodePosition(child.id);
+        if (!childPos) throw new Error('Child position is missing');
+
+        child.buildNodePositions(result, dx + childPos.x, dy + childPos.y);
+      })
+    } else {
+      this.graph.forEachNode(node => {
+        let pos = layout.getNodePosition(node.id);
+        result.set(node.id, {
+          x: pos.x + dx,
+          y: pos.y + dy
+        });
+      })
+    }
+
+    console.log('graph created', result.size);
+    return result;
+  }
+}
+
+function normalizePositions(graph, layout) {
+  let pos = getInitialPositions(graph, layout)
+  pos.forEach((pos, nodeId) => {
+    layout.setNodePosition(nodeId, pos.x, pos.y);
+  })
 }
 
 function getInitialPositions(subgraph, layout) {
@@ -170,9 +224,12 @@ function init(rootGraph) {
   var root = new GraphLayer(rootGraph);
 
   var api = {
-    root
+    root,
+    rootGraph
   };
 
+  Object.freeze(rootGraph);
+  root.freeze();
   return api;
 }
 

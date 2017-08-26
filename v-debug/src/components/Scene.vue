@@ -13,7 +13,7 @@ export default {
   mounted() {
     this.createScene();
     bus.on('restart-layout', this.createScene, this);
-    bus.on('clusters-ready', this.showClusters, this);
+    bus.on('show-links', this.showLinks, this);
   },
   methods: {
     destroyScene() {
@@ -41,15 +41,14 @@ export default {
         })
       }
     },
-    showClusters(clustersGraph) {
-      if (this.graphScene) {
-        this.graphScene.showClusters(clustersGraph);
-      }
+    showLinks() {
+      this.graphScene.showLinks();
     }
   },
   beforeDestroy() {
     this.destroyScene()
     bus.off('restart-layout', this.createScene, this);
+    bus.off('show-links', this.showLinks, this);
   }
 }
 </script>

@@ -28,6 +28,7 @@ function makeScene(canvas) {
 
   var api = {
     appendChild,
+    removeChild,
     setViewBox,
     dispose,
   };
@@ -57,8 +58,12 @@ function makeScene(canvas) {
     frameToken = requestAnimationFrame(frame);
   }
 
-  function appendChild(object) {
-    sceneRoot.appendChild(object);
+  function appendChild(child) {
+    sceneRoot.appendChild(child);
+  }
+
+  function removeChild(child) {
+    sceneRoot.removeChild(child)
   }
 }
 
