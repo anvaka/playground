@@ -1,8 +1,6 @@
 var Color = require('../Color');
 var Element = require('../Element');
 
-const DEFAULT_COLOR =  new Color(1, 1, 1, 1);
-
 class BaseLines extends Element {
   constructor(capacity, itemsPerLine) {
     super();
@@ -11,7 +9,7 @@ class BaseLines extends Element {
     this.capacity = capacity;
     this.count = 0;
     this._program = null;
-    this.color = DEFAULT_COLOR;
+    this.color = new Color(1, 1, 1, 1);
     this.buffer = new Float32Array(capacity * this.itemsPerLine);
   }
 
