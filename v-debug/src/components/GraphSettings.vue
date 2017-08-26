@@ -26,7 +26,7 @@ export default {
 
   methods: {
     restartLayout() {
-      this.model.root.stepsCount = 0;
+      this.model.root.reset(true);
       bus.fire('restart-layout');
     },
   }

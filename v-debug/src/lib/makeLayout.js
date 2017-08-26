@@ -14,7 +14,7 @@ function makeLayout(graph, settings) {
 }
 
 function extractSettings(settings) {
-  return {
+  let cleanSettings = {
    springLength: getFloatOrDefault(settings.springLength,  30),
    springCoeff : getFloatOrDefault(settings.springCoeff,   0.0008),
    gravity     : getFloatOrDefault(settings.gravity,       -1.2),
@@ -22,6 +22,10 @@ function extractSettings(settings) {
    dragCoeff   : getFloatOrDefault(settings.dragCoeff,     0.02),
    timeStep    : getFloatOrDefault(settings.timeStep,      20)
   };
+  if (settings.nodeMass) {
+    cleanSettings.nodeMass = settings.nodeMass;
+  }
+  return cleanSettings;
 }
 
 function d3Layout(graph, settings) {

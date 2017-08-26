@@ -1,5 +1,6 @@
 var louvain = require('ngraph.louvain');
 var coarsen = require('ngraph.coarsen');
+var centrality = require('ngraph.centrality');
 // var eventify = require('ngraph.events');
 var makeLayout = require('./makeLayout');
 // var getFloatOrDefault = require('./getFloatOrDefault');
@@ -15,32 +16,55 @@ class GraphLayer {
     this.graph = graph;
     this.level = level;
     this.children = null;
+    this.childrenLookup = new Map();
     this.layout = null;
     this.initialPositions = initialPositions;
 
     this.stepsCount = 0;
 
     this.settings = {
-      steps: 100 + level * 20,
+      steps: 200 + level * 200,
       selectedLayout: 'ngraph',
-      springLength: 30 + level * 30,
+      springLength: 30 + level * 400,
       springCoeff: 0.0008,
-      gravity: -1.2,
+      gravity: -10.2 - level * 12,
       theta: 0.8,
       dragCoeff: 0.02,
-      timeStep: 10
+      timeStep: 10,
+    }
+
+    let self = this;
+    if (this.level > 0) {
+      // TODO: Need to normalize this.
+      this.settings.nodeMass = function nodeMass(nodeId) {
+        let child = self.childrenLookup.get(nodeId);
+        return child.graph.getNodesCount();
+      }
+    } else {
+      this.settings.nodeMass = function nodeMass(nodeId) {
+        let node = graph.getNode(nodeId);
+        if (node.links) return node.links.length;
+        return 1;
+      }
+    }
+  }
+
+  reset(deep) {
+    this.stepsCount = 0;
+    if (deep && this.children) {
+      this.children.forEach(child => child.reset(deep));
     }
   }
 
   makeLayout() {
     let layout = makeLayout(this.graph, this.settings);
-    let initialPositions = this.initialPositions;
-    if (initialPositions && layout.setNodePosition) {
-      this.graph.forEachNode(node => {
-        let pos = initialPositions.get(node.id);
-        if (pos) layout.setNodePosition(node.id, pos.x, pos.y);
-      })
-    }
+    // let initialPositions = this.initialPositions;
+    // if (initialPositions && layout.setNodePosition) {
+    //   this.graph.forEachNode(node => {
+    //     let pos = initialPositions.get(node.id);
+    //     if (pos) layout.setNodePosition(node.id, pos.x, pos.y);
+    //   })
+    // }
     return layout;
   }
 
@@ -60,6 +84,15 @@ class GraphLayer {
     this.layout.step();
   }
 
+  addChild(child) {
+    if (!this.children) {
+      this.children = [];
+    }
+    if (!('id' in child)) throw new Error('child id is required');
+    this.children.push(child);
+    this.childrenLookup.set(child.id, child)
+  }
+
   /**
    * Splits current graph into clsuters, returns parent graph layer.
    */
@@ -71,8 +104,8 @@ class GraphLayer {
     // This is our new set of top level nodes
     let subgraphs = coarsen.getSubgraphs(clusterGraph);
 
-    let children = [];
     let layout = this.layout;
+    let ownChildren = this.childrenLookup;
 
     // Each subgraph is a graph, it becomes a node in the parent level graph
     subgraphs.forEach(subgraphInfo => {
@@ -81,12 +114,20 @@ class GraphLayer {
 
       let child = new GraphLayer(subgraph, currentLevel, initialPositions);
       child.id = subgraphInfo.id;
-      children.push(child);
+      parent.addChild(child);
+
+      if (ownChildren) {
+        subgraph.forEachNode(function (node) {
+          let grandChild = ownChildren.get(node.id);
+          if (grandChild) {
+            child.addChild(grandChild);
+          }
+        })
+      }
       // TODO: we also need to make sure that each child has links to existing children
     })
 
-    parent.children = Object.freeze(children);
-
+    parent.reset(true);
     return parent;
   }
 }

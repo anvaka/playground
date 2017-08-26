@@ -2,6 +2,14 @@ var eventify = require('ngraph.events');
 var wgl = require('./wgl/index');
 
 module.exports = renderGraph;
+const niceColors = ['#7FDBFF', '#01FF70', '#FFDC00', '#F012BE', '#FFFFFF', '#0074D9']
+  .map(str => {
+    return {
+      r: parseInt(str.substr(1, 2), 16)/255,
+      g: parseInt(str.substr(3, 2), 16)/255,
+      b: parseInt(str.substr(5, 2), 16)/255
+    }
+  });
 
 function renderGraph(model, canvas) {
   let scene = wgl.scene(canvas);
@@ -59,7 +67,7 @@ function renderGraph(model, canvas) {
   let lastLevel = model.root;
   renderRecusriveLevel(lastLevel, scene);
 
-  let initialSceneSize = 350;
+  let initialSceneSize = 1050;
   scene.setViewBox({
     left:  -initialSceneSize,
     top:   -initialSceneSize,
@@ -90,34 +98,42 @@ function renderGraph(model, canvas) {
     animationHandle = requestAnimationFrame(frame);
   }
 
-  function renderRecusriveLevel(level, parentUI) {
+  function renderRecusriveLevel(level, parentUI, color) {
     let layout = level.makeLayout();
     Object.freeze(layout);
     level.layout = layout;
 
     if (level.children) {
-      renderIntermediate(level, parentUI);
+      renderIntermediate(level, parentUI, color);
     } else {
-      renderPlainGraph(level, parentUI);
+      renderPlainGraph(level, parentUI, color);
     }
-    
   }
 
-  function renderIntermediate(level, parentUI) {
+  function renderIntermediate(level, parentUI, color) {
     let layout = level.layout;
     let nodeIdToUI = new Map();
     let linkIdToUI = new Map();
+
     level.children.forEach(appendGroup);
 
     let graph = level.graph;
     let linksCount = graph.getLinksCount()
     let lines;
     if (linksCount > 0) {
-      lines = new wgl.Wires(graph.getLinksCount());
-      lines.color.r = 256;
-      lines.color.a = 1;
+      lines = new wgl.Lines(graph.getLinksCount());
+      if (color) {
+        lines.color.r = color.r;
+        lines.color.g = color.g;
+        lines.color.b = color.b;
+      } else {
+        lines.color.r = 1.0;
+        lines.color.g = 0.0;
+        lines.color.b = 0.0;
+        lines.color.a = 1;
+      }
       graph.forEachLink(appendInterlevelLink);
-      parentUI.appendChild(lines);
+      // parentUI.appendChild(lines);
     }
 
     level.updatePosition = updatePosition;
@@ -131,17 +147,24 @@ function renderGraph(model, canvas) {
       var line = { from, to };
       var ui = lines.add(line);
 
+      ui.setWidth(level.level * 3 + 1);
+
       linkIdToUI.set(link.id, ui);
     }
 
-    function appendGroup(node) {
+    function appendGroup(node, idx) {
       var point = layout.getNodePosition(node.id);
       let rootUI = new wgl.Element();
       // *0.5 because webgl space is between (-1, 1)
       rootUI.transform.dx = point.x * 0.5;
       rootUI.transform.dy = point.y * 0.5;
 
-      renderRecusriveLevel(node, rootUI)
+      let groupColor = color;
+      if (!groupColor) {
+        groupColor = niceColors[idx % niceColors.length];
+      }
+
+      renderRecusriveLevel(node, rootUI, groupColor);
       nodeIdToUI.set(node.id, rootUI);
 
       parentUI.appendChild(rootUI);
@@ -174,7 +197,7 @@ function renderGraph(model, canvas) {
     }
   }
 
-  function renderPlainGraph(level, parentUI) {
+  function renderPlainGraph(level, parentUI, color) {
     let {graph} = level;
 
     let nodeCount = graph.getNodesCount();
@@ -191,30 +214,41 @@ function renderGraph(model, canvas) {
     graph.forEachNode(node => {
       var point = layout.getNodePosition(node.id);
       point.size = 10; // Math.random() * 10 + 1;
-      point.color = {
-        r: 0.99, // (1 + Math.random()) * 0.5,
-        g: 0.93, // (1 + Math.random()) * 0.5,
-        b: 236/256, // (1 + Math.random()) * 0.5
+      if (color) {
+        point.color = color;
+      } else {
+        point.color = {
+          r: 0.99, // (1 + Math.random()) * 0.5,
+          g: 0.93, // (1 + Math.random()) * 0.5,
+          b: 236/256, // (1 + Math.random()) * 0.5
+        }
       }
 
       var ui = nodes.add(point);
       nodeIdToUI.set(node.id, ui);
     })
 
-    let ui = nodes.add({
-      x: 0,
-      y: 0,
-      size: 20,
-    });
-    ui.setColor({
-      r: 1, g: 0, b: 0
-    });
+    // let ui = nodes.add({
+    //   x: 0,
+    //   y: 0,
+    //   size: 20,
+    // });
+    // ui.setColor({
+    //   r: 1, g: 0, b: 0
+    // });
 
     let lines = new wgl.Wires(graph.getLinksCount());
-    lines.color.r = 83/256;
-    lines.color.g = 82/256;
-    lines.color.b = 139/256;
-    lines.color.a = 0.5;
+    if (color) {
+      lines.color.r = color.r;
+      lines.color.g = color.g;
+      lines.color.b = color.b;
+      lines.color.a = 0.05;
+    } else {
+      lines.color.r = 83/256;
+      lines.color.g = 82/256;
+      lines.color.b = 139/256;
+      lines.color.a = 0.5;
+    }
 
     graph.forEachLink(link => {
       var from = layout.getNodePosition(link.fromId);
