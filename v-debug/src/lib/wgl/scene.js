@@ -9,8 +9,11 @@ module.exports = makeScene;
 let pixelRatio = 1.0; //window.devicePixelRatio;
 
 function makeScene(canvas) {
-  let width = canvas.width = canvas.offsetWidth * pixelRatio;
-  let height = canvas.height = canvas.offsetHeight * pixelRatio;
+  let width;
+  let height;
+  let screen = { width: 0, height: 0 };
+
+  var sceneRoot = new Element();
 
   let gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
   let interactiveTree = createTree();
@@ -19,11 +22,10 @@ function makeScene(canvas) {
   gl.enable(gl.BLEND);
   gl.clearColor(0, 0, 0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT)
-  gl.viewport(0, 0, width, height);
+
+  updateCanvasSize();
   
   var lastTreeUpdate = new Date();
-  var sceneRoot = new Element();
-  var screen = { width, height };
 
   var panzoom = makePanzoom(canvas, {
     controller: wglPanZoom(canvas, sceneRoot)
@@ -45,11 +47,13 @@ function makeScene(canvas) {
   function listenToEvents() {
     canvas.addEventListener('mousemove', onMouseMove);
     canvas.addEventListener('click', onMouseClick);
+    window.addEventListener('resize', onResize, true);
   }
 
   function dispose() {
     canvas.removeEventListener('mousemove', onMouseMove);
     canvas.removeEventListener('click', onMouseClick);
+    window.removeEventListener('resize', onResize, true);
 
     panzoom.dispose();
     sceneRoot.dispose();
@@ -57,6 +61,20 @@ function makeScene(canvas) {
       cancelAnimationFrame(frameToken);
       frameToken = null;
     }
+  }
+
+  function onResize() {
+    updateCanvasSize();
+  }
+
+  function updateCanvasSize() {
+    width = canvas.width = canvas.offsetWidth * pixelRatio
+    height = canvas.height = canvas.offsetHeight * pixelRatio
+    gl.viewport(0, 0, width, height);
+
+    screen.width = width;
+    screen.height = height;
+    sceneRoot.worldTransformNeedsUpdate = true;
   }
 
   function onMouseClick(e) {
