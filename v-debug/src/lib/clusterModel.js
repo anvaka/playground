@@ -174,7 +174,6 @@ class GraphLayer {
       })
     }
 
-    console.log('graph created', result.size);
     return result;
   }
 }

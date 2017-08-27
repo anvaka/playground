@@ -2,69 +2,17 @@ var eventify = require('ngraph.events');
 var wgl = require('./wgl/index');
 
 module.exports = renderGraph;
-const niceColors = ['#7FDBFF', '#01FF70', '#FFDC00', '#F012BE', '#FFFFFF', '#0074D9']
-  .map(str => {
-    return {
-      r: parseInt(str.substr(1, 2), 16)/255,
-      g: parseInt(str.substr(3, 2), 16)/255,
-      b: parseInt(str.substr(5, 2), 16)/255
-    }
-  });
+
+const niceColors = getNiceColors(); 
+
+const appendSceneDebugElements = false;
 
 function renderGraph(model, canvas) {
   let scene = wgl.scene(canvas);
-
-  // let first = new wgl.Element();
-  // first.transform.dx = 100;
-  // first.transform.dy = 0;
-  // first.transform.scale = 1;
-  // let fp = new wgl.Points(1);
-  // fp.add({
-  //   x: 0, y: 0, size: 15
-  // });
-  // first.appendChild(fp);
-
-  // let second = new wgl.Element();
-  // second.transform.dx = -100;
-  // second.transform.dy = 0;
-  // second.transform.scale = 1;
-  // let sp = new wgl.Points(1);
-  // sp.add({
-  //   x: 0, y: 0, size: 15
-  // });
-  // second.appendChild(sp);
-  // scene.appendChild(first);
-  // scene.appendChild(second);
-
-  // let lines = new wgl.Wires(1);
-  // lines.add({
-  //    from: {x: -100, y: 0},
-  //    to: {x: 100, y: 0},
-  // })
-  // scene.appendChild(lines);
-
-
-  // let third = new wgl.Element();
-  // third.transform.dx = 0;
-  // third.transform.dy = -10;
-  // third.transform.scale = 1;
-  // sp = new wgl.Points(2);
-  // sp.add({
-  //   x: -100, y: 0, size: 5
-  // });
-  // sp.add({
-  //   x: 100, y: 0, size: 5
-  // });
-  // third.appendChild(sp);
-  // lines = new wgl.Wires(1);
-  // lines.add({
-  //    from: {x: -100, y: 0},
-  //    to: {x: 100, y: 0},
-  // })
-  // third.appendChild(lines);
-  // scene.appendChild(third);
+  if (appendSceneDebugElements) addDebugElements(scene);
 
   let lastLevel = model.root;
+
   renderRecusriveLevel(lastLevel, scene);
 
   let initialSceneSize = 1050;
@@ -176,9 +124,8 @@ function renderGraph(model, canvas) {
     function appendGroup(node, idx) {
       var point = layout.getNodePosition(node.id);
       let rootUI = new wgl.Element();
-      // *0.5 because webgl space is between (-1, 1)
-      rootUI.transform.dx = point.x * 0.5;
-      rootUI.transform.dy = point.y * 0.5;
+      rootUI.transform.dx = point.x;
+      rootUI.transform.dy = point.y;
 
       let groupColor = color;
       if (!groupColor) {
@@ -197,8 +144,8 @@ function renderGraph(model, canvas) {
         var pos = layout.getNodePosition(node.id);
         var ui = nodeIdToUI.get(node.id);
         if (ui) {
-          ui.transform.dx = pos.x * 0.5;
-          ui.transform.dy = pos.y * 0.5;
+          ui.transform.dx = pos.x;
+          ui.transform.dy = pos.y;
           ui.worldTransformNeedsUpdate = true;
         }
       });
@@ -245,7 +192,7 @@ function renderGraph(model, canvas) {
         }
       }
 
-      var ui = nodes.add(point);
+      var ui = nodes.add(point, node.id);
       nodeIdToUI.set(node.id, ui);
     })
 
@@ -297,4 +244,70 @@ function renderGraph(model, canvas) {
       })
     }
   }
+}
+
+function addDebugElements(scene) {
+  let first = new wgl.Element();
+  first.transform.dx = 100;
+  first.transform.dy = 0;
+  first.transform.scale = 1;
+  let fp = new wgl.Points(1);
+  fp.add({
+    x: 0, y: 0, size: 15
+  });
+
+  let lines = new wgl.Wires(1);
+  lines.add({
+     from: {x: -100, y: 0},
+     to: {x: 100, y: 0},
+  })
+
+  let second = new wgl.Element();
+  second.transform.dx = -100;
+  second.transform.dy = 0;
+  second.transform.scale = 1;
+  let sp = new wgl.Points(1);
+  sp.add({
+    x: 0, y: 0, size: 15
+  });
+  first.appendChild(fp);
+  second.appendChild(sp);
+
+  scene.appendChild(first);
+  scene.appendChild(second);
+  scene.appendChild(lines);
+
+
+  let third = new wgl.Element();
+  third.transform.dx = 0;
+  third.transform.dy = -10;
+  third.transform.scale = 1;
+  sp = new wgl.Points(2);
+  sp.add({
+    x: -100, y: 0, size: 5
+  });
+  sp.add({
+    x: 100, y: 0, size: 5
+  });
+  third.appendChild(sp);
+  lines = new wgl.Wires(1);
+  lines.add({
+     from: {x: -100, y: 0},
+     to: {x: 100, y: 0},
+  });
+
+
+  // third.appendChild(lines);
+  scene.appendChild(third);
+}
+
+function getNiceColors() {
+  return ['#7FDBFF', '#01FF70', '#FFDC00', '#F012BE', '#FFFFFF', '#0074D9']
+    .map(str => {
+      return {
+        r: parseInt(str.substr(1, 2), 16)/255,
+        g: parseInt(str.substr(3, 2), 16)/255,
+        b: parseInt(str.substr(5, 2), 16)/255
+      }
+    });
 }

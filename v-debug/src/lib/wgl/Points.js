@@ -4,10 +4,21 @@ var Element = require('./Element');
 var Color = require('./Color');
 
 class PointAccessor {
-  constructor(buffer, offset, color) {
+  constructor(buffer, offset, color, data) {
     this.offset = offset;
     this.buffer = buffer;
     this.color = color || new Color(1, 1, 1, 1); 
+    if (data) {
+      this.data = data;
+    }
+  }
+
+  get x() {
+    return this.buffer[this.offset];
+  }
+
+  get y() {
+    return this.buffer[this.offset + 1];
   }
 
   update(point, defaults) {
@@ -36,17 +47,30 @@ class Points extends Element {
   constructor(capacity) {
     super();
 
+    // TODO: Not sure I like this too much. But otherwise how can I track interactivity?
+    this.pointsAccessor = [];
+
     this.capacity = capacity;
-    this.points = new Float32Array(capacity * ITEMS_PER_POINT);
+    this.pointsBuffer = new Float32Array(capacity * ITEMS_PER_POINT);
     this.count = 0;
     this._program = null;
     this.color = new Color(1, 1, 1, 1);
     this.size = 1;
   }
 
+  addInteractiveElements(tree, dx, dy) {
+    let t = this.transform;
+    let points = this.pointsAccessor.map(p => ({
+      x: p.x + dx + t.dx,
+      y: p.y + dy + t.dy,
+      p: p
+    }))
+    tree.addAll(points);
+  }
+
   draw(gl, screen) {
     if (!this._program) {
-      this._program = makeNodeProgram(gl, this.points);
+      this._program = makeNodeProgram(gl, this.pointsBuffer);
     }
 
     this._program.draw(this.worldTransform, screen, this.count);
@@ -59,16 +83,19 @@ class Points extends Element {
     }
   }
 
-  add(point) {
+  add(point, data) {
     if (!point) throw new Error('Point is required');
 
     if (this.count >= this.capacity)  {
       this._extendArray();
     }
-    let points = this.points;
+    let pointsBuffer = this.pointsBuffer;
     let internalNodeId = this.count;
     let offset = internalNodeId * ITEMS_PER_POINT;
-    let pointAccessor = new PointAccessor(points, offset, point.color || this.color);
+    let pointAccessor = new PointAccessor(pointsBuffer, offset, point.color || this.color, data);
+
+    this.pointsAccessor.push(pointAccessor);
+
     pointAccessor.update(point, this)
 
     this.count += 1;
@@ -77,6 +104,9 @@ class Points extends Element {
 
   _extendArray() {
     // This is because we would have to track every created point accessor
+    // TODO: Welp, a week older you thinks that we should be tracking the points
+    // for interactivity... So, might as well implement this stuff. Remember anything
+    // about permature optimization?
     throw new Error('Cannot extend array at the moment :(')
   }
 }

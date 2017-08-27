@@ -17,7 +17,7 @@ class BaseLines extends Element {
     if (!this._program) {
       this._program = this._makeProgram(gl);
     }
-    let transform = this.parent ? this.parent.worldTransform : this.worldTransform;
+    let transform = this.worldTransform;
 
     this._program.draw(transform, this.color, screen);
   }

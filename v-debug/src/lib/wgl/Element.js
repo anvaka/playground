@@ -15,6 +15,15 @@ class Element {
     this.worldTransformNeedsUpdate = false;
   }
 
+  addInteractiveElements(tree, dx = 0, dy = 0) {
+    let children = this.children;
+    dx += this.transform.dx;
+    dy += this.transform.dy;
+    for (var i = 0; i < children.length; i++ ) {
+       children[i].addInteractiveElements(tree, dx, dy);
+    }
+  }
+
   appendChild(child) {
     child.parent = this;
     this.children.push(child);
@@ -38,10 +47,14 @@ class Element {
       force = true; // We have to update children now.
     }
 
+    let wasDirty = force;
+
     var children = this.children;
     for (var i = 0; i < children.length; i++ ) {
-       children[i].updateWorldTransform(force);
+       wasDirty = children[i].updateWorldTransform(force) || wasDirty;
     }
+
+    return wasDirty;
   }
 
   draw(gl, screen) {

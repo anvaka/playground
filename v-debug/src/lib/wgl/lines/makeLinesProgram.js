@@ -15,7 +15,7 @@ void main() {
   vec2 vv = 2.0 * uTransform[3].xy/uScreenSize;
   transformed[3][0] = vv.x - 1.0;
   transformed[3][1] = 1.0 - vv.y;
-  vec2 xy = aPosition/uScreenSize;
+  vec2 xy = 2.0 * aPosition/uScreenSize;
   gl_Position = transformed * vec4(xy.x, -xy.y, 0.0, 1.0);
 }
 `;

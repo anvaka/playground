@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "d3-force": "^1.0.6",
+    "d3-quadtree": "^1.0.3",
     "ngraph.coarsen": "^1.4.0",
     "ngraph.events": "0.0.4",
     "ngraph.forcelayout": "^0.2.1",
