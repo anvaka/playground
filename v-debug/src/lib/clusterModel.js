@@ -23,7 +23,7 @@ class GraphLayer {
     this.stepsCount = 0;
 
     this.settings = {
-      steps: 200 + level * 200,
+      steps: 200,
       selectedLayout: 'ngraph',
       springLength: 30,// + level * 200,
       springCoeff: 0.0008,

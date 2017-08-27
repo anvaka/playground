@@ -9,6 +9,7 @@ const appendSceneDebugElements = false;
 
 function renderGraph(model, canvas) {
   let scene = wgl.scene(canvas);
+  scene.setClearColor(12/255, 41/255, 82/255, 1)
   if (appendSceneDebugElements) addDebugElements(scene);
 
   let lastLevel = model.root;
@@ -30,6 +31,9 @@ function renderGraph(model, canvas) {
 
   var animationHandle = requestAnimationFrame(frame)
   var lastLinks;
+  scene.on('point-click', pointClick);
+  scene.on('point-enter', pointEnter);
+  scene.on('point-leave', pointLeave);
 
   return api;
 
@@ -58,8 +62,16 @@ function renderGraph(model, canvas) {
       cancelAnimationFrame(animationHandle);
       animationHandle = null;
     }
+
+    scene.off('point-click', pointClick);
+    scene.off('point-enter', pointEnter);
+    scene.off('point-leave', pointLeave);
     scene.dispose();
   }
+
+  function pointClick(p, coord) { api.fire('point-click', p, coord) }
+  function pointEnter(p, coord) { api.fire('point-enter', p, coord) }
+  function pointLeave(p, coord) { api.fire('point-leave', p, coord) }
 
   function frame() {
     lastLevel.step();
@@ -186,9 +198,9 @@ function renderGraph(model, canvas) {
         point.color = color;
       } else {
         point.color = {
-          r: 0.99, // (1 + Math.random()) * 0.5,
-          g: 0.93, // (1 + Math.random()) * 0.5,
-          b: 236/256, // (1 + Math.random()) * 0.5
+          r: 114/255, // (1 + Math.random()) * 0.5,
+          g: 248/255, // (1 + Math.random()) * 0.5,
+          b: 252/255, // (1 + Math.random()) * 0.5
         }
       }
 
@@ -212,10 +224,11 @@ function renderGraph(model, canvas) {
       lines.color.b = color.b;
       lines.color.a = 0.05;
     } else {
-      lines.color.r = 83/256;
-      lines.color.g = 82/256;
-      lines.color.b = 139/256;
-      lines.color.a = 0.5;
+
+      lines.color.r = 6/255;
+      lines.color.g = 28/255;
+      lines.color.b = 70/255;
+      lines.color.a = 0.05;
     }
 
     graph.forEachLink(link => {

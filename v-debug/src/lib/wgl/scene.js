@@ -1,5 +1,6 @@
 const makePanzoom = require('panzoom');
 const Element = require('./Element');
+const eventify = require('ngraph.events');
 const createTree = require('d3-quadtree').quadtree;
 
 // const makeLineProgram = require('./lines.js');
@@ -35,14 +36,19 @@ function makeScene(canvas) {
     appendChild,
     removeChild,
     setViewBox,
+    setClearColor,
     dispose,
   };
 
   var frameToken = requestAnimationFrame(frame);
-  var prevHighlighted, prevColor;
+  var prevHighlighted;
   listenToEvents();
 
-  return api;
+  return eventify(api);
+
+  function setClearColor(r, g, b, a) {
+    gl.clearColor(r, g, b, a)
+  }
 
   function listenToEvents() {
     canvas.addEventListener('mousemove', onMouseMove);
@@ -78,31 +84,43 @@ function makeScene(canvas) {
   }
 
   function onMouseClick(e) {
+    let res = findUnderCursor(e.clientX, e.clientY);
+    if (res) {
+      api.fire('point-click', res, {
+        x: e.clientX,
+        y: e.clientY
+      });
+    }
   }
 
   function onMouseMove(e) {
+    let res = findUnderCursor(e.clientX, e.clientY);
+    if (!res) {
+      if (prevHighlighted) {
+        api.fire('point-leave', prevHighlighted);
+        prevHighlighted = null;
+      }
+  
+      return;
+    }
+
+    if (res === prevHighlighted) return;
+
+    prevHighlighted = res;
+    api.fire('point-enter', prevHighlighted, {
+      x: e.clientX,
+      y: e.clientY
+    });
+  }
+
+  function findUnderCursor(clientX, clientY) {
     let t = sceneRoot.transform;
-    let canvasX = e.clientX * pixelRatio;
-    let canvasY = e.clientY * pixelRatio;
+    let canvasX = clientX * pixelRatio;
+    let canvasY = clientY * pixelRatio;
     let x = (canvasX - t.dx)/t.scale;
     let y = (canvasY - t.dy)/t.scale;
-    let res = interactiveTree.find(x, y, 10);
+    return interactiveTree.find(x, y, 10);
 
-    if (res) {
-      if (prevHighlighted) {
-        prevHighlighted.setColor(prevColor);
-      }
-      let p = res.p;
-      prevColor = {
-        r: p.color.r,
-        g: p.color.g,
-        b: p.color.b
-      }
-      prevHighlighted = p;
-      p.setColor({ r: 1, g: 0, b: 0 })
-
-      console.log(p.data)
-    }
   }
 
   function setViewBox(rect) {

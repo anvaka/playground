@@ -12,7 +12,7 @@ class Element {
     // Stores transformation to the "world" coordinates. If this element has
     // no parent, this object is equal to `this.transform`
     this.worldTransform = new Transform();
-    this.worldTransformNeedsUpdate = false;
+    this.worldTransformNeedsUpdate = true;
   }
 
   addInteractiveElements(tree, dx = 0, dy = 0) {
