@@ -1,9 +1,8 @@
 <template>
   <div class='cluster-info'>
-    <div v-if='cluster.parent'>
-      <a href='#' @mouseover.prevent='higlight(cluster.parent)' @click.prevent='setCluster(cluster.parent)'>Parent: {{cluster.parent.id}}</a>
-    </div>
-    <div>Custer: {{cluster.id}}</div>
+    <h5>Custer: {{cluster.id}}
+      <a v-if='cluster.parent' href='#' @mouseover.prevent='higlight(cluster.parent)' @click.prevent='setCluster(cluster.parent)'>Parent: {{cluster.parent.id}}</a>
+    </h5>
     <div>Nodes: {{cluster.graph.getNodesCount()}}; Edges: {{cluster.graph.getLinksCount()}}; Mass: {{cluster.mass}}</div>
     <div class='row'>
       <div class='label'>Layout</div>
@@ -23,8 +22,11 @@
     <D3LayoutSettings :settings='cluster.settings' v-if='!isNGraph'></D3LayoutSettings>
     <button @click.prevent='requestSplit'>Split into clusters</button>
     <hr>
-    <div v-for='child in getChildren(cluster)' :key='child.id'>
-      <a href='#' @mouseover.prevent='higlight(child.cluster)' @click.prevent='setCluster(child.cluster)'>{{child.id}}. Mass: {{child.mass}}</a>
+    <h5>Children</h5>
+    <div class='cluster-list'>
+      <div v-for='child in getChildren(cluster)' :key='child.id'>
+        <a href='#' @mouseover.prevent='higlight(child.cluster)' @click.prevent='setCluster(child.cluster)'>{{child.id}}. Mass: {{child.mass}}</a>
+      </div>
     </div>
   </div>
 </template>
@@ -51,6 +53,7 @@ export default {
     getChildren(cluster) {
       let nodes = []
       let massLookup = cluster.childrenLookup;
+
       cluster.graph.forEachNode(node => {
         let clusterInfo = massLookup.get(node.id);
         nodes.push({
@@ -59,6 +62,7 @@ export default {
           cluster: clusterInfo
         });
       })
+
       return nodes;
     },
     higlight(cluster) {
@@ -84,6 +88,10 @@ export default {
   border-top: 1px solid gray;
   text-align: left;
   padding: 14px 0;
+}
+.cluster-list {
+  overflow-y: auto;
+  max-height: 160px;
 }
 
 .row {

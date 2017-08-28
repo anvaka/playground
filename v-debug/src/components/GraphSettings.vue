@@ -5,6 +5,7 @@
     <button @click.prevent='restartLayout()' class='restart'>Restart layout</button>
     <button @click.prevent='toggleLinks'>Toggle original links</button>
     <ClusterInfo :cluster='model.selectedCluster' :model='model'></ClusterInfo>
+    <hr>
     <NodeInfo v-if='selectedPoint' :point='selectedPoint' :model='model'></NodeInfo>
   </div>
 </template>
@@ -88,5 +89,8 @@ export default {
   margin: 2px;
 }
 
+.graph-settings h5 {
+  margin: 0;
+}
 
 </style>

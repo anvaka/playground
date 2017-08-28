@@ -1,12 +1,14 @@
 <template>
   <div class='node-info'>
-    <h3>Selected point</h3>
-    <div>{{point}}</div>
+    <h5>{{point}}</h5>
+    <div>Cluster path</div>
 
-    <h5>Cluster path</h5>
-    <div v-for='cluster in clusterPath' :key='cluster.id'>
+    <div class='cluster-path-container'>
+    <span v-for='cluster in clusterPath' :key='cluster.id'>
       <a href='#' @click.prevent='selectCluster(cluster)' @mouseover="highlightCluster(cluster)">{{cluster.id}}</a>
-      </div>
+      <span class='cluster-name-separator'>&gt;</span>
+    </span>
+    </div>
   </div>
 </template>
 <script>
@@ -38,5 +40,12 @@ export default {
 }
 .node-info h3 {
   margin: 0
+}
+.cluster-name-separator {
+  margin: 0 10px;
+}
+
+.cluster-path-container span:last-child .cluster-name-separator {
+  display: none;
 }
 </style>
