@@ -2,11 +2,13 @@
   <div id="app">
     <scene :model='model'></scene>
     <graph-settings :model='model'></graph-settings>
+    <dot-window v-if='dotWindowVisible' :content='dotContent' @close='hideDotWindow'></dot-window>
   </div>
 </template>
 
 <script>
 const Scene = require('./components/Scene');
+const DotWindow = require('./components/DotWindow');
 const GraphSettings = require('./components/GraphSettings');
 const getGraph = require('./lib/getGraph.js');
 const initClusterModel = require('./lib/clusterModel.js');
@@ -19,24 +21,43 @@ export default {
   name: 'app',
   components: {
     Scene,
-    GraphSettings
+    GraphSettings,
+    DotWindow
   },
   mounted() {
     bus.on('request-split', this.onSplit, this);
+    bus.on('show-dot', this.showDot, this);
+    bus.on('load-graph', this.loadGraph, this);
   },
   beforeDestroy() {
     bus.off('request-split', this.onSplit);
+    bus.off('show-dot', this.showDot);
+    bus.off('load-graph', this.loadGraph);
   },
 
   data() {
     let model = initClusterModel(graph);
-
     window.c0 = model.root;
     return {
       model,
+      dotContent: '',
+      dotWindowVisible: false
     }
   },
+
   methods: {
+    loadGraph(graph) {
+      let model = initClusterModel(graph);
+      window.c0 = model.root;
+      this.model = model;
+    },
+    showDot(dotContent) {
+      this.dotContent = dotContent;
+      this.dotWindowVisible = true;
+    },
+    hideDotWindow() {
+      this.dotWindowVisible = false;
+    },
     onSplit(cluster) {
       if (!cluster.parent) {
         this.model.root = cluster.split();
@@ -57,11 +78,12 @@ export default {
 </script>
 
 <style>
+
+* { box-sizing: border-box; }
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
   color: #2c3e50;
   background: RGB(243, 241, 237);
   position: absolute;

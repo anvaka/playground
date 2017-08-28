@@ -25,6 +25,11 @@ export default {
     bus.off('toggle-links', this.toggleLinks, this);
     bus.off('highlight-cluster', this.highlightCluster, this);
   },
+  watch: {
+    model(newModel) {
+      this.createScene();
+    }
+  },
   data() {
     return {
       tooltip: {

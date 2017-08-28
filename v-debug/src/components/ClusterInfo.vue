@@ -21,6 +21,7 @@
     <NLayoutSettings :settings='cluster.settings' v-if='isNGraph'></NLayoutSettings>
     <D3LayoutSettings :settings='cluster.settings' v-if='!isNGraph'></D3LayoutSettings>
     <button @click.prevent='requestSplit'>Split into clusters</button>
+    <button @click.prevent='showDot'>Show Dot</button>
     <hr>
     <h5>Children</h5>
     <div class='cluster-list'>
@@ -32,6 +33,7 @@
 </template>
 <script>
 
+var toDot = require('ngraph.todot');
 var NLayoutSettings = require('./NLayoutSettings');
 var D3LayoutSettings = require('./D3LayoutSettings');
 var bus = require('../lib/bus');
@@ -50,6 +52,10 @@ export default {
   },
 
   methods: {
+    showDot() {
+      let dot = toDot(this.cluster.graph);
+      bus.fire('show-dot', dot);
+    },
     getChildren(cluster) {
       let nodes = []
       let massLookup = cluster.childrenLookup;
