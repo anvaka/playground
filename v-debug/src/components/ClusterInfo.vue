@@ -1,9 +1,20 @@
 <template>
   <div class='cluster-info'>
-    <h5>Custer: {{cluster.id}}
-      <a v-if='cluster.parent' href='#' @mouseover.prevent='higlight(cluster.parent)' @click.prevent='setCluster(cluster.parent)'>Parent: {{cluster.parent.id}}</a>
-    </h5>
-    <div>Nodes: {{cluster.graph.getNodesCount()}}; Edges: {{cluster.graph.getLinksCount()}}; Mass: {{cluster.mass}}</div>
+    <h5>
+      <span>Custer: {{cluster.id}}</span>
+<span class='stats'>(|V| = {{cluster.graph.getNodesCount()}}, |E| = {{cluster.graph.getLinksCount()}}<span v-if='cluster.mass'>, Mass: {{cluster.mass}}</span>)</span></h5>
+    <div v-if='cluster.parent'>
+      <span>Parent:</span>
+      <a  href='#' @mouseover.prevent='higlight(cluster.parent)' @click.prevent='setCluster(cluster.parent)'>{{cluster.parent.id}}</a>
+    </div>
+    <h5>Children: </h5>
+    <div class='cluster-list'>
+      <a  v-for='child in getChildren(cluster)' :key='child.id' href='#' @mouseover.prevent='higlight(child.cluster)' @click.prevent='setCluster(child.cluster)'>{{child.id}}. Mass: {{child.mass}}</a>
+    </div>
+    <div class='separator'></div>
+    <a href='#' @click.prevent='requestSplit' class='btn-command'>Split into clusters</a>
+    <div class='separator'></div>
+
     <div class='row'>
       <div class='label'>Layout</div>
       <div class='value'>
@@ -20,20 +31,10 @@
     </div>
     <NLayoutSettings :settings='cluster.settings' v-if='isNGraph'></NLayoutSettings>
     <D3LayoutSettings :settings='cluster.settings' v-if='!isNGraph'></D3LayoutSettings>
-    <button @click.prevent='requestSplit'>Split into clusters</button>
-    <button @click.prevent='showDot'>Show Dot</button>
-    <hr>
-    <h5>Children</h5>
-    <div class='cluster-list'>
-      <div v-for='child in getChildren(cluster)' :key='child.id'>
-        <a href='#' @mouseover.prevent='higlight(child.cluster)' @click.prevent='setCluster(child.cluster)'>{{child.id}}. Mass: {{child.mass}}</a>
-      </div>
-    </div>
   </div>
 </template>
 <script>
 
-var toDot = require('ngraph.todot');
 var NLayoutSettings = require('./NLayoutSettings');
 var D3LayoutSettings = require('./D3LayoutSettings');
 var bus = require('../lib/bus');
@@ -52,10 +53,6 @@ export default {
   },
 
   methods: {
-    showDot() {
-      let dot = toDot(this.cluster.graph);
-      bus.fire('show-dot', dot);
-    },
     getChildren(cluster) {
       let nodes = []
       let massLookup = cluster.childrenLookup;
@@ -91,13 +88,21 @@ export default {
 
 <style>
 .cluster-info {
-  border-top: 1px solid gray;
+  border-top: 1px solid RGB(33, 83, 115);
   text-align: left;
+  margin-top: 14px;
   padding: 14px 0;
 }
 .cluster-list {
   overflow-y: auto;
   max-height: 160px;
+}
+span.stats {
+  display: inline;
+  padding: 0;
+  font-size: small;
+  font-weight: 100;
+  color: #69B;
 }
 
 .row {
@@ -114,6 +119,12 @@ export default {
 }
 .row select {
   width: 100%;
+}
+.btn-command {
+  display: block;
+  padding: 4px;
+  margin-top: 10px;
+  border: 1px solid;
 }
 
 </style>
