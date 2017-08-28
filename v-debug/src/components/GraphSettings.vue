@@ -1,29 +1,45 @@
 <template>
   <div class='graph-settings' :class='{hidden: !expanded}'>
     <a class='hide' @click.prevent='expanded = !expanded' href='#'>{{expanded ? "hide" : "show"}}</a>
-    <h5>Settings</h5>
+    <h3>Settings</h3>
     <button @click.prevent='restartLayout()' class='restart'>Restart layout</button>
-
-    <ClusterInfo :cluster='model.root'></ClusterInfo>
-
-    <button @click.prevent='showLinks'>Show original links</button>
+    <button @click.prevent='toggleLinks'>Toggle original links</button>
+    <ClusterInfo :cluster='model.selectedCluster' :model='model'></ClusterInfo>
+    <NodeInfo v-if='selectedPoint' :point='selectedPoint' :model='model'></NodeInfo>
   </div>
 </template>
 
 <script>
 var bus = require('../lib/bus');
 var ClusterInfo = require('./ClusterInfo');
-const initClusterModel = require('../lib/clusterModel');
+var NodeInfo = require('./NodeInfo');
+var initClusterModel = require('../lib/clusterModel');
 
 export default {
   props: ['model'],
   components: {
-    ClusterInfo
+    ClusterInfo,
+    NodeInfo
   },
   data() {
     return {
       expanded: true,
+      selectedPoint: null
     }
+  },
+
+  calculated: {
+    selectedCluster() {
+      return this.model.root;
+    }
+  },
+  
+  mounted() {
+    bus.on('select-node', this.handleSelectNode, this);
+  },
+
+  beforeDestroy() {
+    bus.off('select-node', this.handleSelectNode);
   },
 
   methods: {
@@ -31,8 +47,11 @@ export default {
       this.model.root.reset(true);
       bus.fire('restart-layout');
     },
-    showLinks() {
-      bus.fire('show-links');
+    toggleLinks() {
+      bus.fire('toggle-links');
+    },
+    handleSelectNode(nodeId) {
+      this.selectedPoint = nodeId;
     }
   }
 }
@@ -47,6 +66,7 @@ export default {
   padding: 7px;
   max-height: 100%;
   overflow-y: auto;
+  text-align: left;
 }
 .restart {
   margin-bottom: 10px;
@@ -64,7 +84,7 @@ export default {
   right: 10px;
 }
 
-.graph-settings h5 {
+.graph-settings h3 {
   margin: 2px;
 }
 

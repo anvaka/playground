@@ -41,8 +41,16 @@ export default {
       if (!cluster.parent) {
         this.model.root = cluster.split();
         window.c0 = this.model.root;
-        bus.fire('restart-layout');
+        this.model.selectedCluster = this.model.root;
+      } else {
+        let newSplit = cluster.split();
+        let parent = cluster.parent;
+        parent.removeChild(cluster);
+        parent.appendChild(newSplit);
+        this.model.root.reset(true);
+        this.model.selectedCluster = newSplit;
       }
+      bus.fire('restart-layout');
     }
   }
 }

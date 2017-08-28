@@ -74,7 +74,6 @@ function setInitalLayout(graph, layout) {
         var ny = dy/d;
         var x = from.x + targetDistance * nx;
         var y = from.y + targetDistance * ny;
-        if (Number.isNaN(x) || Number.isNaN(y)) debugger;
         layout.setNodePosition(toId, x, y);
       })
     })

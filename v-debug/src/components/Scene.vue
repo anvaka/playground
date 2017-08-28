@@ -16,7 +16,14 @@ export default {
   mounted() {
     this.createScene();
     bus.on('restart-layout', this.createScene, this);
-    bus.on('show-links', this.showLinks, this);
+    bus.on('toggle-links', this.toggleLinks, this);
+    bus.on('highlight-cluster', this.highlightCluster, this);
+  },
+  beforeDestroy() {
+    this.destroyScene()
+    bus.off('restart-layout', this.createScene, this);
+    bus.off('toggle-links', this.toggleLinks, this);
+    bus.off('highlight-cluster', this.highlightCluster, this);
   },
   data() {
     return {
@@ -31,6 +38,9 @@ export default {
     destroyScene() {
       if (this.graphScene) {
         this.graphScene.dispose();
+        this.graphScene.off('point-enter', this.handlePointEnter);
+        this.graphScene.off('point-leave', this.handlePointLeave);
+        this.graphScene.off('point-click', this.handlePointClick);
         this.graphScene = null;
       }
     },
@@ -47,26 +57,37 @@ export default {
         // Once tool is active it can participate in canvas events.
         // Tools should fire events, and their UI parts would respond to events.
         // Which means when tools are initialized they need to have "context"
-        this.graphScene.on('point-enter', (node, coord) => {
-          this.tooltip.text = node.p.data;
-          this.tooltip.show = true;
-          this.tooltip.style.left = (coord.x + 20) + 'px';
-          this.tooltip.style.top = (coord.y - 20) + 'px';
-        });
-        this.graphScene.on('point-leave', (node, coord) => {
-          this.tooltip.show = false;
-        })
+        this.graphScene.on('point-enter', this.handlePointEnter, this);
+        this.graphScene.on('point-leave', this.handlePointLeave, this)
+        this.graphScene.on('point-click', this.handlePointClick, this);
       }
     },
-    showLinks() {
-      this.graphScene.showLinks();
+    highlightCluster(cluster) {
+      let children = cluster.buildNodePositions();
+      let offset = cluster.getOwnOffset();
+      children.forEach(pos => {
+        pos.x += offset.x;
+        pos.y += offset.y;
+      });
+      this.graphScene.highlight(children);
+    },
+    handlePointClick(node) {
+      bus.fire('select-node', node.p.data);
+    },
+
+    handlePointEnter(node, coord) {
+      this.tooltip.text = node.p.data;
+      this.tooltip.show = true;
+      this.tooltip.style.left = (coord.x + 20) + 'px';
+      this.tooltip.style.top = (coord.y - 20) + 'px';
+    },
+    handlePointLeave(node, coord) {
+      this.tooltip.show = false;
+    },
+    toggleLinks() {
+      this.graphScene.toggleLinks();
     }
   },
-  beforeDestroy() {
-    this.destroyScene()
-    bus.off('restart-layout', this.createScene, this);
-    bus.off('show-links', this.showLinks, this);
-  }
 }
 </script>
 

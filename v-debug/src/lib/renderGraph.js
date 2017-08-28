@@ -26,21 +26,40 @@ function renderGraph(model, canvas) {
 
   let api = eventify({
     dispose,
-    showLinks
+    toggleLinks,
+    highlight
   });
 
   var animationHandle = requestAnimationFrame(frame)
   var lastLinks;
+  var lastHighlight;
   scene.on('point-click', pointClick);
   scene.on('point-enter', pointEnter);
   scene.on('point-leave', pointLeave);
 
   return api;
 
-  function showLinks() {
+  function highlight(positions) {
+    if (lastHighlight) {
+      scene.removeChild(lastHighlight);
+    }
+    let nodes = new wgl.Points(positions.size);
+    positions.forEach((pos, id) => {
+      pos.size = 30;
+      let ui = nodes.add(pos, id);
+      ui.setColor({
+        r: 1, g: 254/255, b: 140/255
+      });
+    })
+    scene.appendChild(nodes)
+    lastHighlight = nodes;
+  }
+
+  function toggleLinks() {
     if (lastLinks) {
       scene.removeChild(lastLinks);
       lastLinks = null;
+      return;
     }
 
     let globalPositions = model.root.buildNodePositions();
@@ -208,14 +227,14 @@ function renderGraph(model, canvas) {
       nodeIdToUI.set(node.id, ui);
     })
 
-    let ui = nodes.add({
-      x: 0,
-      y: 0,
-      size: 20,
-    });
-    ui.setColor(color || {
-      r: 1, g: 0, b: 0
-    });
+    // let ui = nodes.add({
+    //   x: 0,
+    //   y: 0,
+    //   size: 20,
+    // });
+    // ui.setColor(color || {
+    //   r: 1, g: 0, b: 0
+    // });
 
     let lines = new wgl.Wires(graph.getLinksCount());
     if (color) {

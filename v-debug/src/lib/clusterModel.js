@@ -15,6 +15,7 @@ class GraphLayer {
   constructor(graph, level = 0, initialPositions) {
     this.graph = graph;
     this.level = level;
+    this.id = 'root';
     this.children = null;
     this.childrenLookup = new Map();
     this.layout = null;
@@ -41,6 +42,20 @@ class GraphLayer {
     Object.freeze(this.layout);
     Object.freeze(this.childrenLookup);
     Object.freeze(this.graph);
+  }
+
+  findPoint(nodeId) {
+    if (this.children && this.children.length) {
+      for (let i = 0; i < this.children.length; ++i) {
+        let child = this.children[i]
+        let foundCluster = child.findPoint(nodeId)
+        if (foundCluster) return foundCluster;
+      }
+    } else {
+      if (this.graph.getNode(nodeId)) {
+        return this;
+      }
+    }
   }
 
   reset(deep) {
@@ -103,7 +118,7 @@ class GraphLayer {
     normalizePositions(this.graph, this.layout);
   }
 
-  addChild(child) {
+  appendChild(child) {
     if (!this.children) {
       this.children = [];
     }
@@ -113,6 +128,16 @@ class GraphLayer {
     this.childrenLookup.set(child.id, child)
   }
 
+  removeChild(child) {
+    if (this.children) {
+      let childIdx = this.children.indexOf(child);
+      if (childIdx > -1) {
+        this.children.splice(childIdx, 1);
+        this.childrenLookup.delete(child.id);
+      }
+    }
+  }
+
   /**
    * Splits current graph into clsuters, returns parent graph layer.
    */
@@ -120,6 +145,9 @@ class GraphLayer {
     let clusterGraph = detectClusters(this.graph);
     let currentLevel = this.level;
     let parent = new GraphLayer(clusterGraph, currentLevel + 1);
+    if (this.parent) {
+      parent.id = this.id;
+    }
 
     // This is our new set of top level nodes
     let subgraphs = coarsen.getSubgraphs(clusterGraph);
@@ -134,13 +162,13 @@ class GraphLayer {
 
       let child = new GraphLayer(subgraph, currentLevel, initialPositions);
       child.id = subgraphInfo.id;
-      parent.addChild(child);
+      parent.appendChild(child);
 
       if (ownChildren) {
         subgraph.forEachNode(function (node) {
           let grandChild = ownChildren.get(node.id);
           if (grandChild) {
-            child.addChild(grandChild);
+            child.appendChild(grandChild);
           }
         })
       }
@@ -175,6 +203,15 @@ class GraphLayer {
     }
 
     return result;
+  }
+
+  getOwnOffset(x = 0, y = 0) {
+    if (!this.parent)  {
+      return { x, y };
+    }
+
+    let thisPos = this.parent.layout.getNodePosition(this.id);
+    return this.parent.getOwnOffset(x + thisPos.x, y + thisPos.y);
   }
 }
 
@@ -224,12 +261,25 @@ function init(rootGraph) {
 
   var api = {
     root,
-    rootGraph
+    getClusterPath,
+    rootGraph,
+    selectedCluster: root
   };
 
   Object.freeze(rootGraph);
   root.freeze();
   return api;
+
+  function getClusterPath(pointId) {
+    let path = [];
+    let clusterWithNode = this.root.findPoint(pointId);
+    while(clusterWithNode) {
+      path.push(clusterWithNode);
+      clusterWithNode = clusterWithNode.parent;
+    }
+
+    return path;
+  }
 }
 
 module.exports = init;
