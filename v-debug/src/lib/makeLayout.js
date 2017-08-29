@@ -31,7 +31,8 @@ function extractSettings(settings) {
 function d3Layout(graph, settings) {
   var api = {
     getNodePosition,
-    step
+    step,
+    setNodePosition
   };
 
   var nodes = [];
@@ -78,5 +79,11 @@ function d3Layout(graph, settings) {
   function getNodePosition(nodeId) {
     var idx = nodeIndexLookup.get(nodeId);
     return nodes[idx];
+  }
+
+  function setNodePosition(nodeId, x, y) {
+    var idx = nodeIndexLookup.get(nodeId);
+    nodes[idx].x = x;
+    nodes[idx].y = y;
   }
 }

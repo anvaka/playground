@@ -109,11 +109,15 @@ class GraphLayer {
       return;
     }
 
+    let layout = this.layout;
     this.stepsCount += 1;
-    let t = (this.settings.steps - this.stepsCount) / this.settings.steps;
-    let ts = this.settings.timeStep * t;
-    this.layout.simulator.timeStep(ts);
-    this.layout.step();
+    if (layout.simulator) {
+      let t = (this.settings.steps - this.stepsCount) / this.settings.steps;
+      let ts = this.settings.timeStep * t;
+      this.layout.simulator.timeStep(ts);
+      // d3 doesn't need this. TODO: Is there a better way to have this as uniform API?
+    }
+    layout.step();
     // TODO: This might be very slow.
     normalizePositions(this.graph, this.layout);
   }
@@ -145,6 +149,7 @@ class GraphLayer {
     let clusterGraph = detectClusters(this.graph);
     let currentLevel = this.level;
     let parent = new GraphLayer(clusterGraph, currentLevel + 1);
+    parent.settings.selectedLayout = this.settings.selectedLayout;
     if (this.parent) {
       parent.id = this.id;
     }
