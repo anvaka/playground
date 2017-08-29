@@ -256,6 +256,7 @@ function getInitialPositions(subgraph, layout) {
 
 function detectClusters(srcGraph) {
   var clusters = louvain(srcGraph);
+  console.log('Original modularity: ' + clusters.originalModularity + '; New modularity: ' + clusters.newModularity);
   var clusterGraph = coarsen(srcGraph, clusters);
 
   return clusterGraph;
