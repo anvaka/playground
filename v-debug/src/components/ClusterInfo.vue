@@ -1,7 +1,7 @@
 <template>
   <div class='cluster-info'>
     <h5>
-      <span>Custer: {{cluster.id}}</span>
+      <span>Cluster: {{cluster.id}}</span>
 <span class='stats'>(|V| = {{cluster.graph.getNodesCount()}}, |E| = {{cluster.graph.getLinksCount()}}<span v-if='cluster.mass'>, Mass: {{cluster.mass}}</span>)</span></h5>
     <div v-if='cluster.parent'>
       <span>Parent:</span>

@@ -1,7 +1,7 @@
 <template>
   <div class='graph-settings' :class='{hidden: !expanded}'>
     <a class='hide' @click.prevent='expanded = !expanded' href='#'>{{expanded ? "hide" : "show"}}</a>
-    <h3>Settings</h3>
+    <h3 class='title'>Controls</h3>
     <div class='commands'>
       <a href='#' @click.prevent='restartLayout'>Restart layout</a>
       <a href='#' @click.prevent='toggleLinks'>Toggle links</a>
@@ -112,7 +112,7 @@ export default {
 }
 
 .hidden {
-  height: 16px;
+  height: 41px;
   overflow: hidden;
 }
 
@@ -121,6 +121,10 @@ export default {
   font-size: 8px;
   top: 12px;
   right: 10px;
+}
+
+.graph-settings h3.title {
+  margin-bottom: 10px;
 }
 
 .graph-settings h3 {
