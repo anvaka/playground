@@ -1,6 +1,6 @@
 var ngraphLayout = require('ngraph.forcelayout');
 var d3 = require('d3-force');
-var getFloatOrDefault = require('./getFloatOrDefault');
+var getFloatOrDefault = require('../getFloatOrDefault');
 // const setInitialLayout = require('./setInitialLayout');
 
 module.exports = makeLayout;

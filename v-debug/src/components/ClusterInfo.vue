@@ -13,6 +13,8 @@
     </div>
     <div class='separator'></div>
     <a href='#' @click.prevent='requestSplit' class='btn-command'>Split into clusters</a>
+    <a href='#' @click.prevent='removeOverlaps' class='btn-command'>Remove overlaps</a>
+    <a href='#' @click.prevent='pullTogegher' class='btn-command'>Pull together</a>
     <div class='separator'></div>
 
     <div class='row'>
@@ -77,6 +79,14 @@ export default {
     },
     requestSplit() {
       bus.fire('request-split', this.cluster);
+    },
+    removeOverlaps() {
+      this.cluster.removeOverlaps();
+    },
+    pullTogegher() {
+      this.cluster.removeOverlaps({
+        pullX: true
+      });
     },
     setCluster(cluster) {
       if (cluster) this.model.selectedCluster = cluster;

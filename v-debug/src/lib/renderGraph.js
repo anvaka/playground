@@ -9,6 +9,7 @@ const appendSceneDebugElements = false;
 
 function renderGraph(model, canvas) {
   let scene = wgl.scene(canvas);
+  // scene.setClearColor(28/255, 32/255, 59/255, 1)
   scene.setClearColor(12/255, 41/255, 82/255, 1)
   if (appendSceneDebugElements) addDebugElements(scene);
 
