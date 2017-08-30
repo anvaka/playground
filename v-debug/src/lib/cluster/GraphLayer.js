@@ -3,6 +3,7 @@ var coarsen = require('ngraph.coarsen');
 var buildNodeMassFunction = require('./buildNodeMassFunction');
 var makeLayout = require('./makeLayout');
 var Rect = require('../overlaps/rect')
+var BBox = require('../wgl/BBox');
 var removeOverlaps = require('../overlaps/removeOverlaps');
 
 class GraphLayer {
@@ -14,6 +15,7 @@ class GraphLayer {
     this.childrenLookup = new Map();
     this.layout = null;
     this.initialPositions = initialPositions;
+    this.bbox = null;
 
     this.stepsCount = 0;
 
@@ -114,6 +116,8 @@ class GraphLayer {
     layout.step();
     // TODO: This might be very slow.
     normalizePositions(this.graph, this.layout);
+
+    this.bbox = null;
   }
 
   appendChild(child) {
@@ -187,6 +191,7 @@ class GraphLayer {
     let layout = this.layout;
     let childrenLookup = this.childrenLookup;
 
+    let nodeSize = 10;
     this.graph.forEachNode(node => {
       // todo: need to have notion of sizes.
       let pos = layout.getNodePosition(node.id);
@@ -194,10 +199,9 @@ class GraphLayer {
       let childWidth = 20;
       let childHeight = 20;
       if (child) {
-        // todo: implement in d3?
-        let childRect = child.layout.getGraphRect();
-        childWidth = childRect.x2 - childRect.x1;
-        childHeight = childRect.y2 - childRect.y1;
+        let childBBox = child.getBoundingBox();
+        childWidth = childBBox.width + nodeSize * 2;
+        childHeight = childBBox.height + nodeSize * 2;
       }
 
       let rect = new Rect({
@@ -216,6 +220,16 @@ class GraphLayer {
     })
   }
 
+  getBoundingBox() {
+    // TODO this could be cached.
+    let bbox = new BBox();
+    let positions = this.buildNodePositions()
+    positions.forEach(position => {
+      bbox.addPoint(position)
+    });
+
+    return bbox;
+  }
   /**
    * Gets the flat map of bottom-most nodeds in this graph layer hierarchy.
    */

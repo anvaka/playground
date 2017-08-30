@@ -36,6 +36,17 @@ function removeOverlaps (rectangles, options) {
   const pullX = options.pullX || false
   const pullY = options.pullY || false
 
+  if (rectangles.size < 2) {
+    return;
+  }
+  if (rectangles.size === 2) {
+    // we cannot triangulate this, so let's just cal it directly
+    let arrayOfRects = Array.from(rectangles).map(x => x[1]);
+
+    removeOverlapsForRectangles(arrayOfRects[0], arrayOfRects[1]);
+    return;
+  }
+
   rectangles.forEach(r => {
     const pair = [r.cx, r.cy]
     pair.id = r.id
@@ -100,27 +111,31 @@ function removeOverlaps (rectangles, options) {
         if (processed.has(otherNode.id)) return
 
         const childPos = getRect(otherNode.id)
-        if (overlaps(rootPos, childPos)) {
-          let t = getOverlapFactor(rootPos, childPos)
-          let dx = (childPos.cx - rootPos.cx)
-          let dy = (childPos.cy - rootPos.cy)
-
-          if (!Number.isFinite(t)) {
-            t = 1
-            dx = 1e-3
-            dy = -1e-3
-          }
-
-          if (canMove(otherNode.id)) {
-            childPos.cx = rootPos.cx + t * dx
-            childPos.cy = rootPos.cy + t * dy
-          } else {
-            rootPos.cx = childPos.cx - t * dx
-            rootPos.cy = childPos.cy - t * dy
-          }
-        }
+        removeOverlapsForRectangles(rootPos, childPos, otherNode.id);
         growAt(otherNode.id)
       })
+    }
+  }
+
+  function removeOverlapsForRectangles(rootPos, childPos) {
+    if (overlaps(rootPos, childPos)) {
+      let t = getOverlapFactor(rootPos, childPos)
+      let dx = (childPos.cx - rootPos.cx)
+      let dy = (childPos.cy - rootPos.cy)
+
+      if (!Number.isFinite(t)) {
+        t = 1
+        dx = 1e-3
+        dy = -1e-3
+      }
+
+      if (canMove(childPos.id)) {
+        childPos.cx = rootPos.cx + t * dx
+        childPos.cy = rootPos.cy + t * dy
+      } else {
+        rootPos.cx = childPos.cx - t * dx
+        rootPos.cy = childPos.cy - t * dy
+      }
     }
   }
 

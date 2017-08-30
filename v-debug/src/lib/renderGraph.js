@@ -44,6 +44,8 @@ function renderGraph(model, canvas) {
     if (lastHighlight) {
       scene.removeChild(lastHighlight);
     }
+    if (!positions) return; // they wanted to remove highlight. That's it.
+
     let nodes = new wgl.Points(positions.size);
     positions.forEach((pos, id) => {
       pos.size = 30;
@@ -242,13 +244,12 @@ function renderGraph(model, canvas) {
       lines.color.r = color.r;
       lines.color.g = color.g;
       lines.color.b = color.b;
-      lines.color.a = 0.05;
+      lines.color.a = 0.02;
     } else {
-
       lines.color.r = 6/255;
       lines.color.g = 28/255;
       lines.color.b = 70/255;
-      lines.color.a = 0.05;
+      lines.color.a = 0.02;
     }
 
     graph.forEachLink(link => {
@@ -256,7 +257,7 @@ function renderGraph(model, canvas) {
       var to = layout.getNodePosition(link.toId);
       var line = { from, to };
       var ui = lines.add(line);
-
+      // ui.setWidth(1)
       linkIdToUI.set(link.id, ui);
     });
 

@@ -81,12 +81,15 @@ export default {
       bus.fire('request-split', this.cluster);
     },
     removeOverlaps() {
-      this.cluster.removeOverlaps();
+      bus.fire('highlight-cluster', null);
+      for (var i = 0; i < 10; ++i) this.cluster.removeOverlaps();
     },
     pullTogegher() {
-      this.cluster.removeOverlaps({
-        pullX: true
-      });
+      bus.fire('highlight-cluster', null);
+
+      let pullSettings = { pullX: true };
+      for (var i = 0; i < 10; ++i) this.cluster.removeOverlaps(pullSettings);
+
     },
     setCluster(cluster) {
       if (cluster) this.model.selectedCluster = cluster;

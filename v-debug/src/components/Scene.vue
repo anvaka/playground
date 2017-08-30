@@ -68,6 +68,11 @@ export default {
       }
     },
     highlightCluster(cluster) {
+      if (!cluster) {
+        // just remove the highlight.
+        this.graphScene.highlight(null);
+        return;
+      }
       let children = cluster.buildNodePositions();
       let offset = cluster.getOwnOffset();
       children.forEach(pos => {
