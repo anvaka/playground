@@ -15,7 +15,6 @@ class GraphLayer {
     this.childrenLookup = new Map();
     this.layout = null;
     this.initialPositions = initialPositions;
-    this.bbox = null;
 
     this.stepsCount = 0;
 
@@ -116,8 +115,6 @@ class GraphLayer {
     layout.step();
     // TODO: This might be very slow.
     normalizePositions(this.graph, this.layout);
-
-    this.bbox = null;
   }
 
   appendChild(child) {
@@ -191,7 +188,6 @@ class GraphLayer {
     let layout = this.layout;
     let childrenLookup = this.childrenLookup;
 
-    let nodeSize = 10;
     this.graph.forEachNode(node => {
       // todo: need to have notion of sizes.
       let pos = layout.getNodePosition(node.id);
@@ -200,8 +196,8 @@ class GraphLayer {
       let childHeight = 20;
       if (child) {
         let childBBox = child.getBoundingBox();
-        childWidth = childBBox.width + nodeSize * 2;
-        childHeight = childBBox.height + nodeSize * 2;
+        childWidth = childBBox.width;
+        childHeight = childBBox.height;
       }
 
       let rect = new Rect({
@@ -223,10 +219,13 @@ class GraphLayer {
   getBoundingBox() {
     // TODO this could be cached.
     let bbox = new BBox();
-    let positions = this.buildNodePositions()
+    let ownOffset = this.getOwnOffset();
+    let positions = this.buildNodePositions(null, ownOffset.x, ownOffset.y)
     positions.forEach(position => {
       bbox.addPoint(position)
     });
+    // TODO: I need to account for node's dimensions.
+    bbox.growBy(15);
 
     return bbox;
   }

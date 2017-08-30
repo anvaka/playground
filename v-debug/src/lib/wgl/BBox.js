@@ -1,9 +1,16 @@
 class BBox {
   constructor() {
-    this.minX = 0;
-    this.minY = 0;
-    this.maxX = 0;
-    this.maxY = 0;
+    this.minX = Number.POSITIVE_INFINITY;
+    this.minY = Number.POSITIVE_INFINITY;
+    this.maxX = Number.NEGATIVE_INFINITY;
+    this.maxY = Number.NEGATIVE_INFINITY;
+  }
+
+  growBy(offset) {
+    this.minX -= offset;
+    this.minY -= offset;
+    this.maxX += offset;
+    this.maxY += offset;
   }
 
   get left() {
@@ -28,6 +35,14 @@ class BBox {
 
   get height() {
     return this.maxY - this.minY;
+  }
+
+  get cx() {
+    return (this.minX + this.maxX)/2;
+  }
+
+  get cy() {
+    return (this.minY + this.maxY)/2;
   }
 
   addPoint(point) {

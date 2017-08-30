@@ -28,17 +28,40 @@ function renderGraph(model, canvas) {
   let api = eventify({
     dispose,
     toggleLinks,
-    highlight
+    highlight,
+    showRectangles
   });
 
   var animationHandle = requestAnimationFrame(frame)
   var lastLinks;
   var lastHighlight;
+  var prevRectangles;
   scene.on('point-click', pointClick);
   scene.on('point-enter', pointEnter);
   scene.on('point-leave', pointLeave);
 
   return api;
+
+  function showRectangles(rects) {
+    if (prevRectangles) {
+      scene.removeChild(prevRectangles);
+    }
+
+    let rectangles = new wgl.Lines(rects.length * 4);
+    rects.forEach(rect => {
+      let topLeft = {x: rect.left, y: rect.top };
+      let topRight = {x: rect.right, y: rect.top };
+      let bottomLeft = {x:  rect.left, y: rect.bottom };
+      let bottomRight = {x: rect.right, y: rect.bottom };
+
+      rectangles.add({ from: topLeft, to: topRight });
+      rectangles.add({ from: topRight, to: bottomRight });
+      rectangles.add({ from: bottomRight, to: bottomLeft });
+      rectangles.add({ from: bottomLeft, to: topLeft });
+    })
+    scene.appendChild(rectangles);
+    prevRectangles = rectangles;
+  }
 
   function highlight(positions) {
     if (lastHighlight) {

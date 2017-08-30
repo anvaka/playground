@@ -9,6 +9,7 @@
 const wgl = require('../lib/wgl/index');
 const renderGraph = require('../lib/renderGraph');
 const bus = require('../lib/bus');
+const Rect = require('../lib/overlaps/rect');
 
 export default {
   name: 'Scene',
@@ -18,12 +19,14 @@ export default {
     bus.on('restart-layout', this.createScene, this);
     bus.on('toggle-links', this.toggleLinks, this);
     bus.on('highlight-cluster', this.highlightCluster, this);
+    bus.on('show-bounds', this.showBounds, this);
   },
   beforeDestroy() {
     this.destroyScene()
     bus.off('restart-layout', this.createScene, this);
     bus.off('toggle-links', this.toggleLinks, this);
     bus.off('highlight-cluster', this.highlightCluster, this);
+    bus.off('show-bounds', this.showBounds, this);
   },
   watch: {
     model(newModel) {
@@ -48,6 +51,21 @@ export default {
         this.graphScene.off('point-click', this.handlePointClick);
         this.graphScene = null;
       }
+    },
+    showBounds(cluster) {
+      if (!cluster.children) return; // only higher level clusters have bounds.
+      let rectangles = [];
+
+      cluster.children.forEach(child => {
+        let bbox = child.getBoundingBox();
+        rectangles.push(new Rect({
+          left: bbox.left,
+          width: bbox.width,
+          top: bbox.top,
+          height: bbox.height
+        }));
+      })
+      this.graphScene.showRectangles(rectangles);
     },
     createScene() {
       if (this.graphScene) {

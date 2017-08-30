@@ -15,6 +15,7 @@
     <a href='#' @click.prevent='requestSplit' class='btn-command'>Split into clusters</a>
     <a href='#' @click.prevent='removeOverlaps' class='btn-command'>Remove overlaps</a>
     <a href='#' @click.prevent='pullTogegher' class='btn-command'>Pull together</a>
+    <a href='#' @click.prevent='showBounds' class='btn-command'>Show bounds</a>
     <div class='separator'></div>
 
     <div class='row'>
@@ -47,6 +48,11 @@ export default {
     NLayoutSettings,
     D3LayoutSettings
   },
+  data() {
+    return {
+      boundsVisible: false
+    };
+  },
 
   computed: {
     isNGraph() {
@@ -73,23 +79,29 @@ export default {
     higlight(cluster) {
       if (cluster && cluster.buildNodePositions) bus.fire('highlight-cluster', cluster);
     },
+    showBounds() {
+      this.boundsVisible = true;
+      bus.fire('show-bounds', this.cluster);
+    },
     changeLayout(e) {
       this.cluster.settings.selectedLayout = e.target.value;
       // this.restartLayout();
     },
     requestSplit() {
+      this.boundsVisible = false;
       bus.fire('request-split', this.cluster);
     },
     removeOverlaps() {
       bus.fire('highlight-cluster', null);
       for (var i = 0; i < 10; ++i) this.cluster.removeOverlaps();
+      if (this.boundsVisible) this.showBounds();
     },
     pullTogegher() {
       bus.fire('highlight-cluster', null);
 
       let pullSettings = { pullX: true };
       for (var i = 0; i < 10; ++i) this.cluster.removeOverlaps(pullSettings);
-
+      if (this.boundsVisible) this.showBounds();
     },
     setCluster(cluster) {
       if (cluster) this.model.selectedCluster = cluster;
