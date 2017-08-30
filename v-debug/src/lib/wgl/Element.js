@@ -32,7 +32,9 @@ class Element {
   removeChild(child) {
     // TODO: should this be faster?
     let childIdx = this.children.indexOf(child);
-    this.children.splice(childIdx, 1);
+    if (childIdx > -1) {
+      this.children.splice(childIdx, 1);
+    }
   }
 
   updateWorldTransform(force) {
