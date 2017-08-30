@@ -28,7 +28,7 @@ const outStream = createOutStream(processedFile);
 if (fs.existsSync(queueFile)) {
   console.log('Reading queue file from ' + queueFile);
   let queue = JSON.parse(fs.readFileSync(queueFile, 'utf8'));
-  processQueue(queue.accumulator);
+  processQueue(queue);
 } else if (argv._.length) {
   const screen_name = argv._[0];
   console.log('Queue file is missing. Creating a new queue file for ' + screen_name);
