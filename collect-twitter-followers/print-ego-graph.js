@@ -18,8 +18,8 @@ if (!fs.existsSync(inFileName)) {
 
 if (!fs.existsSync(screenNames)) {
   console.log('Construct user ids first: ');
-  console.log(' > node print-ego-graph-ids.js data/anvaka/followers.json > data/anvaka/ids.js');
-  console.log(' > node conver-ids-to-users.js data/anvaka/ids.txt');
+  console.log(' > node print-ego-graph-ids.js data/anvaka/followers.json > data/anvaka/ids.txt');
+  console.log(' > node convert-ids-to-users.js data/anvaka/ids.txt');
   console.log(' > node print-ego-graph.js data/anvaka/followers.json data/anvaka/ids.txt.users');
   process.exit(2);
 }
