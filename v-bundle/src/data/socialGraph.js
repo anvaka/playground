@@ -3,11 +3,25 @@ const createLayout = require('ngraph.forcelayout')
 const miserables = require('miserables')
 const clusterLayout = require('../lib/clusterLayout');
 
-module.exports = getGraph
+module.exports = getBooksGraph;
+
+function getBooksGraph() {
+    let booksData = require('./books_no_pull.json')
+    let graph = parseJSONGraph(booksData);
+    return graph;
+}
 
 function getGraph() {
   const useMySocialNetwork = true;
-  const graph = useMySocialNetwork ? getMySocialNetwork() : miserables;
+
+  // Note: anvaka.json is not committed. I don't want to share my social graph :).
+  let graph;
+  if (useMySocialNetwork) {
+    let socialData = require('./anvaka.json')
+    graph = parseJSONGraph(socialData);
+  } else {
+    graph = miserables
+  }
 
   const useClusterLayout = true;
   const layout = useClusterLayout ? getClusterLayout(graph) : getNormalLayout(graph);
@@ -23,16 +37,14 @@ function getGraph() {
   return graph;
 }
 
-function getMySocialNetwork() {
+function parseJSONGraph(jsonGraph) {
   const graph = createGraph({uniqueLinkId: false});
-  // Note: anvaka.json is not committed. I don't want to share my social graph :).
-  const data = require('./anvaka.json')
 
-  data.nodes.forEach(n => {
-    graph.addNode(n.id);
+  jsonGraph.nodes.forEach(n => {
+    graph.addNode(n.id, n.data);
   });
   
-  data.links.forEach(l => {
+  jsonGraph.links.forEach(l => {
     graph.addLink(l.fromId, l.toId)
   })
 
