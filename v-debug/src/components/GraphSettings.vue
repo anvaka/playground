@@ -5,7 +5,7 @@
     <div class='commands'>
       <a href='#' @click.prevent='restartLayout'>Restart layout</a>
       <a href='#' @click.prevent='toggleLinks'>Toggle links</a>
-      <a href='#' @click.prevent='showDot'>Show Dot</a>
+      <a href='#' @click.prevent='tidyup'>Tidy up</a>
     </div>
     <ClusterInfo :cluster='model.selectedCluster' :model='model'></ClusterInfo>
     <div class='separator'></div>
@@ -15,7 +15,6 @@
 
 <script>
 var bus = require('../lib/bus');
-var toDot = require('ngraph.todot');
 var ClusterInfo = require('./ClusterInfo');
 var NodeInfo = require('./NodeInfo');
 var initClusterModel = require('../lib/clusterModel');
@@ -52,15 +51,17 @@ export default {
       this.model.root.reset(true);
       bus.fire('restart-layout');
     },
-    showDot() {
-      let dot = toDot(this.model.selectedCluster.graph);
-      bus.fire('show-dot', dot);
+    tidyup() {
+      // not sure yet what this will do. Final layout processing?
+      this.model.tidyUp();
     },
     toggleLinks() {
       bus.fire('toggle-links');
     },
     handleSelectNode(nodeId) {
       this.selectedPoint = nodeId;
+      let clusterPath = this.model.getClusterPath(nodeId); 
+      this.model.selectedCluster = clusterPath[0];
     }
   }
 }

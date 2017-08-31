@@ -238,7 +238,13 @@ function renderGraph(model, canvas) {
 
     graph.forEachNode(node => {
       var point = layout.getNodePosition(node.id);
-      point.size = 10; // Math.random() * 10 + 1;
+      let size = 10;
+      if (node.data && node.data.size) {
+        size = node.data.size;
+      } else {
+        console.error('Size is missing for ', node.id)
+      }
+      point.size = size
       if (color) {
         point.color = color;
       } else {

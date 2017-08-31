@@ -15,7 +15,8 @@
     <a href='#' @click.prevent='requestSplit' class='btn-command'>Split into clusters</a>
     <a href='#' @click.prevent='removeOverlaps' class='btn-command'>Remove overlaps</a>
     <a href='#' @click.prevent='pullTogegher' class='btn-command'>Pull together</a>
-    <a href='#' @click.prevent='showBounds' class='btn-command'>Show bounds</a>
+    <a href='#' @click.prevent='showBounds' class='btn-command' v-if='cluster.children'>Show bounds</a>
+    <a href='#' @click.prevent='showDot' class='btn-command'>Show Dot</a>
     <div class='separator'></div>
 
     <div class='row'>
@@ -41,6 +42,7 @@
 var NLayoutSettings = require('./NLayoutSettings');
 var D3LayoutSettings = require('./D3LayoutSettings');
 var bus = require('../lib/bus');
+var toDot = require('ngraph.todot');
 
 export default {
   props: ['cluster', 'model'],
@@ -78,6 +80,10 @@ export default {
     },
     higlight(cluster) {
       if (cluster && cluster.buildNodePositions) bus.fire('highlight-cluster', cluster);
+    },
+    showDot() {
+      let dot = toDot(this.cluster.graph);
+      bus.fire('show-dot', dot);
     },
     showBounds() {
       this.boundsVisible = true;

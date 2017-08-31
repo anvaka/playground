@@ -13,7 +13,11 @@ function buildNodeMassFunction(cluster) {
   let graph = cluster.graph;
   return function nodeMass(nodeId) {
     let node = graph.getNode(nodeId);
-    if (node.links) return node.links.length + 1;
+    let factor = 1;
+    if (node.data && node.data.size) {
+      factor = 1;// node.data.size;
+    }
+    if (node.links) return (node.links.length + 1) * factor;
     return 1;
   }
 }

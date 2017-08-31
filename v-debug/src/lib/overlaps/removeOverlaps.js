@@ -172,6 +172,9 @@ function removeOverlaps (rectangles, options) {
   }
 
   function overlaps (a, b) {
+    if (pullX) {
+      return true;
+    }
     // If one rectangle is on left side of other
     // NOTE: This gives funny results when we always return true
     if (a.left > b.right || b.left > a.right) return pullX

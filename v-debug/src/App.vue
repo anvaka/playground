@@ -60,16 +60,25 @@ export default {
     },
     onSplit(cluster) {
       if (!cluster.parent) {
-        this.model.root = cluster.split();
-        window.c0 = this.model.root;
-        this.model.selectedCluster = this.model.root;
+        let potentialRoot = cluster.split();
+        if (potentialRoot) {
+          this.model.root = potentialRoot
+          window.c0 = this.model.root;
+          this.model.selectedCluster = this.model.root;
+        } else {
+          console.error('Cannot split anymore - no modularity gain');
+        }
       } else {
         let newSplit = cluster.split();
-        let parent = cluster.parent;
-        parent.removeChild(cluster);
-        parent.appendChild(newSplit);
-        this.model.root.reset(true);
-        this.model.selectedCluster = newSplit;
+        if (newSplit) {
+          let parent = cluster.parent;
+          parent.removeChild(cluster);
+          parent.appendChild(newSplit);
+          this.model.root.reset(true);
+          this.model.selectedCluster = newSplit;
+        } else {
+          console.error('cannot split anymore - no modularity gain');
+        }
       }
       bus.fire('restart-layout');
     }
