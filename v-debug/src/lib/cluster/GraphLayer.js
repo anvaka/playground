@@ -15,6 +15,7 @@ class GraphLayer {
     this.childrenLookup = new Map();
     this.layout = null;
     this.initialPositions = initialPositions;
+    this.modularityImproved = false;
 
     this.stepsCount = 0;
 
@@ -101,7 +102,8 @@ class GraphLayer {
     } 
 
     if (!this.layout) {
-      return;
+      this.layout = this.makeLayout();
+      Object.freeze(this.layout);
     }
 
     let layout = this.layout;
@@ -141,7 +143,10 @@ class GraphLayer {
    * Splits current graph into clsuters, returns parent graph layer.
    */
   split() {
-    let clusterGraph = detectClusters(this.graph);
+    let clusters = detectClusters(this.graph);
+    let clusterGraph = clusters.clusterGraph;
+    if (!clusters.modularityImproved) return false;
+
     let currentLevel = this.level;
     let parent = new GraphLayer(clusterGraph, currentLevel + 1);
     parent.settings.selectedLayout = this.settings.selectedLayout;
@@ -178,6 +183,21 @@ class GraphLayer {
     parent.reset(true);
     parent.freeze();
     return parent;
+  }
+
+  forEachLeaf(callback) {
+    if (this.children) {
+      this.children.forEach(child => child.forEachLeaf(callback));
+    } else {
+      callback(this);
+    }
+  }
+
+  forEachNode(callback) {
+    if (this.children) {
+      this.children.forEach(child => child.forEachNode(callback));
+    }
+    callback(this);
   }
 
   /**
@@ -307,7 +327,10 @@ function detectClusters(srcGraph) {
   console.log('Original modularity: ' + clusters.originalModularity + '; New modularity: ' + clusters.newModularity);
   var clusterGraph = coarsen(srcGraph, clusters);
 
-  return clusterGraph;
+  return {
+    modularityImproved: clusters.canCoarse(),
+    clusterGraph
+  }
 }
 
 module.exports = GraphLayer;
