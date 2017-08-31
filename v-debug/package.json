@@ -24,6 +24,7 @@
     "ngraph.pagerank": "^0.1.4",
     "ngraph.random": "0.0.1",
     "ngraph.todot": "^0.2.1",
+    "ngraph.tojson": "^0.1.4",
     "panzoom": "^3.0.0",
     "vue": "^2.3.3"
   },

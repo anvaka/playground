@@ -3,15 +3,19 @@ var pagerank = require('ngraph.pagerank')
 var Rect = require('./overlaps/rect')
 var removeOverlaps = require('./overlaps/removeOverlaps');
 
-function init(rootGraph) {
+function init(rootGraph, autoCluster = false) {
   peprocessGraphNodeSize(rootGraph);
   var root = new GraphLayer(rootGraph);
-  var newRoot;
-  do {
-    // todo: i need to ignore isolated clusters, and add them at the end.
-    newRoot = root.split();
-    if (newRoot) root = newRoot;
-  } while (newRoot)
+
+  if (autoCluster) {
+    var newRoot;
+
+    do {
+      // todo: i need to ignore isolated clusters, and add them at the end.
+      newRoot = root.split();
+      if (newRoot) root = newRoot;
+    } while (newRoot)
+  }
 
   var api = {
     root,

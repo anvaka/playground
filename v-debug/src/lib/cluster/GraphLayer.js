@@ -5,6 +5,7 @@ var makeLayout = require('./makeLayout');
 var Rect = require('../overlaps/rect')
 var BBox = require('../wgl/BBox');
 var removeOverlaps = require('../overlaps/removeOverlaps');
+var tojson = require('ngraph.tojson');
 
 class GraphLayer {
   constructor(graph, level = 0, initialPositions) {
@@ -31,6 +32,16 @@ class GraphLayer {
     }
 
     this.settings.nodeMass = buildNodeMassFunction(this)
+  }
+
+  getGraphJson() {
+    if (this.layout) {
+      let layout = this.layout;
+      this.graph.forEachNode(node => {
+        node.data = layout.getNodePosition(node.id)
+      })
+    }
+    return tojson(this.graph);
   }
 
   freeze() {
