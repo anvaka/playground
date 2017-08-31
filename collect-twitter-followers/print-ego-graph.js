@@ -45,8 +45,8 @@ forEach(screenNames, row =>  {
       }
     });
 
-    var tojson = require('ngraph.tojson');
-    console.log(tojson(graph));
+    var todot = require('ngraph.todot');
+    console.log(todot(graph));
   });
 
   function screenName(id) {
