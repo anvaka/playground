@@ -6,7 +6,7 @@ const clusterLayout = require('../lib/clusterLayout');
 module.exports = getBooksGraph;
 
 function getBooksGraph() {
-    let booksData = require('./books_no_pull.json')
+    let booksData = require('./books_small.json')
     let graph = parseJSONGraph(booksData);
     return graph;
 }
