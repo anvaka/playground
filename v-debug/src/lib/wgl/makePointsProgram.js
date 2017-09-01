@@ -25,7 +25,7 @@ void main() {
 `;
 
 const fragmentShaderSrc = `
-precision mediump float;
+precision highp float;
 varying vec4 vColor;
 uniform sampler2D texture;
 

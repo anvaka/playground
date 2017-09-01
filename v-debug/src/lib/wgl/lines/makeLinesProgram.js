@@ -21,7 +21,7 @@ void main() {
 `;
 
 const lineFSSrc = `
-precision mediump float;
+precision highp float;
 uniform vec4 uColor;
 
 void main() {
@@ -71,10 +71,10 @@ function makeLineProgram(gl, data, drawTriangles) {
     gl.uniform4f(locations.uniforms.uColor, color.r, color.g, color.b, color.a);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
-
-    gl.vertexAttribPointer(locations.attributes.aPosition, 2, gl.FLOAT, false, bpe * 2, 0)
     gl.enableVertexAttribArray(locations.attributes.aPosition)
+    // TODO: Avoid buffering, if data hasn't changed?
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+    gl.vertexAttribPointer(locations.attributes.aPosition, 2, gl.FLOAT, false, bpe * 2, 0)
 
     gl.drawArrays(drawType, 0, data.length / 2);
   }
