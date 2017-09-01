@@ -34,6 +34,11 @@ export default {
     bus.off('show-dot', this.showDot);
     bus.off('load-graph', this.loadGraph);
   },
+  watch: {
+    'model.selectedCluster': function(value) {
+      window.c1 = value;
+    }
+  },
 
   data() {
     let model = initClusterModel(graph);
