@@ -35,11 +35,13 @@ function init(rootGraph, autoCluster = false) {
     //   processCity(cluster);
     // });
     root.forEachNode(cluster => {
-      // for (let i = 0; i < 5; ++i) {
+      if (!cluster.children) return;
+
+      for (let i = 0; i < 5; ++i) {
         cluster.removeOverlaps({
           pullX: true
         });
-      // }
+      }
     });
   }
 
