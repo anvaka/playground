@@ -26,6 +26,8 @@
     "ngraph.todot": "^0.2.1",
     "ngraph.tojson": "^0.1.4",
     "panzoom": "^3.0.0",
+    "rbush": "^2.0.1",
+    "rbush-knn": "^2.0.0",
     "vue": "^2.3.3"
   },
   "devDependencies": {

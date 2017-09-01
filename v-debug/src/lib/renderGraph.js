@@ -140,7 +140,6 @@ function renderGraph(model, canvas) {
 
   function renderRecusriveLevel(level, parentUI, color) {
     let layout = level.makeLayout();
-    Object.freeze(layout);
     level.layout = layout;
 
     if (level.children) {

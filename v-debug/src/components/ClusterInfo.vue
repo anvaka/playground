@@ -99,7 +99,10 @@ export default {
     },
     removeOverlaps() {
       bus.fire('highlight-cluster', null);
-      for (var i = 0; i < 10; ++i) this.cluster.removeOverlaps();
+      for (var i = 0; i < 10; ++i) this.cluster.removeOverlaps({
+  //      drawLines: i === 9,
+  //      precise: i === 9
+      });
       if (this.boundsVisible) this.showBounds();
     },
     pullTogegher() {

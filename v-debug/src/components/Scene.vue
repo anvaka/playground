@@ -20,6 +20,8 @@ export default {
     bus.on('toggle-links', this.toggleLinks, this);
     bus.on('highlight-cluster', this.highlightCluster, this);
     bus.on('show-bounds', this.showBounds, this);
+    bus.on('draw-lines', this.drawLines, this);
+    bus.on('draw-rectangles', this.drawRectangles, this);
   },
   beforeDestroy() {
     this.destroyScene()
@@ -27,6 +29,8 @@ export default {
     bus.off('toggle-links', this.toggleLinks, this);
     bus.off('highlight-cluster', this.highlightCluster, this);
     bus.off('show-bounds', this.showBounds, this);
+    bus.off('draw-lines', this.drawLines, this);
+    bus.off('draw-rectangles', this.drawRectangles, this);
   },
   watch: {
     model(newModel) {
@@ -52,20 +56,29 @@ export default {
         this.graphScene = null;
       }
     },
+    drawLines(lines) {
+      this.graphScene.drawLines(lines);
+    },
     showBounds(cluster) {
       if (!cluster.children) return; // only higher level clusters have bounds.
       let rectangles = [];
 
+      let layout = cluster.layout;
+      let ownOffset = cluster.getOwnOffset();
       cluster.children.forEach(child => {
+        let pos = layout.getNodePosition(child.id);
         let bbox = child.getBoundingBox();
         rectangles.push(new Rect({
-          left: bbox.left,
+          left: bbox.cx + ownOffset.x + pos.x - bbox.width/2,
           width: bbox.width,
-          top: bbox.top,
+          top: bbox.cy + ownOffset.y + pos.y - bbox.height/2,
           height: bbox.height
         }));
       })
       this.graphScene.showRectangles(rectangles);
+    },
+    drawRectangles(rectangles, color) {
+      this.graphScene.showRectangles(rectangles, false, color);
     },
     createScene() {
       if (this.graphScene) {

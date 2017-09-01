@@ -2,6 +2,8 @@ const Delaunay = require('delaunator');
 const findMinimumSpanningTree = require('ngraph.kruskal')
 const createGraph = require('ngraph.graph')
 const makeSpanningTree = require('./spanningTree.js')
+const rbush = require('rbush');
+const knn = require('rbush-knn');
 
 module.exports = removeOverlaps
 
@@ -82,10 +84,72 @@ function removeOverlaps (rectangles, options) {
     getRect(edge.toId)
   ))
 
+  let spanningTree
   if (mstEdges.length > 0) {
-    const spanningTree = makeSpanningTree(mstEdges)
+    spanningTree = makeSpanningTree(mstEdges)
 
     grow(spanningTree)
+
+    if (options.precise && false) {
+      let rbushRect = []
+      rectangles.forEach(rect => {
+        rbushRect.push({
+          minX: rect.left,
+          minY: rect.top,
+          maxX: rect.right,
+          maxY: rect.bottom,
+          id: rect.id
+        });
+      });
+      let tree = rbush()
+      tree.load(rbushRect);
+      let processed = new Set();
+      rbushRect.forEach(r => {
+        let from = getRect(r.id);
+        processed.add(r.id);
+        let overlaps = knn(tree, from.cx, from.cy, 10, null,
+          Math.max(from.width, from.height));
+
+        overlaps.forEach(other => {
+          if (other.id === from.id) return;
+          if (processed.has(other.id)) return;
+
+          let to = getRect(other.id);
+          removeOverlapsForRectangles(from, to)
+        })
+        console.log(overlaps, r.id);
+      });
+    }
+
+    if (options.drawLines) {
+      let sGraph = spanningTree.getGraph();
+      sGraph.forEachNode(node => {
+        node.data = getRect(node.id);
+      })
+
+      let lines = [];
+      sGraph.forEachLink(link => {
+        let from = sGraph.getNode(link.fromId);
+        let to = sGraph.getNode(link.toId);
+        lines.push({
+          from: {
+            x: from.data.cx,
+            y: from.data.cy,
+          }, 
+          to: {
+            x: to.data.cx,
+            y: to.data.cy,
+          }
+        })
+      });
+
+      // // todo: remove me
+      // const bus = require('../bus')
+      // bus.fire('draw-lines', lines);
+      // bus.fire('draw-rectangles', Array.from(rectangles.values()), {
+      //   r: 1, g: 0, b: 0, a: 1
+      // })
+    }
   }
 
   return
@@ -111,7 +175,7 @@ function removeOverlaps (rectangles, options) {
         if (processed.has(otherNode.id)) return
 
         const childPos = getRect(otherNode.id)
-        removeOverlapsForRectangles(rootPos, childPos, otherNode.id);
+        removeOverlapsForRectangles(rootPos, childPos);
         growAt(otherNode.id)
       })
     }

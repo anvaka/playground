@@ -32,6 +32,8 @@ class GraphLayer {
     }
 
     this.settings.nodeMass = buildNodeMassFunction(this)
+    Object.freeze(this.graph);
+    Object.freeze(this.childrenLookup);
   }
 
   getGraphJson() {
@@ -75,6 +77,7 @@ class GraphLayer {
   makeLayout() {
     let graph = this.graph;
     let layout = makeLayout(graph, this.settings);
+    Object.freeze(layout);
     if (this.level > 0) {
       // graph.forEachLink(link => {
       //   let spring = layout.getSpring(link.id);
@@ -188,6 +191,7 @@ class GraphLayer {
           }
         })
       }
+      child.freeze();
       // TODO: we also need to make sure that each child has links to existing children
     })
 
@@ -225,17 +229,22 @@ class GraphLayer {
       let child = childrenLookup.get(node.id);
       let childWidth = 20;
       let childHeight = 20;
+      let dx = 0;
+      let dy = 0;
       if (child) {
         let childBBox = child.getBoundingBox();
         childWidth = childBBox.width;
         childHeight = childBBox.height;
+        dx = childBBox.cx;
+        dy = childBBox.cy;
       }
 
       let rect = new Rect({
-        left: pos.x - childWidth / 2,
-        top: pos.y - childHeight / 2,
+        left: dx + pos.x - childWidth / 2,
+        top: dy + pos.y - childHeight / 2,
         width: childWidth,
         height: childHeight,
+        dx, dy,
         id: node.id
       });
       rectangels.set(node.id, rect);
@@ -243,15 +252,16 @@ class GraphLayer {
     removeOverlaps(rectangels, overlapsOptions);
 
     rectangels.forEach(rect => {
-      layout.setNodePosition(rect.id, rect.cx, rect.cy);
-    })
+      layout.setNodePosition(rect.id, rect.cx - rect.dx, rect.cy - rect.dy);
+    });
+    normalizePositions(this.graph, this.layout);
   }
 
   getBoundingBox() {
     // TODO this could be cached.
     let bbox = new BBox();
-    let ownOffset = this.getOwnOffset();
-    let positions = this.buildNodePositions(null, ownOffset.x, ownOffset.y)
+    // let ownOffset = this.getOwnOffset();
+    let positions = this.buildNodePositions()
     positions.forEach(position => {
       bbox.addPoint(position)
     });
@@ -300,9 +310,11 @@ class GraphLayer {
 
 function normalizePositions(graph, layout) {
   let pos = getInitialPositions(graph, layout)
-  pos.forEach((pos, nodeId) => {
-    layout.setNodePosition(nodeId, pos.x, pos.y);
-  })
+  if (pos) {
+    pos.forEach((pos, nodeId) => {
+      layout.setNodePosition(nodeId, pos.x, pos.y);
+    })
+  }
 }
 
 function getInitialPositions(subgraph, layout) {
@@ -324,12 +336,15 @@ function getInitialPositions(subgraph, layout) {
   // move center to (0, 0)
   let cx = (maxX + minX)/2;
   let cy = (maxY + minY)/2;
-  positions.forEach(v => {
-    v.x -= cx;
-    v.y -= cy;
-  });
 
-  return positions;
+  if (cx && cy) {
+    positions.forEach(v => {
+      v.x -= cx;
+      v.y -= cy;
+    });
+
+    return positions;
+  }
 }
 
 function detectClusters(srcGraph) {
