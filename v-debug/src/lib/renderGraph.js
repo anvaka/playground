@@ -29,7 +29,8 @@ function renderGraph(model, canvas) {
     dispose,
     toggleLinks,
     highlight,
-    showRectangles
+    showRectangles,
+    drawLines
   });
 
   var animationHandle = requestAnimationFrame(frame)
@@ -42,12 +43,24 @@ function renderGraph(model, canvas) {
 
   return api;
 
-  function showRectangles(rects) {
-    if (prevRectangles) {
+  function drawLines(lines) {
+    let wglLines = new wgl.Lines(lines.length);
+    lines.forEach(l => {
+      let ui = wglLines.add(l);
+      ui.setWidth(10);
+    })
+    scene.appendChild(wglLines);
+  }
+
+  function showRectangles(rects, overwrite = true, color) {
+    if (prevRectangles && overwrite) {
       scene.removeChild(prevRectangles);
     }
 
     let rectangles = new wgl.Lines(rects.length * 4);
+    if (color) {
+      rectangles.color = color
+    }
     rects.forEach(rect => {
       let topLeft = {x: rect.left, y: rect.top };
       let topRight = {x: rect.right, y: rect.top };
@@ -60,7 +73,8 @@ function renderGraph(model, canvas) {
       rectangles.add({ from: bottomLeft, to: topLeft });
     })
     scene.appendChild(rectangles);
-    prevRectangles = rectangles;
+
+    if (overwrite) prevRectangles = rectangles;
   }
 
   function highlight(positions) {
@@ -229,6 +243,7 @@ function renderGraph(model, canvas) {
     let nodes = new wgl.Points(nodeCount + 1);
     let nodeIdToUI = new Map();
     let linkIdToUI = new Map();
+
 
     // var layoutSteps = getFloatOrDefault(settings.steps, 100);
     var layout = level.makeLayout();
