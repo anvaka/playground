@@ -243,10 +243,7 @@ function renderGraph(model, canvas) {
     let nodeIdToUI = new Map();
     let linkIdToUI = new Map();
 
-
-    // var layoutSteps = getFloatOrDefault(settings.steps, 100);
     var layout = level.makeLayout();
-    Object.freeze(layout);
     level.layout = layout;
     level.updatePosition = updatePosition;
 
