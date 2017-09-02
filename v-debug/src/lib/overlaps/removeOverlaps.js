@@ -193,21 +193,21 @@ function removeOverlaps (rectangles, options) {
         dy = -1e-3
       }
 
-      if (rootPos.width * rootPos.height > childPos.width * childPos.height) {
-        childPos.cx = rootPos.cx + t * dx
-        childPos.cy = rootPos.cy + t * dy
-      } else {
-        rootPos.cx = childPos.cx - t * dx
-        rootPos.cy = childPos.cy - t * dy
-      }
-
-      // if (canMove(childPos.id)) {
+      // if (rootPos.width * rootPos.height > childPos.width * childPos.height) {
       //   childPos.cx = rootPos.cx + t * dx
       //   childPos.cy = rootPos.cy + t * dy
       // } else {
       //   rootPos.cx = childPos.cx - t * dx
       //   rootPos.cy = childPos.cy - t * dy
       // }
+
+      if (canMove(childPos.id)) {
+        childPos.cx = rootPos.cx + t * dx
+        childPos.cy = rootPos.cy + t * dy
+      } else {
+        rootPos.cx = childPos.cx - t * dx
+        rootPos.cy = childPos.cy - t * dy
+      }
     }
   }
 
