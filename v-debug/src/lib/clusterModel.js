@@ -136,7 +136,7 @@ function peprocessGraphNodeSize(graph) {
     distr.push(bucket);
 
     if (!node.data) node.data = {};
-    node.data.size = bucket;
+    node.data.size = bucket * 2;
   })
 
   window.distr = distr;

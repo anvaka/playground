@@ -7,6 +7,7 @@
       <a href='#' @click.prevent='toggleLinks'>Toggle links</a>
       <a href='#' @click.prevent='tidyup'>Tidy up</a>
     </div>
+    <component v-for='tool in tools' :is='tool.component' :vm='tool.vm'></component>
     <ClusterInfo :cluster='model.selectedCluster' :model='model'></ClusterInfo>
     <div class='separator'></div>
     <NodeInfo v-if='selectedPoint' :point='selectedPoint' :model='model'></NodeInfo>
@@ -28,7 +29,8 @@ export default {
   data() {
     return {
       expanded: true,
-      selectedPoint: null
+      selectedPoint: null,
+      tools: [],
     }
   },
 
@@ -40,16 +42,31 @@ export default {
   
   mounted() {
     bus.on('select-node', this.handleSelectNode, this);
+    bus.on('add-setting', this.handleAddSetting, this);
+    bus.on('remove-setting', this.handleRemoveSetting, this);
   },
 
   beforeDestroy() {
     bus.off('select-node', this.handleSelectNode);
+    bus.off('add-setting', this.handleAddSetting, this);
+    bus.off('remove-setting', this.handleRemoveSetting, this);
   },
 
   methods: {
     restartLayout() {
       this.model.root.reset(true);
       bus.fire('restart-layout');
+    },
+
+    handleAddSetting(toolContext) {
+      this.tools.push(toolContext);
+    },
+
+    handleRemoveSetting(toolContext) {
+      let toolIdx = this.tools.indexOf(toolContext);
+      if (toolIdx > -1) {
+        this.tools.splice(toolIdx, 1);
+      }
     },
     tidyup() {
       // not sure yet what this will do. Final layout processing?

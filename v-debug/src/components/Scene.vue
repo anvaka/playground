@@ -10,27 +10,20 @@ const wgl = require('../lib/wgl/index');
 const renderGraph = require('../lib/renderGraph');
 const bus = require('../lib/bus');
 const Rect = require('../lib/overlaps/rect');
+const allTools = require('../tools/index.js');
 
 export default {
   name: 'Scene',
   props: ['model'],
   mounted() {
     this.createScene();
-    bus.on('restart-layout', this.createScene, this);
-    bus.on('toggle-links', this.toggleLinks, this);
-    bus.on('highlight-cluster', this.highlightCluster, this);
-    bus.on('show-bounds', this.showBounds, this);
-    bus.on('draw-lines', this.drawLines, this);
-    bus.on('draw-rectangles', this.drawRectangles, this);
+    this.listenToEvents();
+    this.initTools();
   },
   beforeDestroy() {
+    this.destroyTools();
     this.destroyScene()
-    bus.off('restart-layout', this.createScene, this);
-    bus.off('toggle-links', this.toggleLinks, this);
-    bus.off('highlight-cluster', this.highlightCluster, this);
-    bus.off('show-bounds', this.showBounds, this);
-    bus.off('draw-lines', this.drawLines, this);
-    bus.off('draw-rectangles', this.drawRectangles, this);
+    this.unsubscribeFromEvents();
   },
   watch: {
     model(newModel) {
@@ -47,6 +40,40 @@ export default {
     }
   },
   methods: {
+    listenToEvents() {
+      bus.on('restart-layout', this.createScene, this);
+      bus.on('toggle-links', this.toggleLinks, this);
+      bus.on('highlight-cluster', this.highlightCluster, this);
+      bus.on('show-bounds', this.showBounds, this);
+      bus.on('draw-lines', this.drawLines, this);
+      bus.on('draw-rectangles', this.drawRectangles, this);
+    },
+    unsubscribeFromEvents() {
+      bus.off('restart-layout', this.createScene, this);
+      bus.off('toggle-links', this.toggleLinks, this);
+      bus.off('highlight-cluster', this.highlightCluster, this);
+      bus.off('show-bounds', this.showBounds, this);
+      bus.off('draw-lines', this.drawLines, this);
+      bus.off('draw-rectangles', this.drawRectangles, this);
+    },
+    initTools() {
+      this.pendingToolInit = setTimeout(() => {
+        this.pendingToolInit = null;
+        let model = this.model;
+        let registeredTools = [];
+        allTools.forEach(createTool => {
+          registeredTools.push(createTool(model));
+        });
+        this.registeredTools = registeredTools;
+      })
+    },
+    destroyTools() {
+      if (this.pendingToolInit) {
+        clearTimeout(this.pendingToolInit);
+        this.pendingToolInit = null;
+      }
+      this.registeredTools.forEach(tool => tool.dispose());
+    },
     destroyScene() {
       if (this.graphScene) {
         this.graphScene.dispose();
