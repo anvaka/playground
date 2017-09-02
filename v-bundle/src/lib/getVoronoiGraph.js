@@ -99,11 +99,18 @@ function getVoronoiGraph(layout, srcGraph) {
     const shortestPath = ''
     const shortestPathAsIs = route;
     rememberPath(route);
+    let edgePath;
+    // TODO: I'm not sure why this doesn't work sometimes
+    if (route.length > 0) {
+      edgePath = 'M' + pointXY(route[0]) + route.slice(1).map(p => 'L' + pointXY(p)).join(' ')
+    } else {
+      edgePath = ''
+    }
 
     return {
       route,
       cellPath,
-      edgePath: 'M' + pointXY(route[0]) + route.slice(1).map(p => 'L' + pointXY(p)).join(' '),
+      edgePath,
       shortestPath,
       shortestPathAsIs
     }
