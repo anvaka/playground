@@ -18,7 +18,6 @@
 var bus = require('../lib/bus');
 var ClusterInfo = require('./ClusterInfo');
 var NodeInfo = require('./NodeInfo');
-var initClusterModel = require('../lib/clusterModel');
 
 export default {
   props: ['model'],

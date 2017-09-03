@@ -11,7 +11,7 @@ const Scene = require('./components/Scene');
 const DotWindow = require('./components/DotWindow');
 const GraphSettings = require('./components/GraphSettings');
 const getGraph = require('./lib/getGraph.js');
-const initClusterModel = require('./lib/clusterModel.js');
+const initAppModel = require('./lib/appModel.js');
 const bus = require('./lib/bus');
 
 const graph = getGraph();
@@ -41,7 +41,7 @@ export default {
   },
 
   data() {
-    let model = initClusterModel(graph);
+    let model = initAppModel(graph);
     window.c0 = model.root;
     return {
       model,
@@ -52,7 +52,7 @@ export default {
 
   methods: {
     loadGraph(graph) {
-      let model = initClusterModel(graph);
+      let model = initAppModel(graph);
       window.c0 = model.root;
       this.model = model;
     },
