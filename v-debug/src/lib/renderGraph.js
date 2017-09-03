@@ -55,12 +55,21 @@ function renderGraph(model, canvas) {
     options = options || {};
     let width = options.width || 1;
     let wglLines = new wgl.Lines(lines.length);
+    if (options.color) {
+      wglLines.color = options.color;
+    }
 
     if (options.key) rememberElement(options.key, wglLines);
 
     lines.forEach(l => {
       let ui = wglLines.add(l);
-      ui.setWidth(width);
+      if ('width' in l) {
+        ui.setWidth(l.width);
+        ui.update(l.from, l.to)
+      } else {
+        ui.setWidth(width);
+        ui.update(l.from, l.to)
+      }
     })
 
     scene.appendChild(wglLines, options.sendToBack);
@@ -334,7 +343,7 @@ function renderGraph(model, canvas) {
       linkIdToUI.set(link.id, ui);
     });
 
-    parentUI.appendChild(lines);
+    // parentUI.appendChild(lines);
     parentUI.appendChild(nodes);
 
     function updatePosition() {
