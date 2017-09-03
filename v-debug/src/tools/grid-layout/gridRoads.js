@@ -2,6 +2,7 @@ const findShortestPaths = require('./findShortestPath');
 const cellKey = require('./cellKey');
 const createGridGraph = require('./createGridGraph');
 const getBBoxAndRects = require('./getBBoxAndRects');
+const RoadAccumulator = require('./roadAccumulator') ;
 
 module.exports = gridRoads;
 
@@ -14,39 +15,60 @@ function gridRoads(graph, layout, offset) {
   // We mark each cell that contain original node, so that path finding
   // considers its impassible
   rects.forEach(r => {
-    let leftTop = toGridCoordinate(r.left, r.top);
-    let rightBottom = toGridCoordinate(r.right, r.bottom);
-    for(let col = leftTop.col; col <= rightBottom.col; ++col) {
-      for (let row = leftTop.row; row <= rightBottom.row; ++row) {
-        let gridKey = cellKey(col, row);
-        grid.getNode(gridKey).data.src_key = r.id;
+    if (r.width > cellSize) {
+      let leftTop = toGridCoordinate(r.left, r.top);
+      let rightBottom = toGridCoordinate(r.right, r.bottom);
+      for(let col = leftTop.col; col <= rightBottom.col; ++col) {
+        for (let row = leftTop.row; row <= rightBottom.row; ++row) {
+          let gridKey = cellKey(col, row);
+          grid.getNode(gridKey).data.src_key = r.id;
+        }
       }
+    } else {
+      let colRow = toGridCoordinate(r.cx, r.cy);
+      let gridKey = cellKey(colRow.col, colRow.row);
+      grid.getNode(gridKey).data.src_key = r.id;
     }
   });
 
   let edgeIdToSeenCount = new Map();
 
-  var lines = [];
+  // var lines = [];
+
+  var roadAccumulator = new RoadAccumulator();
+  let currentFromId;
+  let currentToId;
+  // TODO: remove global dependency on currentFromId/currenToId
+  let shortestPaths = findShortestPaths(grid, getCityEdgeLength);
 
   graph.forEachLink(l => {
+    currentFromId = l.fromId;
+    currentToId = l.toId;
+
     let fromId = getGridNodeIdFromSrcNodeId(l.fromId);
     let toId = getGridNodeIdFromSrcNodeId(l.toId);
-    let path = collectRoute(fromId, toId); 
+
+    let path = shortestPaths(fromId, toId); 
 
     rememberPath(path);
 
     // Remove internal nodes
-    let firstIndex = 0;
-    while(firstIndex < path.length && ('src_key' in path[firstIndex])) firstIndex += 1;
-    let lastIndex = path.length - 1;
-    while(lastIndex > -1 && ('src_key' in path[lastIndex])) lastIndex -= 1;
-
     // path = path.filter(p => !('src_key' in p));
+    var startFrom = 0;
+    var endAt = path.length - 1;
+    while(startFrom < path.length && ('src_key' in path[startFrom])) startFrom += 1;
+    while(endAt > -1 && ('src_key' in path[endAt])) endAt -= 1;
+
+    path = path.slice(startFrom - 1, endAt + 2);
     // convertPathToLines(lines, path.slice(firstIndex - 1, lastIndex + 2)) // +2 since slice is exclusive
-    convertPathToLines(lines, path) // +2 since slice is exclusive
+    convertPathToLines(roadAccumulator, path) // +2 since slice is exclusive
   });
 
-  return lines;
+  return roadAccumulator.getLines().map(l => ({
+    width: l.width,
+    from: toGraphCoord(l.from.col, l.from.row),
+    to: toGraphCoord(l.to.col, l.to.row),
+  })); //lines;
 
   function getGridNodeIdFromSrcNodeId(nodeId) {
     let pos = layout.getNodePosition(nodeId);
@@ -62,35 +84,27 @@ function gridRoads(graph, layout, offset) {
     }
   }
 
-  function collectRoute(fromId, toId) {
-    let shortestPaths = findShortestPaths(grid, getCityEdgeLength);
-    const route = shortestPaths(fromId, toId)
-
-    return route;
-
-    function getCityEdgeLength(a, b) {
-      let aPos = a.data
-      let bPos = b.data
-      if ('src_id' in aPos) {
-        if (aPos.src_id !== fromId && aPos.src_id !== toId) {
-          // don't let enter other occupied nodes.
-          return Number.POSITIVE_INFINITY;
-        }
+  function getCityEdgeLength(a, b) {
+    let aPos = a.data
+    let bPos = b.data
+    if ('src_key' in aPos) {
+      if (aPos.src_key !== currentFromId && aPos.src_key !== currentToId) {
+        // don't let enter other occupied nodes.
+        return Number.POSITIVE_INFINITY;
       }
-      if ('src_id' in bPos) {
-        if (bPos.src_id !== fromId && bPos.src_id !== toId) {
-          return Number.POSITIVE_INFINITY;
-        }
-      }
-      let dx = aPos.col - bPos.col
-      let dy = aPos.row - bPos.row
-      let edgeKey = getEdgeMemoryId(aPos, bPos);
-      let seenCount = edgeIdToSeenCount.get(edgeKey) || 0;
-      let lengthReducer = seenCount === 0 ? 1 : (Math.exp(-0.8 * seenCount + Math.log(1 - 0.5)) + 0.5)
-
-      return (Math.abs(dx) + Math.abs(dy)) * lengthReducer;
-      //return Math.sqrt(dx * dx + dy * dy) * lengthReducer;
     }
+    if ('src_key' in bPos) {
+      if (bPos.src_key !== currentFromId && bPos.src_key !== currentToId) {
+        return Number.POSITIVE_INFINITY;
+      }
+    }
+    let dx = aPos.col - bPos.col
+    let dy = aPos.row - bPos.row
+    let edgeKey = getEdgeMemoryId(aPos, bPos);
+    let seenCount = edgeIdToSeenCount.get(edgeKey) || 0;
+    let lengthReducer = seenCount === 0 ? 1 : (Math.exp(-0.8 * seenCount + Math.log(1 - 0.5)) + 0.5)
+
+    return (Math.abs(dx) + Math.abs(dy)) * lengthReducer;
   }
 
   function getEdgeMemoryId(from, to) {
@@ -105,14 +119,15 @@ function gridRoads(graph, layout, offset) {
     return fromId + '_' + toId;
   }
 
-  function convertPathToLines(lines, path) {
+  function convertPathToLines(roads, path) {
     let from = path[0];
     for (let i = 1; i < path.length; ++i) {
       let to = path[i];
-      lines.push({
-        from: toGraphCoord(from.col, from.row),
-        to: toGraphCoord(to.col, to.row),
-      });
+      roads.addRoute(from, to)
+      // lines.push({
+      //   from: toGraphCoord(from.col, from.row),
+      //   to: toGraphCoord(to.col, to.row),
+      // });
       from = to;
     }
   }
