@@ -10,7 +10,6 @@ const wgl = require('../lib/wgl/index');
 const renderGraph = require('../lib/renderGraph');
 const bus = require('../lib/bus');
 const Rect = require('../lib/overlaps/rect');
-const allTools = require('../tools/index.js');
 
 export default {
   name: 'Scene',
@@ -18,10 +17,8 @@ export default {
   mounted() {
     this.createScene();
     this.listenToEvents();
-    this.initTools();
   },
   beforeDestroy() {
-    this.destroyTools();
     this.destroyScene()
     this.unsubscribeFromEvents();
   },
@@ -57,22 +54,9 @@ export default {
       bus.off('draw-rectangles', this.drawRectangles, this);
     },
     initTools() {
-      this.pendingToolInit = setTimeout(() => {
-        this.pendingToolInit = null;
-        let model = this.model;
-        let registeredTools = [];
-        allTools.forEach(createTool => {
-          registeredTools.push(createTool(model));
-        });
-        this.registeredTools = registeredTools;
-      })
-    },
-    destroyTools() {
-      if (this.pendingToolInit) {
-        clearTimeout(this.pendingToolInit);
-        this.pendingToolInit = null;
-      }
-      this.registeredTools.forEach(tool => tool.dispose());
+      this.pendingToolInit = null;
+      let registeredTools = [];
+      this.registeredTools = registeredTools;
     },
     destroyScene() {
       if (this.graphScene) {

@@ -3,6 +3,8 @@ var pagerank = require('ngraph.pagerank')
 var Rect = require('./overlaps/rect')
 var removeOverlaps = require('./overlaps/removeOverlaps');
 
+const toolsToInit = require('../tools/index.js');
+
 function init(rootGraph, autoCluster = false) {
   peprocessGraphNodeSize(rootGraph);
   var root = new GraphLayer(rootGraph);
@@ -17,13 +19,20 @@ function init(rootGraph, autoCluster = false) {
     } while (newRoot)
   }
 
+
+  var tools = [];
   var api = {
     root,
     getClusterPath,
     rootGraph,
     selectedCluster: root,
-    tidyUp
+    tidyUp,
+    tools: tools
   };
+
+  toolsToInit.forEach(createTool => {
+    tools.push(createTool(api));
+  });
 
   Object.freeze(rootGraph);
   root.freeze();

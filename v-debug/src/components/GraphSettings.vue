@@ -7,7 +7,7 @@
       <a href='#' @click.prevent='toggleLinks'>Toggle links</a>
       <a href='#' @click.prevent='tidyup'>Tidy up</a>
     </div>
-    <component v-for='tool in tools' :is='tool.component' :vm='tool.vm'></component>
+    <component v-for='tool in model.tools' :key='tool.id' :is='tool.component' :vm='tool.vm'></component>
     <ClusterInfo :cluster='model.selectedCluster' :model='model'></ClusterInfo>
     <div class='separator'></div>
     <NodeInfo v-if='selectedPoint' :point='selectedPoint' :model='model'></NodeInfo>
@@ -41,13 +41,11 @@ export default {
   
   mounted() {
     bus.on('select-node', this.handleSelectNode, this);
-    bus.on('add-setting', this.handleAddSetting, this);
     bus.on('remove-setting', this.handleRemoveSetting, this);
   },
 
   beforeDestroy() {
     bus.off('select-node', this.handleSelectNode);
-    bus.off('add-setting', this.handleAddSetting, this);
     bus.off('remove-setting', this.handleRemoveSetting, this);
   },
 
@@ -55,10 +53,6 @@ export default {
     restartLayout() {
       this.model.root.reset(true);
       bus.fire('restart-layout');
-    },
-
-    handleAddSetting(toolContext) {
-      this.tools.push(toolContext);
     },
 
     handleRemoveSetting(toolContext) {

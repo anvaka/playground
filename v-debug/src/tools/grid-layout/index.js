@@ -1,22 +1,13 @@
 module.exports = createGridLayout;
 
-var bus = require('../../lib/bus');
 var GridLayoutSettings = require('./GridLayoutSettings.vue');
 
 function createGridLayout(appModel) {
-  let toolSettings = {
+  return {
+    id: 'grid-layout@v0',
     component: GridLayoutSettings, 
     vm: createGridLayoutViewModel(appModel)
   };
-  bus.fire('add-setting', toolSettings);
-
-  return {
-    dispose
-  };
-
-  function dispose() {
-    bus.fire('remove-setting', toolSettings);
-  }
 }
 
 function createGridLayoutViewModel(appModel) {
