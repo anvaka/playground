@@ -2,6 +2,7 @@ module.exports = createGridLayout;
 
 const Rect = require('../../lib/Rect');
 
+var bus = require('../../lib/bus');
 var GridLayoutSettings = require('./GridLayoutSettings.vue');
 
 function createGridLayout(appModel) {
@@ -15,10 +16,55 @@ function createGridLayout(appModel) {
 function createGridLayoutViewModel(appModel) {
    var api = {
      moveToPosition,
-     pullNodes
+     pullNodes,
+     drawRoads
    };
 
    return api;
+
+   function drawRoads() {
+     let { selectedCluster } = appModel;
+     let graph = selectedCluster.graph;
+     let layout = selectedCluster.layout;
+
+     let lines = [];
+     let offset = selectedCluster.getOwnOffset();
+     graph.forEachLink(l => {
+       let from = layout.getNodePosition(l.fromId)
+       let to = layout.getNodePosition(l.toId);
+       let dx = 10;
+       let dy = -10;
+       if (from.x < to.x) {
+         dx = -10;
+       }
+       if (from.y < to.y) {
+         dy = 10;
+       }
+       lines.push({
+         from: {
+           x: offset.x + from.x,
+           y: offset.y + from.y + dy
+         }, 
+         to: {
+           x: offset.x + to.x + dx,
+           y: offset.y + from.y + dy
+         }
+        }, {
+          from: {
+            x: offset.x + to.x + dx,
+            y: offset.y + from.y + dy
+          },
+          to: {
+            x: offset.x + to.x + dx,
+            y: offset.y + to.y
+           }
+         } 
+       )
+     });
+     bus.fire('draw-lines', lines, {
+       key: 'grid-roads'
+     });
+   }
 
    function moveToPosition() {
      let { selectedCluster } = appModel;
