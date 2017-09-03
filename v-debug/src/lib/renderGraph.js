@@ -34,6 +34,8 @@ function renderGraph(model, canvas) {
   });
 
   var animationHandle = requestAnimationFrame(frame)
+
+  var singletonElements = new Map();
   var lastLinks;
   var lastHighlight;
   var prevRectangles;
@@ -43,13 +45,32 @@ function renderGraph(model, canvas) {
 
   return api;
 
-  function drawLines(lines) {
+  function drawLines(lines, options) {
+    options = options || {};
+    let width = options.width || 1;
     let wglLines = new wgl.Lines(lines.length);
+
+    if (options.key) rememberElement(options.key, wglLines);
+
     lines.forEach(l => {
       let ui = wglLines.add(l);
-      ui.setWidth(10);
+      ui.setWidth(width);
     })
+
     scene.appendChild(wglLines);
+  }
+
+  function removeIfNeeded(key) {
+    let el = singletonElements.get(key);
+    if (el) {
+      el.parent.removeChild(el);
+      singletonElements.delete(key);
+    }
+  }
+
+  function rememberElement(key, el) {
+    removeIfNeeded(key);
+    singletonElements.set(key, el);
   }
 
   function showRectangles(rects, overwrite = true, color) {

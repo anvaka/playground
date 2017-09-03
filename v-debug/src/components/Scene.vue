@@ -67,8 +67,8 @@ export default {
         this.graphScene = null;
       }
     },
-    drawLines(lines) {
-      this.graphScene.drawLines(lines);
+    drawLines(lines, options) {
+      this.graphScene.drawLines(lines, options);
     },
     showBounds(cluster) {
       if (!cluster.children) return; // only higher level clusters have bounds.
