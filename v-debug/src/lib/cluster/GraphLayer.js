@@ -2,8 +2,8 @@ var louvain = require('ngraph.louvain');
 var coarsen = require('ngraph.coarsen');
 var buildNodeMassFunction = require('./buildNodeMassFunction');
 var makeLayout = require('./makeLayout');
-var Rect = require('../Rect')
-var BBox = require('../wgl/BBox');
+var Rect = require('../geom/Rect')
+var BBox = require('../geom/BBox');
 var removeOverlaps = require('../overlaps/removeOverlaps');
 var tojson = require('ngraph.tojson');
 

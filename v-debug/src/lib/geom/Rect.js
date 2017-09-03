@@ -1,3 +1,6 @@
+/**
+ * A rectangle.
+ */
 class Rect {
   constructor (params) {
     Object.assign(this, params)

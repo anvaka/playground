@@ -1,4 +1,4 @@
-const Rect = require('../../lib/Rect');
+const Rect = require('../../lib/geom/Rect');
 
 module.exports = forEachRectangleNode
 

@@ -1,3 +1,6 @@
+/**
+ * Bounding box computation for a set of points
+ */
 class BBox {
   constructor() {
     this.minX = Number.POSITIVE_INFINITY;

@@ -1,4 +1,4 @@
-const BBox = require('../../lib/wgl/BBox'); // TODO: This needs to be moved.
+const BBox = require('../../lib/geom/BBox');
 const findShortestPaths = require('./findShortestPath');
 const forEachRectangleNode = require('./forEachRectangle');
 const cellKey = require('./cellKey');
