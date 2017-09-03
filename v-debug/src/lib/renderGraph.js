@@ -47,6 +47,11 @@ function renderGraph(model, canvas) {
   return api;
 
   function drawLines(lines, options) {
+    if (!lines) {
+      removeIfNeeded(options.key);
+      return;
+    }
+
     options = options || {};
     let width = options.width || 1;
     let wglLines = new wgl.Lines(lines.length);
@@ -58,7 +63,7 @@ function renderGraph(model, canvas) {
       ui.setWidth(width);
     })
 
-    scene.appendChild(wglLines);
+    scene.appendChild(wglLines, options.sendToBack);
   }
 
   function removeIfNeeded(key) {
@@ -329,7 +334,7 @@ function renderGraph(model, canvas) {
       linkIdToUI.set(link.id, ui);
     });
 
-  //  parentUI.appendChild(lines);
+    parentUI.appendChild(lines);
     parentUI.appendChild(nodes);
 
     function updatePosition() {
@@ -399,7 +404,7 @@ function addDebugElements(scene) {
   });
 
 
-  // third.appendChild(lines);
+  third.appendChild(lines);
   scene.appendChild(third);
 }
 

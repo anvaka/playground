@@ -1,23 +1,14 @@
-const BBox = require('../../lib/geom/BBox');
 const findShortestPaths = require('./findShortestPath');
-const forEachRectangleNode = require('./forEachRectangle');
 const cellKey = require('./cellKey');
 const createGridGraph = require('./createGridGraph');
+const getBBoxAndRects = require('./getBBoxAndRects');
 
 module.exports = gridRoads;
 
 function gridRoads(graph, layout, offset) {
-  let rects = [];
-  let bbox = new BBox();
-
-  forEachRectangleNode(graph, layout, rect => {
-    bbox.addRect(rect);
-    rects.push(rect);
-  });
+  let {bbox, rects} = getBBoxAndRects(graph, layout);
 
   let cellSize = 10;
-
-  if (false) return drawGrid(offset, bbox, cellSize);
 
   let grid = createGridGraph(bbox.width, bbox.height, cellSize) ;
   // We mark each cell that contain original node, so that path finding
@@ -44,14 +35,22 @@ function gridRoads(graph, layout, offset) {
 
     rememberPath(path);
 
-    convertPathToLines(lines, path)
+    // Remove internal nodes
+    let firstIndex = 0;
+    while(firstIndex < path.length && ('src_key' in path[firstIndex])) firstIndex += 1;
+    let lastIndex = path.length - 1;
+    while(lastIndex > -1 && ('src_key' in path[lastIndex])) lastIndex -= 1;
+
+    // path = path.filter(p => !('src_key' in p));
+    // convertPathToLines(lines, path.slice(firstIndex - 1, lastIndex + 2)) // +2 since slice is exclusive
+    convertPathToLines(lines, path) // +2 since slice is exclusive
   });
 
   return lines;
 
   function getGridNodeIdFromSrcNodeId(nodeId) {
     let pos = layout.getNodePosition(nodeId);
-    let gridPos = toGridCoordinate(pos.x, pos.y, /* offset = */ true);
+    let gridPos = toGridCoordinate(pos.x, pos.y); //, /* offset = */ true);
 
     return cellKey(gridPos.col, gridPos.row);
   }
@@ -120,8 +119,8 @@ function gridRoads(graph, layout, offset) {
 
   function toGraphCoord(col, row) {
     return {
-      x: offset.x + col * cellSize - bbox.width/2,
-      y: offset.y + row * cellSize - bbox.height/2,
+      x: col * cellSize + Math.round((offset.x - bbox.width / 2)/cellSize) * cellSize,
+      y: row * cellSize + Math.round((offset.y - bbox.height / 2)/cellSize) * cellSize,
     }
   }
 
@@ -135,6 +134,13 @@ function gridRoads(graph, layout, offset) {
       if (row === 0) row = 1;
       else row -= 1;
     }
+    if (col < 0) col = 0;
+    if (row < 0) row = 0;
+
+    let maxCols = Math.ceil(bbox.width/cellSize);
+    let maxRows = Math.ceil(bbox.height/cellSize);
+    if (col > maxCols) col = maxCols - 1;
+    if (row > maxRows) row = maxRows - 1;
     return { col, row };
   }
 
@@ -171,43 +177,6 @@ function gridRoads(graph, layout, offset) {
       } 
     )
   });
-
-  return lines;
-}
-
-function drawGrid(offset, bbox, cellSize) {
-  let cols = Math.ceil(bbox.width/cellSize);
-  let rows = Math.ceil(bbox.height/cellSize);
-  let startX = offset.x - bbox.width/2 - cellSize/4;
-  let startY = offset.y - bbox.height/2 - cellSize/4;
-
-  let lines = [];
-
-  for(let j = 0; j < cols; ++j) {
-    lines.push({
-      from: {
-        x: startX + j * cellSize,
-        y: startY
-      }, 
-      to: {
-        x: startX + j * cellSize,
-        y: startY + rows * cellSize
-      }
-    })
-  }
-
-  for(let j = 0; j < rows; ++j) {
-    lines.push({
-      from: {
-        x: startX,
-        y: startY + j * cellSize
-      }, 
-      to: {
-        x: startX + cols * cellSize,
-        y: startY + j * cellSize
-      }
-    })
-  }
 
   return lines;
 }

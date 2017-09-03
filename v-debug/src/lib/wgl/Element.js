@@ -24,9 +24,14 @@ class Element {
     }
   }
 
-  appendChild(child) {
+  appendChild(child, sendToBack) {
     child.parent = this;
-    this.children.push(child);
+    if (sendToBack) {
+      // back of z-index
+      this.children.unshift(child);
+    } else {
+      this.children.push(child);
+    }
   }
 
   removeChild(child) {

@@ -5,7 +5,7 @@ var createGraph = require('ngraph.graph');
 
 module.exports = getDot(require('./data/substack'));
 
-let useSmall = false;
+let useSmall = true;
 
 function getGraph() {
   let graph = useSmall ? smallGraph() : fromJson(data);
@@ -14,6 +14,7 @@ function getGraph() {
 
 function smallGraph() {
   let graph = createGraph();
+  graph.addLink(0, -1);
   graph.addLink(0, -1);
   graph.addLink(0, 1);
   graph.addLink(1, 2);

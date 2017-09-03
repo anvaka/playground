@@ -148,8 +148,8 @@ function makeScene(canvas) {
     lastTreeUpdate = new Date();
   }
 
-  function appendChild(child) {
-    sceneRoot.appendChild(child);
+  function appendChild(child, sendToBack) {
+    sceneRoot.appendChild(child, sendToBack);
   }
 
   function removeChild(child) {
