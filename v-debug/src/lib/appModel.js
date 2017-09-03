@@ -1,6 +1,6 @@
 var GraphLayer = require('./cluster/GraphLayer');
 var pagerank = require('ngraph.pagerank')
-var Rect = require('./rect')
+var Rect = require('./Rect')
 var removeOverlaps = require('./overlaps/removeOverlaps');
 
 const toolsToInit = require('../tools/index.js');
