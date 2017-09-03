@@ -11,6 +11,7 @@ function renderGraph(model, canvas) {
   let scene = wgl.scene(canvas);
   // scene.setClearColor(28/255, 32/255, 59/255, 1)
   scene.setClearColor(12/255, 41/255, 82/255, 1)
+  // scene.setClearColor(223/255, 223/255, 223/255);
   if (appendSceneDebugElements) addDebugElements(scene);
 
   let lastLevel = model.root;
@@ -286,6 +287,12 @@ function renderGraph(model, canvas) {
           b: 252/255, // (1 + Math.random()) * 0.5
         }
       }
+      // point.color =  {
+      //   r: 237/255, // (1 + Math.random()) * 0.5,
+      //   g: 237/255, // (1 + Math.random()) * 0.5,
+      //   b: 237/255, // (1 + Math.random()) * 0.5
+      // }
+
 
       var ui = nodes.add(point, node.id);
       nodeIdToUI.set(node.id, ui);
@@ -322,7 +329,7 @@ function renderGraph(model, canvas) {
       linkIdToUI.set(link.id, ui);
     });
 
-    parentUI.appendChild(lines);
+  //  parentUI.appendChild(lines);
     parentUI.appendChild(nodes);
 
     function updatePosition() {

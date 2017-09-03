@@ -1,9 +1,9 @@
 module.exports = createGridLayout;
 
-const Rect = require('../../lib/Rect');
-
 var bus = require('../../lib/bus');
 var GridLayoutSettings = require('./GridLayoutSettings.vue');
+var gridRoads = require('./gridRoads');
+var forEachRectangleNode = require('./forEachRectangle');
 
 function createGridLayout(appModel) {
   return {
@@ -14,57 +14,25 @@ function createGridLayout(appModel) {
 }
 
 function createGridLayoutViewModel(appModel) {
-   var api = {
-     moveToPosition,
-     pullNodes,
-     drawRoads
-   };
+  var api = {
+    moveToPosition,
+    pullNodes,
+    drawRoads
+  };
 
    return api;
 
-   function drawRoads() {
-     let { selectedCluster } = appModel;
-     let graph = selectedCluster.graph;
-     let layout = selectedCluster.layout;
+  function drawRoads() {
+    let { selectedCluster } = appModel;
+    let graph = selectedCluster.graph;
+    let layout = selectedCluster.layout;
+    let offset = selectedCluster.getOwnOffset();
+    let lines = gridRoads(graph, layout, offset);
 
-     let lines = [];
-     let offset = selectedCluster.getOwnOffset();
-     graph.forEachLink(l => {
-       let from = layout.getNodePosition(l.fromId)
-       let to = layout.getNodePosition(l.toId);
-       let dx = 10;
-       let dy = -10;
-       if (from.x < to.x) {
-         dx = -10;
-       }
-       if (from.y < to.y) {
-         dy = 10;
-       }
-       lines.push({
-         from: {
-           x: offset.x + from.x,
-           y: offset.y + from.y + dy
-         }, 
-         to: {
-           x: offset.x + to.x + dx,
-           y: offset.y + from.y + dy
-         }
-        }, {
-          from: {
-            x: offset.x + to.x + dx,
-            y: offset.y + from.y + dy
-          },
-          to: {
-            x: offset.x + to.x + dx,
-            y: offset.y + to.y
-           }
-         } 
-       )
-     });
-     bus.fire('draw-lines', lines, {
-       key: 'grid-roads'
-     });
-   }
+    bus.fire('draw-lines', lines, {
+      key: 'grid-roads' + selectedCluster.id
+    });
+  }
 
    function moveToPosition() {
      let { selectedCluster } = appModel;
@@ -95,22 +63,10 @@ function createGridLayoutViewModel(appModel) {
 
    function pullNodes() {
      let { selectedCluster } = appModel;
-     let graph = selectedCluster.graph;
-     let layout = selectedCluster.layout;
-     let points = [];
+     let {layout, graph} = selectedCluster;
 
-     graph.forEachNode(node => {
-       let pos = layout.getNodePosition(node.id);
-       let size = (node.data.size || 20)/2
-       points.push(new Rect({
-         id: node.id,
-         left: pos.x - size,
-         top: pos.y - size,
-         width: 2 * size,
-         height: 2 * size,
-       }));
-       // layout.setNodePosition(node.id, 20 * Math.round(pos.x / 20), 20 * Math.round(pos.y / 20));
-     });
+     let points = [];
+     forEachRectangleNode(graph, layout, rect => points.push(rect));
 
      pullnodes(points);
      points.forEach(p => {
@@ -121,6 +77,7 @@ function createGridLayoutViewModel(appModel) {
      })
    }
 }
+
 
 function pullnodes(points) {
   for(var i = 0; i < points.length; ++i) {

@@ -45,13 +45,28 @@ class BBox {
     return (this.minY + this.maxY)/2;
   }
 
-  addPoint(point) {
-    if (!point) throw new Error('Point is not defined');
+  addPoint(xIn, yIn) {
+    if (xIn === undefined) throw new Error('Point is not defined');
+    let x = xIn;
+    let y = yIn;
+    if (y === undefined) {
+      // xIn is a point object
+      x = xIn.x;
+      y = xIn.y;
+    }
 
-    if (point.x < this.minX) this.minX = point.x;
-    if (point.x > this.maxX) this.maxX = point.x;
-    if (point.y < this.minY) this.minY = point.y;
-    if (point.y > this.maxY) this.maxY = point.y;
+    if (x < this.minX) this.minX = x;
+    if (x > this.maxX) this.maxX = x;
+    if (y < this.minY) this.minY = y;
+    if (y > this.maxY) this.maxY = y;
+  }
+
+  addRect(rect) {
+    if (!rect) throw new Error('rect is not defined');
+    this.addPoint(rect.left, rect.top);
+    this.addPoint(rect.right, rect.top);
+    this.addPoint(rect.left, rect.bottom);
+    this.addPoint(rect.right, rect.bottom);
   }
 
   merge(otherBBox) {

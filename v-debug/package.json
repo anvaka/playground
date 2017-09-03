@@ -10,6 +10,7 @@
     "build": "node build/build.js"
   },
   "dependencies": {
+    "@tyriar/fibonacci-heap": "^1.0.10",
     "d3-force": "^1.0.6",
     "d3-quadtree": "^1.0.3",
     "delaunator": "^1.0.4",
@@ -26,6 +27,7 @@
     "ngraph.todot": "^0.2.1",
     "ngraph.tojson": "^0.1.4",
     "panzoom": "^3.0.0",
+    "pathfinding": "^0.4.18",
     "rbush": "^2.0.1",
     "rbush-knn": "^2.0.0",
     "vue": "^2.3.3"
