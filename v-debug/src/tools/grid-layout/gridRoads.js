@@ -23,9 +23,14 @@ function gridRoads(graph, layout, offset) {
   // We mark each cell that contain original node, so that path finding
   // considers its impassible
   rects.forEach(r => {
-    let gridC = toGridCoordinate(r.cx, r.cy);
-    let gridKey = cellKey(gridC.col, gridC.row);
-    grid.getNode(gridKey).data.src_key = r.id;
+    let leftTop = toGridCoordinate(r.left, r.top);
+    let rightBottom = toGridCoordinate(r.right, r.bottom);
+    for(let col = leftTop.col; col <= rightBottom.col; ++col) {
+      for (let row = leftTop.row; row <= rightBottom.row; ++row) {
+        let gridKey = cellKey(col, row);
+        grid.getNode(gridKey).data.src_key = r.id;
+      }
+    }
   });
 
   let edgeIdToSeenCount = new Map();
