@@ -1,8 +1,10 @@
 var fromJson = require('ngraph.fromjson');
+var fromDot = require('ngraph.fromdot');
 var data = require('../data/anvaka_twitter.json')
 var createGraph = require('ngraph.graph');
 
-module.exports = getGraph;
+module.exports = getDot(require('./data/substack'));
+
 let useSmall = false;
 
 function getGraph() {
@@ -26,4 +28,10 @@ function smallGraph() {
   graph.addLink(10, 12);
   graph.addLink(10, 13);
   return graph;
+}
+
+function getDot(txt) {
+  return function() {
+    return fromDot(txt);
+  }
 }
