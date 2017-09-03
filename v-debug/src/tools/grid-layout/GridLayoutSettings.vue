@@ -1,7 +1,8 @@
 <template>
   <div>
     <h4>Grid layout</h4>
-    <a href='#' @click.prevent='moveNodes'>Move nodes to grid</a>
+    <a href='#' class='btn-command' @click.prevent='moveNodes'>Move nodes to grid</a>
+    <a href='#' class='btn-command' @click.prevent='pullNodes'>Pull nodes</a>
   </div>
 </template>
 
@@ -12,6 +13,9 @@ export default {
   methods: {
     moveNodes() {
       this.vm.moveToPosition();
+    },
+    pullNodes() {
+      this.vm.pullNodes();
     }
   }
 }

@@ -1,6 +1,6 @@
 var GraphLayer = require('./cluster/GraphLayer');
 var pagerank = require('ngraph.pagerank')
-var Rect = require('./overlaps/rect')
+var Rect = require('./rect')
 var removeOverlaps = require('./overlaps/removeOverlaps');
 
 const toolsToInit = require('../tools/index.js');
@@ -113,6 +113,7 @@ function tightenUp(points) {
     });
     rectangels.set(id, rect);
   });
+
   for (let i = 0; i < 10; ++i) {
     removeOverlaps(rectangels, {
       pullX: true

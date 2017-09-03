@@ -128,4 +128,26 @@ canvas {
   width: 100%;
   height: 100%;
 }
+
+.row {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+}
+
+.row .label {
+  flex: 1;
+}
+.row .value {
+  flex: 1;
+}
+.row select {
+  width: 100%;
+}
+.btn-command {
+  display: block;
+  padding: 4px;
+  margin-top: 10px;
+  border: 1px solid;
+}
 </style>

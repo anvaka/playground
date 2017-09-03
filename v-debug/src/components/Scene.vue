@@ -9,7 +9,7 @@
 const wgl = require('../lib/wgl/index');
 const renderGraph = require('../lib/renderGraph');
 const bus = require('../lib/bus');
-const Rect = require('../lib/overlaps/rect');
+const Rect = require('../lib/Rect');
 
 export default {
   name: 'Scene',
