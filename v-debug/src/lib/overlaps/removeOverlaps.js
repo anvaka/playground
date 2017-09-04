@@ -14,21 +14,12 @@ class EdgeModel {
   }
 }
 
-class TriangleModel {
-  constructor (p1, p2, p3) {
-    this.p1 = p1
-    this.p2 = p2
-    this.p3 = p3
-  }
-}
-
 /**
  * For a given set of rectangles, removes overlaps
  *
  * @param {Map} rectangles - rectId -> Rectangle mapping
  */
 function removeOverlaps (rectangles, options) {
-  const triangulation = []
   // Convert rectangle centers into vertices, that we can feed into Delaunay
   // triangulation
   const vertices = []
@@ -63,15 +54,10 @@ function removeOverlaps (rectangles, options) {
   for (let i = triangles.length; i;) {
     --i
     const first = vertices[triangles[i]]
-    const p0 = [ first[0], first[1] ]
     --i
     const second = vertices[triangles[i]]
-    const p1 = [ second[0], second[1] ]
     --i
     const third = vertices[triangles[i]]
-    const p2 = [ third[0], third[1] ]
-    const node = new TriangleModel(p0, p1, p2)
-    triangulation.push(node)
 
     addTriangulationLink(first.id, second.id, triangulationGraph)
     addTriangulationLink(second.id, third.id, triangulationGraph)
