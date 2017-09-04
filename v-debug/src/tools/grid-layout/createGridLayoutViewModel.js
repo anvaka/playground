@@ -5,24 +5,43 @@ var gridRoads = require('./gridRoads');
 var forEachRectangleNode = require('./forEachRectangle');
 var getGridLines = require('./getGridLines');
 var getBBoxAndRects = require('./getBBoxAndRects');
+var getTesselationLines = require('./getTesselationLines');
 
 function createGridLayoutViewModel(appModel) {
   var api = {
     moveToPosition,
     pullNodes,
     drawRoads,
-    drawGrid
+    drawGrid,
+    drawTesselation
   };
 
   return api;
 
-  function drawGrid(visible) {
+  function drawTesselation(visible) {
     let { selectedCluster } = appModel;
+    let linesId = 'tessel-grid' + selectedCluster.id;
 
     if (!visible) {
-      bus.fire('draw-lines', null, {
-        key: 'grid-grid' + selectedCluster.id
-      });
+      bus.fire('draw-lines', null, { key: linesId });
+      return;
+    }
+
+    let graph = selectedCluster.graph;
+    let layout = selectedCluster.layout;
+    let offset = selectedCluster.getOwnOffset();
+    let lines = getTesselationLines(graph, layout, offset);
+
+    bus.fire('draw-lines', lines, { key: linesId, color: {
+      r: 0.3, g: 0.6, b: 0.9, a: 0.3
+    } });
+  }
+
+  function drawGrid(visible) {
+    let { selectedCluster } = appModel;
+    let linesId = 'grid-grid' + selectedCluster.id;
+    if (!visible) {
+      bus.fire('draw-lines', null, { key:  linesId });
       return;
     }
     let graph = selectedCluster.graph;
@@ -32,7 +51,8 @@ function createGridLayoutViewModel(appModel) {
     let lines = getGridLines(offset, bbox, 10);
 
     bus.fire('draw-lines', lines, {
-      key: 'grid-grid' + selectedCluster.id
+      key: linesId,
+      color: {r: 0.3, g: 0.3, b: 0.6, a: 0.3}
     });
   }
 
@@ -45,6 +65,12 @@ function createGridLayoutViewModel(appModel) {
 
     bus.fire('draw-lines', lines, {
       key: 'grid-roads' + selectedCluster.id,
+      color: {
+        r: 111/255,
+        g: 133/255, 
+        b: 174/255,
+        a: 1.0 
+      }
       // sendToBack: true
     });
   }
@@ -56,6 +82,7 @@ function createGridLayoutViewModel(appModel) {
 
      let seenPos = new Set();
      let cellSize = 20;
+
      graph.forEachNode(node => {
        let pos = layout.getNodePosition(node.id);
        let nodeSize = (node.data.size || cellSize) / 2;
