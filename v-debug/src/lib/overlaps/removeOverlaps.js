@@ -1,6 +1,5 @@
-const Delaunay = require('delaunator');
 const findMinimumSpanningTree = require('ngraph.kruskal')
-const createGraph = require('ngraph.graph')
+const getDelaunayGraph = require('../geom/getDelaunayGraph');
 const makeSpanningTree = require('./spanningTree.js')
 const rbush = require('rbush');
 const knn = require('rbush-knn');
@@ -46,23 +45,8 @@ function removeOverlaps (rectangles, options) {
     vertices.push(pair)
   })
 
-  const delaunay = new Delaunay(vertices);
-  const triangles = delaunay.triangles;
-  // const triangles = Delaunay.triangulate(vertices)
-  const triangulationGraph = createGraph({ uniqueLinkId: false })
-
-  for (let i = triangles.length; i;) {
-    --i
-    const first = vertices[triangles[i]]
-    --i
-    const second = vertices[triangles[i]]
-    --i
-    const third = vertices[triangles[i]]
-
-    addTriangulationLink(first.id, second.id, triangulationGraph)
-    addTriangulationLink(second.id, third.id, triangulationGraph)
-    addTriangulationLink(third.id, first.id, triangulationGraph)
-  }
+  const triangulationGraph = getDelaunayGraph(vertices)
+  triangulationGraph.forEachLink(addTriangulationLinkWeight);
 
   const mst = findMinimumSpanningTree(triangulationGraph, e => e.data)
   const mstEdges = mst.map(edge => new EdgeModel(
@@ -211,12 +195,11 @@ function removeOverlaps (rectangles, options) {
     return t
   }
 
-  function addTriangulationLink (fromId, toId, tGraph) {
-    const from = getRect(fromId)
-    const to = getRect(toId)
+  function addTriangulationLinkWeight(link) {
+    const from = getRect(link.fromId)
+    const to = getRect(link.toId)
     const weight = getTriangulationWeight(from, to)
-
-    tGraph.addLink(fromId, toId, weight)
+    link.data = weight;
   }
 
   function getTriangulationWeight (a, b) {
