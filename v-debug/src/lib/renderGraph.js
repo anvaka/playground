@@ -30,7 +30,7 @@ function renderGraph(model, canvas) {
     dispose,
     toggleLinks,
     highlight,
-    showRectangles,
+    drawRectangles,
     drawLines
   });
 
@@ -47,12 +47,13 @@ function renderGraph(model, canvas) {
   return api;
 
   function drawLines(lines, options) {
+    options = options || {};
+
     if (!lines) {
       removeIfNeeded(options.key);
       return;
     }
 
-    options = options || {};
     let width = options.width || 1;
     let wglLines = new wgl.Lines(lines.length);
     if (options.color) {
@@ -88,14 +89,17 @@ function renderGraph(model, canvas) {
     singletonElements.set(key, el);
   }
 
-  function showRectangles(rects, overwrite = true, color) {
-    if (prevRectangles && overwrite) {
-      scene.removeChild(prevRectangles);
+  function drawRectangles(rects, options) {
+    options = options || {};
+
+    if (!rects) {
+      removeIfNeeded(options.key);
+      return;
     }
 
     let rectangles = new wgl.Lines(rects.length * 4);
-    if (color) {
-      rectangles.color = color
+    if (options.color) {
+      rectangles.color = options.color;
     }
     rects.forEach(rect => {
       let topLeft = {x: rect.left, y: rect.top };
@@ -108,9 +112,10 @@ function renderGraph(model, canvas) {
       rectangles.add({ from: bottomRight, to: bottomLeft });
       rectangles.add({ from: bottomLeft, to: topLeft });
     })
+
     scene.appendChild(rectangles);
 
-    if (overwrite) prevRectangles = rectangles;
+    if (options.key) rememberElement(options.key, rectangles);
   }
 
   function highlight(positions) {

@@ -86,11 +86,15 @@ export default {
           height: bbox.height
         }));
       })
-      this.graphScene.showRectangles(rectangles);
+      this.graphScene.drawRectangles(rectangles, {
+        key: 'bounds'
+      });
     },
-    drawRectangles(rectangles, color) {
-      this.graphScene.showRectangles(rectangles, false, color);
+
+    drawRectangles(rectangles, options) {
+      this.graphScene.drawRectangles(rectangles, options);
     },
+
     createScene() {
       if (this.graphScene) {
         this.destroyScene();
