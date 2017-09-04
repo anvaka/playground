@@ -4,8 +4,8 @@ function getGridLines(offset, bbox, cellSize) {
   let cols = Math.ceil(bbox.width/cellSize);
   let rows = Math.ceil(bbox.height/cellSize);
 
-  let startX = Math.round((offset.x - bbox.width/2) / cellSize) * cellSize;
-  let startY = Math.round((offset.y - bbox.height/2) / cellSize) * cellSize;
+  let startX = offset.x + bbox.left;
+  let startY = offset.y + bbox.top;
 
   let lines = [];
 

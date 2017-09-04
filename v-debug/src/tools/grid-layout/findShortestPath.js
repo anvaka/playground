@@ -2,11 +2,12 @@ var FibonacciHeap = require('@tyriar/fibonacci-heap');
 
 module.exports = shortestPaths;
 
-function shortestPaths (graph, getEdgeLength) {
+function shortestPaths (graph, getEdgeLength, customExit) {
   // maps from node id to shortest path algorithm state.
   let searchStateMemory = new Map()
 
-  let length = getEdgeLength || euclidLength
+  let length = getEdgeLength || euclidLength;
+  let found = customExit || (() => false);
 
   return findShortestPaths
 
@@ -61,8 +62,9 @@ function shortestPaths (graph, getEdgeLength) {
 
       visitNode(minNode)
 
-      if (minNode.value === to) {
-        return lastResult
+      let gNode = graph.getNode(minNode.value);
+      if (minNode.value === to || found(gNode)) {
+        return minNode
       }
     }
 
