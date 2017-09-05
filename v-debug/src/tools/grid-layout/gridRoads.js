@@ -1,10 +1,12 @@
 const findShortestPaths = require('./findShortestPath');
 const cellKey = require('./cellKey');
 const createGridGraph = require('./createGridGraph');
+const createGraph = require('ngraph.graph');
 const getBBoxAndRects = require('./getBBoxAndRects');
 const RoadAccumulator = require('./roadAccumulator') ;
 const Rect = require('../../lib/geom/Rect')
 const bus = require('../../lib/bus')
+const getDelaunayTesselation = require('./tesselation/getDelaunayTesselation');
 
 module.exports = gridRoads;
 
@@ -16,20 +18,29 @@ function gridRoads(graph, layout, offset) {
   let cellSize = 10;
   let maxCols = Math.ceil(bbox.width/cellSize);
   let maxRows = Math.ceil(bbox.height/cellSize);
+  let rectangleById = new Map();
 
   let visRect = [];
 
+  // let grid = createGraph({uniqueLinkId: false});
   let grid = createGridGraph(bbox.width, bbox.height, cellSize) ;
+
+  let delaunay = getDelaunayTesselation(rects, cellSize);
+  mergeDelaunayIntoGrid(grid, delaunay);
+
   // We mark each cell that contain original node, so that path finding
-  // considers its impassible
+  // considers them impassible
   rects.forEach(r => {
+    rectangleById.set(r.id, r);
     if (r.width > cellSize) {
       let leftTop = toGridCoordinate(r.left, r.top);
       let rightBottom = toGridCoordinate(r.right, r.bottom);
-      for(let col = leftTop.col; col <= rightBottom.col; ++col) {
-        for (let row = leftTop.row; row <= rightBottom.row; ++row) {
+      for(let col = leftTop.col; col < rightBottom.col; ++col) {
+        for (let row = leftTop.row; row < rightBottom.row; ++row) {
           let gridKey = cellKey(col, row);
-          grid.getNode(gridKey).data.src_key = r.id;
+          let node = grid.getNode(gridKey);
+          if (!node) continue;
+          node.data.src_key = r.id;
 
           let coord = toGraphCoord(col, row);
           visRect.push(new Rect({
@@ -60,20 +71,85 @@ function gridRoads(graph, layout, offset) {
   }
 
   let edgeIdToSeenCount = new Map();
-  // var lines = [];
 
-  var roadAccumulator = new RoadAccumulator();
+  var firstPassRoads = new RoadAccumulator();
   let currentFromId;
   let currentToId;
 
-  graph.forEachLink(l => {
-    currentFromId = l.fromId;
-    currentToId = l.toId;
+  collectRoads(firstPassRoads);
+  // Note: we can experiment with multi-pass for same edge memory:
+  // Should gias routing towards seen roads.
+  let finalRoads = new RoadAccumulator();
+  collectRoads(finalRoads);
 
-//     let fromTo = getBestFromTo(l.fromId, l.toId);
-    let fromId = getGridNodeIdFromSrcNodeId(l.fromId);
-    let toId = getGridNodeIdFromSrcNodeId(l.toId);
+  return convertAccumulatorToLines(finalRoads);
+  
+  function convertAccumulatorToLines(accumulator) {
+    return accumulator.getLines().map(l => {
+      let from = toGraphCoord(l.from.col, l.from.row);
+      let to = toGraphCoord(l.to.col, l.to.row);
+      let c2 = cellSize/2;
+      // if (from.row === to.row) {
+      //   from.y += c2;
+      //   to.y += c2;
+      // }
+      // if (from.col === to.col) {
+      //   from.x += c2;
+      //   to.x += c2;
+      // }
+      return {
+        width: l.width,
+        from: from,
+        to: to,
+      }
+    });
+  }
 
+  function collectRoads(roadAccumulator) {
+    graph.forEachLink(l => findRoadsForLink(l, roadAccumulator));
+  }
+
+  function findRoadsForLink(link, roadAccumulator) {
+    currentFromId = link.fromId;
+    currentToId = link.toId;
+
+    let fromPos = getGridPosByNodeId(link.fromId);
+    let toPos = getGridPosByNodeId(link.toId);
+
+    let fromRect = rectangleById.get(link.fromId);
+    let toRect = rectangleById.get(link.toId);
+
+    let fW = Math.ceil(fromRect.width/cellSize);
+    let fH = Math.ceil(fromRect.height/cellSize);
+    let tW = Math.ceil(toRect.width/cellSize);
+    let tH = Math.ceil(toRect.height/cellSize);
+
+    let colOffset = 0;
+    let rowOffset = 0;
+
+    if (fromRect.cx < toRect.cx) {
+      fromPos.col += Math.floor(fW/2) + 1
+      toPos.col -= Math.floor(tW/2)
+    } else if (fromRect.cx > toRect.cx) {
+      fromPos.col -= Math.floor(fW/2)
+      toPos.col += Math.floor(tW/2) + 1
+    }
+
+    if (fromRect.cy < toRect.cy) {
+      fromPos.row += Math.floor(fH/2) + 1
+      toPos.row -= Math.floor(tH/2)
+    } else if (fromRect.cy > toRect.cy) {
+      fromPos.row -= Math.floor(fH/2)
+      toPos.row += Math.floor(tH/2) + 1
+    }
+
+    let fromId = cellKey(fromPos.col, fromPos.row);
+    let toId = cellKey(toPos.col, toPos.row);
+    
+    findInGridSpace(fromId, toId, roadAccumulator);
+  }
+
+  function findInGridSpace(fromId, toId, roadAccumulator) {
     // TODO: remove global dependency on currentFromId/currenToId
     let shortestPaths = findShortestPaths(grid, getCityEdgeLength, (node) => {
       return node.data.src_key === currentToId;
@@ -81,59 +157,14 @@ function gridRoads(graph, layout, offset) {
     let path = shortestPaths(fromId, toId); 
 
     rememberPath(path);
-
-    // Remove internal nodes
     // path = path.filter(p => !('src_key' in p));
-    // var startFrom = 0;
-    // var endAt = path.length - 1;
-    // while(startFrom < path.length && ('src_key' in path[startFrom])) startFrom += 1;
-    // while(endAt > -1 && ('src_key' in path[endAt])) endAt -= 1;
+    addPathToRoadAccumulator(roadAccumulator, path);
+  }
 
-    // path = path.slice(startFrom - 1, endAt + 2);
-    path = path.filter(p => !('src_key' in p));
-    // convertPathToLines(lines, path.slice(firstIndex - 1, lastIndex + 2)) // +2 since slice is exclusive
-    convertPathToLines(roadAccumulator, path) // +2 since slice is exclusive
-  });
-
-  return roadAccumulator.getLines().map(l => {
-    let from = toGraphCoord(l.from.col, l.from.row);
-    let to = toGraphCoord(l.to.col, l.to.row);
-    let c2 = cellSize/2;
-    if (from.row === to.row) {
-      from.y += c2;
-      to.y += c2;
-    }
-    if (from.col === to.col) {
-      from.x += c2;
-      to.x += c2;
-    }
-    // from.x += cellSize/2;
-    // from.y += cellSize/2;
-    // to.x += cellSize/2;
-    // to.y += cellSize/2;
-    return {
-      width: l.width,
-      from: from,
-      to: to,
-    }
-  }); //lines;
-
-  // function getBestFromTo(fromId, toId) {
-  //   let fromPoints = getConnectionPoints(fromId);
-  //   let toPoints = getConnectionPoints(toId);
-
-  // }
-
-  // function getConnectionPoints(nodeId) {
-  //   let pos = layout.getNodePosition(nodeId);
-  //   let gridPos = toGridCoordinate(pos.x, pos.y); //, /* offset = */ true);
-  // }
-
-  function getGridNodeIdFromSrcNodeId(nodeId) {
+  function getGridPosByNodeId(nodeId) {
     let pos = layout.getNodePosition(nodeId);
     let gridPos = toGridCoordinate(pos.x, pos.y); //, /* offset = */ true);
-
-    return cellKey(gridPos.col, gridPos.row);
+    return gridPos;
   }
 
   function rememberPath(path) {
@@ -143,7 +174,7 @@ function gridRoads(graph, layout, offset) {
     }
   }
 
-  function getCityEdgeLength(a, b) {
+  function getCityEdgeLength(a, b, link) {
     let aPos = a.data
     let bPos = b.data
     if ('src_key' in aPos) {
@@ -163,7 +194,27 @@ function gridRoads(graph, layout, offset) {
     let seenCount = edgeIdToSeenCount.get(edgeKey) || 0;
     let lengthReducer = seenCount === 0 ? 1 : (Math.exp(-0.8 * seenCount + Math.log(1 - 0.5)) + 0.5)
 
-    return (Math.abs(dx) + Math.abs(dy)) * lengthReducer;
+    // let dist = Math.sqrt(dx * dx + dy * dy);
+    let dist = Math.abs(dx) + Math.abs(dy);
+    let delaunayFactor = 1;
+    if (link && link.data && link.data.delaunay) {
+      let lengthFactor = link.data.lengthFactor;
+      if (dist < 3.1) {
+        delaunayFactor = 40; // we don't want this.
+      } else if (lengthFactor < 0.02) {
+        delaunayFactor = 30;
+      } else if (lengthFactor < 0.2) {
+        dist = Math.sqrt(dx * dx + dy * dy);
+        delaunayFactor = 1.3
+      } else if (lengthFactor < 0.5) {
+        dist = Math.sqrt(dx * dx + dy * dy);
+        delaunayFactor = 1.1
+      } else {
+        dist = Math.sqrt(dx * dx + dy * dy);
+        delaunayFactor = 0.9;
+      }
+    }
+    return dist * lengthReducer * delaunayFactor;
   }
 
   function getEdgeMemoryId(from, to) {
@@ -178,24 +229,16 @@ function gridRoads(graph, layout, offset) {
     return fromId + '_' + toId;
   }
 
-  function convertPathToLines(roads, path) {
+  function addPathToRoadAccumulator(roadAccumulator, path) {
     let from = path[0];
     for (let i = 1; i < path.length; ++i) {
       let to = path[i];
-      roads.addRoute(from, to)
-      // lines.push({
-      //   from: toGraphCoord(from.col, from.row),
-      //   to: toGraphCoord(to.col, to.row),
-      // });
+      roadAccumulator.addRoute(from, to)
       from = to;
     }
   }
 
   function toGraphCoord(col, row) {
-    // return {
-    //   x: offset.x + bbox.width * col/maxCols - bbox.width/2 - cellSize/2,
-    //   y: offset.y + bbox.height * row/maxRows - bbox.height/2 + cellSize/2
-    // }
     let startX = offset.x + bbox.left;
     let startY = offset.y + bbox.top;
 
@@ -203,14 +246,6 @@ function gridRoads(graph, layout, offset) {
       x: startX + col * cellSize,
       y: startY + row * cellSize
     }
-    return {
-      x: offset.x + col * cellSize - Math.floor((bbox.width/2)/cellSize) * cellSize,
-      y: offset.y + row * cellSize - Math.floor((bbox.height/2)/cellSize) * cellSize
-    }
-    // return {
-    //   x: (1 + col) * cellSize + Math.floor((offset.x - bbox.width / 2)/cellSize) * cellSize,
-    //   y: (1 + row) * cellSize + Math.floor((offset.y - bbox.height / 2)/cellSize) * cellSize,
-    // }
   }
 
   function toGridCoordinate(x, y) {
@@ -221,5 +256,62 @@ function gridRoads(graph, layout, offset) {
     if (row < 0) throw new Error('negative row')
 
     return { col, row };
+  }
+  
+  function mergeDelaunayIntoGrid(grid, delaunay) {
+    let min = Number.POSITIVE_INFINITY;
+    let max = Number.NEGATIVE_INFINITY;
+
+    delaunay.forEachLink(l => {
+      let from = delaunay.getNode(l.fromId).data;
+      let to = delaunay.getNode(l.toId).data;
+      let dx = from.x - to.x;
+      let dy = from.y - to.y;
+      let d = Math.sqrt(dx * dx + dy * dy);
+      if (d < min) min = d;
+      if (d > max) max = d;
+    });
+
+    let lengthDistance = (max - min);
+
+    delaunay.forEachLink(l => {
+      let from = delaunay.getNode(l.fromId).data;
+      let to = delaunay.getNode(l.toId).data;
+
+      let fromGridCoord = toGridCoordinate(from.x, from.y);
+      let toGridCoord = toGridCoordinate(to.x, to.y);
+
+      let fromKey = cellKey(fromGridCoord.col, fromGridCoord.row);
+      let toKey = cellKey(toGridCoord.col, toGridCoord.row);
+
+      if (!grid.getNode(fromKey)) {
+        grid.addNode(fromKey, {
+          row: fromGridCoord.row,
+          col: fromGridCoord.col,
+          src_key: l.fromId
+        })
+      }
+
+      if (!grid.getNode(toKey)) {
+        grid.addNode(toKey, {
+          row: toGridCoord.row,
+          col: toGridCoord.col,
+          src_key: l.toId
+        })
+      }
+
+      let alreadyHasThisLink = grid.hasLink(fromKey, toKey) || grid.hasLink(toKey, fromKey)
+      if (!alreadyHasThisLink) {
+        let dx = from.x - to.x;
+        let dy = from.y - to.y;
+        let d = Math.sqrt(dx * dx + dy * dy);
+        let lengthFactor = lengthDistance ? d / lengthDistance : 0
+
+        grid.addLink(fromKey, toKey, {
+          delaunay: true,
+          lengthFactor
+        });
+      }
+    })
   }
 }

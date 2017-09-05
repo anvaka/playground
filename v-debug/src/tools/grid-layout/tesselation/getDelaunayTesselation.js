@@ -6,13 +6,13 @@ const getDelaunayGraph = require('../../../lib/geom/getDelaunayGraph');
  * Extends rectangls with control points and returns delaunay
  * graph.
  */
-function getDelaunayTesselation(rectangles) {
-  let vertices = getPositions(rectangles);
+function getDelaunayTesselation(rectangles, cellSize) {
+  let vertices = getPositions(rectangles, cellSize);
 
   return getDelaunayGraph(vertices, p => p.x, p => p.y);
 }
 
-function getPositions(rectangles) {
+function getPositions(rectangles, cellSize) {
   const positions = [];
 
   rectangles.forEach(r => {
@@ -51,12 +51,13 @@ function getPositions(rectangles) {
     }
   });
 
-  positions.forEach(gridify);
+  if (cellSize !== undefined) {
+    positions.forEach(p => gridify(p, cellSize));
+  }
   return positions;
 }
 
-function gridify(p) {
-  let size = 10;
-  p.x = Math.round(p.x/size) * size;
-  p.y = Math.round(p.y/size) * size;
+function gridify(p, cellSize) {
+  p.x = Math.round(p.x/cellSize) * cellSize;
+  p.y = Math.round(p.y/cellSize) * cellSize;
 }

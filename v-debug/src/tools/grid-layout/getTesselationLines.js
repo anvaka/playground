@@ -6,7 +6,7 @@ module.exports = getTesselationLines;
 function getTesselationLines(graph, layout, offset) {
   let {bbox, rects} = getBBoxAndRects(graph, layout);
 
-  let delaunayGraph  = getDelaunayTesselation(rects);
+  let delaunayGraph = getDelaunayTesselation(rects, 10);
   let lines = [];
   delaunayGraph.forEachLink(l => {
     let fromPos = delaunayGraph.getNode(l.fromId).data;

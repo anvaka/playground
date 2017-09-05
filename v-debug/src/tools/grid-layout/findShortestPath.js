@@ -72,8 +72,8 @@ function shortestPaths (graph, getEdgeLength, customExit) {
       let nodeId = node.value; // node.id
       let srcInfo = nodeIdToHeapNode.get(nodeId)
 
-      graph.forEachLinkedNode(nodeId, otherNode => {
-        let distance = srcInfo.key + length(graph.getNode(nodeId), otherNode)
+      graph.forEachLinkedNode(nodeId, (otherNode, link) => {
+        let distance = srcInfo.key + length(graph.getNode(nodeId), otherNode, link)
         let otherInfo = nodeIdToHeapNode.get(otherNode.id)
         if (distance < otherInfo.key) {
           otherInfo.prevPath = srcInfo
