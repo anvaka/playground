@@ -29,6 +29,7 @@ function shortestPaths (graph, getEdgeLength, customExit) {
   }
 
   function findPath (from, to) {
+    let target = graph.getNode(to).data;
     let searchState = searchStateMemory.get(from)
     if (!searchState) {
       let heap = new FibonacciHeap()
@@ -70,13 +71,15 @@ function shortestPaths (graph, getEdgeLength, customExit) {
 
     function visitNode (node) {
       let nodeId = node.value; // node.id
-      let srcInfo = nodeIdToHeapNode.get(nodeId)
-
+      let srcNode = graph.getNode(nodeId)
       graph.forEachLinkedNode(nodeId, (otherNode, link) => {
-        let distance = srcInfo.key + length(graph.getNode(nodeId), otherNode, link)
+        // let dx = target.x - otherNode.data.x;
+        // let dy = target.y - otherNode.data.y;
+        let stepsToTarget = 0; //  Math.sqrt(dx * dx + dy * dy);
+        let distance = node.key + length(srcNode, otherNode, link)  + stepsToTarget;
         let otherInfo = nodeIdToHeapNode.get(otherNode.id)
         if (distance < otherInfo.key) {
-          otherInfo.prevPath = srcInfo
+          otherInfo.prevPath = node
           heap.decreaseKey(otherInfo, distance);
         }
       })

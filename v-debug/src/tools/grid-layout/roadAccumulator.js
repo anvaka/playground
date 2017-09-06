@@ -13,8 +13,8 @@ class RoadAccumulator {
   }
 
   addRoute(from, to) {
-    let fromId = cellKey(from.col, from.row);
-    let toId = cellKey(to.col, to.row);
+    let fromId = cellKey(from.x, from.y);
+    let toId = cellKey(to.x, to.y);
     let link = this.graph.getLink(fromId, toId);
     if (!link) {
       link = this.graph.addLink(fromId, toId, {

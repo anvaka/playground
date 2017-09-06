@@ -16,14 +16,12 @@ function gridRoads(graph, layout, offset) {
   let {bbox, rects} = getBBoxAndRects(graph, layout);
 
   let cellSize = 10;
-  let maxCols = Math.ceil(bbox.width/cellSize);
-  let maxRows = Math.ceil(bbox.height/cellSize);
   let rectangleById = new Map();
 
   let visRect = [];
 
   // let grid = createGraph({uniqueLinkId: false});
-  let grid = createGridGraph(bbox.width, bbox.height, cellSize) ;
+  let grid = createGridGraph(bbox, cellSize) ;
 
   let delaunay = getDelaunayTesselation(rects, cellSize);
   mergeDelaunayIntoGrid(grid, delaunay);
@@ -35,8 +33,8 @@ function gridRoads(graph, layout, offset) {
     if (r.width > cellSize) {
       let leftTop = toGridCoordinate(r.left, r.top);
       let rightBottom = toGridCoordinate(r.right, r.bottom);
-      for(let col = leftTop.col; col < rightBottom.col; ++col) {
-        for (let row = leftTop.row; row < rightBottom.row; ++row) {
+      for(let col = leftTop.x; col < rightBottom.x; col += cellSize) {
+        for (let row = leftTop.y; row < rightBottom.y; row += cellSize) {
           let gridKey = cellKey(col, row);
           let node = grid.getNode(gridKey);
           if (!node) continue;
@@ -54,7 +52,7 @@ function gridRoads(graph, layout, offset) {
       }
     } else {
       let colRow = toGridCoordinate(r.left, r.top);
-      let gridKey = cellKey(colRow.col, colRow.row);
+      let gridKey = cellKey(colRow.x, colRow.y);
       grid.getNode(gridKey).data.src_key = r.id;
       //grid.removeNode(gridKey);
       visRect.push(r);
@@ -87,8 +85,8 @@ function gridRoads(graph, layout, offset) {
   
   function convertAccumulatorToLines(accumulator) {
     return accumulator.getLines().map(l => {
-      let from = toGraphCoord(l.from.col, l.from.row);
-      let to = toGraphCoord(l.to.col, l.to.row);
+      let from = toGraphCoord(l.from.x, l.from.y);
+      let to = toGraphCoord(l.to.x, l.to.y);
       let c2 = cellSize/2;
       from.x += c2; from.y += c2;
       to.x += c2; to.y += c2;
@@ -110,13 +108,22 @@ function gridRoads(graph, layout, offset) {
     currentFromId = link.fromId;
     currentToId = link.toId;
 
-    let fromPos = getGridPosByNodeId(link.fromId);
-    let toPos = getGridPosByNodeId(link.toId);
+    let fromPos = layout.getNodePosition(link.fromId);
+    let toPos = layout.getNodePosition(link.toId);
+    fromPos = movePosToGrid(fromPos);
+    toPos = movePosToGrid(toPos);
 
-    let fromId = cellKey(fromPos.col, fromPos.row);
-    let toId = cellKey(toPos.col, toPos.row);
+    let fromId = cellKey(fromPos.x, fromPos.y);
+    let toId = cellKey(toPos.x, toPos.y);
     
     findInGridSpace(fromId, toId, roadAccumulator);
+  }
+
+  function movePosToGrid (pos) {
+    return {
+      x: Math.floor(pos.x / cellSize) * cellSize,
+      y: Math.floor(pos.y / cellSize) * cellSize,
+    }
   }
 
   function findInGridSpace(fromId, toId, roadAccumulator) {
@@ -129,12 +136,6 @@ function gridRoads(graph, layout, offset) {
     rememberPath(path);
     // path = path.filter(p => !('src_key' in p));
     addPathToRoadAccumulator(roadAccumulator, path);
-  }
-
-  function getGridPosByNodeId(nodeId) {
-    let pos = layout.getNodePosition(nodeId);
-    let gridPos = toGridCoordinate(pos.x, pos.y); //, /* offset = */ true);
-    return gridPos;
   }
 
   function rememberPath(path) {
@@ -159,15 +160,14 @@ function gridRoads(graph, layout, offset) {
       }
     }
 
-    let dx = aPos.col - bPos.col
-    let dy = aPos.row - bPos.row
+    let dx = aPos.x - bPos.x
+    let dy = aPos.y - bPos.y
     let edgeKey = getEdgeMemoryId(aPos, bPos);
     let seenCount = edgeIdToSeenCount.get(edgeKey) || 0;
     let lengthReducer = seenCount === 0 ? 1 : (Math.exp(-0.8 * seenCount + Math.log(1 - 0.5)) + 0.5)
 
     // let dist = Math.sqrt(dx * dx + dy * dy);
     let dist = Math.abs(dx) + Math.abs(dy);
-    // return dist; 
     let delaunayFactor = 1;
     if (link && link.data && link.data.delaunay) {
       let lengthFactor = link.data.lengthFactor;
@@ -190,8 +190,8 @@ function gridRoads(graph, layout, offset) {
   }
 
   function getEdgeMemoryId(from, to) {
-    let fromId = cellKey(from.col, from.row);
-    let toId = cellKey(to.col, from.row);
+    let fromId = cellKey(from.x, from.y);
+    let toId = cellKey(to.x, to.y);
 
     if (fromId < toId) {
       let t = fromId;
@@ -210,24 +210,18 @@ function gridRoads(graph, layout, offset) {
     }
   }
 
-  function toGraphCoord(col, row) {
-    let startX = offset.x + bbox.left;
-    let startY = offset.y + bbox.top;
+  function toGraphCoord(x, y) {
+    let startX = offset.x;
+    let startY = offset.y;
 
     return {
-      x: startX + col * cellSize,
-      y: startY + row * cellSize
+      x: startX + x,
+      y: startY + y
     }
   }
 
   function toGridCoordinate(x, y) {
-    let col = Math.floor(maxCols * (x - bbox.left)/bbox.width); 
-    let row = Math.floor(maxRows * (y - bbox.top)/bbox.height);
-
-    if (col < 0) throw new Error('negative col')
-    if (row < 0) throw new Error('negative row')
-
-    return { col, row };
+    return {x, y};
   }
   
   function mergeDelaunayIntoGrid(grid, delaunay) {
@@ -250,24 +244,21 @@ function gridRoads(graph, layout, offset) {
       let from = delaunay.getNode(l.fromId).data;
       let to = delaunay.getNode(l.toId).data;
 
-      let fromGridCoord = toGridCoordinate(from.x, from.y);
-      let toGridCoord = toGridCoordinate(to.x, to.y);
-
-      let fromKey = cellKey(fromGridCoord.col, fromGridCoord.row);
-      let toKey = cellKey(toGridCoord.col, toGridCoord.row);
+      let fromKey = cellKey(from.x, from.y);
+      let toKey = cellKey(to.x, to.y);
 
       if (!grid.getNode(fromKey)) {
         grid.addNode(fromKey, {
-          row: fromGridCoord.row,
-          col: fromGridCoord.col,
+          x: from.x,
+          y: from.y,
           src_key: l.fromId
         })
       }
 
       if (!grid.getNode(toKey)) {
         grid.addNode(toKey, {
-          row: toGridCoord.row,
-          col: toGridCoord.col,
+          x: to.x,
+          y: to.y,
           src_key: l.toId
         })
       }
