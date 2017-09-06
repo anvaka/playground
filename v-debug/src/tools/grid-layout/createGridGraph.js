@@ -22,9 +22,6 @@ function createGridGraph(width, height, cellSize) {
       if (j > 0) {
         grid.addLink(thisKey, cellKey(i, j - 1));
       }
-      // if (i > 0 && j > 0) {
-      //   grid.addLink(thisKey, cellKey(i - 1, j - 1));
-      // }
     }
   }
 
