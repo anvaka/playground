@@ -15,7 +15,6 @@ function getGraph() {
 function smallGraph() {
   let graph = createGraph();
   graph.addLink(0, -1);
-  graph.addLink(0, -1);
   graph.addLink(0, 1);
   graph.addLink(1, 2);
   graph.addLink(1, 4);
