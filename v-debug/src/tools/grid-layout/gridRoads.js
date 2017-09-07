@@ -6,7 +6,7 @@ const RoadAccumulator = require('./roadAccumulator') ;
 const Rect = require('../../lib/geom/Rect')
 const bus = require('../../lib/bus')
 const getDelaunayTesselation = require('./tesselation/getDelaunayTesselation');
-// const aStar = require('./path/a-star/bidirectional');
+//const aStar = require('./path/a-star/bidirectional');
 const aStar = require('./path/a-star/index');
 
 module.exports = gridRoads;
@@ -104,24 +104,12 @@ function gridRoads(graph, layout) {
 
     let maxReducer = (Math.exp(-0.8 * grid.getLinksCount() + Math.log(1 - 0.5)) + 0.5)
     aStarPathFinder = aStar(grid, {
-      // distance(fromId, toId) {
-      //   let fromPos = grid.getNode(fromId).data;
-      //   let toPos = grid.getNode(toId).data;
-      //   return aStar.l2(fromPos, toPos);
-      // },
       heuristic(from, to) {
-        //  let fromPos = grid.getNode(fromId).data;
-        //  let toPos = grid.getNode(toId).data;
          let fromPos = from.data;
          let toPos = to.data;
          return aStar.l2(fromPos, toPos) * maxReducer * 0.9;
       },
       distance: getCityEdgeLength
-      // (fromId, toId) {
-      //   let fromPos = grid.getNode(fromId).data;
-      //   let toPos = grid.getNode(toId).data;
-      //   return aStar.l2(fromPos, toPos);
-      // }
     })
 
     console.log('Searching graph with ' + grid.getNodesCount() + ' nodes and ' + grid.getLinksCount() + ' edges');
@@ -142,7 +130,6 @@ function gridRoads(graph, layout) {
         findInGridSpace(fromId, toId, roadAccumulator);
       }, true)
     })
-//    graph.forEachLink(l => findRoadsForLink(l, roadAccumulator));
     console.timeEnd('roads');
   }
 
@@ -174,12 +161,6 @@ function gridRoads(graph, layout) {
       let key = getEdgeMemoryId(path[i], path[i - 1]);
       edgeIdToSeenCount.set(key, (edgeIdToSeenCount.get(key) || 0) + 1)
     }
-  }
-
-  function getCityEdgeLengthId(aId, bId, link) {
-    let a = grid.getNode(aId);
-    let b = grid.getNode(bId);
-    return getCityEdgeLength(a, b, link);
   }
 
   function getCityEdgeLength(a, b, link) {

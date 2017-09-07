@@ -82,7 +82,7 @@ function bidirectionalAStar(graph, options) {
       // no need to visit this node anymore
       current.closed = true;
 
-      if (current.fScore > lMin) continue;
+      if (current.distanceToSource > lMin) continue;
 
       graph.forEachLinkedNode(
         current.node.id,
@@ -94,7 +94,7 @@ function bidirectionalAStar(graph, options) {
     function canExit(currentNode) {
       let opener = currentNode.open
       if (opener && opener !== currentOpener) {
-        return true; // TODO: Fix me
+        return true;
       }
 
       return false;
@@ -132,7 +132,7 @@ function bidirectionalAStar(graph, options) {
         // we found an optimal path, that goes through *this* node. However, there
         // is no guarantee that this is the global optimal solution path.
 
-        let potentialLMin = Math.max(otherSearchState.fScore, cameFrom.fScore);
+        let potentialLMin = otherSearchState.distanceToSource + cameFrom.distanceToSource;
         if (potentialLMin < lMin) {
           minFrom = otherSearchState;
           minTo = cameFrom
@@ -146,22 +146,23 @@ function bidirectionalAStar(graph, options) {
 
       let tentativeDistance = cameFrom.distanceToSource + distance(otherSearchState.node, cameFrom.node, link);
 
-      if (tentativeDistance >= otherSearchState.distanceToSource || tentativeDistance > lMin) {
+      if (tentativeDistance >= otherSearchState.distanceToSource) {
         // This would only make our path longer. Ignore this route.
         return;
       }
 
       // Choose target based on current working set:
       let target = (currentOpener === BY_FROM) ? to : from;
-      otherSearchState.fScore = tentativeDistance + heuristic(otherSearchState.node, target);
+      let newFScore = tentativeDistance + heuristic(otherSearchState.node, target);
+      if (newFScore >= lMin) {
+        return;
+      }
+      otherSearchState.fScore = newFScore;
 
       if (otherSearchState.open === 0) {
         // Remember this node in the current set
-        if (otherSearchState.fScore < lMin) {
-          // we are only interested in those, that can improve found solution.
-          currentSet.push(otherSearchState);
-          currentSet.updateItem(otherSearchState.heapIndex);
-        } 
+        currentSet.push(otherSearchState);
+        currentSet.updateItem(otherSearchState.heapIndex);
 
         otherSearchState.open = currentOpener;
       }
