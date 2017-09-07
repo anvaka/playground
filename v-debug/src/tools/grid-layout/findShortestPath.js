@@ -29,7 +29,6 @@ function shortestPaths (graph, getEdgeLength, customExit) {
   }
 
   function findPath (from, to) {
-    let target = graph.getNode(to).data;
     let searchState = searchStateMemory.get(from)
     if (!searchState) {
       let heap = new FibonacciHeap()
