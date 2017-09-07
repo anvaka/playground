@@ -67,6 +67,7 @@ function createGridLayoutViewModel(appModel) {
   }
 
   function drawRoads() {
+    moveToPosition();
     let { selectedCluster } = appModel;
     let graph = selectedCluster.graph;
     let layout = selectedCluster.layout;
@@ -75,14 +76,14 @@ function createGridLayoutViewModel(appModel) {
 
     if (postRoadsTransform) {
       let splitLine = displace(lines, graph, layout);
-      rotate(lines, graph, layout, Math.random() * 180);
-      translateLines(lines, offset);
       // translateLines(splitLine, offset);
       // bus.fire('draw-lines', splitLine, {
       //   key: 'noise',
       //   color: {r: 0.0, g: 1.0, b: 0.6, a: 1.0}
       // });
+      rotate(lines, graph, layout, Math.random() * 180);
     }
+    translateLines(lines, offset);
     bus.fire('draw-lines', lines, {
       key: 'grid-roads' + selectedCluster.id,
       sendToBack: true,
