@@ -7,6 +7,9 @@ var getGridLines = require('./getGridLines');
 var getBBoxAndRects = require('./getBBoxAndRects');
 var getTesselationLines = require('./getTesselationLines');
 var makeNoise = require('../../lib/geom/makeNoise');
+var BBox = require('../../lib/geom/BBox');
+
+let postRoadsTransform =  false;
 
 function createGridLayoutViewModel(appModel) {
   var api = {
@@ -54,7 +57,8 @@ function createGridLayoutViewModel(appModel) {
 
     bus.fire('draw-lines', lines, {
       key: linesId,
-      color: {r: 0.3, g: 0.3, b: 0.6, a: 0.3}
+      color: {r: 0.3, g: 0.3, b: 0.6, a: 0.3},
+      sendToBack: true
     });
     // bus.fire('draw-lines', splitLine, {
     //   key: 'noise',
@@ -67,27 +71,38 @@ function createGridLayoutViewModel(appModel) {
     let graph = selectedCluster.graph;
     let layout = selectedCluster.layout;
     let offset = selectedCluster.getOwnOffset();
-    let lines = gridRoads(graph, layout, offset);
+    let lines = gridRoads(graph, layout);
 
-    let {bbox} = getBBoxAndRects(graph, layout);
-    // let splitLine = displace(lines, bbox, offset, graph, layout);
-    // rotate(lines, graph, layout, 30); // Math.random() * 180);
-
+    if (postRoadsTransform) {
+      let splitLine = displace(lines, graph, layout);
+      rotate(lines, graph, layout, Math.random() * 180);
+      translateLines(lines, offset);
+      // translateLines(splitLine, offset);
+      // bus.fire('draw-lines', splitLine, {
+      //   key: 'noise',
+      //   color: {r: 0.0, g: 1.0, b: 0.6, a: 1.0}
+      // });
+    }
     bus.fire('draw-lines', lines, {
       key: 'grid-roads' + selectedCluster.id,
+      sendToBack: true,
       color: {
-        r: 111/255,
-        g: 133/255, 
-        b: 174/255,
-        a: 1.0 
+        r: 255/255,
+        g: 255/255, 
+        b: 255/255,
+        a: 0.4 
       }
-      // sendToBack: true
     });
 
-    // bus.fire('draw-lines', splitLine, {
-    //   key: 'noise',
-    //   color: {r: 0.0, g: 1.0, b: 0.6, a: 1.0}
-    // });
+  }
+
+  function translateLines(lines, offset) {
+    lines.forEach(l => {
+      l.from.x += offset.x;
+      l.from.y += offset.y;
+      l.to.x += offset.x;
+      l.to.y += offset.y;
+    })
   }
 
    function moveToPosition() {
@@ -208,7 +223,12 @@ function rotatePoint(pos, alpha) {
   pos.y = y;
 }
 
-function displace(lines, bbox, offset, graph, layout) {
+function displace(lines, graph, layout) {
+  let bbox = new BBox();
+  lines.forEach(l => {
+    bbox.addPoint(l.from.x, l.from.y);
+    bbox.addPoint(l.to.x, l.to.y);
+  })
   const variance = bbox.width * 0.2;
   const noise = []
   const transform = naiveT;  // transformPoint
