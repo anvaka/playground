@@ -8,7 +8,7 @@ class PointAccessor {
     this.offset = offset;
     this.buffer = buffer;
     this.color = color || new Color(1, 1, 1, 1); 
-    if (data) {
+    if (data !== undefined) {
       this.data = data;
     }
   }
