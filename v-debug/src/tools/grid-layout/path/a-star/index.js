@@ -4,53 +4,12 @@
 
 module.exports = aStarPathSearch;
 
-// heuristics.
-aStarPathSearch.l1 = l1;
-aStarPathSearch.l2 = l2;
-
-/**
- * Euclid distance (l2 norm);
- * 
- * @param {*} a 
- * @param {*} b 
- */
-function l2(a, b) {
-  let dx = a.x - b.x;
-  let dy = a.y - b.y;
-  return Math.sqrt(dx * dx + dy * dy);
-}
-
-/**
- * Manhattan distance (l1 norm);
- * @param {*} a 
- * @param {*} b 
- */
-function l1(a, b) {
-  let dx = a.x - b.x;
-  let dy = a.y - b.y;
-  return Math.abs(dx) + Math.abs(dy);
-}
-
+const reconstructPath = require('./reconstructPath');
 const NodeHeap = require('../NodeHeap');
+const NodeSearchState = require('./NodeSearchState');
+const heuristics = require('./heuristics');
 
-class NodeSearchState {
-  constructor(node) {
-    this.node = node;
-
-    // How we came to this node?
-    this.parent = null;
-
-    this.closed = false;
-    this.open = 0;
-
-    this.distanceToSource = Number.POSITIVE_INFINITY;
-    // the f(n) = g(n) + h(n) value
-    this.fScore = Number.POSITIVE_INFINITY;
-
-    // used to reconstruct heap when fScore is updated.
-    this.heapIndex = -1;
-  }
-}
+Object.assign(module.exports, heuristics);
 
 function aStarPathSearch(graph, options) {
   options = options || {};
@@ -78,7 +37,9 @@ function aStarPathSearch(graph, options) {
     });
 
     let from = graph.getNode(fromId);
+    if (!from) throw new Error('fromId is not defined in this graph: ' + fromId);
     let to = graph.getNode(toId);
+    if (!to) throw new Error('toId is not defined in this graph: ' + toId);
 
     let startNode = new NodeSearchState(from);
     nodeState.set(fromId, startNode);
@@ -139,30 +100,17 @@ function aStarPathSearch(graph, options) {
   }
 }
 
-function reconstructPath(searchState) {
-  let path = [searchState.node];
-  let parent = searchState.parent;
-
-  while (parent) {
-    path.push(parent.node);
-    parent = parent.parent;
-  }
-
-  return path;
-}
-
 function goalReached(searchState, targetNode) {
   return searchState.node === targetNode;
 }
 
 function compareFScore(a, b) {
-  return a.fScore - b.fScore;
+  let result = a.fScore - b.fScore;
+  // TODO: Can I improve speed with smarter ties-breaking?
+  // I tried distanceToSource, but it didn't seem to have much effect
+  return result;
 }
 
 function setHeapIndex(nodeSearchState, heapIndex) {
   nodeSearchState.heapIndex = heapIndex;
-}
-
-function bidirectionalAStar(graph, options) {
-  throw new Error('Not implemented');
 }

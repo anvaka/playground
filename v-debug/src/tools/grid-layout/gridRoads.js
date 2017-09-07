@@ -1,12 +1,12 @@
 const findShortestPaths = require('./findShortestPath');
 const cellKey = require('./cellKey');
 const createGridGraph = require('./createGridGraph');
-const createGraph = require('ngraph.graph');
 const getBBoxAndRects = require('./getBBoxAndRects');
 const RoadAccumulator = require('./roadAccumulator') ;
 const Rect = require('../../lib/geom/Rect')
 const bus = require('../../lib/bus')
 const getDelaunayTesselation = require('./tesselation/getDelaunayTesselation');
+// const aStar = require('./path/a-star/bidirectional');
 const aStar = require('./path/a-star/index');
 
 module.exports = gridRoads;
@@ -21,7 +21,6 @@ function gridRoads(graph, layout) {
 
   let visRect = [];
 
-  // let grid = createGraph({uniqueLinkId: false});
   let grid = createGridGraph(bbox, cellSize) ;
 
   let delaunay = getDelaunayTesselation(rects, cellSize);
