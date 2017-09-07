@@ -7,12 +7,13 @@ const RoadAccumulator = require('./roadAccumulator') ;
 const Rect = require('../../lib/geom/Rect')
 const bus = require('../../lib/bus')
 const getDelaunayTesselation = require('./tesselation/getDelaunayTesselation');
+const aStar = require('./path/a-star/index');
 
 module.exports = gridRoads;
 
 const drawDebugRects = false;
 
-function gridRoads(graph, layout, offset) {
+function gridRoads(graph, layout) {
   let {bbox, rects} = getBBoxAndRects(graph, layout);
 
   let cellSize = 10;
@@ -31,8 +32,8 @@ function gridRoads(graph, layout, offset) {
   rects.forEach(r => {
     rectangleById.set(r.id, r);
     if (r.width > cellSize) {
-      let leftTop = toGridCoordinate(r.left, r.top);
-      let rightBottom = toGridCoordinate(r.right, r.bottom);
+      let leftTop = toPoint(r.left, r.top);
+      let rightBottom = toPoint(r.right, r.bottom);
       for(let col = leftTop.x; col < rightBottom.x; col += cellSize) {
         for (let row = leftTop.y; row < rightBottom.y; row += cellSize) {
           let gridKey = cellKey(col, row);
@@ -40,7 +41,7 @@ function gridRoads(graph, layout, offset) {
           if (!node) continue;
           node.data.src_key = r.id;
 
-          let coord = toGraphCoord(col, row);
+          let coord = toPoint(col, row);
           visRect.push(new Rect({
             left: coord.x,
             top: coord.y,
@@ -51,7 +52,7 @@ function gridRoads(graph, layout, offset) {
         }
       }
     } else {
-      let colRow = toGridCoordinate(r.left, r.top);
+      let colRow = toPoint(r.left, r.top);
       let gridKey = cellKey(colRow.x, colRow.y);
       grid.getNode(gridKey).data.src_key = r.id;
       //grid.removeNode(gridKey);
@@ -71,6 +72,7 @@ function gridRoads(graph, layout, offset) {
   let edgeIdToSeenCount = new Map();
 
   var firstPassRoads = new RoadAccumulator();
+  let aStarPathFinder;
   let currentFromId;
   let currentToId;
 
@@ -85,8 +87,8 @@ function gridRoads(graph, layout, offset) {
   
   function convertAccumulatorToLines(accumulator) {
     return accumulator.getLines().map(l => {
-      let from = toGraphCoord(l.from.x, l.from.y);
-      let to = toGraphCoord(l.to.x, l.to.y);
+      let from = toPoint(l.from.x, l.from.y);
+      let to = toPoint(l.to.x, l.to.y);
       let c2 = cellSize/2;
       from.x += c2; from.y += c2;
       to.x += c2; to.y += c2;
@@ -100,23 +102,49 @@ function gridRoads(graph, layout, offset) {
 
   function collectRoads(roadAccumulator) {
     console.time('roads');
-    graph.forEachLink(l => findRoadsForLink(l, roadAccumulator));
+
+    let maxReducer = (Math.exp(-0.8 * grid.getLinksCount() + Math.log(1 - 0.5)) + 0.5)
+    aStarPathFinder = aStar(grid, {
+      // distance(fromId, toId) {
+      //   let fromPos = grid.getNode(fromId).data;
+      //   let toPos = grid.getNode(toId).data;
+      //   return aStar.l2(fromPos, toPos);
+      // },
+      heuristic(from, to) {
+        //  let fromPos = grid.getNode(fromId).data;
+        //  let toPos = grid.getNode(toId).data;
+         let fromPos = from.data;
+         let toPos = to.data;
+         return aStar.l2(fromPos, toPos) * maxReducer * 0.9;
+      },
+      distance: getCityEdgeLength
+      // (fromId, toId) {
+      //   let fromPos = grid.getNode(fromId).data;
+      //   let toPos = grid.getNode(toId).data;
+      //   return aStar.l2(fromPos, toPos);
+      // }
+    })
+
+    console.log('Searching graph with ' + grid.getNodesCount() + ' nodes and ' + grid.getLinksCount() + ' edges');
+    graph.forEachNode(n => {
+      let fromPos = layout.getNodePosition(n.id);
+      fromPos = movePosToGrid(fromPos);
+      let fromId = cellKey(fromPos.x, fromPos.y);
+
+      currentFromId = n.id;
+
+      // TODO: explore this further.
+      // aStarPathFinder.reset();
+      graph.forEachLinkedNode(n.id, (otherNode) => {
+        let toPos = layout.getNodePosition(otherNode.id);
+        currentToId = otherNode.id;
+        toPos = movePosToGrid(toPos);
+        let toId = cellKey(toPos.x, toPos.y);
+        findInGridSpace(fromId, toId, roadAccumulator);
+      }, true)
+    })
+//    graph.forEachLink(l => findRoadsForLink(l, roadAccumulator));
     console.timeEnd('roads');
-  }
-
-  function findRoadsForLink(link, roadAccumulator) {
-    currentFromId = link.fromId;
-    currentToId = link.toId;
-
-    let fromPos = layout.getNodePosition(link.fromId);
-    let toPos = layout.getNodePosition(link.toId);
-    fromPos = movePosToGrid(fromPos);
-    toPos = movePosToGrid(toPos);
-
-    let fromId = cellKey(fromPos.x, fromPos.y);
-    let toId = cellKey(toPos.x, toPos.y);
-    
-    findInGridSpace(fromId, toId, roadAccumulator);
   }
 
   function movePosToGrid (pos) {
@@ -128,10 +156,14 @@ function gridRoads(graph, layout, offset) {
 
   function findInGridSpace(fromId, toId, roadAccumulator) {
     // TODO: remove global dependency on currentFromId/currenToId
-    let shortestPaths = findShortestPaths(grid, getCityEdgeLength, (node) => {
-      return node.data.src_key === currentToId;
+    // let shortestPaths = findShortestPaths(grid, getCityEdgeLength, (node) => {
+    //   return node.data.src_key === currentToId;
+    // });
+    // let path = shortestPaths(fromId, toId); 
+    let path = aStarPathFinder.find(fromId, toId).map(p => {
+      // return grid.getNode(p).data;
+      return (p).data;
     });
-    let path = shortestPaths(fromId, toId); 
 
     rememberPath(path);
     // path = path.filter(p => !('src_key' in p));
@@ -143,6 +175,12 @@ function gridRoads(graph, layout, offset) {
       let key = getEdgeMemoryId(path[i], path[i - 1]);
       edgeIdToSeenCount.set(key, (edgeIdToSeenCount.get(key) || 0) + 1)
     }
+  }
+
+  function getCityEdgeLengthId(aId, bId, link) {
+    let a = grid.getNode(aId);
+    let b = grid.getNode(bId);
+    return getCityEdgeLength(a, b, link);
   }
 
   function getCityEdgeLength(a, b, link) {
@@ -168,6 +206,7 @@ function gridRoads(graph, layout, offset) {
 
     // let dist = Math.sqrt(dx * dx + dy * dy);
     let dist = Math.abs(dx) + Math.abs(dy);
+    // return dist;
     let delaunayFactor = 1;
     if (link && link.data && link.data.delaunay) {
       let lengthFactor = link.data.lengthFactor;
@@ -210,18 +249,8 @@ function gridRoads(graph, layout, offset) {
     }
   }
 
-  function toGraphCoord(x, y) {
-    let startX = offset.x;
-    let startY = offset.y;
-
-    return {
-      x: startX + x,
-      y: startY + y
-    }
-  }
-
-  function toGridCoordinate(x, y) {
-    return {x, y};
+  function toPoint(x, y) {
+    return { x: x, y: y }
   }
   
   function mergeDelaunayIntoGrid(grid, delaunay) {

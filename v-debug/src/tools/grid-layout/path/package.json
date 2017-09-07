@@ -1,0 +1,7 @@
+{
+  "devDependencies": {
+    "ngraph.fromdot": "^0.1.6",
+    "ngraph.graph": "0.0.13",
+    "tap": "^10.7.2"
+  }
+}
