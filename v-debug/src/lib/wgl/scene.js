@@ -7,7 +7,7 @@ const createTree = require('d3-quadtree').quadtree;
 
 module.exports = makeScene;
 
-let pixelRatio = 1.0; //window.devicePixelRatio;
+let pixelRatio = window.devicePixelRatio;
 
 function makeScene(canvas) {
   let width;
@@ -34,6 +34,8 @@ function makeScene(canvas) {
 
   var api = {
     appendChild,
+    getSceneCoordinate,
+    getTransform,
     removeChild,
     setViewBox,
     setClearColor,
@@ -45,6 +47,10 @@ function makeScene(canvas) {
   listenToEvents();
 
   return eventify(api);
+
+  function getTransform() {
+    return sceneRoot.transform;
+  }
 
   function setClearColor(r, g, b, a) {
     gl.clearColor(r, g, b, a)
@@ -63,6 +69,7 @@ function makeScene(canvas) {
 
     panzoom.dispose();
     sceneRoot.dispose();
+    // api.off(); Do I need this?
     if (frameToken) {
       cancelAnimationFrame(frameToken);
       frameToken = null;
@@ -84,7 +91,13 @@ function makeScene(canvas) {
   }
 
   function onMouseClick(e) {
-    let res = findUnderCursor(e.clientX, e.clientY);
+    let p = getSceneCoordinate(e.clientX, e.clientY);
+    api.fire('click', {
+      event: e,
+      sceneX: p.x,
+      sceneY: p.y,
+    });
+    let res = findUnderCursor(p.x, p.y);
     if (res) {
       api.fire('point-click', res, {
         x: e.clientX,
@@ -94,7 +107,13 @@ function makeScene(canvas) {
   }
 
   function onMouseMove(e) {
-    let res = findUnderCursor(e.clientX, e.clientY);
+    let p = getSceneCoordinate(e.clientX, e.clientY);
+    api.fire('mousemove', {
+      event: e,
+      sceneX: p.x,
+      sceneY: p.y,
+    });
+    let res = findUnderCursor(p.x, p.y);
     if (!res) {
       if (prevHighlighted) {
         api.fire('point-leave', prevHighlighted);
@@ -113,14 +132,20 @@ function makeScene(canvas) {
     });
   }
 
-  function findUnderCursor(clientX, clientY) {
+  function getSceneCoordinate(clientX, clientY) {
     let t = sceneRoot.transform;
     let canvasX = clientX * pixelRatio;
     let canvasY = clientY * pixelRatio;
     let x = (canvasX - t.dx)/t.scale;
     let y = (canvasY - t.dy)/t.scale;
-    return interactiveTree.find(x, y, 10);
 
+    return {x, y};
+  }
+
+  function findUnderCursor(x, y) {
+    // TODO: I don't like this. Almost seem like interactivity
+    // does not belong here
+    return interactiveTree.find(x, y, 10);
   }
 
   function setViewBox(rect) {
