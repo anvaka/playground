@@ -39,7 +39,6 @@ function renderGraph(model, canvas) {
   var singletonElements = new Map();
   var lastLinks;
   var lastHighlight;
-  var prevRectangles;
   scene.on('point-click', pointClick);
   scene.on('point-enter', pointEnter);
   scene.on('point-leave', pointLeave);
