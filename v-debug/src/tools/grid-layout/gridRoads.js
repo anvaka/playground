@@ -6,14 +6,15 @@ const RoadAccumulator = require('./roadAccumulator') ;
 const Rect = require('../../lib/geom/Rect')
 const bus = require('../../lib/bus')
 const getDelaunayTesselation = require('./tesselation/getDelaunayTesselation');
-//const aStar = require('./path/a-star/bidirectional');
+const createGraph = require('ngraph.graph');
+// const aStar = require('./path/a-star/bidirectional');
 const aStar = require('./path/a-star/index');
 
 module.exports = gridRoads;
 
 const drawDebugRects = false;
 
-function gridRoads(graph, layout) {
+function gridRoads(graph, layout, useGrid = true) {
   let {bbox, rects} = getBBoxAndRects(graph, layout);
 
   let cellSize = 10;
@@ -21,10 +22,16 @@ function gridRoads(graph, layout) {
 
   let visRect = [];
 
-  let grid = createGridGraph(bbox, cellSize) ;
+  let grid;
+  let delaunay = getDelaunayTesselation(rects, cellSize, useGrid);
 
-  let delaunay = getDelaunayTesselation(rects, cellSize);
-  mergeDelaunayIntoGrid(grid, delaunay);
+  if (useGrid) {
+    grid = createGridGraph(bbox, cellSize) ;
+    mergeDelaunayIntoGrid(grid, delaunay);
+  } else {
+    grid = createGraph({uniqueLinkId: false});
+    mergeDelaunayIntoGrid(grid, delaunay);
+  }
 
   // We mark each cell that contain original node, so that path finding
   // considers them impassible
@@ -53,7 +60,9 @@ function gridRoads(graph, layout) {
     } else {
       let colRow = toPoint(r.left, r.top);
       let gridKey = cellKey(colRow.x, colRow.y);
-      grid.getNode(gridKey).data.src_key = r.id;
+      let node = grid.getNode(gridKey)
+      if (!node) return;
+      node.data.src_key = r.id;
       //grid.removeNode(gridKey);
       visRect.push(r);
     }
@@ -105,9 +114,9 @@ function gridRoads(graph, layout) {
     let maxReducer = (Math.exp(-0.8 * grid.getLinksCount() + Math.log(1 - 0.5)) + 0.5)
     aStarPathFinder = aStar(grid, {
       heuristic(from, to) {
-         let fromPos = from.data;
-         let toPos = to.data;
-         return aStar.l2(fromPos, toPos) * maxReducer * 0.9;
+        let fromPos = from.data;
+        let toPos = to.data;
+        return aStar.l2(fromPos, toPos) * maxReducer * 0.9;
       },
       distance: getCityEdgeLength
     })
@@ -147,7 +156,6 @@ function gridRoads(graph, layout) {
     // });
     // let path = shortestPaths(fromId, toId); 
     let path = aStarPathFinder.find(fromId, toId).map(p => {
-      // return grid.getNode(p).data;
       return (p).data;
     });
 
@@ -186,7 +194,6 @@ function gridRoads(graph, layout) {
 
     // let dist = Math.sqrt(dx * dx + dy * dy);
     let dist = Math.abs(dx) + Math.abs(dy);
-    // return dist;
     let delaunayFactor = 1;
     if (link && link.data && link.data.delaunay) {
       let lengthFactor = link.data.lengthFactor;
@@ -257,19 +264,25 @@ function gridRoads(graph, layout) {
       let toKey = cellKey(to.x, to.y);
 
       if (!grid.getNode(fromKey)) {
-        grid.addNode(fromKey, {
+        let fromData = {
           x: from.x,
           y: from.y,
-          src_key: l.fromId
-        })
+        }
+        if (from.id === from.src_key) {
+          fromData.src_key = from.id;
+        }
+        grid.addNode(fromKey, fromData);
       }
 
       if (!grid.getNode(toKey)) {
-        grid.addNode(toKey, {
-          x: to.x,
-          y: to.y,
-          src_key: l.toId
-        })
+        let toData = {
+          x: from.x,
+          y: from.y,
+        }
+        if (to.id === to.src_key) {
+          toData.src_key = to.id;
+        }
+        grid.addNode(toKey, toData)
       }
 
       let alreadyHasThisLink = grid.hasLink(fromKey, toKey) || grid.hasLink(toKey, fromKey)

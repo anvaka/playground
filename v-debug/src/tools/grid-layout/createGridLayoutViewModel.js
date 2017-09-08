@@ -67,12 +67,13 @@ function createGridLayoutViewModel(appModel) {
   }
 
   function drawRoads() {
+    let useGrid = true;
     moveToPosition();
     let { selectedCluster } = appModel;
     let graph = selectedCluster.graph;
     let layout = selectedCluster.layout;
     let offset = selectedCluster.getOwnOffset();
-    let lines = gridRoads(graph, layout);
+    let lines = gridRoads(graph, layout, useGrid);
 
     if (postRoadsTransform) {
       let splitLine = displace(lines, graph, layout);
