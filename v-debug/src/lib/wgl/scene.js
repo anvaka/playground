@@ -1,23 +1,22 @@
-const makePanzoom = require('panzoom');
-const Element = require('./Element');
-const eventify = require('ngraph.events');
-const createTree = require('d3-quadtree').quadtree;
-
-// const makeLineProgram = require('./lines.js');
+var makePanzoom = require('panzoom');
+var Element = require('./Element');
+var eventify = require('ngraph.events');
+var createTree = require('d3-quadtree').quadtree;
+var onClap = require('./clap');
 
 module.exports = makeScene;
 
-let pixelRatio = window.devicePixelRatio;
+var pixelRatio = window.devicePixelRatio;
 
 function makeScene(canvas) {
-  let width;
-  let height;
-  let screen = { width: 0, height: 0 };
+  var width;
+  var height;
+  var screen = { width: 0, height: 0 };
 
   var sceneRoot = new Element();
 
-  let gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-  let interactiveTree = createTree();
+  var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  var interactiveTree = createTree();
 
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   gl.enable(gl.BLEND);
@@ -29,6 +28,7 @@ function makeScene(canvas) {
   var lastTreeUpdate = new Date();
 
   var panzoom = makePanzoom(canvas, {
+    zoomSpeed: 0.025,
     controller: wglPanZoom(canvas, sceneRoot)
   });
 
@@ -44,6 +44,7 @@ function makeScene(canvas) {
 
   var frameToken = requestAnimationFrame(frame);
   var prevHighlighted;
+  var disposeClick;
   listenToEvents();
 
   return eventify(api);
@@ -58,18 +59,19 @@ function makeScene(canvas) {
 
   function listenToEvents() {
     canvas.addEventListener('mousemove', onMouseMove);
-    canvas.addEventListener('click', onMouseClick);
+    disposeClick = onClap(canvas, onMouseClick, this);
     window.addEventListener('resize', onResize, true);
   }
 
   function dispose() {
     canvas.removeEventListener('mousemove', onMouseMove);
+    if (disposeClick) this.disposeClick();
+
     canvas.removeEventListener('click', onMouseClick);
     window.removeEventListener('resize', onResize, true);
 
     panzoom.dispose();
     sceneRoot.dispose();
-    // api.off(); Do I need this?
     if (frameToken) {
       cancelAnimationFrame(frameToken);
       frameToken = null;
@@ -91,13 +93,13 @@ function makeScene(canvas) {
   }
 
   function onMouseClick(e) {
-    let p = getSceneCoordinate(e.clientX, e.clientY);
+    var p = getSceneCoordinate(e.clientX, e.clientY);
     api.fire('click', {
       event: e,
       sceneX: p.x,
       sceneY: p.y,
     });
-    let res = findUnderCursor(p.x, p.y);
+    var res = findUnderCursor(p.x, p.y);
     if (res) {
       api.fire('point-click', res, {
         x: e.clientX,
@@ -107,13 +109,13 @@ function makeScene(canvas) {
   }
 
   function onMouseMove(e) {
-    let p = getSceneCoordinate(e.clientX, e.clientY);
+    var p = getSceneCoordinate(e.clientX, e.clientY);
     api.fire('mousemove', {
       event: e,
       sceneX: p.x,
       sceneY: p.y,
     });
-    let res = findUnderCursor(p.x, p.y);
+    var res = findUnderCursor(p.x, p.y);
     if (!res) {
       if (prevHighlighted) {
         api.fire('point-leave', prevHighlighted);
@@ -133,11 +135,11 @@ function makeScene(canvas) {
   }
 
   function getSceneCoordinate(clientX, clientY) {
-    let t = sceneRoot.transform;
-    let canvasX = clientX * pixelRatio;
-    let canvasY = clientY * pixelRatio;
-    let x = (canvasX - t.dx)/t.scale;
-    let y = (canvasY - t.dy)/t.scale;
+    var t = sceneRoot.transform;
+    var canvasX = clientX * pixelRatio;
+    var canvasY = clientY * pixelRatio;
+    var x = (canvasX - t.dx)/t.scale;
+    var y = (canvasY - t.dy)/t.scale;
 
     return {x, y};
   }
@@ -154,7 +156,7 @@ function makeScene(canvas) {
 
   function frame() {
     gl.clear(gl.COLOR_BUFFER_BIT)
-    let wasDirty = sceneRoot.updateWorldTransform();
+    var wasDirty = sceneRoot.updateWorldTransform();
     if (wasDirty) {
       updateInteractiveTree();
     }
@@ -164,7 +166,7 @@ function makeScene(canvas) {
   }
 
   function updateInteractiveTree() {
-    let now = new Date();
+    var now = new Date();
     if (now - lastTreeUpdate < 500) return; 
 
     interactiveTree = createTree().x(p => p.x).y(p => p.y);
