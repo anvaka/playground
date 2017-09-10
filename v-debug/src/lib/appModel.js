@@ -27,7 +27,7 @@ function init(rootGraph, autoCluster = false) {
     rootGraph,
     selectedCluster: root,
     tidyUp,
-    tools: tools
+    tools: tools,
   };
 
   toolsToInit.forEach(createTool => {
@@ -146,7 +146,8 @@ function peprocessGraphNodeSize(graph) {
     distr.push(bucket);
 
     if (!node.data) node.data = {};
-    node.data.size = bucket;
+    node.data.size = bucket; //  10 * Math.round(bucket/10);
+   // node.data.size = bucket;
   })
 
   window.distr = distr;
