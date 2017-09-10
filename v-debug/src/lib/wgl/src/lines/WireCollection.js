@@ -1,4 +1,4 @@
-var BaseLines = require('./BaseLines');
+var BaseLineCollection = require('./BaseLineCollection');
 var makeLinesProgram = require('./makeLinesProgram');
 var WireAccessor = require('./WireAccessor');
 
@@ -6,7 +6,7 @@ var WireAccessor = require('./WireAccessor');
  * Unlike lines, wires do not have width, and are always 1px wide, regardless
  * of resolution.
  */
-class Wires extends BaseLines {
+class WireCollection extends BaseLineCollection {
   constructor(capacity) {
     super(capacity, 4); // items per wire
   }
@@ -22,4 +22,4 @@ class Wires extends BaseLines {
   }
 }
 
-module.exports = Wires;
+module.exports = WireCollection;

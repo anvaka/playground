@@ -2,11 +2,11 @@
 module.exports = {
   scene: require('./src/scene'),
 
-  Points: require('./src/Points'),
+  PointCollection: require('./src/PointCollection'),
   Point: require('./src/Point'),
   
-  Lines: require('./src/lines/Lines'),
-  Wires: require('./src/lines/Wires'),
+  LineCollection: require('./src/lines/LineCollection'),
+  WireCollection: require('./src/lines/WireCollection'),
 
   Element: require('./src/Element'),
 }

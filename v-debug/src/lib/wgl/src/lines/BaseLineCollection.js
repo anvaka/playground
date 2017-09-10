@@ -1,7 +1,7 @@
 var Color = require('../Color');
 var Element = require('../Element');
 
-class BaseLines extends Element {
+class BaseLineCollection extends Element {
   constructor(capacity, itemsPerLine) {
     super();
 
@@ -64,4 +64,4 @@ class BaseLines extends Element {
   }
 }
 
-module.exports = BaseLines;
+module.exports = BaseLineCollection;

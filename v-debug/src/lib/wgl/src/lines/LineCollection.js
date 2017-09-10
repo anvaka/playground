@@ -1,4 +1,4 @@
-var BaseLines = require('./BaseLines');
+var BaseLineCollection = require('./BaseLineCollection');
 var makeLinesProgram = require('./makeLinesProgram');
 var LineAccessor = require('./LineAccessor');
 
@@ -6,7 +6,7 @@ var LineAccessor = require('./LineAccessor');
  * Lines have varying thickness. That comes at extra price: Each line
  * requires additional space in buffer, as it is rendered as triangles
  */
-class Lines extends BaseLines {
+class LineCollection extends BaseLineCollection {
   constructor(capacity) {
     super(capacity, 12); // items per thick line
   }
@@ -23,4 +23,4 @@ class Lines extends BaseLines {
   }
 }
 
-module.exports = Lines;
+module.exports = LineCollection;

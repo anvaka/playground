@@ -43,7 +43,7 @@ class PointAccessor {
   }
 }
 
-class Points extends Element {
+class PointCollection extends Element {
   constructor(capacity) {
     super();
 
@@ -111,4 +111,4 @@ class Points extends Element {
   }
 }
 
-module.exports = Points;
+module.exports = PointCollection;
