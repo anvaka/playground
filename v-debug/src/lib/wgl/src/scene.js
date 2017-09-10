@@ -1,7 +1,7 @@
 var makePanzoom = require('panzoom');
 var Element = require('./Element');
+var ActivePoints = require('./interaction/ActivePoints');
 var eventify = require('ngraph.events');
-var createTree = require('d3-quadtree').quadtree;
 var onClap = require('./clap');
 
 module.exports = makeScene;
@@ -11,12 +11,11 @@ var pixelRatio = window.devicePixelRatio;
 function makeScene(canvas) {
   var width;
   var height;
-  var screen = { width: 0, height: 0 };
+  var drawContext = { width: 0, height: 0 };
 
   var sceneRoot = new Element();
 
   var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-  var interactiveTree = createTree();
 
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   gl.enable(gl.BLEND);
@@ -25,29 +24,35 @@ function makeScene(canvas) {
 
   updateCanvasSize();
   
-  var lastTreeUpdate = new Date();
-
   var panzoom = makePanzoom(canvas, {
     zoomSpeed: 0.025,
     controller: wglPanZoom(canvas, sceneRoot)
   });
 
-  var api = {
+  var api = eventify({
     appendChild,
     getSceneCoordinate,
     getTransform,
+    getRoot,
     removeChild,
     setViewBox,
     setClearColor,
     dispose,
-  };
+  });
 
   var frameToken = requestAnimationFrame(frame);
-  var prevHighlighted;
   var disposeClick;
+
+  var interactiveListener = new ActivePoints(api);
+  sceneRoot.appendChild(interactiveListener);
+
   listenToEvents();
 
-  return eventify(api);
+  return api;
+
+  function getRoot() {
+    return sceneRoot;
+  }
 
   function getTransform() {
     return sceneRoot.transform;
@@ -60,6 +65,7 @@ function makeScene(canvas) {
   function listenToEvents() {
     canvas.addEventListener('mousemove', onMouseMove);
     disposeClick = onClap(canvas, onMouseClick, this);
+
     window.addEventListener('resize', onResize, true);
   }
 
@@ -72,6 +78,7 @@ function makeScene(canvas) {
 
     panzoom.dispose();
     sceneRoot.dispose();
+
     if (frameToken) {
       cancelAnimationFrame(frameToken);
       frameToken = null;
@@ -87,50 +94,26 @@ function makeScene(canvas) {
     height = canvas.height = canvas.offsetHeight * pixelRatio
     gl.viewport(0, 0, width, height);
 
-    screen.width = width;
-    screen.height = height;
+    drawContext.width = width;
+    drawContext.height = height;
     sceneRoot.worldTransformNeedsUpdate = true;
   }
 
   function onMouseClick(e) {
     var p = getSceneCoordinate(e.clientX, e.clientY);
     api.fire('click', {
-      event: e,
+      originalEvent: e,
       sceneX: p.x,
       sceneY: p.y,
     });
-    var res = findUnderCursor(p.x, p.y);
-    if (res) {
-      api.fire('point-click', res, {
-        x: e.clientX,
-        y: e.clientY
-      });
-    }
   }
 
   function onMouseMove(e) {
     var p = getSceneCoordinate(e.clientX, e.clientY);
     api.fire('mousemove', {
-      event: e,
+      originalEvent: e,
       sceneX: p.x,
       sceneY: p.y,
-    });
-    var res = findUnderCursor(p.x, p.y);
-    if (!res) {
-      if (prevHighlighted) {
-        api.fire('point-leave', prevHighlighted);
-        prevHighlighted = null;
-      }
-  
-      return;
-    }
-
-    if (res === prevHighlighted) return;
-
-    prevHighlighted = res;
-    api.fire('point-enter', prevHighlighted, {
-      x: e.clientX,
-      y: e.clientY
     });
   }
 
@@ -144,35 +127,15 @@ function makeScene(canvas) {
     return {x, y};
   }
 
-  function findUnderCursor(x, y) {
-    // TODO: I don't like this. Almost seem like interactivity
-    // does not belong here
-    return interactiveTree.find(x, y, 10);
-  }
-
   function setViewBox(rect) {
     panzoom.showRectangle(rect)
   }
 
   function frame() {
     gl.clear(gl.COLOR_BUFFER_BIT)
-    var wasDirty = sceneRoot.updateWorldTransform();
-    if (wasDirty) {
-      updateInteractiveTree();
-    }
-
-    sceneRoot.draw(gl, screen);
+    drawContext.wasDirty = sceneRoot.updateWorldTransform();
+    sceneRoot.draw(gl, drawContext);
     frameToken = requestAnimationFrame(frame);
-  }
-
-  function updateInteractiveTree() {
-    var now = new Date();
-    if (now - lastTreeUpdate < 500) return; 
-
-    interactiveTree = createTree().x(p => p.x).y(p => p.y);
-    sceneRoot.addInteractiveElements(interactiveTree, -sceneRoot.transform.dx, -sceneRoot.transform.dy);
-
-    lastTreeUpdate = new Date();
   }
 
   function appendChild(child, sendToBack) {
