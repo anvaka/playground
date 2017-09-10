@@ -1,5 +1,6 @@
 var eventify = require('ngraph.events');
 var wgl = require('./wgl/index');
+var ActivePoints = require('./wgl/input/ActivePoints');
 
 module.exports = renderGraph;
 
@@ -39,6 +40,9 @@ function renderGraph(model, canvas) {
   var singletonElements = new Map();
   var lastLinks;
   var lastHighlight;
+
+  let activePoints = new ActivePoints(scene);
+  scene.appendChild(activePoints);
   scene.on('point-click', pointClick);
   scene.on('point-enter', pointEnter);
   scene.on('point-leave', pointLeave);

@@ -1,6 +1,5 @@
 var makePanzoom = require('panzoom');
 var Element = require('./Element');
-var ActivePoints = require('./interaction/ActivePoints');
 var eventify = require('ngraph.events');
 var onClap = require('./clap');
 
@@ -42,9 +41,6 @@ function makeScene(canvas) {
 
   var frameToken = requestAnimationFrame(frame);
   var disposeClick;
-
-  var interactiveListener = new ActivePoints(api);
-  sceneRoot.appendChild(interactiveListener);
 
   listenToEvents();
 

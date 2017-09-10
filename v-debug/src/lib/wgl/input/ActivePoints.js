@@ -1,6 +1,14 @@
-var Element = require('../Element');
+var Element = require('../src/Element');
 var createTree = require('d3-quadtree').quadtree;
 
+/**
+ * Add this element to your scene to get `point-enter`, `point-leave`,
+ * `point-click` events from PointCollection elements.
+ * 
+ * Note: current implementation is suboptimal and used for debugging
+ * only. More work needs to be done before I can recommend it to anyone.
+ * (see TODOs in the file)
+ */
 class ActivePoints extends Element {
   constructor(scene) {
     super();
@@ -9,6 +17,7 @@ class ActivePoints extends Element {
     this.prevHighlighted = null;
     this.lastTreeUpdate = new Date();
 
+    // TODO: when removed from scene we need to release these events
     scene.on('mousemove', this.onMouseMove, this);
     scene.on('click', this.onClick, this);
   }
