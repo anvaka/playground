@@ -2,8 +2,8 @@
 module.exports = {
   scene: require('./src/scene'),
 
-  PointCollection: require('./src/PointCollection'),
-  Point: require('./src/Point'),
+  PointCollection: require('./src/points/PointCollection'),
+  Point: require('./src/points/Point'),
   
   LineCollection: require('./src/lines/LineCollection'),
   WireCollection: require('./src/lines/WireCollection'),

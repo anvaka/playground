@@ -1,10 +1,9 @@
-const gl_utils = require('./glUtils');
-
 module.exports = makePointsProgram;
 
-var shaderGraph = require('./shaderGraph/index.js');
-var panzoomVS = require('./shaderGraph/panzoom');
-var pointVS = require('./shaderGraph/point');
+var gl_utils = require('../glUtils');
+var shaderGraph = require('../shaderGraph/index.js');
+var panzoomVS = require('../shaderGraph/panzoom');
+var pointVS = require('../shaderGraph/point');
 
 const vertextShaderSrc = shaderGraph.getVSCode([
   panzoomVS,

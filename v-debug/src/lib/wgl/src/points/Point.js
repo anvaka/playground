@@ -1,4 +1,4 @@
-var Color = require('./Color')
+var Color = require('../Color')
 
 class Point {
   constructor(x, y, size) {
