@@ -35,6 +35,8 @@ function makeLineProgram(gl, data, drawTriangles) {
   var bpe = data.BYTES_PER_ELEMENT;
   var drawType = drawTriangles ? gl.TRIANGLES : gl.LINES;
   gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer)
+  gl.bufferData(gl.ARRAY_BUFFER, data.byteLength, gl.STATIC_DRAW);
+  gl.bufferSubData(gl.ARRAY_BUFFER, 0, data);
 
   var api = {
     draw,
@@ -61,7 +63,7 @@ function makeLineProgram(gl, data, drawTriangles) {
     gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
     gl.enableVertexAttribArray(locations.attributes.aPosition)
     // TODO: Avoid buffering, if data hasn't changed?
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+    // gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
     gl.vertexAttribPointer(locations.attributes.aPosition, 2, gl.FLOAT, false, bpe * 2, 0)
 
     gl.drawArrays(drawType, 0, data.length / 2);

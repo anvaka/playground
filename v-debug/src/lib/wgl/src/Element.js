@@ -1,5 +1,5 @@
 var Transform = require('./Transform')
-var BBox = require('../geom/BBox')
+var BBox = require('../../geom/BBox')
 
 /**
  * represents a single element in the scene tree

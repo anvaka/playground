@@ -17,9 +17,9 @@ varying vec4 vColor;
 uniform sampler2D texture;
 
 void main() {
-  // vec4 tColor = texture2D( texture, gl_PointCoord );
-  // gl_FragColor = vec4(vColor.rgb, tColor.a);
-  gl_FragColor = vec4(vColor.rgb, 1.0);
+  vec4 tColor = texture2D( texture, gl_PointCoord );
+  gl_FragColor = vec4(vColor.rgb, tColor.a);
+  //gl_FragColor = vec4(vColor.rgb, 1.0);
   // vec2 t = 2.0 * gl_PointCoord - 1.0;
   // float a = 1.0 - pow(t.x, 2.0) - pow(t.y, 2.0);
   // gl_FragColor = vec4(vColor.rgb, a);
@@ -42,6 +42,7 @@ function makePointsProgram(gl, data) {
   var buffer = gl.createBuffer();
   if (!buffer) throw new Error('failed to create a nodesBuffer');
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, data.byteLength, gl.DYNAMIC_DRAW);
 
   var pointTexture = createCircleTexture(gl);
 
