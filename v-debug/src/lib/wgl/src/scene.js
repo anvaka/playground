@@ -71,7 +71,7 @@ function makeScene(canvas) {
 
   function dispose() {
     canvas.removeEventListener('mousemove', onMouseMove);
-    if (disposeClick) this.disposeClick();
+    if (disposeClick) disposeClick();
 
     canvas.removeEventListener('click', onMouseClick);
     window.removeEventListener('resize', onResize, true);
