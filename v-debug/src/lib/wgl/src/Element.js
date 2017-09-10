@@ -1,5 +1,4 @@
 var Transform = require('./Transform')
-var BBox = require('../../geom/BBox')
 
 /**
  * represents a single element in the scene tree
@@ -69,23 +68,6 @@ class Element {
       var child = this.children[i];
       child.draw(gl, screen);
     }
-  }
-
-  computeBoundingBox() {
-    // TODO This should probably compute bbox in the world coordinates, and then
-    // transform it back?
-    var bbox = new BBox()
-    if (this.bbox) {
-      bbox.merge()
-    }
-
-    for (var i = 0; i < this.children.length; ++i) {
-      var child = this.children[i];
-      var childBBox = child.computeBoundingBox();
-      bbox.merge(childBBox)
-    }
-
-    return bbox;
   }
 
   dispose() {
