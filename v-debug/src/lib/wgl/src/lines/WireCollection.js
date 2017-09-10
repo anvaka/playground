@@ -9,6 +9,8 @@ var WireAccessor = require('./WireAccessor');
 class WireCollection extends BaseLineCollection {
   constructor(capacity) {
     super(capacity, 4); // items per wire
+
+    this.type = 'WireCollection';
   }
 
   _makeProgram(gl) {

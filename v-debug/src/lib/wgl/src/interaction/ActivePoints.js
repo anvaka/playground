@@ -29,10 +29,29 @@ class ActivePoints extends Element {
     var now = new Date();
     if (now - this.lastTreeUpdate < 500) return; 
 
+    // TODO: This is such a waste of time! Instead of rebuilding tree on each
+    // transform modification you should build tree once for each point collection
+    // in global coordinates, and apply transform to lookup point.
     var interactiveTree = createTree().x(p => p.x).y(p => p.y);
     var transform = this.scene.getTransform();
     var sceneRoot = this.scene.getRoot();
-    sceneRoot.addInteractiveElements(interactiveTree, -transform.dx, -transform.dy);
+    var dx = -transform.dx;
+    var dy = -transform.dy
+    sceneRoot.traverse(child => {
+      dx += child.transform.dx;
+      dy += child.transform.dy;
+      if (child.type === 'PointCollection') {
+        var points = child.pointsAccessor.map(p => ({
+          x: p.x + dx,
+          y: p.y + dy,
+          p: p
+        }))
+        interactiveTree.addAll(points);
+      }
+    }, child => {
+      dx -= child.transform.dx;
+      dy -= child.transform.dy;
+    })
 
     this.interactiveTree = interactiveTree;
 

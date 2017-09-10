@@ -12,15 +12,7 @@ class Element {
     // no parent, this object is equal to `this.transform`
     this.worldTransform = new Transform();
     this.worldTransformNeedsUpdate = true;
-  }
-
-  addInteractiveElements(tree, dx = 0, dy = 0) {
-    let children = this.children;
-    dx += this.transform.dx;
-    dy += this.transform.dy;
-    for (var i = 0; i < children.length; i++ ) {
-       children[i].addInteractiveElements(tree, dx, dy);
-    }
+    this.type = 'Element';
   }
 
   appendChild(child, sendToBack) {
@@ -31,6 +23,17 @@ class Element {
     } else {
       this.children.push(child);
     }
+  }
+
+  traverse(enterCallback, exitCallback) {
+    enterCallback(this);
+
+    for (var i = 0; i < this.children.length; ++i) {
+      var child = this.children[i];
+      child.traverse(enterCallback, exitCallback);
+    }
+
+    if (exitCallback) exitCallback(this);
   }
 
   removeChild(child) {

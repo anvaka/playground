@@ -9,6 +9,7 @@ var LineAccessor = require('./LineAccessor');
 class LineCollection extends BaseLineCollection {
   constructor(capacity) {
     super(capacity, 12); // items per thick line
+    this.type = 'LineCollection';
   }
 
   _makeProgram(gl) {

@@ -8,6 +8,7 @@ var PointAccessor = require('./PointAccessor');
 class PointCollection extends Element {
   constructor(capacity) {
     super();
+    this.type = 'PointCollection';
 
     // TODO: Not sure I like this too much. But otherwise how can I track interactivity?
     this.pointsAccessor = [];
@@ -18,16 +19,6 @@ class PointCollection extends Element {
     this._program = null;
     this.color = new Color(1, 1, 1, 1);
     this.size = 1;
-  }
-
-  addInteractiveElements(tree, dx, dy) {
-    var t = this.transform;
-    var points = this.pointsAccessor.map(p => ({
-      x: p.x + dx + t.dx,
-      y: p.y + dy + t.dy,
-      p: p
-    }))
-    tree.addAll(points);
   }
 
   draw(gl, screen) {
