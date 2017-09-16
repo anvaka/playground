@@ -11,7 +11,29 @@ if (!areaId) {
   process.exit(1);
 }
 
-const roadFilter = `["highway"~"motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link|unclassified|unclassified_link|residential|residential_link|service|service_link|living_street"]`;
+let highwayTags = [
+  'motorway',
+  'motorway_link',
+  'trunk',
+  'trunk_link',
+  'primary',
+  'primary_link',
+  'secondary',
+  'secondary_link',
+  'tertiary',
+  'tertiary_link',
+  'unclassified',
+  'unclassified_link',
+  'residential',
+  'residential_link',
+  'service',
+  'service_link',
+  'living_street',
+  'pedestrian',
+  'road'
+].join('|');
+
+let roadFilter = `["highway"~"${highwayTags}"]`;
 console.error('Searching for area ', areaId);
 
 let query = `

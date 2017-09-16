@@ -61,6 +61,7 @@ function saveResults() {
   var xyBBox = new BBox();
   let project = createProjector(lonLatBbox);
 
+  var nodesToDelete = new Set();
   graph.forEachNode(node => {
     let data = nodes.get(node.id);
 
@@ -70,17 +71,22 @@ function saveResults() {
 
     let xyID = id(nodeData.x, nodeData.y);
     let prevNode = latLonToNodeId.get(xyID)
-    while (prevNode) {
-      nodeData.x += Math.round((Math.random() - 0.5) * 10)
-      nodeData.x += Math.round((Math.random() - 0.5) * 10);
+    if (prevNode) {
       xyID = id(nodeData.x, nodeData.y);
       prevNode = latLonToNodeId.get(xyID);
-      console.log('bumping', node.id);
+      console.log('!Marking for deletion', node.id);
+      nodesToDelete.add(node.id);
+    } else {
+      latLonToNodeId.set(xyID, node);
     }
-    latLonToNodeId.set(xyID, node);
 
     node.data = nodeData;
     xyBBox.addPoint(node.data.x, node.data.y);
+  });
+
+  nodesToDelete.forEach(nodeId => {
+    console.log('removing', nodeId);
+    graph.removeNode(nodeId);
   });
 
   moveCoordinatesToZero();
