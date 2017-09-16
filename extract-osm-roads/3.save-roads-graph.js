@@ -28,17 +28,15 @@ function done() {
 }
 
 function processOSMWay(way) {
-  if (way.tags && way.tags.highway) {
-    var nodes = way.nodes;
-    if (!nodes) {
-      console.log('no nodes', way)
-      return;
-    }
-    for (var i = 1; i < nodes.length; ++i) {
-      let from = nodes[i];
-      let to = nodes[i - 1];
-      graph.addLink(from, to);
-    }
+  var nodes = way.nodes;
+  if (!nodes) {
+    console.log('no nodes', way)
+    return;
+  }
+  for (var i = 1; i < nodes.length; ++i) {
+    let from = nodes[i];
+    let to = nodes[i - 1];
+    graph.addLink(from, to);
   }
 }
 
@@ -59,7 +57,7 @@ function id(x, y) { return x + ';' + y; }
 
 
 function saveResults() {
-  console.log('end');
+  console.log('Graph loaded. Processing...');
   var xyBBox = new BBox();
   let project = createProjector(lonLatBbox);
 
