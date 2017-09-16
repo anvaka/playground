@@ -4,7 +4,6 @@ var outFileName = process.argv[3]
 
 var osmread = require('osm-read');
 
-
 var graph = require('ngraph.graph')();
 var nodes = new Map();
 var BBox = require('./bbox.js');

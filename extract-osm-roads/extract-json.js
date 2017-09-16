@@ -2,10 +2,12 @@ var JSONStream = require('JSONStream');
 var es = require('event-stream');
 var fs = require('fs')
 
+var createProjector = require('./lib/createProjector.js');
 var graph = require('ngraph.graph')();
 var nodes = new Map();
 var BBox = require('./bbox.js');
-var bbox = new BBox();
+var lonLatBbox = new BBox();
+var latLonToNodeId = new Map();
  
 var outFileName = process.argv[3];
 
@@ -45,7 +47,7 @@ function processOSMError() {
 }
 
 function processOSMNode(node) {
-  bbox.addPoint(node.lon, node.lat);
+  lonLatBbox.addPoint(node.lon, node.lat);
 
   nodes.set(node.id, {
     lon: node.lon,
@@ -53,21 +55,33 @@ function processOSMNode(node) {
   });
 }
 
+function id(x, y) { return x + ';' + y; }
+
 
 function saveResults() {
   console.log('end');
-  var phi0 = Math.cos(bbox.cy);
-  var r = 6371393; // radius of earth in meters
   var xyBBox = new BBox();
+  let project = createProjector(lonLatBbox);
+
   graph.forEachNode(node => {
     let data = nodes.get(node.id);
 
     if (!data) throw new Error('missing data for ' + node.id);
 
-    node.data = {
-      x: -Math.round(r * data.lon * phi0),
-      y: -Math.round(r * data.lat),
-    };
+    var nodeData = project(data.lon, data.lat);
+
+    let xyID = id(nodeData.x, nodeData.y);
+    let prevNode = latLonToNodeId.get(xyID)
+    while (prevNode) {
+      nodeData.x += Math.round((Math.random() - 0.5) * 10)
+      nodeData.x += Math.round((Math.random() - 0.5) * 10);
+      xyID = id(nodeData.x, nodeData.y);
+      prevNode = latLonToNodeId.get(xyID);
+      console.log('bumping', node.id);
+    }
+    latLonToNodeId.set(xyID, node);
+
+    node.data = nodeData;
     xyBBox.addPoint(node.data.x, node.data.y);
   });
 
