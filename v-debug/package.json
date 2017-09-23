@@ -23,6 +23,7 @@
     "ngraph.kruskal": "^1.0.0",
     "ngraph.louvain": "^1.0.1",
     "ngraph.pagerank": "^0.1.4",
+    "ngraph.path": "^1.0.2",
     "ngraph.random": "0.0.1",
     "ngraph.todot": "^0.2.1",
     "ngraph.tojson": "^0.1.4",

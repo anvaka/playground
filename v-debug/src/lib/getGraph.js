@@ -3,9 +3,9 @@ var fromDot = require('ngraph.fromdot');
 var data = require('../data/anvaka_twitter.json')
 var createGraph = require('ngraph.graph');
 
-module.exports = getDot(require('./data/substack'));
+module.exports = getGraph; //getDot(require('./data/substack'));
 
-let useSmall = true;
+let useSmall = false;
 
 function getGraph() {
   let graph = useSmall ? smallGraph() : fromJson(data);

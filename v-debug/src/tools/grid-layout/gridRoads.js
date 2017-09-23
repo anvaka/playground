@@ -9,6 +9,7 @@ const getDelaunayTesselation = require('./tesselation/getDelaunayTesselation');
 const createGraph = require('ngraph.graph');
 // const aStar = require('./path/a-star/bidirectional');
 const aStar = require('./path/a-star/index');
+const finder = require('ngraph.path').aStar;
 
 module.exports = gridRoads;
 
@@ -86,7 +87,7 @@ function gridRoads(graph, layout, useGrid = true) {
 
   collectRoads(firstPassRoads);
   // Note: we can experiment with multi-pass for same edge memory:
-  // Should gias routing towards seen roads.
+  // Should bias routing towards seen roads.
   // let finalRoads = new RoadAccumulator();
   // collectRoads(finalRoads);
 
@@ -112,13 +113,13 @@ function gridRoads(graph, layout, useGrid = true) {
     console.time('roads');
 
     let maxReducer = (Math.exp(-0.8 * grid.getLinksCount() + Math.log(1 - 0.5)) + 0.5)
-    aStarPathFinder = aStar(grid, {
-      heuristic(from, to) {
-        let fromPos = from.data;
-        let toPos = to.data;
-        return aStar.l2(fromPos, toPos) * maxReducer * 0.9;
-      },
-      distance: getCityEdgeLength
+    aStarPathFinder = finder(grid, {
+        heuristic(from, to) {
+          let fromPos = from.data;
+          let toPos = to.data;
+          return aStar.l2(fromPos, toPos) * maxReducer * 0.9;
+        },
+        distance: getCityEdgeLength
     })
 
     console.log('Searching graph with ' + grid.getNodesCount() + ' nodes and ' + grid.getLinksCount() + ' edges');
