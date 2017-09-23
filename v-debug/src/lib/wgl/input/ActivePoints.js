@@ -1,4 +1,4 @@
-var Element = require('../src/Element');
+var Element = require('wgl').Element;
 var createTree = require('d3-quadtree').quadtree;
 
 /**

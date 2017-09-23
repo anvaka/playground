@@ -30,7 +30,8 @@
     "pathfinding": "^0.4.18",
     "rbush": "^2.0.1",
     "rbush-knn": "^2.0.0",
-    "vue": "^2.3.3"
+    "vue": "^2.3.3",
+    "wgl": "0.0.3"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.2",

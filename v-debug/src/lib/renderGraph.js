@@ -1,5 +1,5 @@
 var eventify = require('ngraph.events');
-var wgl = require('./wgl/index');
+var wgl = require('wgl');
 var ActivePoints = require('./wgl/input/ActivePoints');
 
 module.exports = renderGraph;
@@ -180,6 +180,7 @@ function renderGraph(model, canvas) {
     lastLevel.step();
     lastLevel.updatePosition();
     animationHandle = requestAnimationFrame(frame);
+    scene.renderFrame();
   }
 
   function renderRecusriveLevel(level, parentUI, color) {

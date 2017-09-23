@@ -6,7 +6,6 @@
 </template>
 
 <script>
-const wgl = require('../lib/wgl/index');
 const renderGraph = require('../lib/renderGraph');
 const bus = require('../lib/bus');
 const Rect = require('../lib/geom/Rect');
