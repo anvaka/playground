@@ -1,5 +1,6 @@
 var eventify = require('ngraph.events');
 var wgl = require('./wgl/index');
+var ActivePoints = require('./wgl/input/ActivePoints');
 
 module.exports = renderGraph;
 
@@ -11,6 +12,7 @@ function renderGraph(model, canvas) {
   let scene = wgl.scene(canvas);
   // scene.setClearColor(28/255, 32/255, 59/255, 1)
   scene.setClearColor(12/255, 41/255, 82/255, 1)
+  // scene.setClearColor(223/255, 223/255, 223/255);
   if (appendSceneDebugElements) addDebugElements(scene);
 
   let lastLevel = model.root;
@@ -29,37 +31,78 @@ function renderGraph(model, canvas) {
     dispose,
     toggleLinks,
     highlight,
-    showRectangles,
+    drawRectangles,
     drawLines
   });
 
   var animationHandle = requestAnimationFrame(frame)
+
+  var singletonElements = new Map();
   var lastLinks;
   var lastHighlight;
-  var prevRectangles;
+
+  let activePoints = new ActivePoints(scene);
+  scene.appendChild(activePoints);
   scene.on('point-click', pointClick);
   scene.on('point-enter', pointEnter);
   scene.on('point-leave', pointLeave);
 
   return api;
 
-  function drawLines(lines) {
-    let wglLines = new wgl.Lines(lines.length);
-    lines.forEach(l => {
-      let ui = wglLines.add(l);
-      ui.setWidth(10);
-    })
-    scene.appendChild(wglLines);
-  }
+  function drawLines(lines, options) {
+    options = options || {};
 
-  function showRectangles(rects, overwrite = true, color) {
-    if (prevRectangles && overwrite) {
-      scene.removeChild(prevRectangles);
+    if (!lines) {
+      removeIfNeeded(options.key);
+      return;
     }
 
-    let rectangles = new wgl.Lines(rects.length * 4);
-    if (color) {
-      rectangles.color = color
+    let width = options.width || 1;
+    let wglLines = new wgl.LineCollection(lines.length);
+    if (options.color) {
+      wglLines.color = options.color;
+    }
+
+    if (options.key) rememberElement(options.key, wglLines);
+
+    lines.forEach(l => {
+      let ui = wglLines.add(l);
+      if ('width' in l) {
+        ui.setWidth(l.width);
+        ui.update(l.from, l.to)
+      } else {
+        ui.setWidth(width);
+        ui.update(l.from, l.to)
+      }
+    })
+
+    scene.appendChild(wglLines, options.sendToBack);
+  }
+
+  function removeIfNeeded(key) {
+    let el = singletonElements.get(key);
+    if (el) {
+      el.parent.removeChild(el);
+      singletonElements.delete(key);
+    }
+  }
+
+  function rememberElement(key, el) {
+    removeIfNeeded(key);
+    singletonElements.set(key, el);
+  }
+
+  function drawRectangles(rects, options) {
+    options = options || {};
+
+    if (!rects) {
+      removeIfNeeded(options.key);
+      return;
+    }
+
+    let rectangles = new wgl.LineCollection(rects.length * 4);
+    if (options.color) {
+      rectangles.color = options.color;
     }
     rects.forEach(rect => {
       let topLeft = {x: rect.left, y: rect.top };
@@ -72,9 +115,10 @@ function renderGraph(model, canvas) {
       rectangles.add({ from: bottomRight, to: bottomLeft });
       rectangles.add({ from: bottomLeft, to: topLeft });
     })
+
     scene.appendChild(rectangles);
 
-    if (overwrite) prevRectangles = rectangles;
+    if (options.key) rememberElement(options.key, rectangles);
   }
 
   function highlight(positions) {
@@ -83,7 +127,7 @@ function renderGraph(model, canvas) {
     }
     if (!positions) return; // they wanted to remove highlight. That's it.
 
-    let nodes = new wgl.Points(positions.size);
+    let nodes = new wgl.PointCollection(positions.size);
     positions.forEach((pos, id) => {
       pos.size = 30;
       let ui = nodes.add(pos, id);
@@ -104,7 +148,7 @@ function renderGraph(model, canvas) {
 
     let globalPositions = model.root.buildNodePositions();
     let rootGraph = model.rootGraph;
-    let lines = new wgl.Wires(rootGraph.getLinksCount());
+    let lines = new wgl.WireCollection(rootGraph.getLinksCount());
     lines.color.a = 0.04;
     rootGraph.forEachLink(function (link) {
       let from = globalPositions.get(link.fromId);
@@ -160,7 +204,7 @@ function renderGraph(model, canvas) {
     let linksCount = graph.getLinksCount()
     let lines;
     if (linksCount > 0) {
-      lines = new wgl.Lines(graph.getLinksCount());
+      lines = new wgl.LineCollection(graph.getLinksCount());
       if (color) {
         lines.color.r = color.r;
         lines.color.g = color.g;
@@ -239,14 +283,11 @@ function renderGraph(model, canvas) {
     let {graph} = level;
 
     let nodeCount = graph.getNodesCount();
-    let nodes = new wgl.Points(nodeCount + 1);
+    let nodes = new wgl.PointCollection(nodeCount + 1);
     let nodeIdToUI = new Map();
     let linkIdToUI = new Map();
 
-
-    // var layoutSteps = getFloatOrDefault(settings.steps, 100);
     var layout = level.makeLayout();
-    Object.freeze(layout);
     level.layout = layout;
     level.updatePosition = updatePosition;
 
@@ -268,6 +309,12 @@ function renderGraph(model, canvas) {
           b: 252/255, // (1 + Math.random()) * 0.5
         }
       }
+      // point.color =  {
+      //   r: 237/255, // (1 + Math.random()) * 0.5,
+      //   g: 237/255, // (1 + Math.random()) * 0.5,
+      //   b: 237/255, // (1 + Math.random()) * 0.5
+      // }
+
 
       var ui = nodes.add(point, node.id);
       nodeIdToUI.set(node.id, ui);
@@ -282,7 +329,7 @@ function renderGraph(model, canvas) {
     //   r: 1, g: 0, b: 0
     // });
 
-    let lines = new wgl.Wires(graph.getLinksCount());
+    let lines = new wgl.WireCollection(graph.getLinksCount());
     if (color) {
       lines.color.r = color.r;
       lines.color.g = color.g;
@@ -304,7 +351,7 @@ function renderGraph(model, canvas) {
       linkIdToUI.set(link.id, ui);
     });
 
-    parentUI.appendChild(lines);
+    // parentUI.appendChild(lines);
     parentUI.appendChild(nodes);
 
     function updatePosition() {
@@ -328,12 +375,12 @@ function addDebugElements(scene) {
   first.transform.dx = 100;
   first.transform.dy = 0;
   first.transform.scale = 1;
-  let fp = new wgl.Points(1);
+  let fp = new wgl.PointCollection(1);
   fp.add({
     x: 0, y: 0, size: 15
   });
 
-  let lines = new wgl.Wires(1);
+  let lines = new wgl.WireCollection(1);
   lines.add({
      from: {x: -100, y: 0},
      to: {x: 100, y: 0},
@@ -343,7 +390,7 @@ function addDebugElements(scene) {
   second.transform.dx = -100;
   second.transform.dy = 0;
   second.transform.scale = 1;
-  let sp = new wgl.Points(1);
+  let sp = new wgl.PointCollection(1);
   sp.add({
     x: 0, y: 0, size: 15
   });
@@ -359,7 +406,7 @@ function addDebugElements(scene) {
   third.transform.dx = 0;
   third.transform.dy = -10;
   third.transform.scale = 1;
-  sp = new wgl.Points(2);
+  sp = new wgl.PointCollection(2);
   sp.add({
     x: -100, y: 0, size: 5
   });
@@ -367,14 +414,14 @@ function addDebugElements(scene) {
     x: 100, y: 0, size: 5
   });
   third.appendChild(sp);
-  lines = new wgl.Wires(1);
+  lines = new wgl.WireCollection(1);
   lines.add({
      from: {x: -100, y: 0},
      to: {x: 100, y: 0},
   });
 
 
-  // third.appendChild(lines);
+  third.appendChild(lines);
   scene.appendChild(third);
 }
 

@@ -1,6 +1,5 @@
-const Delaunay = require('delaunator');
 const findMinimumSpanningTree = require('ngraph.kruskal')
-const createGraph = require('ngraph.graph')
+const getDelaunayGraph = require('../geom/getDelaunayGraph');
 const makeSpanningTree = require('./spanningTree.js')
 const rbush = require('rbush');
 const knn = require('rbush-knn');
@@ -14,21 +13,12 @@ class EdgeModel {
   }
 }
 
-class TriangleModel {
-  constructor (p1, p2, p3) {
-    this.p1 = p1
-    this.p2 = p2
-    this.p3 = p3
-  }
-}
-
 /**
  * For a given set of rectangles, removes overlaps
  *
  * @param {Map} rectangles - rectId -> Rectangle mapping
  */
 function removeOverlaps (rectangles, options) {
-  const triangulation = []
   // Convert rectangle centers into vertices, that we can feed into Delaunay
   // triangulation
   const vertices = []
@@ -55,28 +45,8 @@ function removeOverlaps (rectangles, options) {
     vertices.push(pair)
   })
 
-  const delaunay = new Delaunay(vertices);
-  const triangles = delaunay.triangles;
-  // const triangles = Delaunay.triangulate(vertices)
-  const triangulationGraph = createGraph({ uniqueLinkId: false })
-
-  for (let i = triangles.length; i;) {
-    --i
-    const first = vertices[triangles[i]]
-    const p0 = [ first[0], first[1] ]
-    --i
-    const second = vertices[triangles[i]]
-    const p1 = [ second[0], second[1] ]
-    --i
-    const third = vertices[triangles[i]]
-    const p2 = [ third[0], third[1] ]
-    const node = new TriangleModel(p0, p1, p2)
-    triangulation.push(node)
-
-    addTriangulationLink(first.id, second.id, triangulationGraph)
-    addTriangulationLink(second.id, third.id, triangulationGraph)
-    addTriangulationLink(third.id, first.id, triangulationGraph)
-  }
+  const triangulationGraph = getDelaunayGraph(vertices)
+  triangulationGraph.forEachLink(addTriangulationLinkWeight);
 
   const mst = findMinimumSpanningTree(triangulationGraph, e => e.data)
   const mstEdges = mst.map(edge => new EdgeModel(
@@ -193,6 +163,14 @@ function removeOverlaps (rectangles, options) {
         dy = -1e-3
       }
 
+      // if (rootPos.width * rootPos.height > childPos.width * childPos.height) {
+      //   childPos.cx = rootPos.cx + t * dx
+      //   childPos.cy = rootPos.cy + t * dy
+      // } else {
+      //   rootPos.cx = childPos.cx - t * dx
+      //   rootPos.cy = childPos.cy - t * dy
+      // }
+
       if (canMove(childPos.id)) {
         childPos.cx = rootPos.cx + t * dx
         childPos.cy = rootPos.cy + t * dy
@@ -217,12 +195,11 @@ function removeOverlaps (rectangles, options) {
     return t
   }
 
-  function addTriangulationLink (fromId, toId, tGraph) {
-    const from = getRect(fromId)
-    const to = getRect(toId)
+  function addTriangulationLinkWeight(link) {
+    const from = getRect(link.fromId)
+    const to = getRect(link.toId)
     const weight = getTriangulationWeight(from, to)
-
-    tGraph.addLink(fromId, toId, weight)
+    link.data = weight;
   }
 
   function getTriangulationWeight (a, b) {

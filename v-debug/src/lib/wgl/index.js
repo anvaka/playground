@@ -1,12 +1,12 @@
 // TODO: I need better names.
 module.exports = {
-  scene: require('./scene'),
+  scene: require('./src/scene'),
 
-  Points: require('./Points'),
-  Point: require('./Point'),
+  PointCollection: require('./src/points/PointCollection'),
+  Point: require('./src/points/Point'),
   
-  Lines: require('./lines/Lines'),
-  Wires: require('./lines/Wires'),
+  LineCollection: require('./src/lines/LineCollection'),
+  WireCollection: require('./src/lines/WireCollection'),
 
-  Element: require('./Element'),
+  Element: require('./src/Element'),
 }

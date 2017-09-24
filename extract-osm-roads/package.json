@@ -1,0 +1,15 @@
+{
+  "name": "test-roads",
+  "dependencies": {
+    "d3-geo-projection": "^2.3.1",
+    "event-stream": "^3.3.4",
+    "node-osm-stream": "^0.2.2",
+    "openstreetmap-stream": "^0.1.0",
+    "osm-read": "^0.6.0",
+    "r2": "^1.0.0"
+  },
+  "devDependencies": {
+    "JSONStream": "^1.3.1",
+    "ngraph.graph": "0.0.14"
+  }
+}

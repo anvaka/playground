@@ -9,28 +9,18 @@
 const wgl = require('../lib/wgl/index');
 const renderGraph = require('../lib/renderGraph');
 const bus = require('../lib/bus');
-const Rect = require('../lib/overlaps/rect');
+const Rect = require('../lib/geom/Rect');
 
 export default {
   name: 'Scene',
   props: ['model'],
   mounted() {
     this.createScene();
-    bus.on('restart-layout', this.createScene, this);
-    bus.on('toggle-links', this.toggleLinks, this);
-    bus.on('highlight-cluster', this.highlightCluster, this);
-    bus.on('show-bounds', this.showBounds, this);
-    bus.on('draw-lines', this.drawLines, this);
-    bus.on('draw-rectangles', this.drawRectangles, this);
+    this.listenToEvents();
   },
   beforeDestroy() {
     this.destroyScene()
-    bus.off('restart-layout', this.createScene, this);
-    bus.off('toggle-links', this.toggleLinks, this);
-    bus.off('highlight-cluster', this.highlightCluster, this);
-    bus.off('show-bounds', this.showBounds, this);
-    bus.off('draw-lines', this.drawLines, this);
-    bus.off('draw-rectangles', this.drawRectangles, this);
+    this.unsubscribeFromEvents();
   },
   watch: {
     model(newModel) {
@@ -47,6 +37,27 @@ export default {
     }
   },
   methods: {
+    listenToEvents() {
+      bus.on('restart-layout', this.createScene, this);
+      bus.on('toggle-links', this.toggleLinks, this);
+      bus.on('highlight-cluster', this.highlightCluster, this);
+      bus.on('show-bounds', this.showBounds, this);
+      bus.on('draw-lines', this.drawLines, this);
+      bus.on('draw-rectangles', this.drawRectangles, this);
+    },
+    unsubscribeFromEvents() {
+      bus.off('restart-layout', this.createScene, this);
+      bus.off('toggle-links', this.toggleLinks, this);
+      bus.off('highlight-cluster', this.highlightCluster, this);
+      bus.off('show-bounds', this.showBounds, this);
+      bus.off('draw-lines', this.drawLines, this);
+      bus.off('draw-rectangles', this.drawRectangles, this);
+    },
+    initTools() {
+      this.pendingToolInit = null;
+      let registeredTools = [];
+      this.registeredTools = registeredTools;
+    },
     destroyScene() {
       if (this.graphScene) {
         this.graphScene.dispose();
@@ -56,8 +67,8 @@ export default {
         this.graphScene = null;
       }
     },
-    drawLines(lines) {
-      this.graphScene.drawLines(lines);
+    drawLines(lines, options) {
+      this.graphScene.drawLines(lines, options);
     },
     showBounds(cluster) {
       if (!cluster.children) return; // only higher level clusters have bounds.
@@ -75,11 +86,15 @@ export default {
           height: bbox.height
         }));
       })
-      this.graphScene.showRectangles(rectangles);
+      this.graphScene.drawRectangles(rectangles, {
+        key: 'bounds'
+      });
     },
-    drawRectangles(rectangles, color) {
-      this.graphScene.showRectangles(rectangles, false, color);
+
+    drawRectangles(rectangles, options) {
+      this.graphScene.drawRectangles(rectangles, options);
     },
+
     createScene() {
       if (this.graphScene) {
         this.destroyScene();
