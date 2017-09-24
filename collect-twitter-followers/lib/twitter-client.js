@@ -91,7 +91,8 @@ function getAllFollowers(request) {
           console.log(data.errors);
           throw new Error(data.errors);
         }
-      } if (!data.ids) {
+      }
+      if (!data.ids) {
         if (data.error === 'Not authorized.') {
           console.log('Not authorized ', request);
           return {
@@ -99,8 +100,12 @@ function getAllFollowers(request) {
             error: 403
           };
         }
-        console.log(data);
-        throw new Error('no ids');
+        console.log('!!!Missing ids for: ', data);
+        console.log('request was: ', request);
+        return {
+            accumulator: [],
+            error: 'missing_ids'
+        }
       }
 
       // save everyone we've got.
