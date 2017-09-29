@@ -121,49 +121,24 @@ function createGridTensor(x, y, direction) {
 }
 
 function createCompositeTensor(tensors, d) {
-  return new Tensor2d(ta1, ta, ta2)
-
-  function ta1(x, y) {
-    var sum = 0;
-    for(var i = 0; i < tensors.length; ++i) {
-      var t = tensors[i];
-      var dist = t.pos.distanceTo(x, y);
-      var p = -d * dist * dist;
-      var e = Math.exp(p);
-      
-      sum += e * t.a1(x, y);
-    }
-    
-    return sum;
-  }
+  return new Tensor2d(rbf('a1'), rbf('a'), rbf('a2'));
   
-  function ta(x, y) {
-    var sum = 0;
-    for(var i = 0; i < tensors.length; ++i) {
-      var t = tensors[i];
-      var dist = t.pos.distanceTo(x, y);
-      var p = -d * dist * dist;
-      var e = Math.exp(p);
-      
-      sum += e * t.a(x, y);
+  function rbf(fn) {
+    return function(x, y) { 
+      var sum = 0;
+      for(var i = 0; i < tensors.length; ++i) {
+        var t = tensors[i];
+        var dist = t.pos.distanceTo(x, y);
+        var p = -d * dist * dist;
+        var e = Math.exp(p); 
+//         if (Number.isNaN(e)) continue;
+        sum +=e * t[fn](x, y);
+      }
+
+      return sum;
     }
-    
-    return sum;
   }
-  function ta2(x, y) {
-    var sum = 0;
-    for(var i = 0; i < tensors.length; ++i) {
-      var t = tensors[i];
-      var dist = t.pos.distanceTo(x, y);
-      var p = -d * dist * dist;
-      var e = Math.exp(p);
-      
-      sum += e * t.a2(x, y);
-    }
-    
-    return sum;
-  }
-}
+} 
 
 function createOffsetTensor(dx, dy) {
   var tensor = new Tensor2d(ta1, ta, ta2);
