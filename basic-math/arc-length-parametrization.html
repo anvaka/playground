@@ -34,8 +34,8 @@ svg {
 panzoom(document.getElementById('scene'))
 
 
-renderPath('path', getPoints());
-renderPath('preciseDerivative', getPointsEqualArcLength(2));
+//renderPath('path', getPoints());
+// renderPath('preciseDerivative', getPointsEqualArcLength(2));
 renderPath('euler', getEulerPoints(2));
 
 function renderPath(selector, points) {
@@ -106,11 +106,13 @@ function getPointsEqualArcLength(arcLength) {
 }
 
 function x(t) {
-  return t;
+  return t * Math.sin(t);
+  // return t * Math.sin(t);
 }
 
 function y(t) {
-  return -30 * Math.cos(t * 0.09);
+  return t * Math.cos(t);
+  // return -30 * Math.cos(t * 0.09);
 }
 
 function dx(t) {
