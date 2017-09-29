@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2017 by anvaka 
+
+Playing with tensor fields
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <script src='https://cdn.rawgit.com/anvaka/panzoom/v3.0.0/dist/panzoom.min.js'></script>
+  <title>Playing with tensor fields</title>
+<style>
+svg {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+</style>
+</head>
+<body>
+  <svg>
+    <g id='scene'>
+      <path transform='matrix(3 0 0 3 300 300)' id='path' stroke-width='1' stroke='black' fill='transparent'></path>
+    </g>
+  </svg>
+<script>
+panzoom(document.getElementById('scene'))
+
+function Vec(x, y) {
+  this.x = x;
+  this.y = y;
+}
+
+Vec.prototype = {
+  norm: function() {
+    var l = this.length();
+    return new Vec(this.x/l, this.y / l);
+  },
+  add: function(other) {
+    return new Vec(this.x + other.x, this.y + other.y);
+  },
+  div: function(scalar) {
+    return new Vec(this.x/scalar, this.y/scalar);
+  },
+  
+  mul: function(scalar) {
+    return new Vec(this.x * scalar, this.y * scalar);
+  },
+  
+  length: function() {
+    return Math.sqrt(this.x * this.x + this.y * this.y);
+  },
+  distanceTo: function(x, y) {
+    var dx = x - this.x;
+    var dy = y - this.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+}
+
+function Tensor2d(a1, a, a2) {
+  this.a1 = a1;
+  this.a = a;
+  this.a2 = a2;
+  this.pos = new Vec(0, 0);
+}
+
+Tensor2d.prototype = {
+  getEigenVector: function() {
+    var a1 = this.a1;
+    var a = this.a;
+    var a2 = this.a2;
+    
+    var vecFunction = function(x, y) {
+      var _a1 = a1(x, y);
+      var _a = a(x, y);
+      var _a2 = a2(x, y);
+      
+      var D = Math.sqrt(
+        4 * _a * _a + _a1 * _a1 - 2 * _a1 * _a2 + _a2 * _a2
+      );
+      
+      return [{
+        vector: new Vec(-(_a2 - _a1 + D)/(2 * _a), 1),
+        value: (_a1 + _a2 - D) * 0.5
+      }, {
+        vector: new Vec(-(_a2 - _a1 - D)/(2 * _a), 1),
+        value: (_a1 + _a2 + D) * 0.5        
+      }]
+    }
+    
+    return vecFunction;
+  }
+}
+
+var cellWidth = 10;
+var arrows = []
+var radial = createOffsetTensor(5, 5)
+var radiaDx = createOffsetTensor(-5, -5);
+var gridDx = createGridTensor(0, -5, Math.PI/2);
+var composite = createCompositeTensor([radial, radiaDx, gridDx], 1);
+var vectorField = composite.getEigenVector(); 
+
+function createGridTensor(x, y, direction) {
+  var tensor = new Tensor2d(ta1, ta, ta2)
+  tensor.pos = new Vec(x, y);
+  return tensor;
+
+  function ta1(x, y) {
+    return Math.cos(2 * direction);
+  }
+  function ta(x, y) {
+    return Math.sin(2 * direction);
+  }
+  
+  function ta2(x, y) {
+    return -Math.cos(2 * direction);
+  }
+}
+
+function createCompositeTensor(tensors, d) {
+  return new Tensor2d(ta1, ta, ta2)
+
+  function ta1(x, y) {
+    var sum = 0;
+    for(var i = 0; i < tensors.length; ++i) {
+      var t = tensors[i];
+      var dist = t.pos.distanceTo(x, y);
+      var p = -d * dist * dist;
+      var e = Math.exp(p);
+      
+      sum += e * t.a1(x, y);
+    }
+    
+    return sum;
+  }
+  
+  function ta(x, y) {
+    var sum = 0;
+    for(var i = 0; i < tensors.length; ++i) {
+      var t = tensors[i];
+      var dist = t.pos.distanceTo(x, y);
+      var p = -d * dist * dist;
+      var e = Math.exp(p);
+      
+      sum += e * t.a(x, y);
+    }
+    
+    return sum;
+  }
+  function ta2(x, y) {
+    var sum = 0;
+    for(var i = 0; i < tensors.length; ++i) {
+      var t = tensors[i];
+      var dist = t.pos.distanceTo(x, y);
+      var p = -d * dist * dist;
+      var e = Math.exp(p);
+      
+      sum += e * t.a2(x, y);
+    }
+    
+    return sum;
+  }
+}
+
+function createOffsetTensor(dx, dy) {
+  var tensor = new Tensor2d(ta1, ta, ta2);
+  tensor.pos = new Vec(dx, dy);
+  return tensor;
+  
+  function ta(x, y) {
+    return -2 * (x - dx) * (y - dy);
+  }
+
+  function ta1(x, y) {
+    return (y - dy) * (y - dy) - (x - dx) * (x - dx);
+  }
+
+  function ta2(x, y) {
+    return (x - dx) * (x - dx) - (y - dy) * (y - dy);
+  }
+}
+
+
+for (var x = -10.1; x < 10; x += 0.5) {
+  for (var y = -10.1; y < 10; y += 0.5) {
+      drawArrow(x, y); 
+  } 
+}
+
+var point = new Vec(6, 6);
+var points = [point];
+
+for (var i = 0; i < 20; ++i) {
+  var next = samplePoint(point, 0.001);
+  point = next;
+  points.push(point);
+}
+
+function samplePoint(point, h) {
+  var eps = 0.00001;
+  var fromX = sample_vector_field(new Vec(point.x + eps, point.y));
+  var fromY = sample_vector_field(new Vec(point.x, point.y + eps));
+  var to = sample_vector_field(point);   
+  return new Vec((fromX.x - to.x)/eps, (fromY.y - to.y)/eps);
+//   let k2 = sample_vector_field( point.add(k1.mul(h/2)) )
+//   let k3 = sample_vector_field( point.add(k2.mul(h/2)) )
+//   let k4 = sample_vector_field( point.add(k3.mul(h)));
+
+//   return k1.mul(h/6).add(k2.mul(h/3)).add(k3.mul(h/3)).add(k4.mul(h/6));
+  
+  function sample_vector_field(p) {
+    return vectorField(p.x, p.y)[1].vector;
+  }
+} 
+
+var p = document.getElementById('path');
+p.setAttributeNS(null, 'd', toPath(arrows));
+// p.setAttributeNS(null, 'd', toPolyPath(points));
+
+
+function drawArrow(x, y) {
+  var ox = x * cellWidth; 
+  var oy = y * cellWidth; 
+  
+  var eigenVectors = vectorField(x, y);
+//   drawFor(eigenVectors[0].vector)
+  drawFor(eigenVectors[1].vector)
+  
+  function drawFor(vf) {
+    var dx = 0;
+    var dy = 0;
+    if (vf.length() !== 0){
+      var vf_norm = vf.norm();
+    
+     dx = 0.5 * cellWidth * vf_norm.x;
+     dy = 0.5 * cellWidth * vf_norm.y;
+    }
+
+    arrows.push({
+      from: {
+        x: ox - dx/3,
+        y: oy - dx/3
+      }, 
+      to: {
+        x: ox + dx/3,
+        y: oy + dy/3
+      }
+    })
+  }
+}
+
+
+function toPolyPath(arr) {
+  return 'M' + (arr.map(function(p) {
+    return toSVG(p)
+  }).join(' '))
+}
+
+
+function toPath(arr) {
+  return arr.map(function(segment) {
+    return 'M' + toSVG(segment.from) + ' ' +
+      toSVG(segment.to);
+  }).join(' '); 
+}
+
+function toSVG(p) {
+  return p.x + ',' + p.y;
+}
+</script>
+</body>
+</html>
