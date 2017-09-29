@@ -1,6 +1,6 @@
 import Vector from './Vector';
 
-export default class Tensor{
+export default class Tensor {
   constructor(a, b) {
     this.a = a;
     this.b = b;
@@ -10,23 +10,38 @@ export default class Tensor{
   getEigenVector() {
     var a = this.a;
     var b = this.b;
+
+    // Because our tensor is symmetric and traceless, the eignevector
+    // computation can be simplified:
     
-    return vectorField;
-    function vectorField(x, y) {
+    return {
+      major,
+      minor,
+      eigenvalue
+    };
+
+    function major(x, y) {
       var _a = a(x, y);
       var _b = b(x, y);
-      // Because our tensor is symmetric and traceless, the eignevector
-      // computation can be simplified:
       
       var D = Math.sqrt(_a * _a + _b * _b);
+      return new Vector(-(-_a - D)/_b, 1);
+    }
+
+    function minor(x, y) {
+      var _a = a(x, y);
+      var _b = b(x, y);
       
-      return [{
-        vector: new Vector(-(-_a + D)/_b, 1),
-        value: -D
-      }, {
-        vector: new Vector(-(-_a - D)/_b, 1),
-        value: D
-      }]
+      var D = Math.sqrt(_a * _a + _b * _b);
+      return new Vector(-(-_a + D)/_b, 1);
+    }
+
+    function eigenvalue(x, y) {
+      var _a = a(x, y);
+      var _b = b(x, y);
+      
+      var D = Math.sqrt(_a * _a + _b * _b);
+      return D;
     }
   }
 }
