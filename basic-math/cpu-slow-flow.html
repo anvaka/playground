@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2017 by anvaka 
+
+Released under the MIT license
+-->
+<meta name="robots" content="noindex">
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Field particles on cpu</title>
+<style>
+canvas {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  filter: blur(3px);
+}
+body {
+  padding: 0;
+  margin: 0;
+}
+</style>
+</head>
+<body>
+  <canvas id='cnv'></canvas>
+<script >
+var cnv = document.getElementById('cnv');
+var width = 800;// window.innerWidth;
+var height = 800;//  window.innerHeight;
+var ctx = cnv.getContext('2d');
+var maxv = 0.1;
+ctx.width = width; //+ 'px';
+ctx.height = height;// + 'px';
+cnv.width = width;
+cnv.height = height;
+
+
+var  maxvel = 0;
+var xmin=-3, xmax=3, ymin=-3, ymax=3;
+ 
+var matrix = createMatrix(width, height);
+
+drawMatrix(matrix);
+drawFlow(); 
+
+function sample(x, y) {
+  return {
+    x: y, 
+    y: (1 - x*x ) * y - x
+  };
+}
+
+function drawMatrix(matrix) {
+  ctx.fillRect(0, 0, width, height)
+  var imgData = ctx.getImageData(0, 0, width, height);
+  var data = imgData.data;
+
+  for (var pIndex = 0; pIndex < matrix.length; ++pIndex) {
+    var p = matrix[pIndex];
+    var i = x_to_i(p.x);
+    var j = y_to_j(p.y);
+    var v = p.color;
+      var idx = (j * width + i) * 4;
+//     if (p.vel/maxvel > 0.6) {
+//         v = maxv;
+//     }
+
+      var color = hslToRgb(v/maxv, 1, 0.6);
+      data[idx + 0] = color[0];
+      data[idx + 1] = color[1];
+      data[idx + 2] = color[2];
+//     data[idx + 0] = v * 255;
+//     data[idx + 1] = v * 255;
+//     data[idx + 2] = v * 255;
+
+      data[idx + 3] = 0xff;
+  }
+  ctx.putImageData(imgData, 0, 0);
+}
+
+function hslToRgb(h, s, l) {
+  var r, g, b;
+
+  if (s == 0) {
+    r = g = b = l; // achromatic
+  } else {
+    function hue2rgb(p, q, t) {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1/6) return p + (q - p) * 6 * t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    }
+
+    var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    var p = 2 * l - q;
+
+    r = hue2rgb(p, q, h + 1/3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1/3);
+  }
+
+  return [ r * 255, g * 255, b * 255 ];
+}
+
+function Particle(color, i, j) {
+  this.color = color;
+  this.acolor = color;
+  this.x = i_to_x(i);
+  this.y = j_to_y(j);
+}
+
+function createMatrix(width, height) {
+  var matrix = new Array(width * height);
+  for (var i = 0; i < width; ++i) {
+    for (var j = 0; j < height; ++j) {
+      matrix[j * width + i] = new Particle(Math.random(), i, j);
+    }
+  }
+  return matrix; 
+}
+
+function drawFlow() { 
+maxvel = 0;
+ for (var pIndex = 0; pIndex < matrix.length; ++pIndex) {
+   var p = matrix[pIndex];
+   var x = p.x;
+   var y = p.y;
+   var v = getVelocity(x, y, 0.051);
+   p.x += v.x;
+   p.y += v.y;
+//    if (p.x > xmax) p.x = xmin;
+//    if (p.y > xmax) p.y = xmin;
+//    if (p.x < xmin) p.x = xmax;
+//    if (p.y < xmin) p.y = xmin;
+   var ni = x_to_i(p.x);
+   var nj = y_to_j(p.y);
+   var otherPoint = matrix[ni + nj * width];
+   var vel = Math.sqrt((v.x*v.x + v.y *v.y))
+   p.vel = vel;
+   if (vel > maxvel) maxvel = vel
+
+   p.color = p.color + otherPoint.color;
+//    p.acolor = p.acolor + 0.5 * ;
+//    p.color = (p.color + otherPoint.color);
+   
+   if (p.color > maxv) maxv = p.color;  
+  }
+  drawMatrix(matrix);
+  requestAnimationFrame(drawFlow);
+}
+
+function getVelocity(x, y, h=0.001) {
+    var k1 = sample(x, y );          
+    var k2 = sample(x + k1.x * h/2, y + k1.y * h/2);
+    var k3 = sample(x + k2.x * h/2, y + k2.y * h/2);
+    var k4 = sample(x + k3.x * h, y + k3.y * h);
+
+    return {
+      x: k1.x * h/6 + k2.x * h/3 + k3.x * h/3 + k4.x * h/6,
+      y: k1.y * h/6 + k2.y * h/3 + k3.y * h/3 + k4.y * h/6
+    };
+}
+
+ function i_to_x(i) {
+  return xmin + i / width  * (xmax - xmin);
+ }
+ function j_to_y(j) {
+   return ymin + j / height * (ymax - ymin); 
+ }
+  function x_to_i(x) {
+    return Math.min(width - 1,  Math.max( 0, Math.round( (x-xmin)/(xmax-xmin) * width)));
+  }
+  
+  function y_to_j(y) {
+    return Math.min(height -1, Math.max( 0, Math.round((y-ymin)/(ymax-ymin) * height)));
+  }
+
+</script>
+</body>
+</html>
