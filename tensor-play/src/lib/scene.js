@@ -21,7 +21,7 @@ export function traceLine(tensor, point) {
   var points = [];
 //  var previousDirection = new Vector(0, 0);
 
-  for (var i = 0; i < 200; ++i) {
+  for (var i = 0; i < 2000; ++i) {
     if (tensor.isDegenerate(point)) {
       console.log('degenerate')
       break;

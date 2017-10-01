@@ -36,9 +36,9 @@ export default {
     // DE.appendPolyLineTensor(composition, [{x: -5, y: 0}, {x: 0, y: -2}, {x: 3, y: -10}]);
     var composite = DE.createCompositeTensor(composition, 0.95);
 
-    var sceneField = radial;
+    var sceneField = DE.explicit();
     var vectorField = sceneField.getEigenVector(); 
-    this.traces.push(traceLine(sceneField, new Vector(0.1, -0.1)));
+    this.traces.push(traceLine(sceneField, new Vector(-7.45, 0.0)));
     this.arrows = getFieldPath(vectorField);
   },
 
