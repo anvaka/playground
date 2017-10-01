@@ -11,6 +11,11 @@ export default class Vector {
   add(other) {
     return new Vector(this.x + other.x, this.y + other.y);
   }
+
+  dot(other) {
+    return this.x * other.x + this.y + other.y;
+  }
+
   div(scalar) {
     return new Vector(this.x/scalar, this.y/scalar);
   }

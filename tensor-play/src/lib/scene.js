@@ -16,13 +16,27 @@ export function getFieldPath(vectorField) {
   return toPath(arrows);
 }
 
-export function traceLine(vectorField, point) {
-  var points = [point];
+export function traceLine(tensor, point) {
+  var vectorField = tensor.getEigenVector();
+  var points = [];
+//  var previousDirection = new Vector(0, 0);
 
-  for (var i = 0; i < 300; ++i) {
-    var direction = integratePoint(point, 0.1);
-    point = new Vector(point.x + direction.x, point.y + direction.y);
+  for (var i = 0; i < 200; ++i) {
+    if (tensor.isDegenerate(point)) {
+      console.log('degenerate')
+      break;
+    }
     points.push(point); 
+    var direction = integratePoint(point, 0.1);
+    // var dotProduct = direction.dot(previousDirection);
+    // if (dotProduct < 0) {
+    //   direction.x = -direction.x;
+    //   direction.y = -direction.y;
+    // }
+//     console.log(direction.x, direction.y, direction.length());
+
+ //   previousDirection = direction;
+    point = new Vector(point.x + direction.x, point.y + direction.y);
   }
 
   return toPolyPath(points);

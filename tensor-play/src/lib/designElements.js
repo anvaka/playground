@@ -34,7 +34,7 @@ function appendPolyLineTensor(composition, polyline) {
 }
 
 function createCompositeTensor(tensors, d) {
-  var distanceThreshold = 1e-9;
+  var distanceThreshold = 1e-7;
   var lnThreshold = -Math.log(distanceThreshold);
   
   return new Tensor(rbf('a'), rbf('b'));
@@ -70,6 +70,6 @@ function createRadialTensor(dx, dy) {
   }
 
   function b(x, y) {
-    return -2 * (x - dx) * (y - dy);
+    return  -2 * (x - dx) * (y - dy);
   }
 }

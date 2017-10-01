@@ -8,10 +8,10 @@
     </marker>
   </defs> 
     <g ref='scene'>
-      <g transform='matrix(3 0 0 3 300 300)' id='points' >
-        <path :d='arrows' stroke-width='1' stroke='black' fill='transparent'></path>
+      <g transform='matrix(3 0 0 3 300 400)'>
+        <path :d='arrows' stroke-width='1' stroke='#224A46' fill='transparent'></path>
+        <path v-for='traceLine in traces' :d='traceLine' stroke-width='0.5' stroke='#8CF9F6' fill='transparent'></path>
       </g>
-      <path :d='traceLine' transform='matrix(3 0 0 3 300 300)' id='sline' stroke-width='0.5' stroke='red' fill='transparent'></path>
     </g>
   </svg>
   </div>
@@ -27,23 +27,25 @@ export default {
   name: 'app',
   mounted() {
     this.zoomer = panzoom(this.$refs.scene)
-
+    var self = this;
     var radial = DE.createRadialTensor(0, 0);
-    var radiaDx = DE.createRadialTensor(-5, -5);
-    var gridDx = DE.createGridTensor(5, -5, Math.PI);
-    var composition = [radial, radiaDx, gridDx];
+    var radialDx = DE.createRadialTensor(5, -5);
+    var gridDx = DE.createGridTensor(0, 0, -Math.PI/3);
+    var composition = [radial, radialDx]//, gridDx];
     // var composition = [];
     // DE.appendPolyLineTensor(composition, [{x: -5, y: 0}, {x: 0, y: -2}, {x: 3, y: -10}]);
-    var composite = DE.createCompositeTensor(composition, 1);
-    var vectorField = radial.getEigenVector(); 
+    var composite = DE.createCompositeTensor(composition, 0.95);
+
+    var sceneField = radial;
+    var vectorField = sceneField.getEigenVector(); 
+    this.traces.push(traceLine(sceneField, new Vector(0.1, -0.1)));
     this.arrows = getFieldPath(vectorField);
-    this.traceLine = traceLine(vectorField, new Vector(-1, -1));
   },
 
   data() {
     return {
       arrows: '',
-      traceLine
+      traces: []
     };
   },
 
@@ -60,6 +62,10 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
+
+}
+body {
+  background-color: #0E2324;
 }
 svg {
   width: 100%;
