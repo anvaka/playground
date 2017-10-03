@@ -38,7 +38,12 @@ export default {
 
     var sceneField = DE.explicit();
     var vectorField = sceneField.getEigenVector(); 
-    this.traces.push(traceLine(sceneField, new Vector(-7.45, 0.0)));
+    for (var i = -10; i < 10; i += 1) {
+    for (var j = -10; j < 10; j += 1) {
+      this.traces.push(traceLine(sceneField, new Vector(i, j)));
+    }
+    }
+    
     this.arrows = getFieldPath(vectorField);
   },
 

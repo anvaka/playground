@@ -17,27 +17,59 @@ function explicit(center) {
         major,
       };
       function major(x, y) {
-        var centers = [{
+        var centers = [
+          /*
+          {
           t: new Vector(-5, 0),
-          strength: 1
+          strength: 1,
+          x(x, y) {
+            return -y;
+          },
+          y(x, y) {
+            return x;
+          }
         }, {
           t: new Vector(5, 0),
-          strength: 1
-        }, {
+          strength: 1,
+          x(x, y) {
+            return -y;
+          },
+          y(x, y) {
+            return x;
+          }
+        },*/ {
+          t: new Vector(0, -5),
+          strength: 1,
+          x(x, y) {
+            return 0;
+          },
+          y(x, y) {
+            return -1;
+          }
+        },
+         {
           t: new Vector(0, 5),
-          strength: 1
-        }, {
-          t: new Vector(2, -5),
-          strength: 1
+          strength: 1,
+          x(x, y) {
+            return Math.sin(x * y);
+          },
+          y(x, y) {
+            return Math.sin(x);
+          }
         }]
         var sum = new Vector(0, 0);
         for (var i = 0; i < centers.length; ++i) {
           var c = centers[i];
           var dist = c.t.distanceSquaredTo(x, y);
+          var tx = x - c.t.x;
+          var ty = y - c.t.y;
           var e = 1/(1.0 + dist);
-          sum.y += (x - c.t.x) * c.strength * e;
-          sum.x += -(y - c.t.y) * c.strength * e;
+          sum.y += c.y(tx, ty) * c.strength * e;
+          sum.x += c.x(tx, ty) * c.strength * e;
         }
+        // var t = sum.y;
+        // sum.y = sum.x;
+        // sum.x = t;
 
         return sum;
 
@@ -47,8 +79,8 @@ function explicit(center) {
         var t2 = new Vector(5, 0);
         var d2 = t2.distanceSquaredTo(x, y);
 
-        var e1 = 1/(0.1 + d1); // Math.exp(-s * d1)/(d1);
-        var e2 = 1/(0.1 + d2); // Math.exp(-s * d2)/(d2);
+        var e1 = 1/(1.0 + d1); // Math.exp(-s * d1)/(d1);
+        var e2 = 1/(1.0 + d2); // Math.exp(-s * d2)/(d2);
         var st1 = 1.0;
         var st2 = 1.0;
 
