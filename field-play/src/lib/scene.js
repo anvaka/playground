@@ -56,53 +56,78 @@ function initScene(gl, particlesCount = 10000) {
   }
 
   function initWind() {
+    var minX = -1; var maxX = 1;
+    var minY = -1; var maxY = 1;
     console.time('inittext');
-    var speedMap = createSpeedMap(windData.width);
+    var textureSize = 1024;
+    var speedMap = createSpeedMap(textureSize);
     console.timeEnd('inittext');
-    windTexture = util.createTexture(gl, gl.LINEAR, speedMap, windData.width, windData.height);
+    windTexture = util.createTexture(gl, gl.LINEAR, speedMap, textureSize, textureSize);
 
     function createSpeedMap(size) {
         var result = new Uint8Array(size * size * 4);
-        windData.uMax = size;
-        windData.vMax = size;
-        windData.uMin = -size;
-        windData.vMin = -size;
-        var maxR = Math.sqrt(4 * size * size);
-        var scaleR = 255 * 255;
-        var scaleTheta = (255 * 255)/(2 * Math.PI);
+        var uMax = Number.NEGATIVE_INFINITY;
+        var vMax = Number.NEGATIVE_INFINITY;
+        var uMin = Number.POSITIVE_INFINITY;
+        var vMin = Number.POSITIVE_INFINITY;
 
+        for (var row = 0; row < size; ++row) {
+          for (var col = 0; col < size; ++col) {
+            var x = fx(row, col);
+            var y = fy(row, col);
+            if (x < uMin) uMin = x;
+            if (x > uMax) uMax = x;
+            if (y < vMin) vMin = y;
+            if (y > vMax) vMax = y;
+          }
+        }
+
+        var maxValue = 0xFFFF;
         for (var row = 0; row < size; ++row) {
           var offset = row * size;
           for (var col = 0; col < size; ++col) {
-            var x = -row + size/2;
-            var y = col - size/2;
-            var theta = Math.atan2(y, x) + Math.PI;
-            //var theta = - Math.PI/4;
-            theta = scaleTheta * theta;
-            var radius = scaleR * Math.sqrt(x * x + y * y)/maxR;
-
-            // r g, b a
+            // r b, g a
             var idx = (offset + col) * 4;
-            var r = Math.floor(radius / 255);
-            var b = Math.round(radius % 255);
+            var x = fx(row, col);
+            var y = fy(row, col);
 
-            var g = Math.floor(theta / 255);
-            var a = Math.round(theta % 255);
+            var xEnc = maxValue * (x - uMin)/(uMax - uMin);
+            var r = (xEnc & 0xFF00) >> 8;
+            var b = xEnc & 0xFF;
+
+            var yEnc = maxValue * (y - vMin) /(vMax - vMin);
+            if (yEnc > maxValue || xEnc > maxValue) throw new Error('out of range');
+
+            var g = (yEnc & 0xFF00) >> 8;
+            var a = yEnc & 0xFF;
             result[idx + 0] = r;
             result[idx + 1] = g;
             result[idx + 2] = b;
             result[idx + 3] = a;
           }
         }
+
+        windData.uMax = uMax;
+        windData.vMax = vMax;
+        windData.uMin = uMin;
+        windData.vMin = vMin;
+
         return result
 
-        function encodeY(y) {
-          return 255 * (y - windData.vMin)/(windData.vMax - windData.vMin);
+        function fx(row, col) {
+          return getXValue(minX + (maxX - minX) * (col)/size, minY + (maxY - minY) * (row) / size);
         }
+        function fy(row, col) {
+          return getYValue(minX + (maxX - minX) * (col)/size, minY + (maxY - minY) * (row) / size);
+        }
+      }
 
-        function encodeX(x) {
-          return 255 * (x - windData.uMin)/(windData.uMax - windData.uMin);
-        }
+      function getXValue(x, y) {
+        return -y; // y/l;
+      }
+
+      function getYValue(x, y) {
+        return y * Math.cos(y);// -y/l;
       }
   }
 

@@ -81,8 +81,6 @@ void main() {
 // TODO: Need to read from the texture
 var updateFrag = `precision highp float;
 
-#define M_PI 3.1415926535897932384626433832795
-
 uniform sampler2D u_particles;
 uniform sampler2D u_wind;
 uniform vec2 u_wind_min;
@@ -102,16 +100,29 @@ float rand(const vec2 co) {
     return fract(sin(t) * (rand_constants.z + t));
 }
 
+vec2 get_velocity(const vec2 pos) {
+    vec4 vColor = texture2D(u_wind, pos) * 255.0;
+    vec2 dist = u_wind_max - u_wind_min;
+    float tx = dist.x * (vColor.r * 255.0 + vColor.b)/(65535.) + u_wind_min.x;
+    float ty = dist.y * (vColor.g * 255.0 + vColor.a)/(65535.) + u_wind_min.y;
+
+    return vec2(tx, -ty);
+}
+
 // wind speed lookup; use manual bilinear filtering based on 4 adjacent pixels for smooth interpolation
 vec2 lookup_wind(const vec2 uv) {
     // return texture2D(u_wind, uv).rg; // lower-res hardware filtering
     vec2 px = 1.0 / u_wind_res;
     vec2 vc = (floor(uv * u_wind_res)) * px;
     vec2 f = fract(uv * u_wind_res);
-    vec2 tl = texture2D(u_wind, vc).rg;
-    vec2 tr = texture2D(u_wind, vc + vec2(px.x, 0)).rg;
-    vec2 bl = texture2D(u_wind, vc + vec2(0, px.y)).rg;
-    vec2 br = texture2D(u_wind, vc + px).rg;
+    // vec2 tl = texture2D(u_wind, vc).rg;
+    // vec2 tr = texture2D(u_wind, vc + vec2(px.x, 0)).rg;
+    // vec2 bl = texture2D(u_wind, vc + vec2(0, px.y)).rg;
+    // vec2 br = texture2D(u_wind, vc + px).rg;
+    vec2 tl = get_velocity(vc);
+    vec2 tr = get_velocity(vc + vec2(px.x, 0));
+    vec2 bl = get_velocity(vc + vec2(0, px.y));
+    vec2 br = get_velocity(vc + px);
     return mix(mix(tl, tr, f.x), mix(bl, br, f.x), f.y);
 }
 
@@ -121,20 +132,12 @@ void main() {
         color.r / 255.0 + color.b,
         color.g / 255.0 + color.a); // decode particle position from pixel RGBA
 
-   // vec2 velocity =  mix(u_wind_min, u_wind_max, texture2D(u_wind, pos).rg);
+    // vec2 velocity =  mix(u_wind_min, u_wind_max, texture2D(u_wind, pos).rg);
     // vec2 velocity = mix(u_wind_min, u_wind_max, lookup_wind(pos));
-    vec4 vColor = texture2D(u_wind, pos) * 255.0;
-    float maxR = (u_wind_max[0] - u_wind_min[0]);
-    maxR = 2. * sqrt(maxR * maxR);
-    maxR = 1024.;
 
-    // (r, theta)
-    float r = maxR * (vColor.r * 255.0 + vColor.b)/(255. * 255.);
-    float theta = 2.*M_PI * (vColor.g * 255.0 + vColor.a - 255. * 255./2.)/(255. * 255.);
-    
-    vec2 velocity = vec2(r * cos(theta), r * sin(theta));
-
-    pos = pos + 0.0002 * velocity/length(velocity);
+    vec2 velocity = lookup_wind(pos);
+    //vec2 velocity = get_velocity(pos);
+    pos = pos + 0.002 * velocity;
 
     float speed_t = 0.01 * length(velocity);
 
