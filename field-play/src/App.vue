@@ -21,7 +21,7 @@ export default {
 
   beforeDestroy() {
     if (this.scene) {
-      this.scene.stop();
+      this.scene.dispose();
       this.scene = null;
     }
   },

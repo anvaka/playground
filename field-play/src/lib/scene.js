@@ -10,6 +10,7 @@
  */
 import util from './gl-utils';
 import shaders from './sharders';
+import makePanzoom from 'panzoom';
 
 export default initScene;
 
@@ -20,6 +21,11 @@ function initScene(gl, particlesCount = 10000) {
   gl.disable(gl.STENCIL_TEST); 
   var width = gl.canvas.width; 
   var height = gl.canvas.height;
+  var transform = {
+    scale: 1,
+    dx: 0,
+    dy: 0
+  };
 
   var framebuffer = gl.createFramebuffer();
   var quadBuffer = util.createBuffer(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]));
@@ -37,100 +43,31 @@ function initScene(gl, particlesCount = 10000) {
   var particleStateResolution, _numParticles, particleStateTexture0, particleStateTexture1, particleIndices, particleIndexBuffer;
   var lastAnimationFrame;
 
-  var windTexture;
-  var windData = {
-    uMin: -1.0,
-    uMax: 1.0,
-    vMin: -1.0,
-    vMax: 1.0,
-    width: 512,
-    height: 512,
-  }
-  initWind();
-  
   initParticles(particlesCount);
-  
-  return {
+
+  var api = {
     start: nextFrame,
-    stop
+    stop,
+    dispose
   }
 
-  function initWind() {
-    var minX = -1; var maxX = 1;
-    var minY = -1; var maxY = 1;
-    console.time('inittext');
-    var textureSize = 1024;
-    var speedMap = createSpeedMap(textureSize);
-    console.timeEnd('inittext');
-    windTexture = util.createTexture(gl, gl.LINEAR, speedMap, textureSize, textureSize);
+  var panzoom = makePanzoom(gl.canvas, {
+    zoomSpeed: 0.025,
+    controller: wglPanZoom(gl.canvas, transform, api)
+  });
+  panzoom.showRectangle({
+    left: -window.innerWidth/2,
+    top: -window.innerHeight/2,
+    right: window.innerWidth/2,
+    bottom: window.innerHeight/2,
+  })
 
-    function createSpeedMap(size) {
-        var result = new Uint8Array(size * size * 4);
-        var uMax = Number.NEGATIVE_INFINITY;
-        var vMax = Number.NEGATIVE_INFINITY;
-        var uMin = Number.POSITIVE_INFINITY;
-        var vMin = Number.POSITIVE_INFINITY;
+  return api;
 
-        for (var row = 0; row < size; ++row) {
-          for (var col = 0; col < size; ++col) {
-            var x = fx(row, col);
-            var y = fy(row, col);
-            if (x < uMin) uMin = x;
-            if (x > uMax) uMax = x;
-            if (y < vMin) vMin = y;
-            if (y > vMax) vMax = y;
-          }
-        }
-
-        var maxValue = 0xFFFF;
-        for (var row = 0; row < size; ++row) {
-          var offset = row * size;
-          for (var col = 0; col < size; ++col) {
-            // r b, g a
-            var idx = (offset + col) * 4;
-            var x = fx(row, col);
-            var y = fy(row, col);
-
-            var xEnc = maxValue * (x - uMin)/(uMax - uMin);
-            var r = (xEnc & 0xFF00) >> 8;
-            var b = xEnc & 0xFF;
-
-            var yEnc = maxValue * (y - vMin) /(vMax - vMin);
-            if (yEnc > maxValue || xEnc > maxValue) throw new Error('out of range');
-
-            var g = (yEnc & 0xFF00) >> 8;
-            var a = yEnc & 0xFF;
-            result[idx + 0] = r;
-            result[idx + 1] = g;
-            result[idx + 2] = b;
-            result[idx + 3] = a;
-          }
-        }
-
-        windData.uMax = uMax;
-        windData.vMax = vMax;
-        windData.uMin = uMin;
-        windData.vMin = vMin;
-
-        return result
-
-        function fx(row, col) {
-          return getXValue(minX + (maxX - minX) * (col)/size, minY + (maxY - minY) * (row) / size);
-        }
-        function fy(row, col) {
-          return getYValue(minX + (maxX - minX) * (col)/size, minY + (maxY - minY) * (row) / size);
-        }
-      }
-
-      function getXValue(x, y) {
-        return -y; // y/l;
-      }
-
-      function getYValue(x, y) {
-        return y * Math.cos(y);// -y/l;
-      }
+  function dispose() {
+      stop();
+      panzoom.dispose();
   }
-
   function nextFrame() {
     lastAnimationFrame = requestAnimationFrame(draw);
   }
@@ -145,14 +82,12 @@ function initScene(gl, particlesCount = 10000) {
     gl.disable(gl.STENCIL_TEST);
     
     util.bindTexture(gl, particleStateTexture0, 1);
-    util.bindTexture(gl, windTexture, 0);
     
     drawScreen();
     updateParticles();
 
     nextFrame();
   }
-
 
   function drawScreen() {
     // render to the frame buffer
@@ -183,15 +118,12 @@ function initScene(gl, particlesCount = 10000) {
   
     util.bindAttribute(gl, quadBuffer, program.a_pos, 2);
   
-    gl.uniform1i(program.u_wind, 0);
     gl.uniform1i(program.u_particles, 1);
   
     gl.uniform1f(program.u_rand_seed, Math.random());
-    gl.uniform2f(program.u_wind_res, windData.width, windData.height);
-    gl.uniform2f(program.u_wind_min, windData.uMin, windData.vMin);
-    gl.uniform2f(program.u_wind_max, windData.uMax, windData.vMax);
+    gl.uniform3f(program.u_camera, transform.scale, transform.dx, transform.dy);
+    gl.uniform2f(program.u_screen_size, window.innerWidth, window.innerHeight);
 
-    gl.uniform1f(program.u_speed_factor, 0.25);
     gl.uniform1f(program.u_drop_rate, 0.003);
     gl.uniform1f(program.u_drop_rate_bump, 0.01);
   
@@ -212,13 +144,10 @@ function initScene(gl, particlesCount = 10000) {
     util.bindAttribute(gl, particleIndexBuffer, program.a_index, 1);
   //   util.bindTexture(gl, this.colorRampTexture, 2);
   
-    gl.uniform1i(program.u_wind, 0);
     gl.uniform1i(program.u_particles, 1);
   //   gl.uniform1i(program.u_color_ramp, 2);
   
     gl.uniform1f(program.u_particles_res, particleStateResolution);
-    gl.uniform2f(program.u_wind_min, windData.uMin, windData.vMin);
-    gl.uniform2f(program.u_wind_max, windData.uMax, windData.vMax);
   
     gl.drawArrays(gl.POINTS, 0, _numParticles); 
   }
@@ -256,4 +185,20 @@ function initScene(gl, particlesCount = 10000) {
     particleIndexBuffer = util.createBuffer(gl, particleIndices);
   }
 
+}
+
+function wglPanZoom(canvas, transform/*, scene */) {
+  return {
+      applyTransform(newT) {
+        var pixelRatio = 1.0; // scene.getPixelRatio(); // TODO?
+
+        transform.dx = newT.x * pixelRatio;
+        transform.dy = newT.y * pixelRatio; 
+        transform.scale = newT.scale;
+      },
+
+      getOwner() {
+        return canvas
+      }
+    }
 }
