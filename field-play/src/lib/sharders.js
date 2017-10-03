@@ -81,6 +81,8 @@ void main() {
 // TODO: Need to read from the texture
 var updateFrag = `precision highp float;
 
+#define M_PI 3.1415926535897932384626433832795
+
 uniform sampler2D u_particles;
 uniform sampler2D u_wind;
 uniform vec2 u_wind_min;
@@ -120,9 +122,19 @@ void main() {
         color.g / 255.0 + color.a); // decode particle position from pixel RGBA
 
    // vec2 velocity =  mix(u_wind_min, u_wind_max, texture2D(u_wind, pos).rg);
-    vec2 velocity = mix(u_wind_min, u_wind_max, lookup_wind(pos));
+    // vec2 velocity = mix(u_wind_min, u_wind_max, lookup_wind(pos));
+    vec4 vColor = texture2D(u_wind, pos) * 255.0;
+    float maxR = (u_wind_max[0] - u_wind_min[0]);
+    maxR = 2. * sqrt(maxR * maxR);
+    maxR = 1024.;
 
-    pos = pos + 0.0002 * velocity;
+    // (r, theta)
+    float r = maxR * (vColor.r * 255.0 + vColor.b)/(255. * 255.);
+    float theta = 2.*M_PI * (vColor.g * 255.0 + vColor.a - 255. * 255./2.)/(255. * 255.);
+    
+    vec2 velocity = vec2(r * cos(theta), r * sin(theta));
+
+    pos = pos + 0.0002 * velocity/length(velocity);
 
     float speed_t = 0.01 * length(velocity);
 

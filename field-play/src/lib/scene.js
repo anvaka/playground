@@ -67,22 +67,31 @@ function initScene(gl, particlesCount = 10000) {
         windData.vMax = size;
         windData.uMin = -size;
         windData.vMin = -size;
-        for (var row = 0; row < size; ++row) {
-          // min .. max; 
-          // v = 0 .. 255
-          // 1 * 255/(max - min)
-          // 
+        var maxR = Math.sqrt(4 * size * size);
+        var scaleR = 255 * 255;
+        var scaleTheta = (255 * 255)/(2 * Math.PI);
 
-          // 255/40
+        for (var row = 0; row < size; ++row) {
           var offset = row * size;
           for (var col = 0; col < size; ++col) {
-            var x = encodeY(-row + size/2);
-            var y = encodeX(col - size/2);
+            var x = -row + size/2;
+            var y = col - size/2;
+            var theta = Math.atan2(y, x) + Math.PI;
+            //var theta = - Math.PI/4;
+            theta = scaleTheta * theta;
+            var radius = scaleR * Math.sqrt(x * x + y * y)/maxR;
+
+            // r g, b a
             var idx = (offset + col) * 4;
-            result[idx + 0] = Math.floor(x);
-            result[idx + 1] = Math.floor(y);
-            result[idx + 2] = 0;
-            result[idx + 3] = 255;
+            var r = Math.floor(radius / 255);
+            var b = Math.round(radius % 255);
+
+            var g = Math.floor(theta / 255);
+            var a = Math.round(theta % 255);
+            result[idx + 0] = r;
+            result[idx + 1] = g;
+            result[idx + 2] = b;
+            result[idx + 3] = a;
           }
         }
         return result
