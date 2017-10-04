@@ -66,6 +66,7 @@ void main() {
 var updateFrag = `precision highp float;
 
 uniform sampler2D u_particles;
+uniform vec4 u_timer;
 uniform vec3 u_camera;
 uniform vec2 u_screen_size;
 uniform float u_rand_seed;
@@ -82,16 +83,57 @@ float rand(const vec2 co) {
 }
 
 void udf_vector_field(const vec2 p, out vec2 v) {
-    v.x = sin(p.y) * exp(p.x);
-    v.y = cos(p.x) * sin(p.x);
+    // v = vec2(-p.y, p.x); //vec2(-p.y * sin(u_timer.x * 15.) , p.x); //(vec2(-p.y, p.x));
+    // float l = length(p);
+    // v = -0.03 * p/(l * l * l);
+    // if (length(p) < 0.50) {
+    //     v.x = -p.y;
+    //     v.y = p.x;
+    // } else {
+    //     v.x = 0.;
+    //     v.y = 0.;
+    // }
+    // if (abs(p.x - 3.14) < 0.005) {
+    //     v.y = 0.1;
+    // } else {
+    //     v.y = 0.;
+    // }
+    // if (abs(p.y) < 0.005) {
+    //     v.x = 0.1;
+    // } else {
+    //     v.x = 0.0;
+    // }
+
+    vec2 c0 = vec2(-4., 0.);
+    vec2 c1 = vec2(4., 0.);
+    float l1 = length(p - c0);
+    float l2 = length(p - c1);
+    v = -1.2 * (p - c0)/(l1 * l1 *  l1); 
+       // 1./(1. + l2 * l2) * (p - c1)/(l2 * l2 * l2) 
+        + vec2(0., 0.);
+    // v.x = -p.y;
+    // v.y = p.x;
+    // v.x = sin(p.y) * sin(p.x);
+    // v.y = cos(p.x) * sin(p.x);
 }
 
 vec2 get_velocity(const vec2 pos) {
     vec2 velocity;
-    vec2 vv = u_camera.yz/u_screen_size;
+    vec2 vv =  (pos - u_camera.yz/u_screen_size)/u_camera.x;
 
-    udf_vector_field(vec2(pos.x, pos.y)/u_camera.x  - vv /u_camera.x, velocity);
+    udf_vector_field(vv, velocity);
+
     return velocity;
+}
+
+vec2 rk4(const vec2 point) {
+    float h = 0.01;
+    vec2 k1 = get_velocity( point );          
+    vec2 k2 = get_velocity( point + k1 * h * 0.5);
+    vec2 k3 = get_velocity( point + k2 * h * 0.5);
+    vec2 k4 = get_velocity( point + k3 * h);
+
+    return k1 * h / 6. + k2 * h/3. + k3 * h/3. + k4 * h/6.;
 }
 
 void main() {
@@ -100,8 +142,9 @@ void main() {
         encSpeed.r / 255.0 + encSpeed.b,
         encSpeed.g / 255.0 + encSpeed.a); // decode particle position from pixel RGBA
 
-    vec2 velocity = get_velocity(pos);
-    pos = pos + 0.002 * velocity;
+    vec2 velocity = rk4(pos);
+    // pos = pos + 0.002 * velocity;
+    pos = pos + rk4(pos);
 
     // a random seed to use for the particle drop
     vec2 seed = (pos + v_tex_pos) * u_rand_seed;
@@ -114,6 +157,11 @@ void main() {
     pos = mix(pos, random_pos, drop);
 
     // encode the new particle position back into RGBA
+    // gl_FragColor = vec4(
+    //     fract(pos * 255.0),
+    //     floor(pos * 255.0) / 255.0);
+    pos.x = -1.;
+    pos.y = -1.;
     gl_FragColor = vec4(
         fract(pos * 255.0),
         floor(pos * 255.0) / 255.0);

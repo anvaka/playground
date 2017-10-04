@@ -14,7 +14,7 @@ import makePanzoom from 'panzoom';
 
 export default initScene;
 
-const fadeOpacity = 0.998;
+const fadeOpacity = 0.8;
 
 function initScene(gl, particlesCount = 10000) {
   gl.disable(gl.DEPTH_TEST);
@@ -26,7 +26,11 @@ function initScene(gl, particlesCount = 10000) {
     dx: 0,
     dy: 0
   };
-
+  var dt = 0.001;
+  var t1 = 0;
+  var t2 = 0;
+  var t3 = 0;
+  var t4 = 0;
   var framebuffer = gl.createFramebuffer();
   var quadBuffer = util.createBuffer(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]));
   
@@ -48,7 +52,8 @@ function initScene(gl, particlesCount = 10000) {
   var api = {
     start: nextFrame,
     stop,
-    dispose
+    dispose,
+    transform
   }
 
   var panzoom = makePanzoom(gl.canvas, {
@@ -122,8 +127,13 @@ function initScene(gl, particlesCount = 10000) {
   
     gl.uniform1f(program.u_rand_seed, Math.random());
     gl.uniform3f(program.u_camera, transform.scale, transform.dx, transform.dy);
+    gl.uniform4f(program.u_timer, t1, t2, t3, t4);
     gl.uniform2f(program.u_screen_size, window.innerWidth, window.innerHeight);
 
+    t1 = (t1 + dt) % 1;
+    t2 = (t2 + dt) % 1;
+    t3 = (t3 + dt) % 1;
+    t4 = (t4 + dt) % 1;
     gl.uniform1f(program.u_drop_rate, 0.003);
     gl.uniform1f(program.u_drop_rate_bump, 0.01);
   
