@@ -62,8 +62,16 @@ void main() {
     gl_Position = vec4(2.0 * v_particle_pos.x - 1.0, (1. - 2. *(v_particle_pos.y)),  0., 1.);
 }`
 
-// TODO: Need to read from the texture
-var updateFrag = `precision highp float;
+var defaultVectorField = `
+void udf_vector_field(const vec2 p, out vec2 v) {
+    v.x = -p.y;
+    v.y = p.x;
+}
+`;
+
+// TODO: Need to read velocities from a texture?
+var updateFrag = {
+    header: `precision highp float;
 
 uniform sampler2D u_particles;
 uniform vec4 u_timer;
@@ -74,20 +82,14 @@ uniform float u_drop_rate;
 uniform float u_drop_rate_bump;
 
 varying vec2 v_tex_pos;
+`,
 
-
+methods: `
 // pseudo-random generator
 const vec3 rand_constants = vec3(12.9898, 78.233, 4375.85453);
 float rand(const vec2 co) {
     float t = dot(rand_constants.xy, co);
     return fract(sin(t) * (rand_constants.z + t));
-}
-
-void udf_vector_field(const vec2 p, out vec2 v) {
-    v.x = -p.y;
-    v.y = p.x;
-    // float l = length(p);
-    // v = -p * 0.3 /(l * l * sin(l));
 }
 
 vec2 get_velocity(const vec2 pos) {
@@ -104,9 +106,8 @@ vec2 rk4(const vec2 point) {
     vec2 k4 = get_velocity( point + k3 * h);
 
     return k1 * h / 6. + k2 * h/3. + k3 * h/3. + k4 * h/6.;
-}
-
-void main() {
+}`,
+body: `void main() {
     vec4 encSpeed = texture2D(u_particles, v_tex_pos);
     vec2 pos = vec2(
         encSpeed.r / 255.0 + encSpeed.b,
@@ -132,12 +133,30 @@ void main() {
 
     // encode the new particle position back into RGBA
     gl_FragColor = vec4(fract(pos * 255.0), floor(pos * 255.0) / 255.0);
-}`;
+}`
+};
 
 export default {
   quadVert: quadVert,
   screenFrag: screenFrag,
   drawFrag: drawFrag,
   drawVert: drawVert,
-  updateFrag: updateFrag
+  updateFrag: buildShaderForUpdate(defaultVectorField),
+  buildShaderForUpdate,
+  unsafeBuildShader,
 };
+
+function unsafeBuildShader(udfContent) {
+  // TODO: Do I need to worry about "glsl injection" (i.e. is there potential for security attack?)
+
+  const udf_body = `
+void udf_vector_field(const vec2 p, out vec2 v) {
+${udfContent}
+}
+`
+  return buildShaderForUpdate(udf_body);
+}
+
+function buildShaderForUpdate(vectorField) {
+  return updateFrag.header + vectorField +  updateFrag.methods +  updateFrag.body;
+}

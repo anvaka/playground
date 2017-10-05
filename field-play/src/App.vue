@@ -2,12 +2,14 @@
   <div id="app">
     <canvas ref='scene'></canvas>
     <ruler></ruler>
+    <settings :scene='scene'></settings>
   </div>
 </template>
 
 <script>
 import initScene from './lib/scene';
 import Ruler from './components/Ruler';
+import Settings from './components/Settings';
 
 export default {
   name: 'app',
@@ -22,10 +24,12 @@ export default {
   },
   data() {
     return {
+      scene: null
     };
   },
   components: {
-    Ruler
+    Ruler,
+    Settings
   },
 
   beforeDestroy() {

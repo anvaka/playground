@@ -104,7 +104,6 @@ vertical-labels-width = 48px;
 
 .highlighted .tick-container {
   color: white;
-  background-color: rgba(0, 0, 0, 0.8);
 }
 
 .horizontal {
@@ -171,7 +170,6 @@ vertical-labels-width = 48px;
   top: -5px;
   width: 10px;
   height: 10px;
-  background-color: orange;
 }
 </style>
 

@@ -38,6 +38,7 @@ function createTexture(gl, filter, data, width, height) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
   if (data instanceof Uint8Array) {
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+      debugger;
   } else {
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data);
   }
@@ -72,7 +73,10 @@ function createProgram(gl, vertexSource, fragmentSource) {
       throw new Error(gl.getProgramInfoLog(program));
   }
 
-  var wrapper = {program: program};
+  var wrapper = {
+    program: program,
+    unload
+  };
 
   var numAttributes = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
   var i;
@@ -87,6 +91,10 @@ function createProgram(gl, vertexSource, fragmentSource) {
   }
 
   return wrapper; 
+
+  function unload() {
+    gl.deleteProgram(program);
+  }
 }
 
 function createShader(gl, type, source) {

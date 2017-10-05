@@ -62,11 +62,26 @@ function initScene(gl, particlesCount = 10000) {
     stop,
     dispose,
     transform,
+    updateVectorField
   }
 
   var panzoom = initPanzoom(); 
 
   return api;
+
+  function updateVectorField(vf) {
+    try {
+      let updateFrag = shaders.unsafeBuildShader(vf)
+
+      let newProgram = util.createProgram(gl, shaders.quadVert, updateFrag);
+      updateProgram.unload();
+      updateProgram = newProgram;
+    } catch (e) {
+      return {
+        error: e.message
+      };
+    }
+  }
 
   function updateScreenTextures() {
     var width = gl.canvas.width; 
@@ -278,6 +293,5 @@ function initScene(gl, particlesCount = 10000) {
         return canvas
       }
     };
-
   }
 }
