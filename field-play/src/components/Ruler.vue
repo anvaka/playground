@@ -1,12 +1,10 @@
 <template>
-  <div class='ruler'>
-    <div class='horizontal'>
-      <div class='tick' v-for='tick in hticks' :style='{left: tick.offset}'>
-        {{tick.label}}
-      </div>
-      <div class='tick v' v-for='tick in vticks' :style='{top: tick.offset}'>
-        {{tick.label}}
-      </div>
+  <div class='ruler' :class='{highlighted: highlighted}'>
+    <div class='horizontal tick-container'>
+      <div class='tick' v-for='tick in hticks' :style='{left: tick.offset}'>{{tick.label}}</div>
+    </div>
+    <div class='vertical tick-container'>
+      <div class='tick' v-for='tick in vticks' :style='{top: tick.offset}'>{{tick.label}}</div>
     </div>
   </div>
 </template>
@@ -26,40 +24,68 @@ import bus from '../lib/bus';
       return {
         hticks: [],
         vticks: [],
+        highlighted: false
       };
     },
     methods: {
       recomupteLabels(bbox) {
-        console.log('recomputing')
-        let hticks = [];
-        let vticks = [];
-        let width = window.innerWidth;
-        let height = window.innerHeight;
-        var tickCount = 10;
         let {minX, minY, maxX, maxY} = bbox;
-        let dx = (maxX - minX)/tickCount;
-        let dy = (maxY - minY)/tickCount;
-        var hstep = width/tickCount;
-        var vstep = height/tickCount;
-        var start = 0;
-        for (var i = 0; i <= tickCount; ++i) {
-          hticks.push({
-            offset: i * hstep + 'px',
-            label: (dx * i + minX).toFixed(2)
-          });
-
-          vticks.push({
-            offset: i * vstep + 'px',
-            label: (dy * i + minY).toFixed(2)
-          });
+        if (this.clearHighlight) {
+          clearTimeout(this.clearHighlight);
+          this.clearHighlight = null;
         }
-        this.hticks = hticks;
-        this.vticks = vticks;
+
+        this.highlighted = true;
+        this.hticks = getHorizontalTicks(window.innerWidth, minX, maxX);
+        this.vticks = getVerticalTicks(window.innerHeight, minY, maxY);
+        this.clearHighlight = setTimeout(() => {
+          this.highlighted = false;
+          this.clearHighlight = null;
+        }, 1500);
       }
     }
   }
+
+function getHorizontalTicks(availableWidth, minX, maxX) {
+  let ticks = [];
+  var tickCount = availableWidth < 600 ? 3 : 10;
+  var step = availableWidth/tickCount;
+  let dx = (maxX - minX)/tickCount;
+
+  for (var i = 0; i < tickCount; ++i) {
+    ticks.push({
+      offset: i * step + 'px',
+      label: formatNumber(dx * i + minX)
+    });
+  }
+
+  return ticks;
+}
+
+function getVerticalTicks(availableHeight, minY, maxY) {
+  var ticks = [];
+  var tickCount = availableHeight < 600? 5 : 10;
+  let dy = (maxY - minY)/tickCount;
+  var step = availableHeight/tickCount;
+
+  // start from 1 to not overlap with x axis;
+  for (var i = 1; i < tickCount; ++i) {
+    ticks.push({
+      offset: i * step + 'px',
+      label: formatNumber(dy * i + minY)
+    });
+  }
+  return ticks;
+}
+
+
+function formatNumber(x) {
+  return x.toFixed(2);
+}
 </script>
 <style lang='stylus'>
+vertical-labels-width = 48px;
+
 
 .ruler {
   position: absolute;
@@ -70,17 +96,75 @@ import bus from '../lib/bus';
   pointer-events: none;
   color: #99c5f1;
 }
+
+.tick-container {
+  position: absolute;
+  transition: all .5s;
+}
+
+.highlighted .tick-container {
+  color: white;
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
 .horizontal {
-  top: 0;
+  height: 22px;
   left: 0;
-  right: 0;
+  right: vertical-labels-width;
   .tick {
-    position: absolute;
+    transform: translateX(-50%);
+    top: 0;
   }
-  .tick.v {
-    right: 8px;
+  .tick:first-child {
+    transform: translate(0%);
+  }
+  .tick:last-child {
+    transform: translate(-100%);
   }
 }
+.tick {
+  position: absolute;
+}
+
+.vertical {
+  right: 0px;
+  top: 0;
+  bottom: 0;
+  width: vertical-labels-width;
+  .tick {
+    width: vertical-labels-width - 8px;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    right: 0;
+    padding-right: 8px;
+    transform: translateY(-50%);
+  }
+}
+
+@media (min-width: 800px) {
+  large-screen-vertical-width = 70px;
+  .horizontal {
+    right: large-screen-vertical-width;
+  }
+  .vertical {
+    width: large-screen-vertical-width;
+    .tick {
+      width: large-screen-vertical-width - 8px;
+    }
+  }
+}
+
+@media (max-width: 800px) {
+.horizontal {
+  height: 16px;
+}
+  .tick {
+    font-size: 12px;
+  }
+}
+
+
 .tracker {
   position: absolute;
   left: -5px;

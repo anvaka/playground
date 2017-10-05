@@ -84,8 +84,8 @@ float rand(const vec2 co) {
 }
 
 void udf_vector_field(const vec2 p, out vec2 v) {
-    v.x = p.y/p.x;
-    v.y = 0.;
+    v.x = -p.y;
+    v.y = p.x;
     // float l = length(p);
     // v = -p * 0.3 /(l * l * sin(l));
 }

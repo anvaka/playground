@@ -18,10 +18,11 @@ export default initScene;
 const fadeOpacity = .9998;
 
 function initScene(gl, particlesCount = 10000) {
+  var pixelRatio = 1.0; // scene.getPixelRatio(); // TODO?
+  window.addEventListener('resize', onResize, true);
+
   gl.disable(gl.DEPTH_TEST);
   gl.disable(gl.STENCIL_TEST); 
-  var width = gl.canvas.width; 
-  var height = gl.canvas.height;
   var bbox = {
     minX: -1,
     minY: -1,
@@ -42,10 +43,9 @@ function initScene(gl, particlesCount = 10000) {
   var framebuffer = gl.createFramebuffer();
   var quadBuffer = util.createBuffer(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]));
   
-  var emptyPixels = new Uint8Array(width * height * 4);
-
-  var screenTexture = util.createTexture(gl, gl.NEAREST, emptyPixels, width, height);
-  var backgroundTexture = util.createTexture(gl, gl.NEAREST, emptyPixels, width, height);
+  // screen rendering;
+  var screenTexture, backgroundTexture;
+  updateScreenTextures();
 
   var screenProgram = util.createProgram(gl, shaders.quadVert, shaders.screenFrag);
   var drawProgram = util.createProgram(gl, shaders.drawVert, shaders.drawFrag);
@@ -64,24 +64,38 @@ function initScene(gl, particlesCount = 10000) {
     transform,
   }
 
-  var panzoom = makePanzoom(gl.canvas, {
-    zoomSpeed: 0.025,
-    controller: wglPanZoom(gl.canvas, transform, api)
-  });
-  var w = Math.PI * Math.E * window.innerWidth/2;
-  var h = Math.PI * Math.E * window.innerHeight/2;
-  panzoom.showRectangle({
-    left: -w,
-    top: -h,
-    right: w,
-    bottom: h,
-  })
+  var panzoom = initPanzoom(); 
 
   return api;
+
+  function updateScreenTextures() {
+    var width = gl.canvas.width; 
+    var height = gl.canvas.height;
+    var emptyPixels = new Uint8Array(width * height * 4);
+    if (screenTexture) {
+      gl.deleteTexture(screenTexture);
+    }
+    if (backgroundTexture) {
+      gl.deleteTexture(backgroundTexture);
+    }
+
+    screenTexture = util.createTexture(gl, gl.NEAREST, emptyPixels, width, height);
+    backgroundTexture = util.createTexture(gl, gl.NEAREST, emptyPixels, width, height);
+  }
+
+  function onResize() {
+    let canvas = gl.canvas;
+    canvas.width = window.innerWidth * pixelRatio;
+    canvas.height = window.innerHeight * pixelRatio;
+
+    updateScreenTextures();
+    updateBBox();
+  }
 
   function dispose() {
       stop();
       panzoom.dispose();
+      window.removeEventListener('resize', onResize, true);
   }
   function nextFrame() {
     lastAnimationFrame = requestAnimationFrame(draw);
@@ -206,46 +220,64 @@ function initScene(gl, particlesCount = 10000) {
     particleIndexBuffer = util.createBuffer(gl, particleIndices);
   }
 
-function wglPanZoom(canvas, transform/*, scene */) {
-  return {
+  function initPanzoom() {
+    let initializedPanzoom = makePanzoom(gl.canvas, {
+      zoomSpeed: 0.025,
+      controller: wglPanZoom(gl.canvas, transform, api)
+    });
+    var w = Math.PI * Math.E * window.innerWidth/2;
+    var h = Math.PI * Math.E * window.innerHeight/2;
+    initializedPanzoom.showRectangle({
+      left: -w,
+      top: -h,
+      right: w,
+      bottom: h,
+    });
+    return initializedPanzoom;
+  }
+
+  function updateBBox() {
+    var tx = transform.dx;
+    var ty = transform.dy;
+    var s = transform.scale;
+    var w = window.innerWidth;
+    var h = window.innerHeight;
+
+    var minX = clientX(0);
+    var minY = clientY(0);
+    var maxX = clientX(w);
+    var maxY = clientY(h);
+
+    var ar = w/h;
+    bbox.minX = minX/w
+    bbox.minY =  -minY/h / ar
+    bbox.maxX = maxX/w
+    bbox.maxY =  -maxY/h / ar
+
+    bus.fire('bbox-change', bbox);
+
+    function clientX(x) {
+      return (x - tx)/s;
+    }
+
+    function clientY(y) {
+      return (y - ty)/s;
+    }
+  }
+
+  function wglPanZoom(canvas, transform/*, scene */) {
+    return {
       applyTransform(newT) {
-        var pixelRatio = 1.0; // scene.getPixelRatio(); // TODO?
-        var tx = transform.dx = newT.x * pixelRatio;
-        var ty = transform.dy = newT.y * pixelRatio; 
-        var s = transform.scale = newT.scale;
-        var w = window.innerWidth;
-        var h = window.innerHeight;
-
-        // console.log(newT.x, newT.y, newT.scale, bbox);
-        console.log('Transform', s, tx, ty);
-        var minX = clientX(0);
-        var minY = clientY(0);
-        var maxX = clientX(w);
-        var maxY = clientY(h);
-
-        var ar = w/h;
-        bbox.minX = minX/w
-        bbox.minY =  -minY/h / ar
-        bbox.maxX = maxX/w
-        bbox.maxY =  -maxY/h / ar
-
-        // console.log('visible client rect (in client rect coordinates):', minX, minY, maxX, maxY);
-        // console.log('Suggested rect space', minX/w, minY/h, maxX/w, maxY/h);
-        bus.fire('bbox-change', bbox);
-
-        function clientX(x) {
-          return (x - tx)/s;
-        }
-
-        function clientY(y) {
-          return (y - ty)/s;
-        }
-
+        transform.dx = newT.x * pixelRatio;
+        transform.dy = newT.y * pixelRatio; 
+        transform.scale = newT.scale;
+        updateBBox();
       },
 
       getOwner() {
         return canvas
       }
-    }
-}
+    };
+
+  }
 }
