@@ -8,18 +8,26 @@
   </div>
 </template>
 <script>
+import bus from '../lib/bus';
 export default {
   name: 'Settings',
   props: ['scene'],
+  mounted() {
+    bus.on('scene-ready', this.onSceneReady, this);
+  },
+  beforeDestroy() {
+    bus.off('scene-ready', this.onSceneReady, this);
+  },
   data() {
     return {
       error: '',
-      vectorField: `v.x = -p.y;
-v.y = p.x;
-`
+      vectorField: ''
     };
   },
   methods: {
+    onSceneReady(scene) {
+      this.vectorField = scene.getCurrentCode();
+    },
     sendVectorField() {
       let result = this.scene.updateVectorField(this.vectorField);
       if (result && result.error) {

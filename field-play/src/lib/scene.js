@@ -12,10 +12,14 @@ import util from './gl-utils';
 import shaders from './sharders';
 import makePanzoom from 'panzoom';
 import bus from './bus';
+import appState from './appState';
 
 export default initScene;
 
 const fadeOpacity = .9998;
+var defaultVectorField = `v.x = -p.y;
+v.y = p.x;
+`;
 
 function initScene(gl, particlesCount = 10000) {
   var pixelRatio = 1.0; // scene.getPixelRatio(); // TODO?
@@ -49,7 +53,10 @@ function initScene(gl, particlesCount = 10000) {
 
   var screenProgram = util.createProgram(gl, shaders.quadVert, shaders.screenFrag);
   var drawProgram = util.createProgram(gl, shaders.drawVert, shaders.drawFrag);
-  var updateProgram = util.createProgram(gl, shaders.quadVert, shaders.updateFrag);
+
+  var currentCode = '';
+  var updateProgram;
+  loadUpdateProgramFromAppState();
 
   // particles
   var particleStateResolution, _numParticles, particleStateTexture0, particleStateTexture1, particleIndices, particleIndexBuffer;
@@ -62,20 +69,48 @@ function initScene(gl, particlesCount = 10000) {
     stop,
     dispose,
     transform,
-    updateVectorField
+    updateVectorField,
+    getCurrentCode
   }
 
   var panzoom = initPanzoom(); 
+  setTimeout(() => {
+    bus.fire('scene-ready', api);
+  })
 
   return api;
 
-  function updateVectorField(vf) {
+  function getCurrentCode() {
+    return currentCode;
+  }
+
+  function loadUpdateProgramFromAppState() {
+    let persistedCode = appState.getCode();
+    if (persistedCode) {
+      let result = trySetNewCode(persistedCode);
+      if (!result) return; // This means we set correctly;
+      console.error('Failed to restore previous vector field: ', result.error);
+    }
+    // Iw we get here - something went wrong. see the console
+    trySetNewCode(defaultVectorField);
+  }
+
+  function updateVectorField(vfCode) {
+    let result = trySetNewCode(vfCode);
+    if (result && result.error) return result;
+
+    appState.saveCode(vfCode);
+  }
+
+  function trySetNewCode(vfCode) {
     try {
-      let updateFrag = shaders.unsafeBuildShader(vf)
+      let updateFrag = shaders.unsafeBuildShader(vfCode)
 
       let newProgram = util.createProgram(gl, shaders.quadVert, updateFrag);
-      updateProgram.unload();
+      if (updateProgram) updateProgram.unload();
+
       updateProgram = newProgram;
+      currentCode = vfCode;
     } catch (e) {
       return {
         error: e.message
@@ -240,13 +275,25 @@ function initScene(gl, particlesCount = 10000) {
       zoomSpeed: 0.025,
       controller: wglPanZoom(gl.canvas, transform, api)
     });
-    var w = Math.PI * Math.E * window.innerWidth/2;
-    var h = Math.PI * Math.E * window.innerHeight/2;
+    let savedBBox = appState.getBBox();
+
+    let sX = Math.PI * Math.E;
+    let sY = Math.PI * Math.E;
+    let tX = 0;
+    let tY = 0;
+    if (savedBBox) {
+      sX = savedBBox.maxX - savedBBox.minX;
+      sY = savedBBox.maxY - savedBBox.minY;
+      // TODO: Restore tx/ty
+    }
+
+    var w2 = sX * window.innerWidth/2;
+    var h2 = sY * window.innerHeight/2;
     initializedPanzoom.showRectangle({
-      left: -w,
-      top: -h,
-      right: w,
-      bottom: h,
+      left: -w2 + tX,
+      top: -h2,
+      right: w2 + tX,
+      bottom: h2,
     });
     return initializedPanzoom;
   }
@@ -269,6 +316,7 @@ function initScene(gl, particlesCount = 10000) {
     bbox.maxX = maxX/w
     bbox.maxY =  -maxY/h / ar
 
+    appState.saveBBox(bbox);
     bus.fire('bbox-change', bbox);
 
     function clientX(x) {
@@ -279,6 +327,7 @@ function initScene(gl, particlesCount = 10000) {
       return (y - ty)/s;
     }
   }
+
 
   function wglPanZoom(canvas, transform/*, scene */) {
     return {

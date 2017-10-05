@@ -19,7 +19,7 @@ export default {
     canvas.height = window.innerHeight;
 
     var gl = canvas.getContext('webgl', {antialiasing: false});
-    this.scene = initScene(gl)
+    this.scene = initScene(gl);
     this.scene.start();
   },
   data() {

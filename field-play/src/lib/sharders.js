@@ -62,12 +62,6 @@ void main() {
     gl_Position = vec4(2.0 * v_particle_pos.x - 1.0, (1. - 2. *(v_particle_pos.y)),  0., 1.);
 }`
 
-var defaultVectorField = `
-void udf_vector_field(const vec2 p, out vec2 v) {
-    v.x = -p.y;
-    v.y = p.x;
-}
-`;
 
 // TODO: Need to read velocities from a texture?
 var updateFrag = {
@@ -141,7 +135,6 @@ export default {
   screenFrag: screenFrag,
   drawFrag: drawFrag,
   drawVert: drawVert,
-  updateFrag: buildShaderForUpdate(defaultVectorField),
   buildShaderForUpdate,
   unsafeBuildShader,
 };
