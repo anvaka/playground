@@ -1,11 +1,13 @@
 <template>
   <div id="app">
     <canvas ref='scene'></canvas>
+    <ruler></ruler>
   </div>
 </template>
 
 <script>
 import initScene from './lib/scene';
+import Ruler from './components/Ruler';
 
 export default {
   name: 'app',
@@ -17,6 +19,13 @@ export default {
     var gl = canvas.getContext('webgl', {antialiasing: false});
     this.scene = initScene(gl)
     this.scene.start();
+  },
+  data() {
+    return {
+    };
+  },
+  components: {
+    Ruler
   },
 
   beforeDestroy() {

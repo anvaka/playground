@@ -11,16 +11,23 @@
 import util from './gl-utils';
 import shaders from './sharders';
 import makePanzoom from 'panzoom';
+import bus from './bus';
 
 export default initScene;
 
-const fadeOpacity = 0.8;
+const fadeOpacity = .9998;
 
 function initScene(gl, particlesCount = 10000) {
   gl.disable(gl.DEPTH_TEST);
   gl.disable(gl.STENCIL_TEST); 
   var width = gl.canvas.width; 
   var height = gl.canvas.height;
+  var bbox = {
+    minX: -1,
+    minY: -1,
+    maxX: 1,
+    maxY: 1,
+  };
   var transform = {
     scale: 1,
     dx: 0,
@@ -31,6 +38,7 @@ function initScene(gl, particlesCount = 10000) {
   var t2 = 0;
   var t3 = 0;
   var t4 = 0;
+
   var framebuffer = gl.createFramebuffer();
   var quadBuffer = util.createBuffer(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]));
   
@@ -53,18 +61,20 @@ function initScene(gl, particlesCount = 10000) {
     start: nextFrame,
     stop,
     dispose,
-    transform
+    transform,
   }
 
   var panzoom = makePanzoom(gl.canvas, {
     zoomSpeed: 0.025,
     controller: wglPanZoom(gl.canvas, transform, api)
   });
+  var w = Math.PI * Math.E * window.innerWidth/2;
+  var h = Math.PI * Math.E * window.innerHeight/2;
   panzoom.showRectangle({
-    left: -window.innerWidth/2,
-    top: -window.innerHeight/2,
-    right: window.innerWidth/2,
-    bottom: window.innerHeight/2,
+    left: -w,
+    top: -h,
+    right: w,
+    bottom: h,
   })
 
   return api;
@@ -126,15 +136,16 @@ function initScene(gl, particlesCount = 10000) {
     gl.uniform1i(program.u_particles, 1);
   
     gl.uniform1f(program.u_rand_seed, Math.random());
-    gl.uniform3f(program.u_camera, transform.scale, transform.dx, transform.dy);
+    gl.uniform2f(program.u_min, bbox.minX, bbox.minY);
+    gl.uniform2f(program.u_max, bbox.maxX, bbox.maxY);
+
     gl.uniform4f(program.u_timer, t1, t2, t3, t4);
-    gl.uniform2f(program.u_screen_size, window.innerWidth, window.innerHeight);
 
     t1 = (t1 + dt) % 1;
     t2 = (t2 + dt) % 1;
     t3 = (t3 + dt) % 1;
     t4 = (t4 + dt) % 1;
-    gl.uniform1f(program.u_drop_rate, 0.003);
+    gl.uniform1f(program.u_drop_rate, 0.03);
     gl.uniform1f(program.u_drop_rate_bump, 0.01);
   
     gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -184,7 +195,7 @@ function initScene(gl, particlesCount = 10000) {
     var particleState = new Uint8Array(_numParticles * 4);
 
     for (var i = 0; i < particleState.length; i++) {
-      particleState[i] = Math.floor(Math.random() * 256); // randomize the initial particle positions
+      particleState[i] =  Math.floor(Math.random() * 256); // randomize the initial particle positions
       particleIndices[i] = i;
     }
     
@@ -195,20 +206,46 @@ function initScene(gl, particlesCount = 10000) {
     particleIndexBuffer = util.createBuffer(gl, particleIndices);
   }
 
-}
-
 function wglPanZoom(canvas, transform/*, scene */) {
   return {
       applyTransform(newT) {
         var pixelRatio = 1.0; // scene.getPixelRatio(); // TODO?
+        var tx = transform.dx = newT.x * pixelRatio;
+        var ty = transform.dy = newT.y * pixelRatio; 
+        var s = transform.scale = newT.scale;
+        var w = window.innerWidth;
+        var h = window.innerHeight;
 
-        transform.dx = newT.x * pixelRatio;
-        transform.dy = newT.y * pixelRatio; 
-        transform.scale = newT.scale;
+        // console.log(newT.x, newT.y, newT.scale, bbox);
+        console.log('Transform', s, tx, ty);
+        var minX = clientX(0);
+        var minY = clientY(0);
+        var maxX = clientX(w);
+        var maxY = clientY(h);
+
+        var ar = w/h;
+        bbox.minX = minX/w
+        bbox.minY =  -minY/h / ar
+        bbox.maxX = maxX/w
+        bbox.maxY =  -maxY/h / ar
+
+        // console.log('visible client rect (in client rect coordinates):', minX, minY, maxX, maxY);
+        // console.log('Suggested rect space', minX/w, minY/h, maxX/w, maxY/h);
+        bus.fire('bbox-change', bbox);
+
+        function clientX(x) {
+          return (x - tx)/s;
+        }
+
+        function clientY(y) {
+          return (y - ty)/s;
+        }
+
       },
 
       getOwner() {
         return canvas
       }
     }
+}
 }
