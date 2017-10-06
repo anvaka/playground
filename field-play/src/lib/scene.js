@@ -106,6 +106,7 @@ function initScene(gl, particlesCount = 10000) {
     try {
       let updateFrag = shaders.unsafeBuildShader(vfCode)
 
+      // TODO: maybe use https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/shaderSource ?
       let newProgram = util.createProgram(gl, shaders.quadVert, updateFrag);
       if (updateProgram) updateProgram.unload();
 

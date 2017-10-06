@@ -109,10 +109,11 @@ vertical-labels-width = 48px;
 .horizontal {
   height: 22px;
   left: 0;
+  bottom: 0px;
   right: vertical-labels-width;
   .tick {
     transform: translateX(-50%);
-    top: 4px;
+    bottom: 4px;
   }
   .tick:first-child {
     transform: translate(0%);
