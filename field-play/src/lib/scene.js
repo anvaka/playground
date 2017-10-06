@@ -282,18 +282,22 @@ function initScene(gl, particlesCount = 10000) {
     let tX = 0;
     let tY = 0;
     if (savedBBox) {
+
       sX = savedBBox.maxX - savedBBox.minX;
       sY = savedBBox.maxY - savedBBox.minY;
-      // TODO: Restore tx/ty
+      // TODO: Not sure if this is really the best way to do it.
+      var ar = window.innerWidth/window.innerHeight;
+      tX = window.innerWidth * (savedBBox.minX + savedBBox.maxX)/2;
+      tY = window.innerHeight * (savedBBox.minY + savedBBox.maxY)/2*ar;
     }
 
     var w2 = sX * window.innerWidth/2;
     var h2 = sY * window.innerHeight/2;
     initializedPanzoom.showRectangle({
       left: -w2 + tX,
-      top: -h2,
+      top: -h2 - tY,
       right: w2 + tX,
-      bottom: h2,
+      bottom: h2 - tY ,
     });
     return initializedPanzoom;
   }

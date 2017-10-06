@@ -1,8 +1,7 @@
 <template>
   <div class='settings'>
     <div>Vector field:</div>
-    <textarea type='text' v-model='vectorField'>
-    </textarea>
+    <textarea type='text' v-model='vectorField'></textarea>
     <button @click.prevent='sendVectorField' value='send'>Draw</button>
     <div v-if='error' class='error'>{{error}}</div>
   </div>
@@ -23,6 +22,12 @@ export default {
       error: '',
       vectorField: ''
     };
+  },
+  watch: {
+    vectorField(newValue, oldValue) {
+      // console.log(newValue, oldValue);
+      this.sendVectorField();
+    }
   },
   methods: {
     onSceneReady(scene) {

@@ -8,6 +8,8 @@
  * Adapted to field maps by Andrei Kashcha
  * Copyright (C) 2017
  */
+import UpdatePositionGraph from './shaderGraph/updatePositionGraph';
+
 var quadVert = `precision mediump float;
 
 attribute vec2 a_pos;
@@ -100,7 +102,8 @@ vec2 rk4(const vec2 point) {
     vec2 k4 = get_velocity( point + k3 * h);
 
     return k1 * h / 6. + k2 * h/3. + k3 * h/3. + k4 * h/6.;
-}`,
+}
+`,
 body: `void main() {
     vec4 encSpeed = texture2D(u_particles, v_tex_pos);
     vec2 pos = vec2(
@@ -110,8 +113,10 @@ body: `void main() {
     vec2 du = (u_max - u_min);
     pos.x = pos.x * du.x + u_min.x;
     pos.y = pos.y * du.y + u_min.y;
+
     vec2 velocity = rk4(pos);
     pos = pos + velocity;
+
     pos.x = (pos.x - u_min.x)/du.x;
     pos.y = (pos.y - u_min.y)/du.y;
 
@@ -130,26 +135,25 @@ body: `void main() {
 }`
 };
 
+const updateGraph = new UpdatePositionGraph();
+
 export default {
   quadVert: quadVert,
   screenFrag: screenFrag,
   drawFrag: drawFrag,
   drawVert: drawVert,
-  buildShaderForUpdate,
   unsafeBuildShader,
 };
 
-function unsafeBuildShader(udfContent) {
-  // TODO: Do I need to worry about "glsl injection" (i.e. is there potential for security attack?)
-
-  const udf_body = `
-void udf_vector_field(const vec2 p, out vec2 v) {
-${udfContent}
+function unsafeBuildShader(vectorField) {
+  updateGraph.setCustomVelocity(vectorField);
+  let code = updateGraph.getCode();
+  let codeWithLineNumbers = addLineNumbers(code);
+  console.log(codeWithLineNumbers);
+  return code;
+  // return updateFrag.header + vectorField +  updateFrag.methods +  updateFrag.body;
 }
-`
-  return buildShaderForUpdate(udf_body);
-}
-
-function buildShaderForUpdate(vectorField) {
-  return updateFrag.header + vectorField +  updateFrag.methods +  updateFrag.body;
+function addLineNumbers(code) {
+  return code.split('\n')
+    .map((line, lineNo) => lineNo + '. ' + line).join('\n');
 }
