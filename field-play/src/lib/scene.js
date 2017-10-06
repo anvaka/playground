@@ -70,7 +70,9 @@ function initScene(gl, particlesCount = 10000) {
     dispose,
     transform,
     updateVectorField,
-    getCurrentCode
+    getCurrentCode,
+    getParticlesCount,
+    setParticlesCount
   }
 
   var panzoom = initPanzoom(); 
@@ -79,6 +81,19 @@ function initScene(gl, particlesCount = 10000) {
   })
 
   return api;
+
+  function getParticlesCount() {
+    return particlesCount;
+  }
+
+  function setParticlesCount(newParticlesCount) {
+    if (newParticlesCount === particlesCount) return;
+    if (newParticlesCount < 1) return;
+
+    console.log(newParticlesCount, typeof newParticlesCount);
+    initParticles(newParticlesCount);
+    particlesCount = newParticlesCount;
+  }
 
   function getCurrentCode() {
     return currentCode;
@@ -265,9 +280,12 @@ function initScene(gl, particlesCount = 10000) {
     }
     
     // textures to hold the particle state for the current and the next frame
+    if (particleStateTexture0) gl.deleteTexture(particleStateTexture0);
     particleStateTexture0 = util.createTexture(gl, gl.NEAREST, particleState, particleRes, particleRes);
+    if (particleStateTexture1) gl.deleteTexture(particleStateTexture1);
     particleStateTexture1 = util.createTexture(gl, gl.NEAREST, particleState, particleRes, particleRes);
 
+    if (particleIndexBuffer) gl.deleteBuffer(particleIndexBuffer);
     particleIndexBuffer = util.createBuffer(gl, particleIndices);
   }
 

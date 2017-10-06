@@ -13,7 +13,10 @@ function velocity(<span class='type'>vec2</span> p) {
       <div v-if='error' class='error'>{{error}}</div>
     </div>
     <div class='block'>
-
+      <div class='row'>
+        <div class='col'>Particles count </div>
+        <div class='col'><input type='text' v-model='particlesCount'></div>
+      </div>
     </div>
   </div>
 </template>
@@ -31,18 +34,23 @@ export default {
   data() {
     return {
       error: '',
-      vectorField: ''
+      vectorField: '',
+      particlesCount: 0,
     };
   },
   watch: {
     vectorField(newValue, oldValue) {
       // console.log(newValue, oldValue);
       this.sendVectorField();
+    },
+    particlesCount(newValue, oldValue) {
+      this.scene.setParticlesCount(parseInt(newValue, 10));
     }
   },
   methods: {
     onSceneReady(scene) {
       this.vectorField = scene.getCurrentCode();
+      this.particlesCount = scene.getParticlesCount();
     },
     sendVectorField() {
       let result = this.scene.updateVectorField(this.vectorField);
@@ -108,6 +116,15 @@ secondary-text = #99c5f1;
       background: #13294f;
     }
   }
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+}
+
+.col {
+  flex: 1;
 }
 
 @media (max-width: 600px) {
