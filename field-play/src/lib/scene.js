@@ -16,13 +16,13 @@ import appState from './appState';
 
 export default initScene;
 
-const fadeOpacity = .9998;
 var defaultVectorField = `v.x = -p.y;
 v.y = p.x;
 `;
 
 function initScene(gl, particlesCount = 10000) {
-  var pixelRatio = 1.0; // scene.getPixelRatio(); // TODO?
+  let fadeOpacity = .9998;
+  let pixelRatio = 1.0; // scene.getPixelRatio(); // TODO?
   window.addEventListener('resize', onResize, true);
 
   gl.disable(gl.DEPTH_TEST);
@@ -38,12 +38,8 @@ function initScene(gl, particlesCount = 10000) {
     dx: 0,
     dy: 0
   };
-  var dt = 0.001;
-  var t1 = 0;
-  var t2 = 0;
-  var t3 = 0;
-  var t4 = 0;
 
+  var isPaused = false;
   var framebuffer = gl.createFramebuffer();
   var quadBuffer = util.createBuffer(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]));
   
@@ -53,6 +49,9 @@ function initScene(gl, particlesCount = 10000) {
 
   var screenProgram = util.createProgram(gl, shaders.quadVert, shaders.screenFrag);
   var drawProgram = util.createProgram(gl, shaders.drawVert, shaders.drawFrag);
+
+  // On each frame the likelihood for a particle to reset its position is this:
+  var dropProbabilty = 0.009;
 
   var currentCode = '';
   var updateProgram;
@@ -69,10 +68,20 @@ function initScene(gl, particlesCount = 10000) {
     stop,
     dispose,
     transform,
+
+    setPaused,
+
     updateVectorField,
     getCurrentCode,
+
     getParticlesCount,
-    setParticlesCount
+    setParticlesCount,
+
+    setFadeOutSpeed,
+    getFadeOutSpeed,
+
+    setDropProbability,
+    getDropProbability
   }
 
   var panzoom = initPanzoom(); 
@@ -82,19 +91,48 @@ function initScene(gl, particlesCount = 10000) {
 
   return api;
 
+  function setPaused(shouldPause) {
+    isPaused = shouldPause;
+    nextFrame();
+  }
+
+  // Main screen fade out configuration
+  function setFadeOutSpeed(x) {
+    var f = parseFloat(x);
+    if (Number.isFinite(f)) {
+      fadeOpacity = f;
+    }
+  }
+
+  function getFadeOutSpeed() {
+    return fadeOpacity;
+  }
+
+  // Number of particles configuration
   function getParticlesCount() {
     return particlesCount;
   }
 
   function setParticlesCount(newParticlesCount) {
+    if (!Number.isFinite(newParticlesCount)) return;
     if (newParticlesCount === particlesCount) return;
     if (newParticlesCount < 1) return;
 
-    console.log(newParticlesCount, typeof newParticlesCount);
     initParticles(newParticlesCount);
     particlesCount = newParticlesCount;
   }
 
+  // drop probability
+  function setDropProbability(x) {
+    var f = parseFloat(x);
+    if (Number.isFinite(f)) dropProbabilty = f;
+  }
+
+  function getDropProbability() {
+    return dropProbabilty;
+  }
+
+  // current code;
   function getCurrentCode() {
     return currentCode;
   }
@@ -164,6 +202,10 @@ function initScene(gl, particlesCount = 10000) {
       window.removeEventListener('resize', onResize, true);
   }
   function nextFrame() {
+    if (lastAnimationFrame) return;
+
+    if (isPaused) return;
+
     lastAnimationFrame = requestAnimationFrame(draw);
   }
 
@@ -173,6 +215,7 @@ function initScene(gl, particlesCount = 10000) {
   }
 
   function draw() {
+    lastAnimationFrame = 0;
     gl.disable(gl.DEPTH_TEST);
     gl.disable(gl.STENCIL_TEST);
     
@@ -219,14 +262,7 @@ function initScene(gl, particlesCount = 10000) {
     gl.uniform2f(program.u_min, bbox.minX, bbox.minY);
     gl.uniform2f(program.u_max, bbox.maxX, bbox.maxY);
 
-    gl.uniform4f(program.u_timer, t1, t2, t3, t4);
-
-    t1 = (t1 + dt) % 1;
-    t2 = (t2 + dt) % 1;
-    t3 = (t3 + dt) % 1;
-    t4 = (t4 + dt) % 1;
-    gl.uniform1f(program.u_drop_rate, 0.03);
-    gl.uniform1f(program.u_drop_rate_bump, 0.01);
+    gl.uniform1f(program.u_drop_rate, dropProbabilty);
   
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   

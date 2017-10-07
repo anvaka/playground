@@ -156,7 +156,6 @@ class RandomParticleDropper extends BaseShaderNode {
   getDefines() {
     return `
 uniform float u_drop_rate;
-uniform float u_drop_rate_bump;
 uniform float u_rand_seed;
 `
   }
@@ -178,10 +177,9 @@ float rand(const vec2 co) {
   // a random seed to use for the particle drop
   vec2 seed = (pos + v_tex_pos) * u_rand_seed;
   // drop rate is a chance a particle will restart at random position, to avoid degeneration
-  float drop_rate = u_drop_rate + 0.02 * length(velocity) * u_drop_rate_bump;
-  float drop = step(1.0 - drop_rate, rand(seed));
+  float drop = step(1.0 - u_drop_rate, rand(seed));
 
-  vec2 random_pos = vec2(rand(seed + 1.3), rand(seed + 2.1));
+  vec2 random_pos = vec2(rand(seed + 3.14), rand(seed + 2.1));
   pos = mix(pos, random_pos, drop);
 `;
   }

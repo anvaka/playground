@@ -1,5 +1,7 @@
 <template>
-  <div class='settings'>
+  <div class='settings' :class='{collapsed: collapsed}'>
+    <a href='#' class='toggle-settings' @click.prevent='collapsed=!collapsed'>{{collapsed ? "Show settings" : "Hide"}}</a>
+ <div :class='{collapsed: collapsed}' class='main-settings-block'>
     <div class='block vector-field'>
       <div class='title'>Vector field:</div>
       <pre>
@@ -15,8 +17,20 @@ function velocity(<span class='type'>vec2</span> p) {
     <div class='block'>
       <div class='row'>
         <div class='col'>Particles count </div>
-        <div class='col'><input type='text' v-model='particlesCount'></div>
+        <div class='col full'><input type='text' v-model='particlesCount'></div>
       </div>
+      <div class='row'>
+        <div class='col'>Fade out speed</div>
+        <div class='col full'><input type='text' v-model='fadeOutSpeed'></div>
+      </div>
+      <div class='row'>
+        <div class='col'>Particle reset probability</div>
+        <div class='col full'><input type='text' v-model='dropProbability'></div>
+      </div>
+      <div class='row'>
+        <a href='#' @click.prevent='togglePaused' class='action'>{{paused ? "Resume" : "Pause"}}</a>
+      </div>
+    </div>
     </div>
   </div>
 </template>
@@ -36,6 +50,10 @@ export default {
       error: '',
       vectorField: '',
       particlesCount: 0,
+      fadeOutSpeed: 0,
+      dropProbability: 0,
+      collapsed: window.innerWidth < 600 ? true : false,
+      paused: false
     };
   },
   watch: {
@@ -45,12 +63,24 @@ export default {
     },
     particlesCount(newValue, oldValue) {
       this.scene.setParticlesCount(parseInt(newValue, 10));
+    },
+    fadeOutSpeed(newValue, oldValue) {
+      this.scene.setFadeOutSpeed(newValue);
+    },
+    dropProbability(newValue, oldValue) {
+      this.scene.setDropProbability(newValue);
     }
   },
   methods: {
+    togglePaused() {
+      this.paused = !this.paused;
+      this.scene.setPaused(this.paused);
+    },
     onSceneReady(scene) {
       this.vectorField = scene.getCurrentCode();
       this.particlesCount = scene.getParticlesCount();
+      this.fadeOutSpeed = scene.getFadeOutSpeed();
+      this.dropProbability = scene.getDropProbability();
     },
     sendVectorField() {
       let result = this.scene.updateVectorField(this.vectorField);
@@ -59,7 +89,7 @@ export default {
       } else {
         this.error = '';
       }
-    }
+    },
   }
 }
 </script>
@@ -83,7 +113,31 @@ secondary-text = #99c5f1;
   padding: 7px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
+.main-settings-block.collapsed {
+  display: none;
+}
 .block {
+  .col {
+    align-items: center;
+    display: flex;
+  }
+  .row {
+    margin-top: 4px;
+  }
+  input[type='text'] {
+    background: transparent;
+    color: white;
+    border: 1px solid transparent;
+    padding: 7px;
+    font-size: 16px;
+    width: 100%;
+    margin-left: 7px;
+    &:focus {
+      outline: none;
+      border: 1px dashed;
+      background: #13294f;
+    }
+  }
 }
 .vector-field {
   pre {
@@ -125,6 +179,33 @@ secondary-text = #99c5f1;
 
 .col {
   flex: 1;
+}
+a {
+  text-decoration: none;
+}
+
+a.action {
+  color: white;
+  font-size: 16px;
+}
+
+a.toggle-settings {
+  position: absolute;
+  right: 8px;
+  color: #999;
+  font-size: 12px;
+}
+.settings.collapsed {
+  height: 24px;
+  width: auto;
+  padding: 0 7px;
+  a.toggle-settings {
+    color: white;
+    position: static;
+    margin: 0;
+    top: 0;
+    left: 0
+  }
 }
 
 @media (max-width: 600px) {

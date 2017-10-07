@@ -149,9 +149,7 @@ function unsafeBuildShader(vectorField) {
   updateGraph.setCustomVelocity(vectorField);
   let code = updateGraph.getCode();
   let codeWithLineNumbers = addLineNumbers(code);
-  console.log(codeWithLineNumbers);
   return code;
-  // return updateFrag.header + vectorField +  updateFrag.methods +  updateFrag.body;
 }
 function addLineNumbers(code) {
   return code.split('\n')
