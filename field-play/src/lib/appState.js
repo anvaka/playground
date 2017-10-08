@@ -7,7 +7,40 @@ export default {
   saveBBox,
   getBBox,
   saveCode,
-  getCode
+  getCode,
+
+  getDropProbability,
+  setDropProbability,
+
+  getIntegrationTimeStep,
+  setIntegrationTimeStep
+
+}
+
+function getIntegrationTimeStep() {
+  let timeStep = qs.get('dt');
+  return defined(timeStep) ? timeStep : 0.01;
+}
+
+function setIntegrationTimeStep(dt) {
+  if (!defined(dt)) return;
+  qs.set({dt: dt})
+}
+
+function getDropProbability() {
+  let dropProbability = qs.get('dp');
+  return defined(dropProbability) ? dropProbability : 0.009;
+}
+
+function setDropProbability(dropProbability) {
+  if (!defined(dropProbability)) return;
+  clamp(dropProbability, 0, 1);
+  qs.set({dp: dropProbability})
+}
+
+function clamp(x, min, max) {
+  return x < min ? min :
+        (x > max) ? max : x;
 }
 
 function getBBox() {

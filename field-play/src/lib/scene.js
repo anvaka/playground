@@ -53,7 +53,7 @@ function initScene(gl, particlesCount = 10000) {
   var drawProgram = util.createProgram(gl, shaders.drawVert, shaders.drawFrag);
 
   // On each frame the likelihood for a particle to reset its position is this:
-  var dropProbabilty = 0.009; // TODO: Read from query state
+  var dropProbabilty = appState.getDropProbability();
 
   var currentCode = '';
   var updateProgram;
@@ -74,7 +74,7 @@ function initScene(gl, particlesCount = 10000) {
     a: 1
   });
 
-  let integrationTimeStep = 0.01;
+  let integrationTimeStep = appState.getIntegrationTimeStep();
 
   var api = {
     start: nextFrame,
@@ -121,6 +121,7 @@ function initScene(gl, particlesCount = 10000) {
     var f = parseFloat(x);
     if (Number.isFinite(f)) {
       integrationTimeStep = f;
+      appState.setIntegrationTimeStep(f);
     }
   }
 
@@ -176,7 +177,11 @@ function initScene(gl, particlesCount = 10000) {
   // drop probability
   function setDropProbability(x) {
     var f = parseFloat(x);
-    if (Number.isFinite(f)) dropProbabilty = f;
+    if (Number.isFinite(f)) {
+      // TODO: Do I need to worry about duplication/clamping?
+      appState.setDropProbability(f);
+      dropProbabilty = f;
+    }
   }
 
   function getDropProbability() {
