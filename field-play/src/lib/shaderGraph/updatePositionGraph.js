@@ -1,10 +1,13 @@
+import BaseShaderNode from './BaseShaderNode';
+import TexturePositionNode from './TexturePositionNode';
+
 export default class UpdatePositionGraph {
   constructor() {
-    this.readStoredPosition = new TexturePositionDecode();
+    this.readStoredPosition = new TexturePositionNode(/* isDecode = */ true);
     this.getVelocity = new UserDefinedVelocityFunction();
     this.integratePositions = new RungeKuttaIntegrator();
     this.dropParticles = new RandomParticleDropper();
-    this.writeComputedPosition = new TexturePositionEncode();
+    this.writeComputedPosition = new TexturePositionNode(/* isDecode = */ false);
     this.panZoomDecode = new PanzoomTransform({decode: true});
     this.panZoomEncode = new PanzoomTransform({decode: false});
   }
@@ -13,7 +16,19 @@ export default class UpdatePositionGraph {
     this.getVelocity.setNewUpdateCode(velocityCode);
   }
 
-  getCode() {
+  getVertexShader () {
+    return `precision highp float;
+
+attribute vec2 a_pos;
+varying vec2 v_tex_pos;
+
+void main() {
+    v_tex_pos = a_pos;
+    gl_Position = vec4(1.0 - 2.0 * a_pos, 0, 1);
+}`
+  }
+
+  getFragmentShader() {
     let code = [] 
     let nodes = [
       this.readStoredPosition,
@@ -40,40 +55,22 @@ export default class UpdatePositionGraph {
   }
 }
 
-class BaseShaderNode {
-  constructor() { }
-  getDefines() { return ''; }
-  getFunctions() { return ''; }
-  getMainBody() { return ''; }
-}
-
-class TexturePositionDecode extends BaseShaderNode {
-  getDefines() {
-    return `
-precision highp float;
-
-uniform sampler2D u_particles;
-uniform vec2 u_min;
-uniform vec2 u_max;
-
-varying vec2 v_tex_pos;
-`;
-  }
-  getMainBody() {
-    return `
-  // decode particle position from pixel RGBA
-  vec4 encSpeed = texture2D(u_particles, v_tex_pos);
-  vec2 pos = vec2(encSpeed.r / 255.0 + encSpeed.b, encSpeed.g / 255.0 + encSpeed.a);
-`;
-  }
-}
-
 class PanzoomTransform extends BaseShaderNode {
   constructor(config) {
     super();
     // decode is used when we move particle read from the texture
     // otherwise we write particle to texture and need to reverse transform
     this.decode = config && config.decode;
+  }
+
+  getDefines() {
+    if (this.decode) {
+      // TODO: Need to figure out how to not duplicate this.
+    return `
+  uniform vec2 u_min;
+  uniform vec2 u_max;
+`;
+    }
   }
 
   getMainBody() {
@@ -89,15 +86,6 @@ class PanzoomTransform extends BaseShaderNode {
   pos.x = (pos.x - u_min.x)/du.x;
   pos.y = (pos.y - u_min.y)/du.y;
 `
-  }
-}
-
-class TexturePositionEncode extends BaseShaderNode {
-  getMainBody() {
-    return `
-  // encode the new particle position back into RGBA
-  gl_FragColor = vec4(fract(pos * 255.0), floor(pos * 255.0) / 255.0);
-`;
   }
 }
 

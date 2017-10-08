@@ -45,6 +45,7 @@ function initScene(gl, particlesCount = 10000) {
   var isPaused = false;
   var framebuffer = gl.createFramebuffer();
   var quadBuffer = util.createBuffer(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]));
+  let particleColor = { r: 77, g: 188, b: 201, a: 1  };
   
   // screen rendering;
   var screenTexture, backgroundTexture;
@@ -74,14 +75,6 @@ function initScene(gl, particlesCount = 10000) {
     b: 79,
     a: 1
   });
-
-  let particleColor = {
-    r: 19,
-    g: 41,
-    b: 79,
-    a: 1
-  };
-
 
   var api = {
     start: nextFrame,
@@ -138,7 +131,6 @@ function initScene(gl, particlesCount = 10000) {
 
   function setParticleColor(rgba) {
     particleColor = rgba;
-
   }
 
   // Main screen fade out configuration
@@ -202,10 +194,10 @@ function initScene(gl, particlesCount = 10000) {
 
   function trySetNewCode(vfCode) {
     try {
-      let updateFrag = shaders.unsafeBuildShader(vfCode)
+      let update = shaders.unsafeBuildShader(vfCode)
 
       // TODO: maybe use https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/shaderSource ?
-      let newProgram = util.createProgram(gl, shaders.quadVert, updateFrag);
+      let newProgram = util.createProgram(gl, update.vertex, update.fragment);
       if (updateProgram) updateProgram.unload();
 
       updateProgram = newProgram;
@@ -324,7 +316,7 @@ function initScene(gl, particlesCount = 10000) {
   
     util.bindAttribute(gl, particleIndexBuffer, program.a_index, 1);
   //   util.bindTexture(gl, this.colorRampTexture, 2);
-  
+    gl.uniform4f(program.u_particle_color, particleColor.r/255, particleColor.g/255, particleColor.b/255, particleColor.a);
     gl.uniform1i(program.u_particles, 1);
   //   gl.uniform1i(program.u_color_ramp, 2);
   

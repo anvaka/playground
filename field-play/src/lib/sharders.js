@@ -9,17 +9,7 @@
  * Copyright (C) 2017
  */
 import UpdatePositionGraph from './shaderGraph/updatePositionGraph';
-
-var quadVert = `precision highp float;
-
-attribute vec2 a_pos;
-
-varying vec2 v_tex_pos;
-
-void main() {
-    v_tex_pos = a_pos;
-    gl_Position = vec4(1.0 - 2.0 * a_pos, 0, 1);
-}`;
+import DrawParticleGraph from './shaderGraph/DrawParticleGraph';
 
 var screenFrag = `precision highp float;
 
@@ -34,51 +24,26 @@ void main() {
     gl_FragColor = vec4(floor(255.0 * color * u_opacity) / 255.0);
 }`;
 
-// TODO: need to add color?
-var drawFrag = `precision highp float;
-
-varying vec2 v_particle_pos;
-
-void main() {
-   gl_FragColor = vec4(0.3, 0.74, 0.79, 1.0);
-}`;
-
-var drawVert = `precision highp float;
-
-attribute float a_index;
-
-uniform sampler2D u_particles;
-uniform float u_particles_res;
-
-varying vec2 v_particle_pos;
-
-void main() {
-    vec4 encSpeed = texture2D(u_particles, vec2(
-        fract(a_index / u_particles_res),
-        floor(a_index / u_particles_res) / u_particles_res));
-
-    // decode current particle position from the pixel's RGBA value
-    v_particle_pos = vec2(encSpeed.r / 255.0 + encSpeed.b, encSpeed.g / 255.0 + encSpeed.a);
-
-    gl_PointSize = 1.0;
-    gl_Position = vec4(2.0 * v_particle_pos.x - 1.0, (1. - 2. *(v_particle_pos.y)),  0., 1.);
-}`
-
+const drawGraph = new DrawParticleGraph();
 const updateGraph = new UpdatePositionGraph();
 
 export default {
-  quadVert: quadVert,
+  // TODO: need to find a better way for this. Maybe it's own graph?
+  quadVert: updateGraph.getVertexShader(),
   screenFrag: screenFrag,
-  drawFrag: drawFrag,
-  drawVert: drawVert,
   unsafeBuildShader,
+
+  drawFrag: drawGraph.getFragmentShader(),
+  drawVert: drawGraph.getVertexShader(),
 };
+
 
 function unsafeBuildShader(vectorField) {
   updateGraph.setCustomVelocity(vectorField);
-  let code = updateGraph.getCode();
-  let codeWithLineNumbers = addLineNumbers(code);
-  return code;
+  let fragment = updateGraph.getFragmentShader();
+  let vertex = updateGraph.getVertexShader();
+  // let codeWithLineNumbers = addLineNumbers(code);
+  return {fragment, vertex};
 }
 function addLineNumbers(code) {
   return code.split('\n')
