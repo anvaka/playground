@@ -13,6 +13,7 @@ import shaders from './sharders';
 import makePanzoom from 'panzoom';
 import bus from './bus';
 import appState from './appState';
+import glslParser from 'glsl-parser';
 
 export default initScene;
 
@@ -206,6 +207,19 @@ function initScene(gl, particlesCount = 10000) {
   }
 
   function trySetNewCode(vfCode) {
+    // step 0 - run through primitve check?
+    // step 1 - run through parser
+    let res = glslParser.check(`
+vec2 velocity(vec2 p) {
+vec2 v = vec2(0., 0.);
+${vfCode}
+return v;
+}`);
+    if (res.log.errorCount) {
+      return parserError(res.log);
+    }
+    
+    // step 2 - run through real webgl
     try {
       let update = shaders.unsafeBuildShader(vfCode)
 
@@ -220,6 +234,34 @@ function initScene(gl, particlesCount = 10000) {
         error: e.message
       };
     }
+  }
+
+  function parserError(log) {
+    let diag = log.diagnostics[0];
+    // TODO probably need to check kind (errors ar 0, warnings are 1)
+    let firstError = diag.range;
+    let lineColumn = firstError.lineColumn();
+    let source = firstError.source;
+    let offset = source._lineOffsets[lineColumn.line]
+    let line = source.contents.substr(offset,  lineColumn.column);
+    let prefix = 'Line ' + lineColumn.line + ': ';
+    let diagText = diag.text;
+    return {
+      error: 
+        prefix + line + '\n' +
+        whitespace(prefix.length) + whitespace(lineColumn.column) + '^',
+      errorDetail: diagText,
+      isFloatError: isFloatError(diagText)
+    };
+  }
+
+  function isFloatError(diagText) {
+    return diagText.indexOf('"int"') > -1 &&
+      diagText.indexOf('"float"')  > -1;
+  }
+
+  function whitespace(length) {
+    return new Array(length + 1).join(' ');
   }
 
   function updateScreenTextures() {

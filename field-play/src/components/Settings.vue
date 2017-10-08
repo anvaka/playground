@@ -12,7 +12,12 @@ function velocity(<span class='type'>vec2</span> p) {
       <textarea type='text' v-model='vectorField' rows='3'></textarea>
 <pre>  return v;
 }</pre>
-      <div v-if='error' class='error'>{{error}}</div>
+    <div class='error=container'>
+      <pre v-if='error' class='error hl'>{{error}}</pre>
+      <pre v-if='errorDetail' class='error detail'>{{errorDetail}}<span v-if='isFloatError'>
+Did you forget to add a dot symbol? E.g. <span class='hl'>10</span> should be <span class='hl'>10.</span> and <span class='hl'>42</span> should be <span class='hl'>42.</span>
+</span></pre>
+    </div>
     </div>
     <div class='block'>
       <div class='row'>
@@ -28,7 +33,7 @@ function velocity(<span class='type'>vec2</span> p) {
         <div class='col full'><input type='text' v-model='dropProbability'></div>
       </div>
       <!--div class='row'>
-        <div class='col'>Integration timestemp</div>
+        <div class='col'>Integration timestep</div>
         <div class='col full'><input type='text' v-model='timeStep'></div>
       </div>
       <div class='row'>
@@ -69,6 +74,8 @@ export default {
   data() {
     return {
       error: '',
+      errorDetail: '',
+      isFloatError: false,
       vectorField: '',
       particlesCount: 0,
       fadeOutSpeed: 0,
@@ -123,9 +130,13 @@ export default {
     sendVectorField() {
       let result = this.scene.updateVectorField(this.vectorField);
       if (result && result.error) {
-        this.error = result.error
+        this.error = result.error;
+        this.errorDetail = result.errorDetail;
+        this.isFloatError = result.isFloatError;
       } else {
         this.error = '';
+        this.errorDetail = '';
+        this.isFloatError = false;
       }
     },
   }
@@ -149,10 +160,6 @@ function hex(x) {
 settings-width = 392px;
 secondary-text = #99c5f1;
 
-.error {
-  color: red;
-  font-family: monospace;
-}
 .settings {
   color: secondary-text;
   position: absolute;
@@ -199,6 +206,21 @@ secondary-text = #99c5f1;
       font-style: italic;
     }
   }
+
+  pre.error {
+    color: rgba(250, 232, 55, 1);
+    overflow-y: auto;
+  }
+  pre.error.detail {
+    overflow: none;
+    white-space: normal;
+    .hl {
+      background-color: #172A4D;
+      color: red;
+      font-weight: bold;
+    }
+  }
+
   .title {
     text-align: center;
     margin-bottom: 7px;
