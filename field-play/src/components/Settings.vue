@@ -28,6 +28,10 @@ function velocity(<span class='type'>vec2</span> p) {
         <div class='col full'><input type='text' v-model='dropProbability'></div>
       </div>
       <!--div class='row'>
+        <div class='col'>Integration timestemp</div>
+        <div class='col full'><input type='text' v-model='timeStep'></div>
+      </div>
+      <div class='row'>
         <div class='col'>Background color</div>
         <div class='col'>
           <color-picker :color='backgroundColor' @changed='updateBackground'></color-picker>
@@ -73,6 +77,7 @@ export default {
       paused: false,
       backgroundColor: '',
       particleColor: '',
+      timeStep: 0,
     };
   },
   watch: {
@@ -82,6 +87,9 @@ export default {
     },
     particlesCount(newValue, oldValue) {
       this.scene.setParticlesCount(parseInt(newValue, 10));
+    },
+    timeStep(newValue, oldValue) {
+      this.scene.setIntegrationTimeStep(newValue);
     },
     fadeOutSpeed(newValue, oldValue) {
       this.scene.setFadeOutSpeed(newValue);
@@ -110,6 +118,7 @@ export default {
       this.dropProbability = scene.getDropProbability();
       this.backgroundColor = toColorString(scene.getBackgroundColor());
       this.particleColor = toColorString(scene.getParticleColor());
+      this.timeStep = scene.getIntegrationTimeStep();
     },
     sendVectorField() {
       let result = this.scene.updateVectorField(this.vectorField);

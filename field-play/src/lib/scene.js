@@ -73,6 +73,8 @@ function initScene(gl, particlesCount = 10000) {
     a: 1
   });
 
+  let integrationTimeStep = 0.01;
+
   var api = {
     start: nextFrame,
     stop,
@@ -98,6 +100,9 @@ function initScene(gl, particlesCount = 10000) {
 
     getParticleColor,
     setParticleColor,
+
+    getIntegrationTimeStep,
+    setIntegrationTimeStep
   }
 
   var panzoom = initPanzoom(); 
@@ -106,6 +111,17 @@ function initScene(gl, particlesCount = 10000) {
   })
 
   return api;
+
+  function getIntegrationTimeStep() {
+    return integrationTimeStep;
+  }
+
+  function setIntegrationTimeStep(x) {
+    var f = parseFloat(x);
+    if (Number.isFinite(f)) {
+      integrationTimeStep = f;
+    }
+  }
 
   function setPaused(shouldPause) {
     isPaused = shouldPause;
@@ -292,6 +308,7 @@ function initScene(gl, particlesCount = 10000) {
     gl.uniform1i(program.u_particles, 1);
   
     gl.uniform1f(program.u_rand_seed, Math.random());
+    gl.uniform1f(program.u_h, integrationTimeStep);
     gl.uniform2f(program.u_min, bbox.minX, bbox.minY);
     gl.uniform2f(program.u_max, bbox.maxX, bbox.maxY);
 
