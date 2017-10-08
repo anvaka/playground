@@ -132,10 +132,7 @@ vertical-labels-width = 48px;
   bottom: 0;
   width: vertical-labels-width;
   .tick {
-    width: vertical-labels-width - 8px;
     text-align: right;
-    overflow: hidden;
-    text-overflow: ellipsis;
     right: 0;
     padding-right: 8px;
     transform: translateY(-50%);
@@ -149,9 +146,6 @@ vertical-labels-width = 48px;
   }
   .vertical {
     width: large-screen-vertical-width;
-    .tick {
-      width: large-screen-vertical-width - 8px;
-    }
   }
 }
 
