@@ -28,6 +28,18 @@ function velocity(<span class='type'>vec2</span> p) {
         <div class='col full'><input type='text' v-model='dropProbability'></div>
       </div>
       <div class='row'>
+        <div class='col'>Background color</div>
+        <div class='col'>
+          <color-picker :color='backgroundColor' @changed='updateBackground'></color-picker>
+        </div>
+      </div>
+      <div class='row'>
+        <div class='col'>Particle color</div>
+        <div class='col'>
+          <color-picker :color='particleColor' @changed='updateParticleColor'></color-picker>
+        </div>
+      </div>
+      <div class='row'>
         <a href='#' @click.prevent='togglePaused' class='action'>{{paused ? "Resume" : "Pause"}}</a>
       </div>
     </div>
@@ -36,9 +48,14 @@ function velocity(<span class='type'>vec2</span> p) {
 </template>
 <script>
 import bus from '../lib/bus';
+import ColorPicker from './ColorPicker';
+
 export default {
   name: 'Settings',
   props: ['scene'],
+  components:{
+    ColorPicker
+  },
   mounted() {
     bus.on('scene-ready', this.onSceneReady, this);
   },
@@ -53,7 +70,9 @@ export default {
       fadeOutSpeed: 0,
       dropProbability: 0,
       collapsed: window.innerWidth < 600 ? true : false,
-      paused: false
+      paused: false,
+      backgroundColor: '',
+      particleColor: '',
     };
   },
   watch: {
@@ -72,6 +91,14 @@ export default {
     }
   },
   methods: {
+    updateBackground(rgba) {
+      this.backgroundColor = toColorString(rgba);
+      this.scene.setBackgroundColor(rgba);
+    },
+    updateParticleColor(rgba) {
+      this.particleColor = toColorString(rgba);
+      this.scene.setParticleColor(rgba);
+    },
     togglePaused() {
       this.paused = !this.paused;
       this.scene.setPaused(this.paused);
@@ -81,6 +108,8 @@ export default {
       this.particlesCount = scene.getParticlesCount();
       this.fadeOutSpeed = scene.getFadeOutSpeed();
       this.dropProbability = scene.getDropProbability();
+      this.backgroundColor = toColorString(scene.getBackgroundColor());
+      this.particleColor = toColorString(scene.getParticleColor());
     },
     sendVectorField() {
       let result = this.scene.updateVectorField(this.vectorField);
@@ -91,6 +120,19 @@ export default {
       }
     },
   }
+}
+
+function toColorString({r, g, b, a}) {
+  if (a === 1.0) {
+    return `#${hex(r)}${hex(g)}${hex(b)}`;
+  }
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
+function hex(x) {
+  let value = x.toString(16).toUpperCase();
+  if (value.length === 1) value = '0' + value;
+  return value;
 }
 </script>
 

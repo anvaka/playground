@@ -10,7 +10,7 @@
  */
 import UpdatePositionGraph from './shaderGraph/updatePositionGraph';
 
-var quadVert = `precision mediump float;
+var quadVert = `precision highp float;
 
 attribute vec2 a_pos;
 
@@ -21,7 +21,7 @@ void main() {
     gl_Position = vec4(1.0 - 2.0 * a_pos, 0, 1);
 }`;
 
-var screenFrag = `precision mediump float;
+var screenFrag = `precision highp float;
 
 uniform sampler2D u_screen;
 uniform float u_opacity;
@@ -35,7 +35,7 @@ void main() {
 }`;
 
 // TODO: need to add color?
-var drawFrag = `precision mediump float;
+var drawFrag = `precision highp float;
 
 varying vec2 v_particle_pos;
 
@@ -43,7 +43,7 @@ void main() {
    gl_FragColor = vec4(0.3, 0.74, 0.79, 1.0);
 }`;
 
-var drawVert = `precision mediump float;
+var drawVert = `precision highp float;
 
 attribute float a_index;
 

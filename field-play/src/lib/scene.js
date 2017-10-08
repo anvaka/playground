@@ -16,8 +16,11 @@ import appState from './appState';
 
 export default initScene;
 
-var defaultVectorField = `v.x = -p.y;
-v.y = p.x;
+// var defaultVectorField = `v.x = -p.y;
+// v.y = p.x;
+// `;
+var defaultVectorField = `v.x = -0.;
+v.y = 0.;
 `;
 
 function initScene(gl, particlesCount = 10000) {
@@ -51,7 +54,7 @@ function initScene(gl, particlesCount = 10000) {
   var drawProgram = util.createProgram(gl, shaders.drawVert, shaders.drawFrag);
 
   // On each frame the likelihood for a particle to reset its position is this:
-  var dropProbabilty = 0.009;
+  var dropProbabilty = 0.009; // TODO: Read from query state
 
   var currentCode = '';
   var updateProgram;
@@ -62,6 +65,23 @@ function initScene(gl, particlesCount = 10000) {
   var lastAnimationFrame;
 
   initParticles(particlesCount);
+
+  // TODO: Read from query state
+  let backgroundColor;
+  setBackgroundColor({
+    r: 19,
+    g: 41,
+    b: 79,
+    a: 1
+  });
+
+  let particleColor = {
+    r: 19,
+    g: 41,
+    b: 79,
+    a: 1
+  };
+
 
   var api = {
     start: nextFrame,
@@ -81,7 +101,13 @@ function initScene(gl, particlesCount = 10000) {
     getFadeOutSpeed,
 
     setDropProbability,
-    getDropProbability
+    getDropProbability,
+
+    setBackgroundColor,
+    getBackgroundColor,
+
+    getParticleColor,
+    setParticleColor,
   }
 
   var panzoom = initPanzoom(); 
@@ -94,6 +120,25 @@ function initScene(gl, particlesCount = 10000) {
   function setPaused(shouldPause) {
     isPaused = shouldPause;
     nextFrame();
+  }
+
+  function setBackgroundColor(newBackground) {
+    backgroundColor = newBackground;
+    let {r, g, b, a} = backgroundColor;
+    document.body.style.background = `rgba(${r}, ${g}, ${b}, ${a})`
+  }
+
+  function getBackgroundColor() {
+    return backgroundColor;
+  }
+
+  function getParticleColor() {
+    return particleColor;
+  }
+
+  function setParticleColor(rgba) {
+    particleColor = rgba;
+
   }
 
   // Main screen fade out configuration
@@ -239,8 +284,7 @@ function initScene(gl, particlesCount = 10000) {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     drawTexture(screenTexture, 1.0);
-    gl.disable(gl.BLEND);
-  
+    gl.disable(gl.BLEND); 
     // swap textures
     var temp = backgroundTexture;
     backgroundTexture = screenTexture;
