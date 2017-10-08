@@ -16,11 +16,8 @@ import appState from './appState';
 
 export default initScene;
 
-// var defaultVectorField = `v.x = -p.y;
-// v.y = p.x;
-// `;
-var defaultVectorField = `v.x = -0.;
-v.y = 0.;
+var defaultVectorField = `v.x = -p.y;
+v.y = p.x;
 `;
 
 function initScene(gl, particlesCount = 10000) {

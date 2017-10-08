@@ -27,7 +27,7 @@ function velocity(<span class='type'>vec2</span> p) {
         <div class='col'>Particle reset probability</div>
         <div class='col full'><input type='text' v-model='dropProbability'></div>
       </div>
-      <div class='row'>
+      <!--div class='row'>
         <div class='col'>Background color</div>
         <div class='col'>
           <color-picker :color='backgroundColor' @changed='updateBackground'></color-picker>
@@ -38,7 +38,7 @@ function velocity(<span class='type'>vec2</span> p) {
         <div class='col'>
           <color-picker :color='particleColor' @changed='updateParticleColor'></color-picker>
         </div>
-      </div>
+      </div-->
       <div class='row'>
         <a href='#' @click.prevent='togglePaused' class='action'>{{paused ? "Resume" : "Pause"}}</a>
       </div>

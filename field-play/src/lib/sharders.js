@@ -12,7 +12,6 @@ import UpdatePositionGraph from './shaderGraph/updatePositionGraph';
 import DrawParticleGraph from './shaderGraph/DrawParticleGraph';
 
 var screenFrag = `precision highp float;
-
 uniform sampler2D u_screen;
 uniform float u_opacity;
 
