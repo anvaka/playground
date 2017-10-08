@@ -32,11 +32,11 @@ Did you forget to add a dot symbol? E.g. <span class='hl'>10</span> should be <s
         <div class='col'>Particle reset probability</div>
         <div class='col full'><input type='text' v-model='dropProbability'></div>
       </div>
-      <!--div class='row'>
+      <div class='row'>
         <div class='col'>Integration timestep</div>
         <div class='col full'><input type='text' v-model='timeStep'></div>
       </div>
-      <div class='row'>
+      <!--div class='row'>
         <div class='col'>Background color</div>
         <div class='col'>
           <color-picker :color='backgroundColor' @changed='updateBackground'></color-picker>
