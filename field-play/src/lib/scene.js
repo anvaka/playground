@@ -21,9 +21,10 @@ var defaultVectorField = `v.x = -p.y;
 v.y = p.x;
 `;
 
-function initScene(gl, particlesCount = 10000) {
-  let fadeOpacity = .9998;
+function initScene(gl) {
   let pixelRatio = 1.0; // scene.getPixelRatio(); // TODO?
+  let fadeOpacity = appState.getFadeout();
+  let particleCount = appState.getParticleCount();
   window.addEventListener('resize', onResize, true);
 
   gl.disable(gl.DEPTH_TEST);
@@ -43,7 +44,11 @@ function initScene(gl, particlesCount = 10000) {
   var isPaused = false;
   var framebuffer = gl.createFramebuffer();
   var quadBuffer = util.createBuffer(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]));
+
   let particleColor = { r: 77, g: 188, b: 201, a: 1  };
+  // TODO: Read from query state?
+  let backgroundColor;
+  setBackgroundColor({ r: 19, g: 41, b: 79, a: 1 });
   
   // screen rendering;
   var screenTexture, backgroundTexture;
@@ -63,16 +68,7 @@ function initScene(gl, particlesCount = 10000) {
   var particleStateResolution, _numParticles, particleStateTexture0, particleStateTexture1, particleIndices, particleIndexBuffer;
   var lastAnimationFrame;
 
-  initParticles(particlesCount);
-
-  // TODO: Read from query state
-  let backgroundColor;
-  setBackgroundColor({
-    r: 19,
-    g: 41,
-    b: 79,
-    a: 1
-  });
+  initParticles(particleCount);
 
   let integrationTimeStep = appState.getIntegrationTimeStep();
 
@@ -153,6 +149,7 @@ function initScene(gl, particlesCount = 10000) {
     var f = parseFloat(x);
     if (Number.isFinite(f)) {
       fadeOpacity = f;
+      appState.setFadeout(f);
     }
   }
 
@@ -162,16 +159,17 @@ function initScene(gl, particlesCount = 10000) {
 
   // Number of particles configuration
   function getParticlesCount() {
-    return particlesCount;
+    return particleCount;
   }
 
-  function setParticlesCount(newParticlesCount) {
-    if (!Number.isFinite(newParticlesCount)) return;
-    if (newParticlesCount === particlesCount) return;
-    if (newParticlesCount < 1) return;
+  function setParticlesCount(newParticleCount) {
+    if (!Number.isFinite(newParticleCount)) return;
+    if (newParticleCount === particleCount) return;
+    if (newParticleCount < 1) return;
 
-    initParticles(newParticlesCount);
-    particlesCount = newParticlesCount;
+    initParticles(newParticleCount);
+    particleCount = newParticleCount;
+    appState.setParticleCount(newParticleCount);
   }
 
   // drop probability
@@ -334,7 +332,7 @@ return v;
     util.bindFramebuffer(gl, null);
   
     gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
     drawTexture(screenTexture, 1.0);
     gl.disable(gl.BLEND); 
     // swap textures

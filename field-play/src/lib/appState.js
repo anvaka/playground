@@ -2,6 +2,12 @@ import queryState from 'query-state';
 
 var qs = queryState();
 var pendingSave;
+var defaults = {
+  timeStep: 0.01,
+  dropProbability: 0.009,
+  particleCount: 10000,
+  fadeout: .9998
+}
 
 export default {
   saveBBox,
@@ -13,13 +19,38 @@ export default {
   setDropProbability,
 
   getIntegrationTimeStep,
-  setIntegrationTimeStep
+  setIntegrationTimeStep,
 
+  getParticleCount,
+  setParticleCount,
+
+  getFadeout,
+  setFadeout
+}
+
+function getFadeout() {
+  let fadeout = qs.get('fo');
+  return defined(fadeout) ? fadeout : defaults.fadeout;
+}
+
+function setFadeout(fadeout) {
+  if (!defined(fadeout)) return;
+  qs.set({fo: fadeout});
+}
+
+function getParticleCount() {
+  let particleCount = qs.get('pc');
+  return defined(particleCount) ? particleCount : defaults.particleCount;
+}
+
+function setParticleCount(particleCount) {
+  if (!defined(particleCount)) return;
+  qs.set({pc: particleCount});
 }
 
 function getIntegrationTimeStep() {
   let timeStep = qs.get('dt');
-  return defined(timeStep) ? timeStep : 0.01;
+  return defined(timeStep) ? timeStep : defaults.timeStep;
 }
 
 function setIntegrationTimeStep(dt) {
@@ -29,7 +60,7 @@ function setIntegrationTimeStep(dt) {
 
 function getDropProbability() {
   let dropProbability = qs.get('dp');
-  return defined(dropProbability) ? dropProbability : 0.009;
+  return defined(dropProbability) ? dropProbability : defaults.dropProbability;
 }
 
 function setDropProbability(dropProbability) {
