@@ -31,9 +31,9 @@ function initScene(gl) {
   gl.disable(gl.STENCIL_TEST); 
   var bbox = {
     minX: -1,
-    minY: -1,
+    minY: 1,
     maxX: 1,
-    maxY: 1,
+    maxY: -1,
   };
   var transform = {
     scale: 1,
@@ -210,7 +210,7 @@ function initScene(gl) {
   }
 
   function trySetNewCode(vfCode) {
-    // step 0 - run through primitve check?
+    // step 0 - run through primitive check?
     // step 1 - run through parser
     let res = glslParser.check(`
 vec2 velocity(vec2 p) {
@@ -229,7 +229,6 @@ return v;
       // TODO: maybe use https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/shaderSource ?
       let newProgram = util.createProgram(gl, update.vertex, update.fragment);
       if (updateProgram) updateProgram.unload();
-
       updateProgram = newProgram;
       currentCode = vfCode;
     } catch (e) {
@@ -374,10 +373,10 @@ return v;
     gl.useProgram(program.program);
   
     util.bindAttribute(gl, particleIndexBuffer, program.a_index, 1);
-  //   util.bindTexture(gl, this.colorRampTexture, 2);
     gl.uniform4f(program.u_particle_color, particleColor.r/255, particleColor.g/255, particleColor.b/255, particleColor.a);
     gl.uniform1i(program.u_particles, 1);
-  //   gl.uniform1i(program.u_color_ramp, 2);
+
+    gl.uniform1i(program.u_colors, 2);
   
     gl.uniform1f(program.u_particles_res, particleStateResolution);
   
@@ -409,7 +408,7 @@ return v;
       particleState[i] =  Math.floor(Math.random() * 256); // randomize the initial particle positions
       particleIndices[i] = i;
     }
-    
+
     // textures to hold the particle state for the current and the next frame
     if (particleStateTexture0) gl.deleteTexture(particleStateTexture0);
     particleStateTexture0 = util.createTexture(gl, gl.NEAREST, particleState, particleRes, particleRes);

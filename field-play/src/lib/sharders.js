@@ -44,6 +44,7 @@ function unsafeBuildShader(vectorField) {
   // let codeWithLineNumbers = addLineNumbers(code);
   return {fragment, vertex};
 }
+
 function addLineNumbers(code) {
   return code.split('\n')
     .map((line, lineNo) => lineNo + '. ' + line).join('\n');
