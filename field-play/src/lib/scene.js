@@ -9,7 +9,7 @@
  * Copyright (C) 2017
  */
 import util from './gl-utils';
-import shaders from './sharders';
+import shaders from './shaders';
 import makePanzoom from 'panzoom';
 import bus from './bus';
 import appState from './appState';
