@@ -292,9 +292,6 @@ a.toggle-settings {
     }
   }
   .vector-field {
-    pre {
-      display: none;
-    }
     textarea {
       margin-top: 0;
       font-size: 16px;
