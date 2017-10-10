@@ -40,11 +40,11 @@ void main() {
       this.writeComputedPosition
     ];
 
-    nodes.forEach(node => { addToCode(node.getDefines()); });
-    nodes.forEach(node => { addToCode(node.getFunctions()); });
+    nodes.forEach(node => { if (node.getDefines) addToCode(node.getDefines()); });
+    nodes.forEach(node => { if (node.getFunctions) addToCode(node.getFunctions()); });
 
     addToCode('void main() {')
-      nodes.forEach(node => { addToCode(node.getMainBody()); });
+      nodes.forEach(node => { if (node.getMainBody) addToCode(node.getMainBody()); });
     addToCode('}')
 
     return code.join('\n');
