@@ -1,26 +1,20 @@
 <template>
   <div id="app">
-    <canvas ref='scene'></canvas>
     <ruler></ruler>
     <settings :scene='scene'></settings>
   </div>
 </template>
 
 <script>
-import initScene from './lib/scene';
 import Ruler from './components/Ruler';
 import Settings from './components/Settings';
+import bus from './lib/bus';
 
 export default {
   name: 'app',
   mounted() {
-    var canvas = this.$refs.scene;
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    var gl = canvas.getContext('webgl', {antialiasing: false});
-    this.scene = initScene(gl);
-    this.scene.start();
+    this.scene = window.scene;
+    bus.fire('scene-ready', window.scene);
   },
   data() {
     return {

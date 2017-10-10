@@ -13,7 +13,20 @@ import shaders from './shaders';
 import makePanzoom from 'panzoom';
 import bus from './bus';
 import appState from './appState';
-import glslParser from 'glsl-parser';
+
+var glslParser = {
+  check(/* code */) {
+    return {
+      log: {
+        errorCount: 0
+      }
+    };
+  }
+}
+
+require.ensure('glsl-parser', () => {
+  glslParser = require('glsl-parser');
+})
 
 export default initScene;
 
