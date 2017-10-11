@@ -2,12 +2,14 @@
   <div id="app">
     <ruler></ruler>
     <settings :scene='scene'></settings>
+    <controls></controls>
   </div>
 </template>
 
 <script>
 import Ruler from './components/Ruler';
 import Settings from './components/Settings';
+import Controls from './components/Controls';
 import bus from './lib/bus';
 
 export default {
@@ -23,7 +25,8 @@ export default {
   },
   components: {
     Ruler,
-    Settings
+    Settings,
+    Controls
   },
 
   beforeDestroy() {

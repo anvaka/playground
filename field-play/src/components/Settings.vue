@@ -1,9 +1,7 @@
 <template>
-  <div class='settings' :class='{collapsed: collapsed}'>
-    <a href='#' class='toggle-settings' @click.prevent='collapsed=!collapsed'>{{collapsed ? "Show settings" : "Hide"}}</a>
- <div :class='{collapsed: collapsed}' class='main-settings-block'>
+  <div class='settings' :class='{collapsed: settingsPanel.collapsed}'>
     <div class='block vector-field'>
-      <div class='title'>Vector field:</div>
+      <div class='title'>Vector field</div>
       <pre>
 <span class='comment'>// p.x and p.y are current coordinates
 // v.x and v.y is a velocity at point p</span>
@@ -48,16 +46,13 @@ Did you forget to add a dot symbol? E.g. <span class='hl'>10</span> should be <s
           <color-picker :color='particleColor' @changed='updateParticleColor'></color-picker>
         </div>
       </div-->
-      <div class='row'>
-        <a href='#' @click.prevent='togglePaused' class='action'>{{paused ? "Resume" : "Pause"}}</a>
-      </div>
-    </div>
     </div>
   </div>
 </template>
 <script>
 import bus from '../lib/bus';
 import ColorPicker from './ColorPicker';
+import appState from '../lib/appState';
 
 export default {
   name: 'Settings',
@@ -77,11 +72,10 @@ export default {
       errorDetail: '',
       isFloatError: false,
       vectorField: '',
+      settingsPanel: appState.settingsPanel,
       particlesCount: 0,
       fadeOutSpeed: 0,
       dropProbability: 0,
-      collapsed: window.innerWidth < 600 ? true : false,
-      paused: false,
       backgroundColor: '',
       particleColor: '',
       timeStep: 0,
@@ -113,10 +107,6 @@ export default {
     updateParticleColor(rgba) {
       this.particleColor = toColorString(rgba);
       this.scene.setParticleColor(rgba);
-    },
-    togglePaused() {
-      this.paused = !this.paused;
-      this.scene.setPaused(this.paused);
     },
     onSceneReady(scene) {
       this.vectorField = scene.getCurrentCode();
@@ -157,21 +147,20 @@ function hex(x) {
 </script>
 
 <style lang='stylus'>
-settings-width = 392px;
-secondary-text = #99c5f1;
+@import "./shared.styl";
 
 .settings {
   color: secondary-text;
   position: absolute;
-  top: 8px;
-  left: 8px;
-  background: rgba(6, 24, 56, 1.0);
+  top: control-bar-height;
+  left: 0;
+  background: window-background;
   width: settings-width;
   border: 1px solid transparent;
   padding: 7px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
-.main-settings-block.collapsed {
+.settings.collapsed {
   display: none;
 }
 .block {
@@ -284,12 +273,17 @@ a.toggle-settings {
 @media (max-width: 600px) {
   .settings {
     width: 100%;
-    top: 0;
+    top: 42px;
     left: 0;
     .title {
       font-size: 14px;
       text-align: left;
     }
+  }
+
+  .settings.collapsed {
+    width: 100%;
+    height: 38px;
   }
   .vector-field {
     textarea {

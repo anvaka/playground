@@ -6,10 +6,15 @@ var defaults = {
   timeStep: 0.01,
   dropProbability: 0.009,
   particleCount: 10000,
-  fadeout: .9998
+  fadeout: .998
 }
 
+let settingsPanel = {
+  collapsed: window.innerWidth < 600 ? true : false,
+};
+
 export default {
+  settingsPanel,
   saveBBox,
   getBBox,
   saveCode,

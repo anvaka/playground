@@ -25,7 +25,7 @@ varying vec2 v_tex_pos;
     }
   }
   getMainBody() {
-    if (this.isDecode) {
+  if (this.isDecode) {
       return `
   // decode particle position from pixel RGBA
   vec4 encSpeed = texture2D(u_particles, v_tex_pos);
