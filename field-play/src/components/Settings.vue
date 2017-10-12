@@ -84,6 +84,7 @@ export default {
   watch: {
     vectorField(newValue, oldValue) {
       // console.log(newValue, oldValue);
+      // TODO: this seem to be causing double initialization
       this.sendVectorField();
     },
     particlesCount(newValue, oldValue) {

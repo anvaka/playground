@@ -1,5 +1,6 @@
 import shaders from '../shaders';
 import util from '../gl-utils';
+import bus from '../bus';
 
 /**
  * This program allows to change color of each particle. It works by
@@ -15,13 +16,26 @@ export default function colorProgram(ctx) {
   var pendingSpeedUpdate;
   var numParticles;
 
+  listenToEvents();
+
   return {
     updateCode,
-    onFrame,
+    onUpdateParticles,
     onParticleInit,
     onBeforeDrawParticles,
-    requestSpeedUpdate
+    requestSpeedUpdate,
+    dispose
   };
+
+  function listenToEvents() {
+    bus.on('integration-timestep-changed', requestSpeedUpdate);
+    bus.on('bbox-change', requestSpeedUpdate);
+  }
+
+  function dispose() {
+    bus.off('integration-timestep-changed', requestSpeedUpdate);
+    bus.on('bbox-change', requestSpeedUpdate);
+  }
 
   function requestSpeedUpdate() {
     if (pendingSpeedUpdate) clearTimeout(pendingSpeedUpdate);
@@ -41,6 +55,7 @@ export default function colorProgram(ctx) {
     if (velocityTexture) gl.deleteTexture(velocityTexture);
     particleStateResolution = ctx.particleStateResolution;
     numParticles = particleStateResolution * particleStateResolution;
+
     var velocityState = new Uint8Array(numParticles * 4);
     velocityTexture = util.createTexture(gl, gl.NEAREST, velocityState, particleStateResolution, particleStateResolution);
 
@@ -55,7 +70,7 @@ export default function colorProgram(ctx) {
     requestSpeedUpdate();
   }
 
-  function onFrame() {
+  function onUpdateParticles() {
     util.bindFramebuffer(gl, ctx.framebuffer, velocityTexture);
     gl.viewport(0, 0, particleStateResolution, particleStateResolution);
   
@@ -66,12 +81,10 @@ export default function colorProgram(ctx) {
   
     gl.uniform1i(program.u_particles, 1);
   
-    gl.uniform1f(program.u_rand_seed, Math.random());
     gl.uniform1f(program.u_h, ctx.integrationTimeStep);
-    gl.uniform2f(program.u_min, ctx.bbox.minX, ctx.bbox.minY);
-    gl.uniform2f(program.u_max, ctx.bbox.maxX, ctx.bbox.maxY);
-
-    gl.uniform1f(program.u_drop_rate, ctx.dropProbabilty);
+    var bbox = ctx.bbox;
+    gl.uniform2f(program.u_min, bbox.minX, bbox.minY);
+    gl.uniform2f(program.u_max, bbox.maxX, bbox.maxY);
   
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 

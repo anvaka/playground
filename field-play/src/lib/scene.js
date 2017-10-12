@@ -14,8 +14,11 @@ import makePanzoom from 'panzoom';
 import bus from './bus';
 import appState from './appState';
 
-import defaultColorProgram from './programs/colorProgram';
+import createDrawParticlesProgram from './programs/drawParitclesProgram';
 
+// TODO: This is naive parser that is being used before
+// main `glsl-parser` is loaded asynchronously. This parser assumes
+// there are no errors, but maybe I should be more careful here.
 var glslParser = {
   check(/* code */) {
     return {
@@ -26,7 +29,9 @@ var glslParser = {
   }
 }
 
+// glsl-parser is ~179KB uncompressed, we don't want to wait until it is downloaded.
 require.ensure('glsl-parser', () => {
+  // Replace naive parser with the real one.
   glslParser = require('glsl-parser');
 })
 
@@ -65,6 +70,8 @@ function initScene(gl) {
   var isPaused = false;
   var framebuffer = ctx.framebuffer = gl.createFramebuffer();
   var quadBuffer = ctx.quadBuffer = util.createBuffer(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]));
+  // On each frame the likelihood for a particle to reset its position is this:
+  var dropProbabilty = ctx.dropProbabilty = appState.getDropProbability();
 
   let particleColor = { r: 77, g: 188, b: 201, a: 1  };
   // TODO: Read from query state?
@@ -76,23 +83,18 @@ function initScene(gl) {
   updateScreenTextures();
 
   var screenProgram = util.createProgram(gl, shaders.quadVert, shaders.screenFrag);
-  var drawProgram = util.createProgram(gl, shaders.drawVert, shaders.drawFrag);
 
-  // On each frame the likelihood for a particle to reset its position is this:
-  var dropProbabilty = appState.getDropProbability();
+  var drawProgram = createDrawParticlesProgram(ctx);
 
   var currentCode = '';
-  var updateProgram;
-  var velocityProgram = defaultColorProgram(ctx);
   loadUpdateProgramFromAppState();
 
   // particles
-  var particleStateResolution, _numParticles, particleStateTexture0, particleStateTexture1, particleIndices, particleIndexBuffer;
   var lastAnimationFrame;
 
   initParticles(particleCount);
 
-  let integrationTimeStep = appState.getIntegrationTimeStep();
+  let integrationTimeStep = ctx.integrationTimeStep = appState.getIntegrationTimeStep();
 
   var api = {
     start: nextFrame,
@@ -140,7 +142,7 @@ function initScene(gl) {
     if (Number.isFinite(f)) {
       ctx.integrationTimeStep = integrationTimeStep = f;
       appState.setIntegrationTimeStep(f);
-      velocityProgram.requestSpeedUpdate();
+      bus.fire('integration-timestep-changed', f);
     }
   }
 
@@ -247,15 +249,8 @@ return v;
     
     // step 2 - run through real webgl
     try {
-      let update = shaders.unsafeBuildShader(vfCode)
-
-      // TODO: maybe use https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/shaderSource ?
-      let newProgram = util.createProgram(gl, update.vertex, update.fragment);
-      if (updateProgram) updateProgram.unload();
-      updateProgram = newProgram;
+      drawProgram.updateCode(vfCode);
       currentCode = vfCode;
-
-      velocityProgram.updateCode(vfCode);
     } catch (e) {
       return {
         error: e.message
@@ -338,8 +333,6 @@ return v;
     gl.disable(gl.DEPTH_TEST);
     gl.disable(gl.STENCIL_TEST);
     
-    util.bindTexture(gl, particleStateTexture0, 1);
-    
     drawScreen();
     updateParticles();
 
@@ -352,7 +345,9 @@ return v;
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     
     drawTexture(backgroundTexture, fadeOpacity)
-    drawParticles()
+
+    drawProgram.drawParticles();
+
     util.bindFramebuffer(gl, null);
   
     gl.enable(gl.BLEND);
@@ -366,48 +361,7 @@ return v;
   }
 
   function updateParticles() {
-    util.bindFramebuffer(gl, framebuffer, particleStateTexture1);
-    gl.viewport(0, 0, particleStateResolution, particleStateResolution);
-  
-    var program = updateProgram;
-    gl.useProgram(program.program);
-  
-    util.bindAttribute(gl, quadBuffer, program.a_pos, 2);
-  
-    gl.uniform1i(program.u_particles, 1);
-  
-    gl.uniform1f(program.u_rand_seed, Math.random());
-    gl.uniform1f(program.u_h, integrationTimeStep);
-    gl.uniform2f(program.u_min, bbox.minX, bbox.minY);
-    gl.uniform2f(program.u_max, bbox.maxX, bbox.maxY);
-
-    gl.uniform1f(program.u_drop_rate, dropProbabilty);
-  
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-  
-    // swap the particle state textures so the new one becomes the current one
-    var temp = particleStateTexture0;
-    particleStateTexture0 = particleStateTexture1;
-    particleStateTexture1 = temp;
-    velocityProgram.onFrame();
-  }
-
-
-  function drawParticles() {
-    util.bindTexture(gl, particleStateTexture0, 1);
-  
-    var program = drawProgram;
-    gl.useProgram(program.program);
-  
-    util.bindAttribute(gl, particleIndexBuffer, program.a_index, 1);
-    gl.uniform4f(program.u_particle_color, particleColor.r/255, particleColor.g/255, particleColor.b/255, particleColor.a);
-    gl.uniform1i(program.u_particles, 1);
-
-    velocityProgram.onBeforeDrawParticles(program);
-  
-    gl.uniform1f(program.u_particles_res, particleStateResolution);
-  
-    gl.drawArrays(gl.POINTS, 0, _numParticles); 
+    drawProgram.onUpdateParticles();
   }
 
   function drawTexture(texture, opacity) {
@@ -424,27 +378,8 @@ return v;
   
   function initParticles(numParticles) {
     // we create a square texture where each pixel will hold a particle position encoded as RGBA
-    particleStateResolution = ctx.particleStateResolution = Math.ceil(Math.sqrt(numParticles));
-    _numParticles = particleStateResolution * particleStateResolution;
-
-    particleIndices = new Float32Array(_numParticles);
-    var particleState = new Uint8Array(_numParticles * 4);
-
-    for (var i = 0; i < particleState.length; i++) {
-      particleState[i] =  Math.floor(Math.random() * 256); // randomize the initial particle positions
-      particleIndices[i] = i;
-    }
-
-    // textures to hold the particle state for the current and the next frame
-    if (particleStateTexture0) gl.deleteTexture(particleStateTexture0);
-    particleStateTexture0 = util.createTexture(gl, gl.NEAREST, particleState, particleStateResolution, particleStateResolution);
-    if (particleStateTexture1) gl.deleteTexture(particleStateTexture1);
-    particleStateTexture1 = util.createTexture(gl, gl.NEAREST, particleState, particleStateResolution, particleStateResolution);
-
-    if (particleIndexBuffer) gl.deleteBuffer(particleIndexBuffer);
-    particleIndexBuffer = util.createBuffer(gl, particleIndices);
-
-    velocityProgram.onParticleInit();
+    ctx.particleStateResolution = Math.ceil(Math.sqrt(numParticles));
+    drawProgram.onParticleInit();
   }
 
   function initPanzoom() {
@@ -498,7 +433,6 @@ return v;
     bbox.maxY =  -maxY/h / ar
 
     appState.saveBBox(bbox);
-    velocityProgram.requestSpeedUpdate();
     bus.fire('bbox-change', bbox);
 
     function clientX(x) {
