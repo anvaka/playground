@@ -27,17 +27,25 @@ void main() {
 
 const drawGraph = new DrawParticleGraph();
 const updateGraph = new UpdatePositionGraph();
+const velocityGraph = new UpdatePositionGraph({velocity: true});
 
 export default {
   // TODO: need to find a better way for this. Maybe it's own graph?
   quadVert: updateGraph.getVertexShader(),
   screenFrag: screenFrag,
   unsafeBuildShader,
+  velocityShader,
 
   drawFrag: drawGraph.getFragmentShader(),
   drawVert: drawGraph.getVertexShader(),
 };
 
+function velocityShader(vectorField) {
+  velocityGraph.setCustomVelocity(vectorField);
+  let fragment = velocityGraph.getFragmentShader();
+  let vertex = velocityGraph.getVertexShader();
+  return {fragment, vertex};
+}
 
 function unsafeBuildShader(vectorField) {
   updateGraph.setCustomVelocity(vectorField);

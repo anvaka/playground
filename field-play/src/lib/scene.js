@@ -13,6 +13,7 @@ import shaders from './shaders';
 import makePanzoom from 'panzoom';
 import bus from './bus';
 import appState from './appState';
+import defaultVelocityProgram from './shaderGraph/veolocityProgram';
 
 var glslParser = {
   check(/* code */) {
@@ -54,9 +55,16 @@ function initScene(gl) {
     dy: 0
   };
 
+  // TODO: Remove local variables in favour of context.
+  var ctx = {
+    gl,
+    bbox,
+    framebuffer: null
+  };
   var isPaused = false;
-  var framebuffer = gl.createFramebuffer();
-  var quadBuffer = util.createBuffer(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]));
+  var framebuffer = ctx.framebuffer = gl.createFramebuffer();
+  var quadBuffer = ctx.quadBuffer = util.createBuffer(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]));
+  debugger;
 
   let particleColor = { r: 77, g: 188, b: 201, a: 1  };
   // TODO: Read from query state?
@@ -75,6 +83,7 @@ function initScene(gl) {
 
   var currentCode = '';
   var updateProgram;
+  var velocityProgram = defaultVelocityProgram(ctx);
   loadUpdateProgramFromAppState();
 
   // particles
@@ -129,8 +138,9 @@ function initScene(gl) {
   function setIntegrationTimeStep(x) {
     var f = parseFloat(x);
     if (Number.isFinite(f)) {
-      integrationTimeStep = f;
+      ctx.integrationTimeStep = integrationTimeStep = f;
       appState.setIntegrationTimeStep(f);
+      velocityProgram.requestSpeedUpdate();
     }
   }
 
@@ -191,7 +201,7 @@ function initScene(gl) {
     if (Number.isFinite(f)) {
       // TODO: Do I need to worry about duplication/clamping?
       appState.setDropProbability(f);
-      dropProbabilty = f;
+      ctx.dropProbabilty = dropProbabilty = f;
     }
   }
 
@@ -244,6 +254,8 @@ return v;
       if (updateProgram) updateProgram.unload();
       updateProgram = newProgram;
       currentCode = vfCode;
+
+      velocityProgram.updateCode(vfCode);
     } catch (e) {
       return {
         error: e.message
@@ -377,7 +389,9 @@ return v;
     var temp = particleStateTexture0;
     particleStateTexture0 = particleStateTexture1;
     particleStateTexture1 = temp;
+    velocityProgram.onFrame();
   }
+
 
   function drawParticles() {
     util.bindTexture(gl, particleStateTexture0, 1);
@@ -389,7 +403,7 @@ return v;
     gl.uniform4f(program.u_particle_color, particleColor.r/255, particleColor.g/255, particleColor.b/255, particleColor.a);
     gl.uniform1i(program.u_particles, 1);
 
-    gl.uniform1i(program.u_colors, 2);
+    velocityProgram.onBeforeDrawParticles(program);
   
     gl.uniform1f(program.u_particles_res, particleStateResolution);
   
@@ -410,9 +424,8 @@ return v;
   
   function initParticles(numParticles) {
     // we create a square texture where each pixel will hold a particle position encoded as RGBA
-    var particleRes = Math.ceil(Math.sqrt(numParticles));
-    particleStateResolution = particleRes;
-    _numParticles = particleRes * particleRes;
+    particleStateResolution = ctx.particleStateResolution = Math.ceil(Math.sqrt(numParticles));
+    _numParticles = particleStateResolution * particleStateResolution;
 
     particleIndices = new Float32Array(_numParticles);
     var particleState = new Uint8Array(_numParticles * 4);
@@ -424,12 +437,14 @@ return v;
 
     // textures to hold the particle state for the current and the next frame
     if (particleStateTexture0) gl.deleteTexture(particleStateTexture0);
-    particleStateTexture0 = util.createTexture(gl, gl.NEAREST, particleState, particleRes, particleRes);
+    particleStateTexture0 = util.createTexture(gl, gl.NEAREST, particleState, particleStateResolution, particleStateResolution);
     if (particleStateTexture1) gl.deleteTexture(particleStateTexture1);
-    particleStateTexture1 = util.createTexture(gl, gl.NEAREST, particleState, particleRes, particleRes);
+    particleStateTexture1 = util.createTexture(gl, gl.NEAREST, particleState, particleStateResolution, particleStateResolution);
 
     if (particleIndexBuffer) gl.deleteBuffer(particleIndexBuffer);
     particleIndexBuffer = util.createBuffer(gl, particleIndices);
+
+    velocityProgram.onParticleInit();
   }
 
   function initPanzoom() {
@@ -483,6 +498,7 @@ return v;
     bbox.maxY =  -maxY/h / ar
 
     appState.saveBBox(bbox);
+    velocityProgram.requestSpeedUpdate();
     bus.fire('bbox-change', bbox);
 
     function clientX(x) {

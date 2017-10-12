@@ -1,8 +1,10 @@
 import BaseShaderNode from './BaseShaderNode';
 import TexturePositionNode from './TexturePositionNode';
+import renderNodes from './renderNodes';
+import encodeFloatRGBA from './parts/encodeFloatRGBA';
 
 export default class UpdatePositionGraph {
-  constructor() {
+  constructor(options) {
     this.readStoredPosition = new TexturePositionNode(/* isDecode = */ true);
     this.getVelocity = new UserDefinedVelocityFunction();
     this.integratePositions = new RungeKuttaIntegrator();
@@ -10,6 +12,7 @@ export default class UpdatePositionGraph {
     this.writeComputedPosition = new TexturePositionNode(/* isDecode = */ false);
     this.panZoomDecode = new PanzoomTransform({decode: true});
     this.panZoomEncode = new PanzoomTransform({decode: false});
+    this.velocityOnly = options && options.velocity;
   }
 
   setCustomVelocity(velocityCode) {
@@ -29,29 +32,53 @@ void main() {
   }
 
   getFragmentShader() {
-    let code = [] 
-    let nodes = [
+    let nodes;
+    if (this.velocityOnly) {
+      nodes = this.getVelocityShaderNodes();
+    } else {
+      nodes = this.getUpdatePositionShaderNodes();
+    }
+
+    return renderNodes(nodes);
+  }
+
+  getUpdatePositionShaderNodes() {
+    return [
+      this.readStoredPosition,
+      this.panZoomDecode,
+      this.getVelocity,
+      this.integratePositions, {
+        getMainBody() {
+          return `
+  pos = pos + velocity;
+  `
+        }
+      },
+      this.panZoomEncode,
+      this.dropParticles,
+      this.writeComputedPosition
+    ]
+  }
+
+  getVelocityShaderNodes() {
+    return [
       this.readStoredPosition,
       this.panZoomDecode,
       this.getVelocity,
       this.integratePositions,
-      this.panZoomEncode,
-      this.dropParticles,
-      this.writeComputedPosition
+      {
+        getFunctions() {
+          return encodeFloatRGBA;
+        },
+        getMainBody() {
+          // todo: make this customizeable
+          return `
+          // gl_FragColor = encodeFloatRGBA(atan(velocity.y, velocity.x)); // length(velocity));
+          gl_FragColor = encodeFloatRGBA(length(velocity));
+          `;
+        }
+      }
     ];
-
-    nodes.forEach(node => { if (node.getDefines) addToCode(node.getDefines()); });
-    nodes.forEach(node => { if (node.getFunctions) addToCode(node.getFunctions()); });
-
-    addToCode('void main() {')
-      nodes.forEach(node => { if (node.getMainBody) addToCode(node.getMainBody()); });
-    addToCode('}')
-
-    return code.join('\n');
-
-    function addToCode(line) {
-      if (line) code.push(line)
-    }
   }
 }
 
@@ -116,7 +143,6 @@ vec2 rk4(const vec2 point) {
     // todo: do I need to store velocity?
     return `
   vec2 velocity = rk4(pos);
-  pos = pos + velocity;
 `
   }
 }
