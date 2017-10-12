@@ -13,7 +13,8 @@ import shaders from './shaders';
 import makePanzoom from 'panzoom';
 import bus from './bus';
 import appState from './appState';
-import defaultVelocityProgram from './shaderGraph/veolocityProgram';
+
+import defaultColorProgram from './programs/colorProgram';
 
 var glslParser = {
   check(/* code */) {
@@ -64,7 +65,6 @@ function initScene(gl) {
   var isPaused = false;
   var framebuffer = ctx.framebuffer = gl.createFramebuffer();
   var quadBuffer = ctx.quadBuffer = util.createBuffer(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]));
-  debugger;
 
   let particleColor = { r: 77, g: 188, b: 201, a: 1  };
   // TODO: Read from query state?
@@ -83,7 +83,7 @@ function initScene(gl) {
 
   var currentCode = '';
   var updateProgram;
-  var velocityProgram = defaultVelocityProgram(ctx);
+  var velocityProgram = defaultColorProgram(ctx);
   loadUpdateProgramFromAppState();
 
   // particles

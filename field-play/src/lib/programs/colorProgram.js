@@ -1,7 +1,12 @@
 import shaders from '../shaders';
 import util from '../gl-utils';
 
-export default function defaultVelocityProgram(ctx) {
+/**
+ * This program allows to change color of each particle. It works by
+ * reading current velocities into a texture from the framebuffer. Once
+ * velocities are read, it checks velocity scale and passes it to a draw program.
+ */
+export default function colorProgram(ctx) {
   var maxV, minV, speedNeedsUpdate = true;
   var {gl} = ctx;
   var velocityProgram;
@@ -91,17 +96,17 @@ export default function defaultVelocityProgram(ctx) {
   }
 }
 
-  function decodeRGBA(r, g, b, a) {
-    var A = Math.floor(r + 0.5);
-    var B = Math.floor(g + 0.5);
-    var C = Math.floor(b + 0.5);
-    var D = Math.floor(a + 0.5);
+function decodeRGBA(r, g, b, a) {
+  var A = Math.floor(r + 0.5);
+  var B = Math.floor(g + 0.5);
+  var C = Math.floor(b + 0.5);
+  var D = Math.floor(a + 0.5);
 
-    var exponent = A - 127.0;
-    var sign = 1.0 - (D % 2.0) * 2.0;
-    var mantissa = ((A > 0.0) ? 1 : 0)
-                    + B / 256.0
-                    + C / 65536.0
-                    + Math.floor(D / 2.0) / 8388608.0;
-    return sign * mantissa * Math.exp(exponent * Math.LN2);
-  }
+  var exponent = A - 127.0;
+  var sign = 1.0 - (D % 2.0) * 2.0;
+  var mantissa = ((A > 0.0) ? 1 : 0)
+                  + B / 256.0
+                  + C / 65536.0
+                  + Math.floor(D / 2.0) / 8388608.0;
+  return sign * mantissa * Math.exp(exponent * Math.LN2);
+}
