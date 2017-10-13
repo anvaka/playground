@@ -46,6 +46,7 @@ attribute float a_index;
 uniform float u_particles_res;
 
 ${variables.join('\n')}
+${decodeFloatRGBA}
 ${methods.join('\n')}
 
 void main() {
@@ -102,7 +103,6 @@ vec3 hsv2rgb(vec3 c) {
   return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
-${decodeFloatRGBA}
 `
   }
 
@@ -147,16 +147,22 @@ function textureBasedPosition() {
 
   function getVariables() {
     return `
-uniform sampler2D u_particles;
+uniform sampler2D u_particles_x;
+uniform sampler2D u_particles_y;
     `
   }
 
   function getMain() {
     return `
-  vec4 encPos = texture2D(u_particles, txPos);
+  //vec4 encPos = texture2D(u_particles, txPos);
 
   // decode current particle position from the pixel's RGBA value
-  vec2 particle_pos = vec2(encPos.r / 255.0 + encPos.b, encPos.g / 255.0 + encPos.a);
+//   vec2 particle_pos = vec2(encPos.r / 255.0 + encPos.b, encPos.g / 255.0 + encPos.a);
+
+  vec2 particle_pos = vec2(
+    decodeFloatRGBA(texture2D(u_particles_x, txPos)),
+    decodeFloatRGBA(texture2D(u_particles_y, txPos))
+  );
 `
   }
 }

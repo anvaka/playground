@@ -63,6 +63,15 @@ void main() {
     ]
   }
 
+// // continuous angle from atan?
+// float cAtan(vec2 uv)
+// {
+// 	float a = 0.;
+// 	if (uv.x >= 0.) a = atan(uv.x, uv.y);
+//     if (uv.x < 0.) a = 3.14159 - atan(uv.x, -uv.y);
+//     return a;
+// }
+
   getColorShaderNodes(colorMode) {
     return [
       this.readStoredPosition,
@@ -70,11 +79,9 @@ void main() {
       this.getVelocity,
       this.integratePositions,
       {
-        getFunctions() {
-          return encodeFloatRGBA;
-        },
         getMainBody() {
           if (colorMode === ColorModes.ANGLE) {
+
             return `
   gl_FragColor = encodeFloatRGBA(atan(velocity.y, velocity.x)); 
 `

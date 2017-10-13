@@ -44,7 +44,7 @@ export default function drawParticlesProgram(ctx) {
 
   function onUpdateParticles() {
     updatePositionProgram.onUpdateParticles();
-    colorProgram.onUpdateParticles();
+    colorProgram.onUpdateParticles(updatePositionProgram);
 
     updatePositionProgram.commitUpdate();
   }
@@ -84,10 +84,8 @@ export default function drawParticlesProgram(ctx) {
   
     util.bindAttribute(gl, particleIndexBuffer, program.a_index, 1);
     
-    gl.uniform1i(program.u_particles, 1);
-
-    updatePositionProgram.onBeforeDrawParticles(program);
-    colorProgram.onBeforeDrawParticles(program);
+    updatePositionProgram.bindPositionTexturesToProgram(program);
+    colorProgram.onBeforeDrawParticles(program, updatePositionProgram);
   
     gl.uniform1f(program.u_particles_res, particleStateResolution);
   

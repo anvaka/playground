@@ -1,4 +1,6 @@
 import BaseShaderNode from './BaseShaderNode';
+import encodeFloatRGBA from './parts/encodeFloatRGBA';
+import decodeFloatRGBA from './parts/decodeFloatRGBA';
 
 /**
  * Reads/writes particle coordinates from/to a texture;
@@ -12,29 +14,42 @@ export default class TexturePosition extends BaseShaderNode {
     this.isDecode = isDecode;
   }
 
+  getFunctions() {
+    if (this.isDecode) {
+      return `
+    ${encodeFloatRGBA}
+    ${decodeFloatRGBA}
+`
+    }
+  }
+
   getDefines() {
     if (this.isDecode) {
       // TODO: How to avoid duplication and silly checks?
     return `
 precision highp float;
 
-uniform sampler2D u_particles;
+uniform sampler2D u_particles_x;
+uniform sampler2D u_particles_y;
+uniform int u_out_coordinate;
 
 varying vec2 v_tex_pos;
 `;
     }
   }
+
   getMainBody() {
   if (this.isDecode) {
-      return `
-  // decode particle position from pixel RGBA
-  vec4 encSpeed = texture2D(u_particles, v_tex_pos);
-  vec2 pos = vec2(encSpeed.r / 255.0 + encSpeed.b, encSpeed.g / 255.0 + encSpeed.a);
-`;
+    return `
+   vec2 pos = vec2(
+     decodeFloatRGBA(texture2D(u_particles_x, v_tex_pos)),
+     decodeFloatRGBA(texture2D(u_particles_y, v_tex_pos))
+   );
+`
     }
     return `
-  // encode the new particle position back into RGBA
-  gl_FragColor = vec4(fract(pos * 255.0), floor(pos * 255.0) / 255.0);
-    `
+    if (u_out_coordinate == 0) gl_FragColor = encodeFloatRGBA(pos.x);
+    else if (u_out_coordinate == 1) gl_FragColor = encodeFloatRGBA(pos.y);
+`
   }
 }
