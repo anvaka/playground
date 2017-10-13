@@ -2,6 +2,7 @@ import BaseShaderNode from './BaseShaderNode';
 import TexturePositionNode from './TexturePositionNode';
 import renderNodes from './renderNodes';
 import encodeFloatRGBA from './parts/encodeFloatRGBA';
+import ColorModes from '../programs/colorModes';
 
 export default class UpdatePositionGraph {
   constructor(options) {
@@ -12,7 +13,9 @@ export default class UpdatePositionGraph {
     this.writeComputedPosition = new TexturePositionNode(/* isDecode = */ false);
     this.panZoomDecode = new PanzoomTransform({decode: true});
     this.panZoomEncode = new PanzoomTransform({decode: false});
-    this.velocityOnly = options && options.velocity;
+
+    this.colorOnly = options && options.velocity;
+    this.colorMode = options && options.colorMode;
   }
 
   setCustomVelocity(velocityCode) {
@@ -33,8 +36,8 @@ void main() {
 
   getFragmentShader() {
     let nodes;
-    if (this.velocityOnly) {
-      nodes = this.getVelocityShaderNodes();
+    if (this.colorOnly) {
+      nodes = this.getColorShaderNodes(this.colorMode);
     } else {
       nodes = this.getUpdatePositionShaderNodes();
     }
@@ -60,7 +63,7 @@ void main() {
     ]
   }
 
-  getVelocityShaderNodes() {
+  getColorShaderNodes(colorMode) {
     return [
       this.readStoredPosition,
       this.panZoomDecode,
@@ -71,11 +74,14 @@ void main() {
           return encodeFloatRGBA;
         },
         getMainBody() {
-          // todo: make this customizeable
+          if (colorMode === ColorModes.ANGLE) {
+            return `
+  gl_FragColor = encodeFloatRGBA(atan(velocity.y, velocity.x)); 
+`
+          }
           return `
-          // gl_FragColor = encodeFloatRGBA(atan(velocity.y, velocity.x)); // length(velocity));
-          gl_FragColor = encodeFloatRGBA(length(velocity));
-          `;
+  gl_FragColor = encodeFloatRGBA(length(velocity));
+`
         }
       }
     ];

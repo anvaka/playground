@@ -1,32 +1,95 @@
-import BaseShaderNode from './BaseShaderNode';
+import decodeFloatRGBA from './parts/decodeFloatRGBA';
+import ColorModes from '../programs/colorModes'
 
 // TODO: this duplicates code from texture position.
 export default class DrawParticleGraph {
+  constructor(colorMode) {
+    this.colorMode = colorMode;
+    this.isUniformColor = colorMode === ColorModes.UNIFORM;
+  }
+
   getFragmentShader() {
-  // TODO: need to add velocity based color?
+    let variables = [];
+    var mainBody = [];
+
+    if (this.isUniformColor) {
+      variables.push('uniform vec4 u_particle_color;');
+      mainBody.push('gl_FragColor = u_particle_color;');
+    } else {
+      variables.push('varying vec4 v_particle_color;');
+      mainBody.push('gl_FragColor = v_particle_color;');
+    }
     return `precision highp float;
-uniform vec4 u_particle_color;
-varying vec2 v_particle_pos;
-varying vec4 v_particle_color;
+${variables.join('\n')}
 
 void main() {
-  // gl_FragColor = u_particle_color;
-   gl_FragColor = v_particle_color;
+${mainBody.join('\n')}
 }`
   }
+
   getVertexShader() {
+    let decodePositions = textureBasedPosition();
+    let colorParts = this.isUniformColor ? uniformColor() : textureBasedColor(this.colorMode);
+    let variables = [
+      decodePositions.getVariables(),
+      colorParts.getVariables()
+    ]
+    let methods = []
+    addMethods(decodePositions, methods);
+    addMethods(colorParts, methods);
+    let main = [];
+    addMain(decodePositions, main);
+    addMain(colorParts, main);
+
     return `precision highp float;
-
 attribute float a_index;
-
-uniform sampler2D u_particles;
-uniform sampler2D u_colors;
 uniform float u_particles_res;
+
+${variables.join('\n')}
+${methods.join('\n')}
+
+void main() {
+  vec2 txPos = vec2(
+        fract(a_index / u_particles_res),
+        floor(a_index / u_particles_res) / u_particles_res);
+  gl_PointSize = 1.0;
+
+${main.join('\n')}
+
+  gl_Position = vec4(2.0 * particle_pos.x - 1.0, (1. - 2. * (particle_pos.y)),  0., 1.);
+}`
+  }
+}
+
+function addMethods(producer, array) {
+  if (producer.getMethods) {
+    array.push(producer.getMethods());
+  }
+}
+function addMain(producer, array) {
+  if (producer.getMain) {
+    array.push(producer.getMain());
+  }
+}
+
+function textureBasedColor(colorMode) {
+  return {
+    getVariables,
+    getMain,
+    getMethods
+  }
+
+  function getVariables() {
+    return `
+uniform sampler2D u_colors;
 uniform vec2 u_velocity_range;
 
-varying vec2 v_particle_pos;
 varying vec4 v_particle_color;
+`
+  }
 
+  function getMethods() {
+    return `
 // https://github.com/hughsk/glsl-hsv2rgb
 vec3 hsv2rgb(vec3 c) {
   vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
@@ -34,38 +97,56 @@ vec3 hsv2rgb(vec3 c) {
   return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
-highp float decodeFloatRGBA( vec4 v ) {
-  float a = floor(v.r * 255.0 + 0.5);
-  float b = floor(v.g * 255.0 + 0.5);
-  float c = floor(v.b * 255.0 + 0.5);
-  float d = floor(v.a * 255.0 + 0.5);
+${decodeFloatRGBA}
+`
+  }
 
-  float exponent = a - 127.0;
-  float sign = 1.0 - mod(d, 2.0)*2.0;
-  float mantissa = float(a > 0.0)
-                  + b / 256.0
-                  + c / 65536.0
-                  + floor(d / 2.0) / 8388608.0;
-  return sign * mantissa * exp2(exponent);
+  function getMain() {
+    let decode = colorMode === ColorModes.VELOCITY ?
+      `vec4(hsv2rgb(vec3(0.05 + (1. - speed) * 0.5, 0.9, 1.)), 1.0)` :
+      `vec4(hsv2rgb(vec3(speed, 0.9, 1.)), 1.0)`;
+
+    return `
+vec4 encodedColor = texture2D(u_colors, txPos);
+float speed = (decodeFloatRGBA(encodedColor) - u_velocity_range[0])/(u_velocity_range[1] - u_velocity_range[0]);
+v_particle_color = ${decode};
+`
+  }
+
 }
 
-void main() {
-  vec2 txPos = vec2(
-        fract(a_index / u_particles_res),
-        floor(a_index / u_particles_res) / u_particles_res);
-  vec4 encSpeed = texture2D(u_particles, txPos);
+function uniformColor() {
+  return {
+    getVariables,
+    getMain
+  }
+
+  function getVariables() {
+
+  }
+  function getMain() {
+
+  }
+}
+
+function textureBasedPosition() {
+  return {
+    getVariables,
+    getMain
+  }
+
+  function getVariables() {
+    return `
+uniform sampler2D u_particles;
+    `
+  }
+
+  function getMain() {
+    return `
+  vec4 encPos = texture2D(u_particles, txPos);
 
   // decode current particle position from the pixel's RGBA value
-  v_particle_pos = vec2(encSpeed.r / 255.0 + encSpeed.b, encSpeed.g / 255.0 + encSpeed.a);
-
-  gl_PointSize = 1.0;
-
-  // vec4 encodedVelocity = texture2D(u_colors, vec2(v_particle_pos.x, v_particle_pos.y));
-  vec4 encodedVelocity = texture2D(u_colors, txPos);
-  float speed = (decodeFloatRGBA(encodedVelocity) - u_velocity_range[0])/(u_velocity_range[1] - u_velocity_range[0]);
-  v_particle_color = vec4(hsv2rgb(vec3(0.05 + (1. - speed) * 0.5, 0.8, 1.)), 1.0);
-  // v_particle_color = vec4(mix(vec3(0.4, 0.0, 0.4), vec3(0.9, 0.9, 0.9), speed), 1.0);
-  gl_Position = vec4(2.0 * v_particle_pos.x - 1.0, (1. - 2. *(v_particle_pos.y)),  0., 1.);
-}`
+  vec2 particle_pos = vec2(encPos.r / 255.0 + encPos.b, encPos.g / 255.0 + encPos.a);
+`
   }
 }

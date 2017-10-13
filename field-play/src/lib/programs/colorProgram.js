@@ -1,4 +1,4 @@
-import shaders from '../shaders';
+import UpdatePositionGraph from '../shaderGraph/updatePositionGraph';
 import util from '../gl-utils';
 import bus from '../bus';
 
@@ -7,7 +7,7 @@ import bus from '../bus';
  * reading current velocities into a texture from the framebuffer. Once
  * velocities are read, it checks velocity scale and passes it to a draw program.
  */
-export default function colorProgram(ctx) {
+export default function colorProgram(ctx, colorMode) {
   var maxV, minV, speedNeedsUpdate = true;
   var {gl} = ctx;
   var velocityProgram;
@@ -15,6 +15,7 @@ export default function colorProgram(ctx) {
   var particleStateResolution;
   var pendingSpeedUpdate;
   var numParticles;
+  let colorTextureGraph = new UpdatePositionGraph({velocity: true, colorMode});
 
   listenToEvents();
 
@@ -35,6 +36,8 @@ export default function colorProgram(ctx) {
   function dispose() {
     bus.off('integration-timestep-changed', requestSpeedUpdate);
     bus.on('bbox-change', requestSpeedUpdate);
+    if (velocityTexture) gl.deleteTexture(velocityTexture);
+    if (velocityProgram) velocityProgram.unload(); 
   }
 
   function requestSpeedUpdate() {
@@ -63,8 +66,10 @@ export default function colorProgram(ctx) {
   }
 
   function updateCode(vfCode) {
-    let velocity = shaders.velocityShader(vfCode);
-    let newVelocityProgram = util.createProgram(gl, velocity.vertex, velocity.fragment);
+    colorTextureGraph.setCustomVelocity(vfCode);
+    let fragment = colorTextureGraph.getFragmentShader();
+    let vertex = colorTextureGraph.getVertexShader();
+    let newVelocityProgram = util.createProgram(gl, vertex, fragment);
     if (velocityProgram) velocityProgram.unload();
     velocityProgram = newVelocityProgram;
     requestSpeedUpdate();

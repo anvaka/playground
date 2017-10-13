@@ -19,6 +19,16 @@ Did you forget to add a dot symbol? E.g. <span class='hl'>10</span> should be <s
     </div>
     <div class='block'>
       <div class='row'>
+        <div class='col'>Particle color</div>
+        <div class='col full'> 
+          <select v-model='selectedColorMode' @change='changeColor'>
+              <option value='0'>Uniform</option>
+              <option value='1'>Velocity</option>
+              <option value='2'>Angle</option>
+	        </select>
+        </div>
+      </div>
+      <div class='row'>
         <div class='col'>Particles count </div>
         <div class='col full'><input type='text' v-model='particlesCount'></div>
       </div>
@@ -40,12 +50,7 @@ Did you forget to add a dot symbol? E.g. <span class='hl'>10</span> should be <s
           <color-picker :color='backgroundColor' @changed='updateBackground'></color-picker>
         </div>
       </div>
-      <div class='row'>
-        <div class='col'>Particle color</div>
-        <div class='col'>
-          <color-picker :color='particleColor' @changed='updateParticleColor'></color-picker>
-        </div>
-      </div-->
+      -->
     </div>
   </div>
 </template>
@@ -77,8 +82,8 @@ export default {
       fadeOutSpeed: 0,
       dropProbability: 0,
       backgroundColor: '',
-      particleColor: '',
       timeStep: 0,
+      selectedColorMode: appState.getColorMode()
     };
   },
   watch: {
@@ -101,13 +106,12 @@ export default {
     }
   },
   methods: {
+    changeColor(e) {
+      this.scene.setColorMode(e.target.value);
+    },
     updateBackground(rgba) {
       this.backgroundColor = toColorString(rgba);
       this.scene.setBackgroundColor(rgba);
-    },
-    updateParticleColor(rgba) {
-      this.particleColor = toColorString(rgba);
-      this.scene.setParticleColor(rgba);
     },
     onSceneReady(scene) {
       this.vectorField = scene.getCurrentCode();
@@ -115,7 +119,6 @@ export default {
       this.fadeOutSpeed = scene.getFadeOutSpeed();
       this.dropProbability = scene.getDropProbability();
       this.backgroundColor = toColorString(scene.getBackgroundColor());
-      this.particleColor = toColorString(scene.getParticleColor());
       this.timeStep = scene.getIntegrationTimeStep();
     },
     sendVectorField() {

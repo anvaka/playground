@@ -6,7 +6,8 @@ var defaults = {
   timeStep: 0.01,
   dropProbability: 0.009,
   particleCount: 10000,
-  fadeout: .998
+  fadeout: .998,
+  colorMode: 0, // Uniform
 }
 
 let settingsPanel = {
@@ -30,7 +31,19 @@ export default {
   setParticleCount,
 
   getFadeout,
-  setFadeout
+  setFadeout,
+
+  getColorMode,
+  setColorMode
+}
+
+function getColorMode() {
+  let colorMode = qs.get('cm');
+  return defined(colorMode) ? colorMode : defaults.colorMode;
+}
+function setColorMode(colorMode) {
+  if (!defined(colorMode)) return;
+  qs.set({cm: colorMode});
 }
 
 function getFadeout() {

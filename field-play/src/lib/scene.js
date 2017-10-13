@@ -65,15 +65,15 @@ function initScene(gl) {
   var ctx = {
     gl,
     bbox,
-    framebuffer: null
+    framebuffer: null,
+    colorMode: appState.getColorMode()
   };
   var isPaused = false;
   var framebuffer = ctx.framebuffer = gl.createFramebuffer();
   var quadBuffer = ctx.quadBuffer = util.createBuffer(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]));
   // On each frame the likelihood for a particle to reset its position is this:
-  var dropProbabilty = ctx.dropProbabilty = appState.getDropProbability();
+  ctx.dropProbabilty = appState.getDropProbability();
 
-  let particleColor = { r: 77, g: 188, b: 201, a: 1  };
   // TODO: Read from query state?
   let backgroundColor;
   setBackgroundColor({ r: 19, g: 41, b: 79, a: 1 });
@@ -119,11 +119,11 @@ function initScene(gl) {
     setBackgroundColor,
     getBackgroundColor,
 
-    getParticleColor,
-    setParticleColor,
-
     getIntegrationTimeStep,
-    setIntegrationTimeStep
+    setIntegrationTimeStep,
+
+    setColorMode,
+    getColorMode
   }
 
   var panzoom = initPanzoom(); 
@@ -132,6 +132,17 @@ function initScene(gl) {
   })
 
   return api;
+
+  function setColorMode(x) {
+    var mode = parseInt(x, 10);
+    drawProgram.updateColorMode(mode);
+    appState.setColorMode(mode);
+    ctx.currentColorMode = mode;
+  }
+
+  function getColorMode() {
+    return ctx.currentColorMode;
+  }
 
   function getIntegrationTimeStep() {
     return integrationTimeStep;
@@ -159,14 +170,6 @@ function initScene(gl) {
 
   function getBackgroundColor() {
     return backgroundColor;
-  }
-
-  function getParticleColor() {
-    return particleColor;
-  }
-
-  function setParticleColor(rgba) {
-    particleColor = rgba;
   }
 
   // Main screen fade out configuration
@@ -203,12 +206,12 @@ function initScene(gl) {
     if (Number.isFinite(f)) {
       // TODO: Do I need to worry about duplication/clamping?
       appState.setDropProbability(f);
-      ctx.dropProbabilty = dropProbabilty = f;
+      ctx.dropProbabilty = f;
     }
   }
 
   function getDropProbability() {
-    return dropProbabilty;
+    return ctx.dropProbabilty;
   }
 
   // current code;
