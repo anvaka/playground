@@ -80,11 +80,16 @@ function textureBasedColor(colorMode) {
   }
 
   function getVariables() {
+    let defines = '';
+    if (colorMode === ColorModes.ANGLE) {
+      defines = `#define M_PI 3.1415926535897932384626433832795`;
+    }
     return `
 uniform sampler2D u_colors;
 uniform vec2 u_velocity_range;
-
+${defines}
 varying vec4 v_particle_color;
+
 `
   }
 
@@ -103,13 +108,18 @@ ${decodeFloatRGBA}
 
   function getMain() {
     let decode = colorMode === ColorModes.VELOCITY ?
-      `vec4(hsv2rgb(vec3(0.05 + (1. - speed) * 0.5, 0.9, 1.)), 1.0)` :
-      `vec4(hsv2rgb(vec3(speed, 0.9, 1.)), 1.0)`;
+      `
+  float speed = (decodeFloatRGBA(encodedColor) - u_velocity_range[0])/(u_velocity_range[1] - u_velocity_range[0]);
+  v_particle_color = vec4(hsv2rgb(vec3(0.05 + (1. - speed) * 0.5, 0.9, 1.)), 1.0);
+` : `
+  float speed = (decodeFloatRGBA(encodedColor) + M_PI)/(2.0 * M_PI);
+  v_particle_color = vec4(hsv2rgb(vec3(0.05 + (1. - speed) * 0.5, 0.9, 1.)), 1.0);
+  v_particle_color = vec4(hsv2rgb(vec3(speed, 0.9, 1.)), 1.0);
+`;
 
     return `
 vec4 encodedColor = texture2D(u_colors, txPos);
-float speed = (decodeFloatRGBA(encodedColor) - u_velocity_range[0])/(u_velocity_range[1] - u_velocity_range[0]);
-v_particle_color = ${decode};
+${decode}
 `
   }
 
