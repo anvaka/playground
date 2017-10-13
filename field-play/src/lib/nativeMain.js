@@ -4,7 +4,9 @@ var canvas = document.getElementById('scene');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-var gl = canvas.getContext('webgl', {antialiasing: false});
+var ctxOptions = {antialiasing: false};
+var gl = canvas.getContext('webgl', ctxOptions) ||
+         canvas.getContext('experimental-webgl', ctxOptions);
 var scene = initScene(gl);
 scene.start();
 // TODO: too bad?
