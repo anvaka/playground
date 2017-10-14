@@ -231,6 +231,8 @@ function initScene(gl) {
   }
 
   function updateVectorField(vfCode) {
+    if (vfCode === currentCode) return;
+
     let result = trySetNewCode(vfCode);
     if (result && result.error) return result;
 
