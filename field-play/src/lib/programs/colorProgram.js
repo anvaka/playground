@@ -1,6 +1,7 @@
 import UpdatePositionGraph from '../shaderGraph/updatePositionGraph';
 import util from '../gl-utils';
 import bus from '../bus';
+import {decodeFloatRGBA} from '../floatPacking';
 
 /**
  * This program allows to change color of each particle. It works by
@@ -107,25 +108,9 @@ export default function colorProgram(ctx, colorMode) {
       var g = velocityState[i + 1];
       var b = velocityState[i + 2];
       var a = velocityState[i + 3];
-      var v = decodeRGBA(r, g, b, a);
+      var v = decodeFloatRGBA(r, g, b, a);
       if (v > maxV) maxV = v;
       if (v < minV) minV = v;
     }
   }
-}
-
-// TODO: Move this to separate file.
-function decodeRGBA(r, g, b, a) {
-  var A = Math.floor(r + 0.5);
-  var B = Math.floor(g + 0.5);
-  var C = Math.floor(b + 0.5);
-  var D = Math.floor(a + 0.5);
-
-  var exponent = A - 127.0;
-  var sign = 1.0 - (D % 2.0) * 2.0;
-  var mantissa = ((A > 0.0) ? 1 : 0)
-                  + B / 256.0
-                  + C / 65536.0
-                  + Math.floor(D / 2.0) / 8388608.0;
-  return sign * mantissa * Math.exp(exponent * Math.LN2);
 }
