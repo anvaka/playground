@@ -113,7 +113,6 @@ vec3 hsv2rgb(vec3 c) {
   v_particle_color = vec4(hsv2rgb(vec3(0.05 + (1. - speed) * 0.5, 0.9, 1.)), 1.0);
 ` : `
   float speed = (decodeFloatRGBA(encodedColor) + M_PI)/(2.0 * M_PI);
-  v_particle_color = vec4(hsv2rgb(vec3(0.05 + (1. - speed) * 0.5, 0.9, 1.)), 1.0);
   v_particle_color = vec4(hsv2rgb(vec3(speed, 0.9, 1.)), 1.0);
 `;
 
@@ -154,11 +153,6 @@ uniform sampler2D u_particles_y;
 
   function getMain() {
     return `
-  //vec4 encPos = texture2D(u_particles, txPos);
-
-  // decode current particle position from the pixel's RGBA value
-//   vec2 particle_pos = vec2(encPos.r / 255.0 + encPos.b, encPos.g / 255.0 + encPos.a);
-
   vec2 particle_pos = vec2(
     decodeFloatRGBA(texture2D(u_particles_x, txPos)),
     decodeFloatRGBA(texture2D(u_particles_y, txPos))

@@ -3,7 +3,6 @@ import shaders from '../shaders';
 
 export default function updatePositionProgram(ctx) {
   var gl = ctx.gl;
-  // var particleStateTexture0, particleStateTexture1;
   var readTextures, writeTextures;
   var particleStateResolution;
   var updateProgram;
@@ -25,21 +24,21 @@ export default function updatePositionProgram(ctx) {
     updateProgram = newProgram;
   }
   
-  function onParticleInit(particleState) {
+  function onParticleInit(x, y) {
     particleStateResolution = ctx.particleStateResolution;
 
+    var dimensions = [{
+      name: 'x',
+      particleState: x
+    }, {
+      name: 'y',
+      particleState: y
+    }];
     if (readTextures) readTextures.dispose();
-    readTextures = textureCollection(gl, ['x', 'y'], particleState, particleStateResolution);
+    readTextures = textureCollection(gl, dimensions, particleStateResolution);
 
     if (writeTextures) writeTextures.dispose();
-    writeTextures = textureCollection(gl, ['x', 'y'], particleState, particleStateResolution);
-
-    // TODO: More precise texture
-    // textures to hold the particle state for the current and the next frame
-    // if (particleStateTexture0) gl.deleteTexture(particleStateTexture0);
-    // particleStateTexture0 = util.createTexture(gl, gl.NEAREST, particleState, particleStateResolution, particleStateResolution);
-    // if (particleStateTexture1) gl.deleteTexture(particleStateTexture1);
-    // particleStateTexture1 = util.createTexture(gl, gl.NEAREST, particleState, particleStateResolution, particleStateResolution);
+    writeTextures = textureCollection(gl, dimensions, particleStateResolution);
   }
 
   function bindPositionTexturesToProgram(program) {
@@ -48,9 +47,6 @@ export default function updatePositionProgram(ctx) {
 
   function commitUpdate() {
     // swap the particle state textures so the new one becomes the current one
-    // var temp = particleStateTexture0;
-    // particleStateTexture0 = particleStateTexture1;
-    // particleStateTexture1 = temp;
     var temp = readTextures;
     readTextures = writeTextures;
     writeTextures = temp;
@@ -85,13 +81,13 @@ export default function updatePositionProgram(ctx) {
   }
 }
 
-function textureCollection(gl, dimensions, particleState, particleStateResolution) {
+function textureCollection(gl, dimensions, particleStateResolution) {
   var index = 1;
-  var textures = dimensions.map(name => {
+  var textures = dimensions.map(d => {
     var textureInfo = {
-      texture: util.createTexture(gl, gl.NEAREST, particleState, particleStateResolution, particleStateResolution),
+      texture: util.createTexture(gl, gl.NEAREST, d.particleState, particleStateResolution, particleStateResolution),
       index: index,
-      name
+      name: d.name
     }
     // TODO: need to see if I can simplify this. Second slot is taken by color.
     if (index === 1) index = 2;
@@ -105,6 +101,7 @@ function textureCollection(gl, dimensions, particleState, particleStateResolutio
     bindTextures,
     assignProgramUniforms,
     length: dimensions.length,
+    textures,
     get(i) { return textures[i]; }
   }
 

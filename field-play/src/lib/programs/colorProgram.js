@@ -52,7 +52,6 @@ export default function colorProgram(ctx, colorMode) {
     util.bindTexture(gl, velocityTexture, 2);
     gl.uniform2f(program.u_velocity_range, minV, maxV);
     gl.uniform1i(program.u_colors, 2);
-
   }
 
   function onParticleInit() {
@@ -114,6 +113,7 @@ export default function colorProgram(ctx, colorMode) {
   }
 }
 
+// TODO: Move this to separate file.
 function decodeRGBA(r, g, b, a) {
   var A = Math.floor(r + 0.5);
   var B = Math.floor(g + 0.5);

@@ -63,14 +63,6 @@ void main() {
     ]
   }
 
-// // continuous angle from atan?
-// float cAtan(vec2 uv)
-// {
-// 	float a = 0.;
-// 	if (uv.x >= 0.) a = atan(uv.x, uv.y);
-//     if (uv.x < 0.) a = 3.14159 - atan(uv.x, -uv.y);
-//     return a;
-// }
 
   getColorShaderNodes(colorMode) {
     return [
@@ -83,7 +75,7 @@ void main() {
           if (colorMode === ColorModes.ANGLE) {
 
             return `
-  gl_FragColor = encodeFloatRGBA(atan(velocity.y, velocity.x)); 
+   gl_FragColor = encodeFloatRGBA(atan(velocity.y, velocity.x)); 
 `
           }
           return `
@@ -210,7 +202,7 @@ float rand(const vec2 co) {
   // drop rate is a chance a particle will restart at random position, to avoid degeneration
   float drop = step(1.0 - u_drop_rate, rand(seed));
 
-  vec2 random_pos = vec2(rand(seed + 3.14), rand(seed + 2.1));
+  vec2 random_pos = vec2(rand(seed + 0.19), rand(seed + 0.84));
   pos = mix(pos, random_pos, drop);
 `;
   }
