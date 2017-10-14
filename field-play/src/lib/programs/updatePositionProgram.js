@@ -62,6 +62,7 @@ export default function updatePositionProgram(ctx) {
   
     gl.uniform1f(program.u_rand_seed, frameSeed);
     gl.uniform1f(program.u_h, ctx.integrationTimeStep);
+    gl.uniform1f(program.u_time, ctx.time);
 
     var bbox = ctx.bbox;
     gl.uniform2f(program.u_min, bbox.minX, bbox.minY);

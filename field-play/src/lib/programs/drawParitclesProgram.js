@@ -28,6 +28,7 @@ export default function drawParticlesProgram(ctx) {
   }
 
   function recompileDraw() {
+    ctx.time = 0;
     let isUniformColor = currentColorMode === ColorMode.UNIFORM;
     if (colorProgram) colorProgram.dispose();
     colorProgram = isUniformColor ? uniformColorProgram(ctx) : defaultColorProgram(ctx, currentColorMode);

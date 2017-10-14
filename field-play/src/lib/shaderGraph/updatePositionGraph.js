@@ -2,6 +2,7 @@ import BaseShaderNode from './BaseShaderNode';
 import TexturePositionNode from './TexturePositionNode';
 import renderNodes from './renderNodes';
 import ColorModes from '../programs/colorModes';
+import snoise from './parts/simplex-noise';
 
 export default class UpdatePositionGraph {
   constructor(options) {
@@ -162,10 +163,17 @@ class UserDefinedVelocityFunction extends BaseShaderNode {
     this.updateCode = newUpdateCode;
   }
 
-  getFunctions() {
-
-  // TODO: Do I need to worry about "glsl injection" (i.e. is there potential for security attack?)
+  getDefines() {
     return `
+uniform float u_time;
+`
+  }
+
+  getFunctions() {
+  // TODO: Do I need to worry about "glsl injection" (i.e. is there potential for security attack?)
+  // TODO: Do I need to inject snoise only when it's used?
+    return `
+${snoise}
 vec2 get_velocity(const vec2 p) {
   vec2 v = vec2(0.);
   ${this.updateCode}

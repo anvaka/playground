@@ -66,7 +66,8 @@ function initScene(gl) {
     gl,
     bbox,
     framebuffer: null,
-    colorMode: appState.getColorMode()
+    colorMode: appState.getColorMode(),
+    time: 0
   };
   var isPaused = false;
   var framebuffer = ctx.framebuffer = gl.createFramebuffer();
@@ -247,7 +248,16 @@ vec2 velocity(vec2 p) {
 vec2 v = vec2(0., 0.);
 ${vfCode}
 return v;
-}`);
+}`, {
+  globals: `
+import {
+  float snoise(vec2 v);
+  float u_time;
+}
+`
+});
+
+
     if (res.log.errorCount) {
       return parserError(res.log);
     }
@@ -338,6 +348,7 @@ return v;
     gl.disable(gl.DEPTH_TEST);
     gl.disable(gl.STENCIL_TEST);
     
+    ctx.time += 1;
     drawScreen();
     updateParticles();
 
