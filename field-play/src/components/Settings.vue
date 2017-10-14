@@ -17,7 +17,7 @@ Did you forget to add a dot symbol? E.g. <span class='hl'>10</span> should be <s
 </span></pre>
     </div>
     </div>
-    <div class='block'>
+    <form class='block' @submit.prevent='onSubmit'>
       <div class='row'>
         <div class='col'>Particle color</div>
         <div class='col full'> 
@@ -30,28 +30,21 @@ Did you forget to add a dot symbol? E.g. <span class='hl'>10</span> should be <s
       </div>
       <div class='row'>
         <div class='col'>Particles count </div>
-        <div class='col full'><input type='text' v-model='particlesCount'></div>
+        <div class='col full'><input type='text' v-model='particlesCount' @keyup.enter='onSubmit'></div>
       </div>
       <div class='row'>
         <div class='col'>Fade out speed</div>
-        <div class='col full'><input type='text' v-model='fadeOutSpeed'></div>
+        <div class='col full'><input type='text' v-model='fadeOutSpeed' @keyup.enter='onSubmit'></div>
       </div>
       <div class='row'>
         <div class='col'>Particle reset probability</div>
-        <div class='col full'><input type='text' v-model='dropProbability'></div>
+        <div class='col full'><input type='text' v-model='dropProbability' @keyup.enter='onSubmit'></div>
       </div>
       <div class='row'>
         <div class='col'>Integration timestep</div>
-        <div class='col full'><input type='text' v-model='timeStep'></div>
+        <div class='col full'><input type='text' v-model='timeStep' @keyup.enter='onSubmit'></div>
       </div>
-      <!--div class='row'>
-        <div class='col'>Background color</div>
-        <div class='col'>
-          <color-picker :color='backgroundColor' @changed='updateBackground'></color-picker>
-        </div>
-      </div>
-      -->
-    </div>
+    </form>
   </div>
 </template>
 <script>
@@ -106,6 +99,11 @@ export default {
     }
   },
   methods: {
+    onSubmit() {
+      if (window.innerWidth < 600) {
+        appState.settingsPanel.collapsed = true;
+      }
+    },
     changeColor(e) {
       this.scene.setColorMode(e.target.value);
     },
