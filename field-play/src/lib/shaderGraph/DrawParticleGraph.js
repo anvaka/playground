@@ -1,5 +1,7 @@
 import decodeFloatRGBA from './parts/decodeFloatRGBA';
-import ColorModes from '../programs/colorModes'
+import ColorModes from '../programs/colorModes';
+import UserDefinedVelocityFunction from './UserDefinedVelocityFunction';
+import PanzoomTransform from './PanzoomTransform';
 
 // TODO: this duplicates code from texture position.
 export default class DrawParticleGraph {
@@ -27,9 +29,9 @@ ${mainBody.join('\n')}
 }`
   }
 
-  getVertexShader() {
+  getVertexShader(vfCode) {
     let decodePositions = textureBasedPosition();
-    let colorParts = this.isUniformColor ? uniformColor() : textureBasedColor(this.colorMode);
+    let colorParts = this.isUniformColor ? uniformColor() : textureBasedColor(this.colorMode, vfCode);
     let variables = [
       decodePositions.getVariables(),
       colorParts.getVariables()
@@ -57,7 +59,7 @@ void main() {
 
 ${main.join('\n')}
 
-  gl_Position = vec4(2.0 * particle_pos.x - 1.0, (1. - 2. * (particle_pos.y)),  0., 1.);
+  gl_Position = vec4(2.0 * v_particle_pos.x - 1.0, (1. - 2. * (v_particle_pos.y)),  0., 1.);
 }`
   }
 }
@@ -73,7 +75,9 @@ function addMain(producer, array) {
   }
 }
 
-function textureBasedColor(colorMode) {
+function textureBasedColor(colorMode, vfCode) {
+  var udf = new UserDefinedVelocityFunction(vfCode);
+  var panzoom = new PanzoomTransform({decode: true, srcPosName: 'v_particle_pos'});
   return {
     getVariables,
     getMain,
@@ -90,7 +94,8 @@ uniform sampler2D u_colors;
 uniform vec2 u_velocity_range;
 ${defines}
 varying vec4 v_particle_color;
-
+${panzoom.getDefines()}
+${udf.getDefines()}
 `
   }
 
@@ -103,21 +108,33 @@ vec3 hsv2rgb(vec3 c) {
   return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
+${panzoom.getFunctions()}
+${udf.getFunctions()}
 `
   }
 
   function getMain() {
     let decode = colorMode === ColorModes.VELOCITY ?
       `
-  float speed = (decodeFloatRGBA(encodedColor) - u_velocity_range[0])/(u_velocity_range[1] - u_velocity_range[0]);
+  float speed = (length(velocity) - u_velocity_range[0])/(u_velocity_range[1] - u_velocity_range[0]);
+  // float speed = (decodeFloatRGBA(encodedColor) - u_velocity_range[0])/(u_velocity_range[1] - u_velocity_range[0]);
   v_particle_color = vec4(hsv2rgb(vec3(0.05 + (1. - speed) * 0.5, 0.9, 1.)), 1.0);
 ` : `
-  float speed = (decodeFloatRGBA(encodedColor) + M_PI)/(2.0 * M_PI);
+  float speed = (atan(velocity.y, velocity.x) + M_PI)/(2.0 * M_PI);
+  //float speed = (decodeFloatRGBA(encodedColor) + M_PI)/(2.0 * M_PI);
   v_particle_color = vec4(hsv2rgb(vec3(speed, 0.9, 1.)), 1.0);
 `;
 
+var moveToVectorSpace = `
+vec2 du = (u_max - u_min);
+vec2 pos = vec2(
+  v_particle_pos.x * du.x + u_min.x,
+  v_particle_pos.y * du.y + u_min.y);
+`
     return `
-vec4 encodedColor = texture2D(u_colors, txPos);
+${moveToVectorSpace}
+vec2 velocity = get_velocity(pos);
+// vec4 encodedColor = texture2D(u_colors, txPos);
 ${decode}
 `
   }
@@ -153,7 +170,7 @@ uniform sampler2D u_particles_y;
 
   function getMain() {
     return `
-  vec2 particle_pos = vec2(
+  vec2 v_particle_pos = vec2(
     decodeFloatRGBA(texture2D(u_particles_x, txPos)),
     decodeFloatRGBA(texture2D(u_particles_y, txPos))
   );

@@ -14,12 +14,12 @@ export default function drawParticlesProgram(ctx) {
   var particleStateResolution, particleIndexBuffer;
   var numParticles;
 
-  var currentVectorField;
+  var currentVectorField = '';
   var currentColorMode = ctx.colorMode;
   var updatePositionProgram = makeUpdatePositionProgram(ctx);
 
   var drawProgram, colorProgram;
-  recompileDraw();
+  updateColorProgram();
 
   return {
     onParticleInit,
@@ -29,7 +29,7 @@ export default function drawParticlesProgram(ctx) {
     updateColorMode
   }
 
-  function recompileDraw() {
+  function updateColorProgram() {
     let isUniformColor = currentColorMode === ColorMode.UNIFORM;
     if (colorProgram) colorProgram.dispose();
     colorProgram = isUniformColor ? uniformColorProgram(ctx) : defaultColorProgram(ctx, currentColorMode);
@@ -41,14 +41,14 @@ export default function drawParticlesProgram(ctx) {
 
     const drawGraph = new DrawParticleGraph(currentColorMode);
     if (drawProgram) drawProgram.unload();
-    drawProgram = util.createProgram(gl, drawGraph.getVertexShader(), drawGraph.getFragmentShader());
+    drawProgram = util.createProgram(gl, drawGraph.getVertexShader(currentVectorField), drawGraph.getFragmentShader());
 
     startTime = new Date();
   }
 
   function onUpdateParticles() {
     ctx.time = (new Date() - startTime);
-    let frameSeed = 0.42; // Math.random();
+    let frameSeed = Math.random();
   
     updatePositionProgram.onUpdateParticles(frameSeed);
     colorProgram.onUpdateParticles(updatePositionProgram, frameSeed);
@@ -58,13 +58,17 @@ export default function drawParticlesProgram(ctx) {
 
   function updateColorMode(colorMode) {
     currentColorMode = colorMode;
-    recompileDraw();
+    updateColorProgram();
   }
 
   function updateCode(vfCode) {
     currentVectorField = vfCode;
     updatePositionProgram.updateCode(vfCode);
     colorProgram.updateCode(vfCode);
+
+    const drawGraph = new DrawParticleGraph(currentColorMode);
+    if (drawProgram) drawProgram.unload();
+    drawProgram = util.createProgram(gl, drawGraph.getVertexShader(currentVectorField), drawGraph.getFragmentShader());
   }
 
 
@@ -99,6 +103,9 @@ export default function drawParticlesProgram(ctx) {
     colorProgram.onBeforeDrawParticles(program, updatePositionProgram);
   
     gl.uniform1f(program.u_particles_res, particleStateResolution);
+    var bbox = ctx.bbox;
+    gl.uniform2f(program.u_min, bbox.minX, bbox.minY);
+    gl.uniform2f(program.u_max, bbox.maxX, bbox.maxY);
   
     gl.drawArrays(gl.POINTS, 0, numParticles); 
   }

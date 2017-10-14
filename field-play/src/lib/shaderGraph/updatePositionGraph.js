@@ -2,7 +2,8 @@ import BaseShaderNode from './BaseShaderNode';
 import TexturePositionNode from './TexturePositionNode';
 import renderNodes from './renderNodes';
 import ColorModes from '../programs/colorModes';
-import snoise from './parts/simplex-noise';
+import UserDefinedVelocityFunction from './UserDefinedVelocityFunction';
+import PanzoomTransform from './PanzoomTransform';
 
 export default class UpdatePositionGraph {
   constructor(options) {
@@ -74,7 +75,6 @@ void main() {
       {
         getMainBody() {
           if (colorMode === ColorModes.ANGLE) {
-
             return `
    gl_FragColor = encodeFloatRGBA(atan(velocity.y, velocity.x)); 
 `
@@ -88,40 +88,6 @@ void main() {
   }
 }
 
-class PanzoomTransform extends BaseShaderNode {
-  constructor(config) {
-    super();
-    // decode is used when we move particle read from the texture
-    // otherwise we write particle to texture and need to reverse transform
-    this.decode = config && config.decode;
-  }
-
-  getDefines() {
-    if (this.decode) {
-      // TODO: Need to figure out how to not duplicate this.
-    return `
-  uniform vec2 u_min;
-  uniform vec2 u_max;
-`;
-    }
-  }
-
-  getMainBody() {
-    if (this.decode) {
-      return `
-  // move particle position according to current transform
-  vec2 du = (u_max - u_min);
-  pos.x = pos.x * du.x + u_min.x;
-  pos.y = pos.y * du.y + u_min.y;
-`
-    }
-    return `
-  pos.x = (pos.x - u_min.x)/du.x;
-  pos.y = (pos.y - u_min.y)/du.y;
-`
-  }
-}
-
 class RungeKuttaIntegrator extends BaseShaderNode {
   constructor () {
     super();
@@ -129,7 +95,7 @@ class RungeKuttaIntegrator extends BaseShaderNode {
 
   getDefines() {
     return `
-  uniform float u_h;
+uniform float u_h;
 `
   }
 
@@ -150,36 +116,6 @@ vec2 rk4(const vec2 point) {
     return `
   vec2 velocity = rk4(pos);
 `
-  }
-}
-
-class UserDefinedVelocityFunction extends BaseShaderNode {
-  constructor() {
-    super();
-    this.updateCode = '';
-  }
-
-  setNewUpdateCode(newUpdateCode) {
-    this.updateCode = newUpdateCode;
-  }
-
-  getDefines() {
-    return `
-uniform float u_time;
-`
-  }
-
-  getFunctions() {
-  // TODO: Do I need to worry about "glsl injection" (i.e. is there potential for security attack?)
-  // TODO: Do I need to inject snoise only when it's used?
-    return `
-${snoise}
-vec2 get_velocity(const vec2 p) {
-  vec2 v = vec2(0.);
-  ${this.updateCode}
-  return v;
-}
-  `
   }
 }
 
