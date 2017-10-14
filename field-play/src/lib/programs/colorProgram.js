@@ -103,11 +103,11 @@ export default function colorProgram(ctx, colorMode) {
     minV = Number.POSITIVE_INFINITY;
     // TODO: Do I want this to be async?
     for(var i = 0; i < velocityState.length; i+=4) {
-      let r = velocityState[i + 0];
-      let g = velocityState[i + 1];
-      let b = velocityState[i + 2];
-      let a = velocityState[i + 3];
-      let v = decodeRGBA(r, g, b, a);
+      var r = velocityState[i + 0];
+      var g = velocityState[i + 1];
+      var b = velocityState[i + 2];
+      var a = velocityState[i + 3];
+      var v = decodeRGBA(r, g, b, a);
       if (v > maxV) maxV = v;
       if (v < minV) minV = v;
     }
