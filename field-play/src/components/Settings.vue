@@ -7,7 +7,7 @@
 // v.x and v.y is a velocity at point p</span>
 function velocity(<span class='type'>vec2</span> p) {
   <span class='type'>vec2</span> v = <span class='type'>vec2</span>(0., 0.);</pre>
-      <textarea type='text' v-model='vectorField' rows='3'></textarea>
+      <textarea type='text' v-model='vectorField' rows='3' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
 <pre>  return v;
 }</pre>
     <div class='error=container'>
