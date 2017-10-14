@@ -43,8 +43,10 @@ export default function drawParticlesProgram(ctx) {
   }
 
   function onUpdateParticles() {
-    updatePositionProgram.onUpdateParticles();
-    colorProgram.onUpdateParticles(updatePositionProgram);
+    let frameSeed = Math.random();
+  
+    updatePositionProgram.onUpdateParticles(frameSeed);
+    colorProgram.onUpdateParticles(updatePositionProgram, frameSeed);
 
     updatePositionProgram.commitUpdate();
   }

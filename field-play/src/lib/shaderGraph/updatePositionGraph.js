@@ -1,7 +1,6 @@
 import BaseShaderNode from './BaseShaderNode';
 import TexturePositionNode from './TexturePositionNode';
 import renderNodes from './renderNodes';
-import encodeFloatRGBA from './parts/encodeFloatRGBA';
 import ColorModes from '../programs/colorModes';
 
 export default class UpdatePositionGraph {
@@ -48,6 +47,7 @@ void main() {
   getUpdatePositionShaderNodes() {
     return [
       this.readStoredPosition,
+      this.dropParticles,
       this.panZoomDecode,
       this.getVelocity,
       this.integratePositions, {
@@ -58,7 +58,6 @@ void main() {
         }
       },
       this.panZoomEncode,
-      this.dropParticles,
       this.writeComputedPosition
     ]
   }
@@ -67,6 +66,7 @@ void main() {
   getColorShaderNodes(colorMode) {
     return [
       this.readStoredPosition,
+      this.dropParticles,
       this.panZoomDecode,
       this.getVelocity,
       this.integratePositions,

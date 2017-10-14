@@ -75,7 +75,7 @@ export default function colorProgram(ctx, colorMode) {
     requestSpeedUpdate();
   }
 
-  function onUpdateParticles(updatePositionProgram) {
+  function onUpdateParticles(updatePositionProgram, frameSeed) {
     util.bindFramebuffer(gl, ctx.framebuffer, velocityTexture);
     gl.viewport(0, 0, particleStateResolution, particleStateResolution);
   
@@ -85,6 +85,7 @@ export default function colorProgram(ctx, colorMode) {
     updatePositionProgram.bindPositionTexturesToProgram(program);
     util.bindAttribute(gl, ctx.quadBuffer, program.a_pos, 2);
 
+    gl.uniform1f(program.u_rand_seed, frameSeed);
     gl.uniform1f(program.u_h, ctx.integrationTimeStep);
     var bbox = ctx.bbox;
     gl.uniform2f(program.u_min, bbox.minX, bbox.minY);

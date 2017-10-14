@@ -52,9 +52,7 @@ export default function updatePositionProgram(ctx) {
     writeTextures = temp;
   }
 
-  function onUpdateParticles() {
-    let frameSeed = Math.random();
-  
+  function onUpdateParticles(frameSeed) {
     var program = updateProgram;
     gl.useProgram(program.program);
   

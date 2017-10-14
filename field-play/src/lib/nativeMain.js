@@ -2,7 +2,7 @@ import initScene from './scene';
 
 var canvas = document.getElementById('scene');
 canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.height =  window.innerHeight;
 
 var ctxOptions = {antialiasing: false};
 var gl = canvas.getContext('webgl', ctxOptions) ||
