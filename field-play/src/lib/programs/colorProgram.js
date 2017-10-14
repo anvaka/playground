@@ -77,6 +77,7 @@ export default function colorProgram(ctx, colorMode) {
   }
 
   function onUpdateParticles(updatePositionProgram, frameSeed) {
+    if (!speedNeedsUpdate) return;
     util.bindFramebuffer(gl, ctx.framebuffer, velocityTexture);
     gl.viewport(0, 0, particleStateResolution, particleStateResolution);
   
@@ -94,7 +95,6 @@ export default function colorProgram(ctx, colorMode) {
   
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-    if (!speedNeedsUpdate) return;
 
     speedNeedsUpdate = false;
     var velocityState = new Uint8Array(numParticles * 4);

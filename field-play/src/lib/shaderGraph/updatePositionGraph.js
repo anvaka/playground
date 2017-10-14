@@ -4,6 +4,7 @@ import renderNodes from './renderNodes';
 import ColorModes from '../programs/colorModes';
 import UserDefinedVelocityFunction from './UserDefinedVelocityFunction';
 import PanzoomTransform from './PanzoomTransform';
+import RungeKuttaIntegrator from './RungeKuttaIntegrator';
 
 export default class UpdatePositionGraph {
   constructor(options) {
@@ -88,37 +89,6 @@ void main() {
   }
 }
 
-class RungeKuttaIntegrator extends BaseShaderNode {
-  constructor () {
-    super();
-  }
-
-  getDefines() {
-    return `
-uniform float u_h;
-`
-  }
-
-  getFunctions() {
-    return `
-vec2 rk4(const vec2 point) {
-  vec2 k1 = get_velocity( point );
-  vec2 k2 = get_velocity( point + k1 * u_h * 0.5);
-  vec2 k3 = get_velocity( point + k2 * u_h * 0.5);
-  vec2 k4 = get_velocity( point + k3 * u_h);
-
-  return k1 * u_h / 6. + k2 * u_h/3. + k3 * u_h/3. + k4 * u_h/6.;
-}`
-  }
-
-  getMainBody() {
-    // todo: do I need to store velocity?
-    return `
-  vec2 velocity = rk4(pos);
-`
-  }
-}
-
 class RandomParticleDropper extends BaseShaderNode {
   getDefines() {
     return `
@@ -132,11 +102,16 @@ uniform float u_rand_seed;
     // random number generator node, so that we don't duplicate code
     return `
 // pseudo-random generator
-const vec3 rand_constants = vec3(12.9898, 78.233, 4375.85453);
-float rand(const vec2 co) {
-  float t = dot(rand_constants.xy, co);
-  return fract(sin(t) * (rand_constants.z + t));
-}`
+highp float rand(vec2 co)
+{
+    highp float a = 12.9898;
+    highp float b = 78.233;
+    highp float c = 43758.5453;
+    highp float dt= dot(co.xy ,vec2(a,b));
+    highp float sn= mod(dt,3.14);
+    return fract(sin(sn) * c);
+}
+`
   }
 
   getMainBody() {

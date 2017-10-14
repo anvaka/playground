@@ -2,6 +2,7 @@ import decodeFloatRGBA from './parts/decodeFloatRGBA';
 import ColorModes from '../programs/colorModes';
 import UserDefinedVelocityFunction from './UserDefinedVelocityFunction';
 import PanzoomTransform from './PanzoomTransform';
+import RungeKuttaIntegrator from './RungeKuttaIntegrator';
 
 // TODO: this duplicates code from texture position.
 export default class DrawParticleGraph {
@@ -78,6 +79,8 @@ function addMain(producer, array) {
 function textureBasedColor(colorMode, vfCode) {
   var udf = new UserDefinedVelocityFunction(vfCode);
   var panzoom = new PanzoomTransform({decode: true, srcPosName: 'v_particle_pos'});
+  var integrate = new RungeKuttaIntegrator();
+
   return {
     getVariables,
     getMain,
@@ -96,6 +99,7 @@ ${defines}
 varying vec4 v_particle_color;
 ${panzoom.getDefines()}
 ${udf.getDefines()}
+${integrate.getDefines()}
 `
   }
 
@@ -110,10 +114,12 @@ vec3 hsv2rgb(vec3 c) {
 
 ${panzoom.getFunctions()}
 ${udf.getFunctions()}
+${integrate.getFunctions()}
 `
   }
 
   function getMain() {
+    // TODO: This needs to be refactored. I don't like code duplication.
     let decode = colorMode === ColorModes.VELOCITY ?
       `
   float speed = (length(velocity) - u_velocity_range[0])/(u_velocity_range[1] - u_velocity_range[0]);
@@ -125,15 +131,12 @@ ${udf.getFunctions()}
   v_particle_color = vec4(hsv2rgb(vec3(speed, 0.9, 1.)), 1.0);
 `;
 
-var moveToVectorSpace = `
+    return `
 vec2 du = (u_max - u_min);
 vec2 pos = vec2(
   v_particle_pos.x * du.x + u_min.x,
   v_particle_pos.y * du.y + u_min.y);
-`
-    return `
-${moveToVectorSpace}
-vec2 velocity = get_velocity(pos);
+vec2 velocity = rk4(pos);
 // vec4 encodedColor = texture2D(u_colors, txPos);
 ${decode}
 `

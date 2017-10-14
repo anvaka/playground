@@ -102,6 +102,8 @@ export default function drawParticlesProgram(ctx) {
     updatePositionProgram.bindPositionTexturesToProgram(program);
     colorProgram.onBeforeDrawParticles(program, updatePositionProgram);
   
+    gl.uniform1f(program.u_h, ctx.integrationTimeStep);
+    gl.uniform1f(program.u_time, ctx.time);
     gl.uniform1f(program.u_particles_res, particleStateResolution);
     var bbox = ctx.bbox;
     gl.uniform2f(program.u_min, bbox.minX, bbox.minY);
