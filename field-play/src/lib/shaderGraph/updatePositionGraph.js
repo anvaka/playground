@@ -102,14 +102,10 @@ uniform float u_rand_seed;
     // random number generator node, so that we don't duplicate code
     return `
 // pseudo-random generator
-highp float rand(vec2 co)
-{
-    highp float a = 12.9898;
-    highp float b = 78.233;
-    highp float c = 43758.5453;
-    highp float dt= dot(co.xy ,vec2(a,b));
-    highp float sn= mod(dt,3.14);
-    return fract(sin(sn) * c);
+const vec3 rand_constants = vec3(12.9898, 78.233, 4375.85453);
+float rand(const vec2 co) {
+    float t = dot(rand_constants.xy, co);
+    return fract(sin(t) * (rand_constants.z + t));
 }
 `
   }
@@ -121,7 +117,7 @@ highp float rand(vec2 co)
   // drop rate is a chance a particle will restart at random position, to avoid degeneration
   float drop = step(1.0 - u_drop_rate, rand(seed));
 
-  vec2 random_pos = vec2(rand(seed + 0.19), rand(seed + 0.84));
+  vec2 random_pos = vec2(rand(seed + 1.9), rand(seed + 8.4));
   pos = mix(pos, random_pos, drop);
 `;
   }

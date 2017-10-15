@@ -24,7 +24,6 @@ vec2 rk4(const vec2 point) {
   }
 
   getMainBody() {
-    // todo: do I need to store velocity?
     return `
   vec2 velocity = rk4(pos);
 `
