@@ -44,6 +44,9 @@ Did you forget to add a dot symbol? E.g. <span class='hl'>10</span> should be <s
         <div class='col'>Integration timestep</div>
         <div class='col full'><input type='text' v-model='timeStep' @keyup.enter='onSubmit'></div>
       </div>
+      <div class='row'>
+        <a class="col" href='#'>Reset</a>
+      </div>
     </form>
   </div>
 </template>

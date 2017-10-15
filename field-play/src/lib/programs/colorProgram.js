@@ -67,6 +67,8 @@ export default function colorProgram(ctx, colorMode) {
   }
 
   function updateCode(vfCode) {
+    if (!vfCode) return;
+
     colorTextureGraph.setCustomVelocity(vfCode);
     let fragment = colorTextureGraph.getFragmentShader();
     let vertex = colorTextureGraph.getVertexShader();
@@ -78,6 +80,7 @@ export default function colorProgram(ctx, colorMode) {
 
   function onUpdateParticles(updatePositionProgram, frameSeed) {
     if (!speedNeedsUpdate) return;
+    // We only update speed to know min/max range of velocity.
     util.bindFramebuffer(gl, ctx.framebuffer, velocityTexture);
     gl.viewport(0, 0, particleStateResolution, particleStateResolution);
   
@@ -94,7 +97,6 @@ export default function colorProgram(ctx, colorMode) {
     gl.uniform2f(program.u_max, bbox.maxX, bbox.maxY);
   
     gl.drawArrays(gl.TRIANGLES, 0, 6);
-
 
     speedNeedsUpdate = false;
     var velocityState = new Uint8Array(numParticles * 4);

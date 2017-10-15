@@ -19,7 +19,7 @@ export default function drawParticlesProgram(ctx) {
   var updatePositionProgram = makeUpdatePositionProgram(ctx);
 
   var drawProgram, colorProgram;
-  updateColorProgram();
+  initPrograms();
 
   return {
     onParticleInit,
@@ -29,21 +29,18 @@ export default function drawParticlesProgram(ctx) {
     updateColorMode
   }
 
-  function updateColorProgram() {
+  function initPrograms() {
     let isUniformColor = currentColorMode === ColorMode.UNIFORM;
     if (colorProgram) colorProgram.dispose();
     colorProgram = isUniformColor ? uniformColorProgram(ctx) : defaultColorProgram(ctx, currentColorMode);
 
-    if (currentVectorField) {
-      colorProgram.updateCode(currentVectorField);
-      colorProgram.onParticleInit();
-    }
+    colorProgram.updateCode(currentVectorField);
+    colorProgram.onParticleInit();
 
+    // need to update the draw graph because color mode shader has changed.
     const drawGraph = new DrawParticleGraph(currentColorMode);
     if (drawProgram) drawProgram.unload();
     drawProgram = util.createProgram(gl, drawGraph.getVertexShader(currentVectorField), drawGraph.getFragmentShader());
-
-    startTime = new Date();
   }
 
   function onUpdateParticles() {
@@ -58,10 +55,12 @@ export default function drawParticlesProgram(ctx) {
 
   function updateColorMode(colorMode) {
     currentColorMode = colorMode;
-    updateColorProgram();
+    initPrograms();
+
   }
 
   function updateCode(vfCode) {
+    startTime = new Date();
     currentVectorField = vfCode;
     updatePositionProgram.updateCode(vfCode);
     colorProgram.updateCode(vfCode);
@@ -73,6 +72,8 @@ export default function drawParticlesProgram(ctx) {
 
 
   function onParticleInit() {
+    if (!currentVectorField) return;
+
     particleStateResolution = ctx.particleStateResolution;
     numParticles = particleStateResolution * particleStateResolution;
     var particleIndices = new Float32Array(numParticles);

@@ -24,7 +24,7 @@ uniform float u_time;
 ${snoise}
 vec2 get_velocity(const vec2 p) {
   vec2 v = vec2(0.);
-  ${this.updateCode}
+  ${this.updateCode ? this.updateCode : ''}
   return v;
 }
   `

@@ -224,9 +224,10 @@ function initScene(gl) {
     if (persistedCode) {
       let result = trySetNewCode(persistedCode);
       if (!result) return; // This means we set correctly;
+      // If we get here - something went wrong. see the console
       console.error('Failed to restore previous vector field: ', result.error);
     }
-    // Iw we get here - something went wrong. see the console
+    // we either failed or we want a default vector field
     trySetNewCode(defaultVectorField);
   }
 

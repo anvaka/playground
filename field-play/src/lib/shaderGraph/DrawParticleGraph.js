@@ -33,10 +33,6 @@ ${mainBody.join('\n')}
   getVertexShader(vfCode) {
     let decodePositions = textureBasedPosition();
     let colorParts = this.isUniformColor ? uniformColor() : textureBasedColor(this.colorMode, vfCode);
-    let variables = [
-      decodePositions.getVariables(),
-      colorParts.getVariables()
-    ]
     let methods = []
     addMethods(decodePositions, methods);
     addMethods(colorParts, methods);
@@ -48,8 +44,11 @@ ${mainBody.join('\n')}
 attribute float a_index;
 uniform float u_particles_res;
 
-${variables.join('\n')}
+${decodePositions.getVariables() || ''}
+${colorParts.getVariables() || ''}
+
 ${decodeFloatRGBA}
+
 ${methods.join('\n')}
 
 void main() {
@@ -78,7 +77,7 @@ function addMain(producer, array) {
 
 function textureBasedColor(colorMode, vfCode) {
   var udf = new UserDefinedVelocityFunction(vfCode);
-  var panzoom = new PanzoomTransform({decode: true, srcPosName: 'v_particle_pos'});
+  var panzoom = new PanzoomTransform({decode: true});
   var integrate = new RungeKuttaIntegrator();
 
   return {
@@ -92,6 +91,7 @@ function textureBasedColor(colorMode, vfCode) {
     if (colorMode === ColorModes.ANGLE) {
       defines = `#define M_PI 3.1415926535897932384626433832795`;
     }
+
     return `
 uniform sampler2D u_colors;
 uniform vec2 u_velocity_range;
@@ -123,11 +123,9 @@ ${integrate.getFunctions()}
     let decode = colorMode === ColorModes.VELOCITY ?
       `
   float speed = (length(velocity) - u_velocity_range[0])/(u_velocity_range[1] - u_velocity_range[0]);
-  // float speed = (decodeFloatRGBA(encodedColor) - u_velocity_range[0])/(u_velocity_range[1] - u_velocity_range[0]);
   v_particle_color = vec4(hsv2rgb(vec3(0.05 + (1. - speed) * 0.5, 0.9, 1.)), 1.0);
 ` : `
   float speed = (atan(velocity.y, velocity.x) + M_PI)/(2.0 * M_PI);
-  //float speed = (decodeFloatRGBA(encodedColor) + M_PI)/(2.0 * M_PI);
   v_particle_color = vec4(hsv2rgb(vec3(speed, 0.9, 1.)), 1.0);
 `;
 
@@ -136,25 +134,17 @@ vec2 du = (u_max - u_min);
 vec2 pos = vec2(
   v_particle_pos.x * du.x + u_min.x,
   v_particle_pos.y * du.y + u_min.y);
+
 vec2 velocity = rk4(pos);
-// vec4 encodedColor = texture2D(u_colors, txPos);
 ${decode}
 `
   }
-
 }
 
 function uniformColor() {
   return {
-    getVariables,
-    getMain
-  }
-
-  function getVariables() {
-
-  }
-  function getMain() {
-
+    getVariables() {},
+    getMain() {}
   }
 }
 
