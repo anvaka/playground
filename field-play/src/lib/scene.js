@@ -95,8 +95,7 @@ function initScene(gl) {
 
   initParticles(particleCount);
 
-  let integrationTimeStep = ctx.integrationTimeStep = appState.getIntegrationTimeStep();
-
+  ctx.integrationTimeStep = appState.getIntegrationTimeStep();
   var api = {
     start: nextFrame,
     stop,
@@ -146,13 +145,13 @@ function initScene(gl) {
   }
 
   function getIntegrationTimeStep() {
-    return integrationTimeStep;
+    return ctx.integrationTimeStep;
   }
 
   function setIntegrationTimeStep(x) {
     var f = parseFloat(x);
     if (Number.isFinite(f)) {
-      ctx.integrationTimeStep = integrationTimeStep = f;
+      ctx.integrationTimeStep = f;
       appState.setIntegrationTimeStep(f);
       bus.fire('integration-timestep-changed', f);
     }
@@ -330,6 +329,7 @@ import {
       panzoom.dispose();
       window.removeEventListener('resize', onResize, true);
   }
+
   function nextFrame() {
     if (lastAnimationFrame) return;
 
