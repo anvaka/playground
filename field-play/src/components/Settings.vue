@@ -45,7 +45,7 @@ Did you forget to add a dot symbol? E.g. <span class='hl'>10</span> should be <s
         <div class='col full'><input type='text' v-model='timeStep' @keyup.enter='onSubmit'></div>
       </div>
       <div class='row'>
-        <a class="col" href='#'>Reset</a>
+        <a class='col reset' href='#' @click='reset'>Reset</a>
       </div>
     </form>
   </div>
@@ -63,9 +63,11 @@ export default {
   },
   mounted() {
     bus.on('scene-ready', this.onSceneReady, this);
+    // bus.on('code-changed', this.onCodeChanged, this);
   },
   beforeDestroy() {
     bus.off('scene-ready', this.onSceneReady, this);
+    //bus.off('code-changed', this.onCodeChanged, this);
   },
   data() {
     return {
@@ -79,7 +81,7 @@ export default {
       dropProbability: 0,
       backgroundColor: '',
       timeStep: 0,
-      selectedColorMode: appState.getColorMode()
+      selectedColorMode: 0
     };
   },
   watch: {
@@ -99,21 +101,31 @@ export default {
     },
     dropProbability(newValue, oldValue) {
       this.scene.setDropProbability(newValue);
+    },
+    selectedColorMode(newValue) {
+      this.scene.setColorMode(newValue);
     }
   },
   methods: {
+    reset() {
+      // we reset the scene, and let the a.href = # do the rest.
+      this.scene.reset();
+    },
     onSubmit() {
       if (window.innerWidth < 600) {
         appState.settingsPanel.collapsed = true;
       }
     },
+
     changeColor(e) {
-      this.scene.setColorMode(e.target.value);
+      this.selectedColorMode = e.target.value;
     },
+
     updateBackground(rgba) {
       this.backgroundColor = toColorString(rgba);
       this.scene.setBackgroundColor(rgba);
     },
+
     onSceneReady(scene) {
       this.vectorField = scene.getCurrentCode();
       this.particlesCount = scene.getParticlesCount();
@@ -121,7 +133,13 @@ export default {
       this.dropProbability = scene.getDropProbability();
       this.backgroundColor = toColorString(scene.getBackgroundColor());
       this.timeStep = scene.getIntegrationTimeStep();
+      this.selectedColorMode = scene.getColorMode();
     },
+
+    onCodeChanged(newCode) {
+      this.vectorField = newCode;
+    },
+    
     sendVectorField() {
       let result = this.scene.updateVectorField(this.vectorField);
       if (result && result.error) {
@@ -273,6 +291,11 @@ a.toggle-settings {
     top: 0;
     left: 0
   }
+}
+
+.reset {
+  text-decoration: none;
+  color: wheat;
 }
 
 @media (max-width: 600px) {

@@ -37,24 +37,18 @@ require.ensure('glsl-parser', () => {
 
 export default initScene;
 
-var defaultVectorField = `v.x = -p.y;
-v.y = p.x;
-`;
-
 function initScene(gl) {
   let pixelRatio = 1.0; // scene.getPixelRatio(); // TODO?
   let fadeOpacity = appState.getFadeout();
   let particleCount = appState.getParticleCount();
+  let currentCode = appState.getCode();
+
   window.addEventListener('resize', onResize, true);
 
   gl.disable(gl.DEPTH_TEST);
   gl.disable(gl.STENCIL_TEST); 
-  var bbox = {
-    minX: -1,
-    minY: 1,
-    maxX: 1,
-    maxY: -1,
-  };
+    
+  var bbox = appState.getBBox() || {};
   var transform = {
     scale: 1,
     dx: 0,
@@ -65,15 +59,18 @@ function initScene(gl) {
   var ctx = {
     gl,
     bbox,
-    framebuffer: null,
+    framebuffer: gl.createFramebuffer(),
+    quadBuffer: util.createBuffer(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1])),
+
     colorMode: appState.getColorMode(),
+
+    integrationTimeStep: appState.getIntegrationTimeStep(),
+    // On each frame the likelihood for a particle to reset its position is this:
+    dropProbabilty: appState.getDropProbability(),
     time: 0
   };
+
   var isPaused = false;
-  var framebuffer = ctx.framebuffer = gl.createFramebuffer();
-  var quadBuffer = ctx.quadBuffer = util.createBuffer(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]));
-  // On each frame the likelihood for a particle to reset its position is this:
-  ctx.dropProbabilty = appState.getDropProbability();
 
   // TODO: Read from query state?
   let backgroundColor;
@@ -84,23 +81,21 @@ function initScene(gl) {
   updateScreenTextures();
 
   var screenProgram = util.createProgram(gl, shaders.quadVert, shaders.screenFrag);
-
   var drawProgram = createDrawParticlesProgram(ctx);
 
-  var currentCode = '';
-  loadUpdateProgramFromAppState();
+  loadCodeFromAppState();
 
   // particles
   var lastAnimationFrame;
 
   initParticles(particleCount);
 
-  ctx.integrationTimeStep = appState.getIntegrationTimeStep();
   var api = {
     start: nextFrame,
     stop,
     dispose,
     transform,
+    reset,
 
     setPaused,
 
@@ -127,6 +122,8 @@ function initScene(gl) {
   }
 
   var panzoom = initPanzoom(); 
+  restoreBBox();
+
   setTimeout(() => {
     bus.fire('scene-ready', api);
   })
@@ -141,11 +138,11 @@ function initScene(gl) {
   }
 
   function getColorMode() {
-    return ctx.currentColorMode;
+    return appState.getColorMode();
   }
 
   function getIntegrationTimeStep() {
-    return ctx.integrationTimeStep;
+    return appState.getIntegrationTimeStep();
   }
 
   function setIntegrationTimeStep(x) {
@@ -182,12 +179,12 @@ function initScene(gl) {
   }
 
   function getFadeOutSpeed() {
-    return fadeOpacity;
+    return appState.getFadeout();
   }
 
   // Number of particles configuration
   function getParticlesCount() {
-    return particleCount;
+    return appState.getParticleCount();
   }
 
   function setParticlesCount(newParticleCount) {
@@ -211,15 +208,15 @@ function initScene(gl) {
   }
 
   function getDropProbability() {
-    return ctx.dropProbabilty;
+    return appState.getDropProbability();
   }
 
   // current code;
   function getCurrentCode() {
-    return currentCode;
+    return appState.getCode();
   }
 
-  function loadUpdateProgramFromAppState() {
+  function loadCodeFromAppState() {
     let persistedCode = appState.getCode();
     if (persistedCode) {
       let result = trySetNewCode(persistedCode);
@@ -228,7 +225,7 @@ function initScene(gl) {
       console.error('Failed to restore previous vector field: ', result.error);
     }
     // we either failed or we want a default vector field
-    trySetNewCode(defaultVectorField);
+    trySetNewCode(appState.getDefaultCode());
   }
 
   function updateVectorField(vfCode) {
@@ -237,6 +234,7 @@ function initScene(gl) {
     let result = trySetNewCode(vfCode);
     if (result && result.error) return result;
 
+    currentCode = vfCode;
     appState.saveCode(vfCode);
   }
 
@@ -265,7 +263,6 @@ import {
     // step 2 - run through real webgl
     try {
       drawProgram.updateCode(vfCode);
-      currentCode = vfCode;
     } catch (e) {
       return {
         error: e.message
@@ -346,9 +343,6 @@ import {
 
   function draw() {
     lastAnimationFrame = 0;
-    gl.disable(gl.DEPTH_TEST);
-    gl.disable(gl.STENCIL_TEST);
-    
     ctx.time += 1;
     drawScreen();
     updateParticles();
@@ -358,7 +352,7 @@ import {
 
   function drawScreen() {
     // render to the frame buffer
-    util.bindFramebuffer(gl, framebuffer, screenTexture);
+    util.bindFramebuffer(gl, ctx.framebuffer, screenTexture);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     
     drawTexture(backgroundTexture, fadeOpacity)
@@ -367,10 +361,7 @@ import {
 
     util.bindFramebuffer(gl, null);
   
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
     drawTexture(screenTexture, 1.0);
-    gl.disable(gl.BLEND); 
     // swap textures
     var temp = backgroundTexture;
     backgroundTexture = screenTexture;
@@ -385,7 +376,7 @@ import {
     var program = screenProgram;
     gl.useProgram(program.program);
 
-    util.bindAttribute(gl, quadBuffer, program.a_pos, 2);
+    util.bindAttribute(gl, ctx.quadBuffer, program.a_pos, 2);
     util.bindTexture(gl, texture, 2);
     gl.uniform1i(program.u_screen, 2);
     gl.uniform1f(program.u_opacity, opacity);
@@ -404,6 +395,10 @@ import {
       zoomSpeed: 0.025,
       controller: wglPanZoom(gl.canvas, transform, api)
     });
+    return initializedPanzoom;
+  }
+
+  function restoreBBox() {
     let savedBBox = appState.getBBox();
 
     let sX = Math.PI * Math.E;
@@ -422,19 +417,19 @@ import {
 
     var w2 = sX * window.innerWidth/2;
     var h2 = sY * window.innerHeight/2;
-    initializedPanzoom.showRectangle({
+    panzoom.showRectangle({
       left: -w2 + tX,
       top: -h2 - tY,
       right: w2 + tX,
       bottom: h2 - tY ,
     });
-    return initializedPanzoom;
   }
 
   function updateBBox() {
     var tx = transform.dx;
     var ty = transform.dy;
     var s = transform.scale;
+
     var w = window.innerWidth;
     var h = window.innerHeight;
 
@@ -461,6 +456,19 @@ import {
     }
   }
 
+  function reset() {
+    var w = window.innerWidth/2;
+    var h = window.innerWidth/2;
+    appState.saveBBox({
+      minX: -w,
+      minY: -h,
+      maxX: w,
+      maxY: h
+    }, /* immediate = */ true);
+    restoreBBox();
+    // a hack to trigger panzoom event
+    panzoom.moveBy(0, 0, false);
+  }
 
   function wglPanZoom(canvas, transform/*, scene */) {
     return {
