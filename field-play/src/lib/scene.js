@@ -366,14 +366,20 @@ import {
   function drawScreen() {
     // render to the frame buffer
     util.bindFramebuffer(gl, ctx.framebuffer, screenTexture);
+
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     drawTexture(backgroundTexture, fadeOpacity)
 
     drawProgram.drawParticles();
 
     util.bindFramebuffer(gl, null);
-  
+
+    gl.enable(gl.BLEND); 
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.clearColor(backgroundColor.r/255, backgroundColor.g/255, backgroundColor.b/255, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
     drawTexture(screenTexture, 1.0);
+    gl.disable(gl.BLEND);
     // swap textures
     var temp = backgroundTexture;
     backgroundTexture = screenTexture;
