@@ -52,15 +52,11 @@ Did you forget to add a dot symbol? E.g. <span class='hl'>10</span> should be <s
 </template>
 <script>
 import bus from '../lib/bus';
-import ColorPicker from './ColorPicker';
 import appState from '../lib/appState';
 
 export default {
   name: 'Settings',
   props: ['scene'],
-  components:{
-    ColorPicker
-  },
   mounted() {
     bus.on('scene-ready', this.onSceneReady, this);
     // bus.on('code-changed', this.onCodeChanged, this);
@@ -175,11 +171,14 @@ function hex(x) {
 .settings {
   color: secondary-text;
   position: absolute;
+  overflow-y: auto;
   top: control-bar-height;
   left: 0;
   background: window-background;
   width: settings-width;
-  border: 1px solid transparent;
+  border: 1px solid #99c5f1;
+  border-left: none;
+  border-top: none;
   padding: 7px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
@@ -194,6 +193,10 @@ function hex(x) {
   .row {
     margin-top: 4px;
   }
+  select {
+    margin-left: 14px;
+  }
+
   input[type='text'] {
     background: transparent;
     color: white;
@@ -208,6 +211,11 @@ function hex(x) {
       background: #13294f;
     }
   }
+}
+form.block {
+  margin-top: 12px;
+  border-top: 1px solid #455B7D;
+  padding-top: 10px;
 }
 .vector-field {
   pre {
@@ -295,7 +303,7 @@ a.toggle-settings {
 
 .reset {
   text-decoration: none;
-  color: wheat;
+  color: white;
 }
 
 @media (max-width: 600px) {
