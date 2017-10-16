@@ -48,6 +48,10 @@ function initScene(gl) {
   gl.disable(gl.DEPTH_TEST);
   gl.disable(gl.STENCIL_TEST); 
     
+  bus.on('start-record', startRecord);
+  bus.on('stop-record', stopRecord);
+  var currentCapturer = null;
+
   var bbox = appState.getBBox() || {};
   var transform = {
     scale: 1,
@@ -129,6 +133,14 @@ function initScene(gl) {
   })
 
   return api;
+
+  function startRecord(capturer) {
+    currentCapturer = capturer;
+  }
+
+  function stopRecord() {
+    currentCapturer = null;
+  }
 
   function setColorMode(x) {
     var mode = parseInt(x, 10);
@@ -343,9 +355,10 @@ import {
 
   function draw() {
     lastAnimationFrame = 0;
-    ctx.time += 1;
     drawScreen();
     updateParticles();
+
+    if (currentCapturer) currentCapturer.capture(gl.canvas);
 
     nextFrame();
   }
@@ -354,7 +367,6 @@ import {
     // render to the frame buffer
     util.bindFramebuffer(gl, ctx.framebuffer, screenTexture);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-    
     drawTexture(backgroundTexture, fadeOpacity)
 
     drawProgram.drawParticles();
@@ -375,7 +387,6 @@ import {
   function drawTexture(texture, opacity) {
     var program = screenProgram;
     gl.useProgram(program.program);
-
     util.bindAttribute(gl, ctx.quadBuffer, program.a_pos, 2);
     util.bindTexture(gl, texture, 2);
     gl.uniform1i(program.u_screen, 2);
