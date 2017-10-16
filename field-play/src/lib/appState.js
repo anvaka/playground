@@ -4,9 +4,12 @@ import bus from './bus';
 var qs = queryState();
 var currentState = qs.get();
 
-var defaultVectorField = `v.x = -p.y;
-v.y = p.x;
-`;
+// var defaultVectorField = `v.x = -p.y;
+// v.y = p.x;
+// `;
+var defaultVectorField = `v.x = 0.1 * p.y;
+v.y = -0.2 * p.y;
+`
 
 var pendingSave;
 var defaults = {
