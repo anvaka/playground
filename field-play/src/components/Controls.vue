@@ -1,7 +1,7 @@
 <template>
   <div class='controls'>
     <a href='#' @click.prevent='togglePaused' class='action'>{{paused ? "Resume" : "Pause"}}</a>
-    <a href='#' @click.prevent='toggleSettings' class='action'>{{(settingsPanel.collapsed ? "Show" : "Hide") + " settings"}}</a>
+    <a href='#' @click.prevent='toggleSettings' class='action'>{{(settingsPanel.collapsed ? "Change..." : "Hide settings")}}</a>
   </div>
 </template>
 

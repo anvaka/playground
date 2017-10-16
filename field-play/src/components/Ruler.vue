@@ -94,7 +94,7 @@ vertical-labels-width = 48px;
   width: 100%;
   height: 100%;
   pointer-events: none;
-  color: rgba(153, 197, 241, 0);
+  color: rgba(153, 197, 241, 0.4);
 }
 
 .tick-container {

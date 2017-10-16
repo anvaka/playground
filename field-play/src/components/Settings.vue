@@ -7,7 +7,7 @@
 // v.x and v.y is a velocity at point p</span>
 function velocity(<span class='type'>vec2</span> p) {
   <span class='type'>vec2</span> v = <span class='type'>vec2</span>(0., 0.);</pre>
-      <textarea type='text' v-model='vectorField' rows='3' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+      <textarea ref='codeInput' v-model='vectorField' type='text' rows='3' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
 <pre>  return v;
 }</pre>
     <div class='error=container'>
@@ -53,17 +53,18 @@ Did you forget to add a dot symbol? E.g. <span class='hl'>10</span> should be <s
 <script>
 import bus from '../lib/bus';
 import appState from '../lib/appState';
+import autosize from 'autosize';
 
 export default {
   name: 'Settings',
   props: ['scene'],
   mounted() {
     bus.on('scene-ready', this.onSceneReady, this);
-    // bus.on('code-changed', this.onCodeChanged, this);
+    autosize(this.$refs.codeInput);
   },
   beforeDestroy() {
     bus.off('scene-ready', this.onSceneReady, this);
-    //bus.off('code-changed', this.onCodeChanged, this);
+    autosize.destroy(this.$refs.codeInput);
   },
   data() {
     return {
@@ -84,7 +85,13 @@ export default {
     vectorField(newValue, oldValue) {
       // console.log(newValue, oldValue);
       // TODO: this seem to be causing double initialization
-      this.sendVectorField();
+      if (this.pendingSetCode) {
+        clearTimeout(this.pendingSetCode);
+      }
+      this.pendingSetCode = setTimeout(() => {
+        this.sendVectorField();
+        this.pendingSetCode = 0;
+      }, 300);
     },
     particlesCount(newValue, oldValue) {
       this.scene.setParticlesCount(parseInt(newValue, 10));
@@ -132,10 +139,6 @@ export default {
       this.selectedColorMode = scene.getColorMode();
     },
 
-    onCodeChanged(newCode) {
-      this.vectorField = newCode;
-    },
-    
     sendVectorField() {
       let result = this.scene.updateVectorField(this.vectorField);
       if (result && result.error) {
@@ -248,6 +251,7 @@ form.block {
     font-size: 18px;
   }
   textarea {
+    max-height: 180px;
     background: transparent;
     color: white;
     font-family: monospace;
