@@ -20,51 +20,55 @@ require.ensure('@/main.js', () => {
   require('@/main.js');
 })
 
+var CCapture;
+var currentCapturer;
 
-require.ensure('ccapture.js', () => {
-  var CCapture = require('ccapture.js');
-  var currentCapturer;
+window.startRecord = startRecord;
 
-  window.startRecord = startRecord;
-
-  function startRecord(url) {
-    if (currentCapturer) {
-      currentCapturer.stop();
-    }
-
-    if (!ffmpegScriptLoaded()) {
-      var ffmpegServer = document.createElement('script');
-      ffmpegServer.setAttribute('src', url || 'http://localhost:8080/ffmpegserver/ffmpegserver.js');
-      ffmpegServer.onload = () => startRecord(url);
-      document.head.appendChild(ffmpegServer);
-      return;
-    }
-
-    currentCapturer = new CCapture( {
-        format: 'ffmpegserver',
-        framerate: 60,
-        verbose: true,
-        name: "fieldplay",
-        extension: ".mp4",
-        codec: "mpeg4",
-        ffmpegArguments: [
-          "-b:v", "12M",
-        ],
+function startRecord(url) {
+  if (!CCapture) {
+    require.ensure('ccapture.js', () => {
+      CCapture = require('ccapture.js');
+      window.stopRecord = stopRecord;
+      startRecord(url);
     });
-    currentCapturer.start();
-    bus.fire('start-record', currentCapturer)
+
+    return;
   }
 
-  function ffmpegScriptLoaded() {
-    return typeof FFMpegServer !== 'undefined'
-  }
-  window.stopRecord = () => {
-    bus.fire('stop-record', currentCapturer)
+  if (currentCapturer) {
     currentCapturer.stop();
-    currentCapturer.save();
   }
-});
 
-// window.saveVideo = function() {
-//   return mediaRecorder(canvas);
-// }
+  if (!ffmpegScriptLoaded()) {
+    var ffmpegServer = document.createElement('script');
+    ffmpegServer.setAttribute('src', url || 'http://localhost:8080/ffmpegserver/ffmpegserver.js');
+    ffmpegServer.onload = () => startRecord(url);
+    document.head.appendChild(ffmpegServer);
+    return;
+  }
+
+  currentCapturer = new CCapture( {
+      format: 'ffmpegserver',
+      framerate: 60,
+      verbose: true,
+      name: "fieldplay",
+      extension: ".mp4",
+      codec: "mpeg4",
+      ffmpegArguments: [
+        "-b:v", "12M",
+      ],
+  });
+  currentCapturer.start();
+  bus.fire('start-record', currentCapturer)
+}
+
+function ffmpegScriptLoaded() {
+  return typeof FFMpegServer !== 'undefined'
+}
+
+function stopRecord() {
+  bus.fire('stop-record', currentCapturer)
+  currentCapturer.stop();
+  currentCapturer.save();
+}
