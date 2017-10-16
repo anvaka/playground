@@ -44,7 +44,7 @@ export default function drawParticlesProgram(ctx) {
   }
 
   function onUpdateParticles() {
-    ctx.time = (new Date() - startTime);
+    ctx.time += 1
     let frameSeed = Math.random();
   
     updatePositionProgram.onUpdateParticles(frameSeed);
@@ -60,7 +60,7 @@ export default function drawParticlesProgram(ctx) {
   }
 
   function updateCode(vfCode) {
-    startTime = new Date();
+    ctx.time = 0;
     currentVectorField = vfCode;
     updatePositionProgram.updateCode(vfCode);
     colorProgram.updateCode(vfCode);
