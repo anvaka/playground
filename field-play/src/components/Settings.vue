@@ -179,7 +179,7 @@ function hex(x) {
   left: 0;
   background: window-background;
   width: settings-width;
-  border: 1px solid #99c5f1;
+  border: 1px solid primary-border;
   border-left: none;
   border-top: none;
   padding: 7px;
@@ -202,7 +202,7 @@ function hex(x) {
 
   input[type='text'] {
     background: transparent;
-    color: white;
+    color: primary-text;
     border: 1px solid transparent;
     padding: 7px;
     font-size: 16px;
@@ -217,7 +217,7 @@ function hex(x) {
 }
 form.block {
   margin-top: 12px;
-  border-top: 1px solid #455B7D;
+  border-top: 1px solid secondary-border;
   padding-top: 10px;
 }
 .vector-field {
@@ -247,7 +247,7 @@ form.block {
   .title {
     text-align: center;
     margin-bottom: 7px;
-    color: white;
+    color: primary-text;
     font-size: 18px;
   }
   textarea {
@@ -310,7 +310,7 @@ a.toggle-settings {
   color: white;
 }
 
-@media (max-width: 600px) {
+@media (max-width: small-screen) {
   .settings {
     width: 100%;
     top: 42px;
@@ -320,7 +320,6 @@ a.toggle-settings {
       text-align: left;
     }
   }
-
   .settings.collapsed {
     width: 100%;
     height: 38px;

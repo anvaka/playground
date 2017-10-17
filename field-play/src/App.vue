@@ -13,6 +13,7 @@
       <ruler></ruler>
       <settings :scene='scene'></settings>
       <controls></controls>
+      <share></share>
     </div>
   </div>
 </template>
@@ -21,6 +22,7 @@
 import Ruler from './components/Ruler';
 import Settings from './components/Settings';
 import Controls from './components/Controls';
+import Share from './components/Share';
 import bus from './lib/bus';
 
 export default {
@@ -38,7 +40,8 @@ export default {
   components: {
     Ruler,
     Settings,
-    Controls
+    Controls,
+    Share
   },
 
   beforeDestroy() {
