@@ -1,8 +1,19 @@
 <template>
   <div id="app">
-    <ruler></ruler>
-    <settings :scene='scene'></settings>
-    <controls></controls>
+    <div v-if='!webGLEnabled'>
+      <div class='absolute no-webgl'>
+        <h4>WebGL is not enabled :(</h4>
+        <p>This website needs <a href='https://en.wikipedia.org/wiki/WebGL' class='highlighted'>WebGL</a> to perform numerical integration.
+        </p> <p>
+        You can try another browser. If problem persists - very likely your video card isn't supported then.
+</p>
+      </div>
+    </div>
+    <div v-if='webGLEnabled'>
+      <ruler></ruler>
+      <settings :scene='scene'></settings>
+      <controls></controls>
+    </div>
   </div>
 </template>
 
@@ -20,7 +31,8 @@ export default {
   },
   data() {
     return {
-      scene: null
+      scene: null,
+      webGLEnabled: window.webgGLEnabled
     };
   },
   components: {
@@ -45,4 +57,22 @@ export default {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.no-webgl {
+  width: 100%;
+  color: hsla(215, 37%, 55%, 1);
+  flex-direction: column;
+  text-align: center;
+  padding: 12px;
+}
+a {
+  text-decoration: none;
+}
+a.highlighted {
+  color: white;
+  border-bottom: 1px dashed white;
+}
+.no-webgl h4 {
+  margin: 7px 0;
+  font-size: 24px;
+}
 </style>

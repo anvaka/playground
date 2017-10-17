@@ -5,16 +5,20 @@ import bus from './bus';
 var canvas = document.getElementById('scene');
 canvas.width = window.innerWidth;
 canvas.height =  window.innerHeight;
+var ctxOptions = {antialiasing: false };
 
-var ctxOptions = {
-  antialiasing: false,
-};
 var gl = canvas.getContext('webgl', ctxOptions) ||
-         canvas.getContext('experimental-webgl', ctxOptions);
-var scene = initScene(gl);
-scene.start();
-// TODO: too bad?
-window.scene = scene;
+        canvas.getContext('experimental-webgl', ctxOptions);
+
+if (gl) {
+  window.webgGLEnabled = true;
+  var scene = initScene(gl);
+  scene.start();
+  // TODO: too bad to plop stuff onto window?
+  window.scene = scene;
+} else {
+  window.webgGLEnabled = false;
+}
 
 require.ensure('@/main.js', () => {
   require('@/main.js');
@@ -59,6 +63,7 @@ function startRecord(url) {
         "-b:v", "12M",
       ],
   });
+
   currentCapturer.start();
   bus.fire('start-record', currentCapturer)
 }
