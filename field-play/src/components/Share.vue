@@ -20,6 +20,9 @@
             <div v-if='shortenState === "shortening"'>
               Shortening URL...
             </div>
+            <div v-if='shortenState === "error"'>
+              Couldn't shorten :(
+            </div>
           </div>
           <div class='hint'>You can also copy the link from your browser's address bar.</div>
         </div>
@@ -37,6 +40,7 @@ export default {
   name: 'Share',
   mounted() {
     bus.on('open-share-dialog', this.openDialog, this);
+    this.lastCallTime = new Date();
   },
   beforeDestroy() {
     bus.off('open-share-dialog', this.openDialog, this);
@@ -71,9 +75,20 @@ export default {
       return getLink(providerName, encodeURIComponent(this.enteredUrl));
     },
     hide(e) {
+      var callTime = new Date();
+      if (callTime - this.lastCallTime < 300) {
+        // On iPhone both label and input send this event. We don't want to 
+        // execute it twice, since after first call we hide the input, and check
+        // below assumes the call is not coming from the inside of a dialog.
+        return;
+      }
+      this.lastCallTime = callTime;
       var {shareWindow} = this.$refs;
       if (!shareWindow) return;
-      if ((shareWindow.contains(e.target)  && !e.target.classList.contains('close-modal'))|| e.target == shareWindow) return;
+      var partOfADialog = (shareWindow.contains(e.target)  && !e.target.classList.contains('close-modal'));
+      if (partOfADialog || e.target == shareWindow) {
+          return;
+      }
       this.isOpened = false;
       this.shortenState = 'canShorten';
       this.shouldShorten = false;
