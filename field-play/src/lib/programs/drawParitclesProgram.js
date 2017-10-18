@@ -10,7 +10,6 @@ import ColorMode from './colorModes';
 export default function drawParticlesProgram(ctx) {
   var gl = ctx.gl;
 
-  var startTime;
   var particleStateResolution, particleIndexBuffer;
   var numParticles;
 
