@@ -29,6 +29,8 @@ export default class UpdatePositionGraph {
 
 attribute vec2 a_pos;
 varying vec2 v_tex_pos;
+uniform vec2 u_min;
+uniform vec2 u_max;
 
 void main() {
     v_tex_pos = a_pos;
@@ -51,7 +53,7 @@ void main() {
     return [
       this.readStoredPosition,
       this.dropParticles,
-      this.panZoomDecode,
+      // this.panZoomDecode,
       this.getVelocity,
       this.integratePositions, {
         getMainBody() {
@@ -60,7 +62,7 @@ void main() {
   `
         }
       },
-      this.panZoomEncode,
+      // this.panZoomEncode,
       this.writeComputedPosition
     ]
   }
@@ -70,7 +72,7 @@ void main() {
     return [
       this.readStoredPosition,
       this.dropParticles,
-      this.panZoomDecode,
+      // this.panZoomDecode,
       this.getVelocity,
       this.integratePositions,
       {
@@ -94,6 +96,8 @@ class RandomParticleDropper extends BaseShaderNode {
     return `
 uniform float u_drop_rate;
 uniform float u_rand_seed;
+uniform vec2 u_min;
+uniform vec2 u_max;
 `
   }
 
@@ -117,8 +121,10 @@ float rand(const vec2 co) {
   // drop rate is a chance a particle will restart at random position, to avoid degeneration
   float drop = step(1.0 - u_drop_rate, rand(seed));
 
-  vec2 random_pos = vec2(rand(seed + 1.9), rand(seed + 8.4));
-  pos = mix(pos, random_pos, drop);
+  // TODO: This can be customized to produce various emitters
+  // random_pos is in range from 0..1, we move it to the bounding box:
+  vec2 random_pos = (vec2(rand(seed + 1.9), rand(seed + 8.4)) * (u_max - u_min) + u_min);
+  pos = mix(pos, random_pos, drop) ; // todo extend to the box
 `;
   }
 

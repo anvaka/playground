@@ -79,9 +79,12 @@ export default function drawParticlesProgram(ctx) {
     var particleStateX = new Uint8Array(numParticles * 4);
     var particleStateY = new Uint8Array(numParticles * 4);
 
+    var minX = ctx.bbox.minX; var minY = ctx.bbox.minY;
+    var width = ctx.bbox.maxX - minX;
+    var height = ctx.bbox.maxY - minY;
     for (var i = 0; i < numParticles; i++) {
-      encodeFloatRGBA((Math.random()), particleStateX, i * 4); // randomize the initial particle positions
-      encodeFloatRGBA((Math.random()), particleStateY, i * 4); // randomize the initial particle positions
+      encodeFloatRGBA((Math.random()) * width + minX, particleStateX, i * 4); // randomize the initial particle positions
+      encodeFloatRGBA((Math.random()) * height + minY, particleStateY, i * 4); // randomize the initial particle positions
 
       particleIndices[i] = i;
     }

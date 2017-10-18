@@ -39,6 +39,7 @@ export default initScene;
 
 function initScene(gl) {
   let pixelRatio = 1.0; // scene.getPixelRatio(); // TODO?
+  let bboxUpdating = 0;
   let fadeOpacity = appState.getFadeout();
   let particleCount = appState.getParticleCount();
   let currentCode = appState.getCode();
@@ -356,7 +357,7 @@ import {
   function draw() {
     lastAnimationFrame = 0;
     drawScreen();
-    updateParticles();
+    drawProgram.onUpdateParticles();
 
     if (currentCapturer) currentCapturer.capture(gl.canvas);
 
@@ -368,7 +369,13 @@ import {
     util.bindFramebuffer(gl, ctx.framebuffer, screenTexture);
 
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-    drawTexture(backgroundTexture, fadeOpacity)
+    if (bboxUpdating > 0) {
+      drawTexture(backgroundTexture, 0.7);
+     // drawTexture(backgroundTexture, fadeOpacity)
+      bboxUpdating = 0;
+    } else {
+      drawTexture(backgroundTexture, fadeOpacity)
+    }
 
     drawProgram.drawParticles();
 
@@ -384,10 +391,6 @@ import {
     var temp = backgroundTexture;
     backgroundTexture = screenTexture;
     screenTexture = temp;
-  }
-
-  function updateParticles() {
-    drawProgram.onUpdateParticles();
   }
 
   function drawTexture(texture, opacity) {
@@ -443,6 +446,7 @@ import {
   }
 
   function updateBBox() {
+    bboxUpdating = 30;
     var tx = transform.dx;
     var ty = transform.dy;
     var s = transform.scale;

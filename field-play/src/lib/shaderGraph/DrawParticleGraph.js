@@ -1,7 +1,6 @@
 import decodeFloatRGBA from './parts/decodeFloatRGBA';
 import ColorModes from '../programs/colorModes';
 import UserDefinedVelocityFunction from './UserDefinedVelocityFunction';
-import PanzoomTransform from './PanzoomTransform';
 import RungeKuttaIntegrator from './RungeKuttaIntegrator';
 
 // TODO: this duplicates code from texture position.
@@ -43,6 +42,8 @@ ${mainBody.join('\n')}
     return `precision highp float;
 attribute float a_index;
 uniform float u_particles_res;
+uniform vec2 u_min;
+uniform vec2 u_max;
 
 ${decodePositions.getVariables() || ''}
 ${colorParts.getVariables() || ''}
@@ -59,6 +60,8 @@ void main() {
 
 ${main.join('\n')}
 
+  vec2 du = (u_max - u_min);
+  v_particle_pos = (v_particle_pos - u_min)/du;
   gl_Position = vec4(2.0 * v_particle_pos.x - 1.0, (1. - 2. * (v_particle_pos.y)),  0., 1.);
 }`
   }
@@ -77,7 +80,6 @@ function addMain(producer, array) {
 
 function textureBasedColor(colorMode, vfCode) {
   var udf = new UserDefinedVelocityFunction(vfCode);
-  var panzoom = new PanzoomTransform({decode: true});
   var integrate = new RungeKuttaIntegrator();
 
   return {
@@ -97,7 +99,6 @@ uniform sampler2D u_colors;
 uniform vec2 u_velocity_range;
 ${defines}
 varying vec4 v_particle_color;
-${panzoom.getDefines()}
 ${udf.getDefines()}
 ${integrate.getDefines()}
 `
@@ -112,7 +113,6 @@ vec3 hsv2rgb(vec3 c) {
   return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
-${panzoom.getFunctions()}
 ${udf.getFunctions()}
 ${integrate.getFunctions()}
 `
@@ -130,12 +130,7 @@ ${integrate.getFunctions()}
 `;
 
     return `
-vec2 du = (u_max - u_min);
-vec2 pos = vec2(
-  v_particle_pos.x * du.x + u_min.x,
-  v_particle_pos.y * du.y + u_min.y);
-
-vec2 velocity = rk4(pos);
+vec2 velocity = rk4(v_particle_pos);
 ${decode}
 `
   }
