@@ -38,13 +38,13 @@ require.ensure('glsl-parser', () => {
 export default initScene;
 
 function initScene(gl) {
-  var pixelRatio = 1.0; // scene.getPixelRatio(); // TODO?
   var bboxUpdating = 0;
   var textureTransform = {dx: 0, dy: 0, scale: 1};
   var fadeOpacity = appState.getFadeout();
   var particleCount = appState.getParticleCount();
   var currentCode = appState.getCode();
-  var width, height;
+  var canvasRect = { width: 0, height: 0, top: 0, left: 0 };
+
   setWidthHeight(gl.canvas.width, gl.canvas.height);
 
   window.addEventListener('resize', onResize, true);
@@ -89,63 +89,20 @@ function initScene(gl) {
   var screenTexture, backgroundTexture, tempTexture;
   updateScreenTextures();
 
-  var movingProgram = util.createProgram(gl, `
-  // screen program
-precision highp float;
-
-attribute vec2 a_pos;
-varying vec2 v_tex_pos;
-uniform vec2 u_min;
-uniform vec2 u_max;
-uniform vec2 u_p_min;
-uniform vec2 u_p_max;
-uniform vec3 u_transform;
-
-void main() {
-    v_tex_pos = a_pos;
-    vec2 pos = a_pos;
-
-    pos.x = (pos.x - 0.5) / u_transform.z - u_transform.x + 0.5 * u_transform.z;
-    pos.y = pos.y / u_transform.z + u_transform.y;
-    // v_tex_pos = pos;
-    pos = 1.0 - 2.0 * pos;
-    gl_Position = vec4(pos, 0, 1);
-}`, `precision highp float;
-uniform sampler2D u_screen;
-uniform float u_opacity;
-uniform float u_opacity_border;
-
-varying vec2 v_tex_pos;
-
-void main() {
-  vec2 p = 1.0 - v_tex_pos;
-    vec4 color = texture2D(u_screen , p);
-  if (p.x < u_opacity_border || p.x > 1. - u_opacity_border || p.y < u_opacity_border || p.y > 1. - u_opacity_border) {
-    gl_FragColor = vec4(floor(255.0 * color * 0.0) / 255.0);
-  } else {
-    // a hack to guarantee opacity fade out even with a value close to 1.0
-    gl_FragColor = vec4(floor(255.0 * color * u_opacity) / 255.0);
-  }
-    // vec4 color = texture2D(u_screen, 1.0 - v_tex_pos);
-    // // a hack to guarantee opacity fade out even with a value close to 1.0
-    // gl_FragColor = vec4(floor(255.0 * color * u_opacity) / 255.0);
-    // //gl_FragColor = vec4(0., 1., 0., 1.);
-}`);
+  // TODO: Clean up
   var screenProgram = util.createProgram(gl, `
   // screen program
 precision highp float;
 
 attribute vec2 a_pos;
 varying vec2 v_tex_pos;
-uniform vec2 u_min;
-uniform vec2 u_max;
 uniform vec3 u_transform;
 
 void main() {
     v_tex_pos = a_pos;
     vec2 pos = a_pos;
-    pos.x = pos.x  - u_transform.x;
-    pos.y = pos.y + u_transform.y;
+    pos.x = (pos.x - 0.5) / u_transform.z - u_transform.x + 0.5 * u_transform.z;
+    pos.y = pos.y / u_transform.z + u_transform.y;
     pos = 1.0 - 2.0 * pos;
     gl_Position = vec4(pos, 0, 1);
 }`, `precision highp float;
@@ -202,7 +159,12 @@ void main() {
     setIntegrationTimeStep,
 
     setColorMode,
-    getColorMode
+    getColorMode,
+
+    getCanvasRect() {
+      // We trust they don't do anything bad with this ...
+      return canvasRect;
+    }
   }
 
   var panzoom = initPanzoom(); 
@@ -391,6 +353,7 @@ import {
   }
 
   function updateScreenTextures() {
+    var {width, height} = canvasRect;
     var emptyPixels = new Uint8Array(width * height * 4);
     if (screenTexture) {
       gl.deleteTexture(screenTexture);
@@ -414,15 +377,17 @@ import {
   }
 
   function setWidthHeight(w, h) {
-    var dx = Math.max(w * 0.02, 20);
-    var dy = Math.max(h * 0.02, 20);
-    width = w + 2 * dx;
-    height = h + 2 * dy;
+    var dx = Math.max(w * 0.02, 30);
+    var dy = Math.max(h * 0.02, 30);
+    canvasRect.width = w + 2 * dx;
+    canvasRect.height = h + 2 * dy;
+    canvasRect.top = - dy;
+    canvasRect.left = - dx;
 
 
     let canvas = gl.canvas;
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = canvasRect.width;
+    canvas.height = canvasRect.height;
     canvas.style.left = (-dx) + 'px';
     canvas.style.top = (-dy) + 'px';
   }
@@ -455,27 +420,12 @@ import {
 
     nextFrame();
   }
-  function saveCurrentPixels() {
-    var container = document.getElementById('canvases');
-    if (!container) return;
-    var w = width;
-    var h = height;
-    var store = new Uint8Array(w * h * 4);
-    gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, store);
-    var c = document.createElement('canvas');
-    c.width = w; c.height = h;
-    var ctx = c.getContext('2d');
-    var imgData = ctx.getImageData(0, 0, w, h)
-    imgData.data.set(store);
-    ctx.putImageData(imgData, 0, 0);
-    container.appendChild(c);
-  }
 
   function drawScreen() {
     // render to the frame buffer
     util.bindFramebuffer(gl, ctx.framebuffer, screenTexture);
+    gl.viewport(0, 0, canvasRect.width, canvasRect.height);
 
-    gl.viewport(0, 0, width, height);
     if (bboxUpdating > 0 && lastBbox) {
       let dx = -(ctx.bbox.minX - lastBbox.minX)/(ctx.bbox.maxX - ctx.bbox.minX);
       let dy = -(ctx.bbox.minY - lastBbox.minY)/(ctx.bbox.maxY - ctx.bbox.minY);
@@ -485,12 +435,7 @@ import {
         dy: dy, 
         scale: scale 
       };
-      console.log(applied);
-      drawTransformedTexture(backgroundTexture, fadeOpacity, applied);
-      // saveCurrentPixels();
-      textureTransform.dy = 0;
-      textureTransform.dx = 0;
-      textureTransform.scale = 1;
+      drawTexture(backgroundTexture, fadeOpacity, applied);
     } else {
       drawTexture(backgroundTexture, fadeOpacity, textureTransform)
     }
@@ -499,7 +444,7 @@ import {
 
     util.bindFramebuffer(gl, null);
 
-    lastBbox = Object.assign({}, ctx.bbox);
+    saveLastBbox();
 
     gl.enable(gl.BLEND); 
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -508,39 +453,26 @@ import {
     drawTexture(screenTexture, 1.0, textureTransform);
     gl.disable(gl.BLEND);
 
-    // util.bindFramebuffer(gl, null);
-    // drawTexture(backgroundTexture, 1.0,  textureTransform)
-    // swap textures
     var temp = backgroundTexture;
     backgroundTexture = screenTexture;
     screenTexture = temp;
     bboxUpdating = 0;
   }
 
-
-  function drawTransformedTexture(texture, opacity, textureTransform){
-    var program = movingProgram;
-    gl.useProgram(program.program);
-    util.bindAttribute(gl, ctx.quadBuffer, program.a_pos, 2);
-    util.bindTexture(gl, texture, 2);
-    gl.uniform2f(program.u_min, ctx.bbox.minX, ctx.bbox.minY);
-    gl.uniform2f(program.u_max, ctx.bbox.maxX, ctx.bbox.maxY);
-    gl.uniform1i(program.u_screen, 2);
-    gl.uniform1f(program.u_opacity_border, 0.02);
-    gl.uniform1f(program.u_opacity, opacity);
-    console.log('scale',  textureTransform.scale)
-    gl.uniform3f(program.u_transform, textureTransform.dx, textureTransform.dy, textureTransform.scale);
-
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  function saveLastBbox() {
+    if (!lastBbox) lastBbox = {};
+    lastBbox.minX = ctx.bbox.minX;
+    lastBbox.minY = ctx.bbox.minY;
+    lastBbox.maxX = ctx.bbox.maxX;
+    lastBbox.maxY = ctx.bbox.maxY;
   }
+
   function drawTexture(texture, opacity, textureTransform){
     var program = screenProgram;
     gl.useProgram(program.program);
     util.bindAttribute(gl, ctx.quadBuffer, program.a_pos, 2);
     util.bindTexture(gl, texture, 2);
     gl.uniform1f(program.u_opacity_border, bboxUpdating ? 0.02 : 0);
-    gl.uniform2f(program.u_min, ctx.bbox.minX, ctx.bbox.minY);
-    gl.uniform2f(program.u_max, ctx.bbox.maxX, ctx.bbox.maxY);
     gl.uniform1i(program.u_screen, 2);
     gl.uniform1f(program.u_opacity, opacity);
     gl.uniform3f(program.u_transform, textureTransform.dx, textureTransform.dy, textureTransform.scale);
@@ -570,7 +502,7 @@ import {
     let tX = 0;
     let tY = 0;
     if (savedBBox) {
-
+      var {width, height} = canvasRect;
       sX = savedBBox.maxX - savedBBox.minX;
       sY = savedBBox.maxY - savedBBox.minY;
       // TODO: Not sure if this is really the best way to do it.
@@ -589,8 +521,10 @@ import {
     });
   }
 
-  function updateBBox(relativeChange) {
+  function updateBBox() {
     bboxUpdating = 1;
+
+    var {width, height} = canvasRect;
     var tx = transform.dx;
     var ty = transform.dy;
     var s = transform.scale;
@@ -609,11 +543,6 @@ import {
 
     appState.saveBBox(bbox);
 
-    if (relativeChange) {
-      textureTransform.dx = relativeChange.dx;
-      textureTransform.dy = relativeChange.dy; // relativeChange.scale;
-      textureTransform.scale = relativeChange.scale;
-    }
     bus.fire('bbox-change', bbox);
 
     function clientX(x) {
@@ -626,8 +555,8 @@ import {
   }
 
   function reset() {
-    var w = width/2;
-    var h = height/2;
+    var w = canvasRect.width/2;
+    var h = canvasRect.height/2;
 
     appState.saveBBox({
       minX: -w,
@@ -641,11 +570,28 @@ import {
   }
 
   function wglPanZoom(canvas, transform/*, scene */) {
+    var pDx = 0;
+    var pDy = 0;
+    var pScale = 1;
+    var transformThreshold = 2.1;
+
     return {
       applyTransform(newT) {
-        transform.dx = newT.x * pixelRatio;
-        transform.dy = newT.y * pixelRatio; 
-        transform.scale = newT.scale;
+        var dx = newT.x;
+        var dy = newT.y; 
+
+        if (Math.abs(pScale - newT.scale) < 0.0001) {
+          if (Math.abs(dx - pDx) < transformThreshold &&
+              Math.abs(dy - pDy) < transformThreshold) {
+                return; // Wait for larger transform
+          }
+        }
+        pDx = dx;
+        pDy = dy;
+        pScale = newT.scale;
+        transform.dx = dx;
+        transform.dy = dy;
+        transform.scale = pScale;
         updateBBox();
       },
 

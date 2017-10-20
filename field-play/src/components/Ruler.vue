@@ -35,9 +35,11 @@ import bus from '../lib/bus';
           this.clearHighlight = null;
         }
 
+        
         this.highlighted = true;
-        this.hticks = getHorizontalTicks(window.innerWidth, minX, maxX);
-        this.vticks = getVerticalTicks(window.innerHeight, minY, maxY);
+        var canvasRect = window.scene.getCanvasRect();
+        this.hticks = getHorizontalTicks(canvasRect, minX, maxX);
+        this.vticks = getVerticalTicks(canvasRect, minY, maxY);
         this.clearHighlight = setTimeout(() => {
           this.highlighted = false;
           this.clearHighlight = null;
@@ -46,15 +48,16 @@ import bus from '../lib/bus';
     }
   }
 
-function getHorizontalTicks(availableWidth, minX, maxX) {
+function getHorizontalTicks(rect, minX, maxX) {
+  var availableWidth = rect.width;
   let ticks = [];
   var tickCount = availableWidth < 600 ? 3 : 10;
-  var step = availableWidth/tickCount;
+  var step = availableWidth/(tickCount);
   let dx = (maxX - minX)/tickCount;
 
   for (var i = 0; i < tickCount; ++i) {
     ticks.push({
-      offset: i * step + 'px',
+      offset: (rect.left + i * step) + 'px',
       label: formatNumber(dx * i + minX)
     });
   }
@@ -62,7 +65,8 @@ function getHorizontalTicks(availableWidth, minX, maxX) {
   return ticks;
 }
 
-function getVerticalTicks(availableHeight, minY, maxY) {
+function getVerticalTicks(rect, minY, maxY) {
+  var availableHeight = rect.height;
   var ticks = [];
   var tickCount = availableHeight < 600? 5 : 10;
   let dy = (maxY - minY)/tickCount;
@@ -71,7 +75,7 @@ function getVerticalTicks(availableHeight, minY, maxY) {
   // start from 1 to not overlap with x axis;
   for (var i = 1; i < tickCount; ++i) {
     ticks.push({
-      offset: i * step + 'px',
+      offset: (rect.top + i * step) + 'px',
       label: formatNumber(dy * i + minY)
     });
   }
