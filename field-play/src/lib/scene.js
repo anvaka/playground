@@ -38,11 +38,14 @@ require.ensure('glsl-parser', () => {
 export default initScene;
 
 function initScene(gl) {
-  let pixelRatio = 1.0; // scene.getPixelRatio(); // TODO?
-  let bboxUpdating = 0;
-  let fadeOpacity = appState.getFadeout();
-  let particleCount = appState.getParticleCount();
-  let currentCode = appState.getCode();
+  var pixelRatio = 1.0; // scene.getPixelRatio(); // TODO?
+  var bboxUpdating = 0;
+  var textureTransform = {dx: 0, dy: 0, scale: 1};
+  var fadeOpacity = appState.getFadeout();
+  var particleCount = appState.getParticleCount();
+  var currentCode = appState.getCode();
+  var width, height;
+  setWidthHeight(gl.canvas.width, gl.canvas.height);
 
   window.addEventListener('resize', onResize, true);
 
@@ -59,6 +62,7 @@ function initScene(gl) {
     dx: 0,
     dy: 0
   };
+  var lastBbox = null;
 
   // TODO: Remove local variables in favour of context.
   var ctx = {
@@ -82,10 +86,85 @@ function initScene(gl) {
   setBackgroundColor({ r: 19, g: 41, b: 79, a: 1 });
   
   // screen rendering;
-  var screenTexture, backgroundTexture;
+  var screenTexture, backgroundTexture, tempTexture;
   updateScreenTextures();
 
-  var screenProgram = util.createProgram(gl, shaders.quadVert, shaders.screenFrag);
+  var movingProgram = util.createProgram(gl, `
+  // screen program
+precision highp float;
+
+attribute vec2 a_pos;
+varying vec2 v_tex_pos;
+uniform vec2 u_min;
+uniform vec2 u_max;
+uniform vec2 u_p_min;
+uniform vec2 u_p_max;
+uniform vec3 u_transform;
+
+void main() {
+    v_tex_pos = a_pos;
+    vec2 pos = a_pos;
+
+    pos.x = (pos.x - 0.5) / u_transform.z - u_transform.x + 0.5 * u_transform.z;
+    pos.y = pos.y / u_transform.z + u_transform.y;
+    // v_tex_pos = pos;
+    pos = 1.0 - 2.0 * pos;
+    gl_Position = vec4(pos, 0, 1);
+}`, `precision highp float;
+uniform sampler2D u_screen;
+uniform float u_opacity;
+uniform float u_opacity_border;
+
+varying vec2 v_tex_pos;
+
+void main() {
+  vec2 p = 1.0 - v_tex_pos;
+    vec4 color = texture2D(u_screen , p);
+  if (p.x < u_opacity_border || p.x > 1. - u_opacity_border || p.y < u_opacity_border || p.y > 1. - u_opacity_border) {
+    gl_FragColor = vec4(floor(255.0 * color * 0.0) / 255.0);
+  } else {
+    // a hack to guarantee opacity fade out even with a value close to 1.0
+    gl_FragColor = vec4(floor(255.0 * color * u_opacity) / 255.0);
+  }
+    // vec4 color = texture2D(u_screen, 1.0 - v_tex_pos);
+    // // a hack to guarantee opacity fade out even with a value close to 1.0
+    // gl_FragColor = vec4(floor(255.0 * color * u_opacity) / 255.0);
+    // //gl_FragColor = vec4(0., 1., 0., 1.);
+}`);
+  var screenProgram = util.createProgram(gl, `
+  // screen program
+precision highp float;
+
+attribute vec2 a_pos;
+varying vec2 v_tex_pos;
+uniform vec2 u_min;
+uniform vec2 u_max;
+uniform vec3 u_transform;
+
+void main() {
+    v_tex_pos = a_pos;
+    vec2 pos = a_pos;
+    pos.x = pos.x  - u_transform.x;
+    pos.y = pos.y + u_transform.y;
+    pos = 1.0 - 2.0 * pos;
+    gl_Position = vec4(pos, 0, 1);
+}`, `precision highp float;
+uniform sampler2D u_screen;
+uniform float u_opacity;
+uniform float u_opacity_border;
+
+varying vec2 v_tex_pos;
+
+void main() {
+  vec2 p = 1.0 - v_tex_pos;
+    vec4 color = texture2D(u_screen , p);
+  if (p.x < u_opacity_border || p.x > 1. - u_opacity_border || p.y < u_opacity_border || p.y > 1. - u_opacity_border) {
+    gl_FragColor = vec4(floor(255.0 * color * 0.0) / 255.0);
+  } else {
+    // a hack to guarantee opacity fade out even with a value close to 1.0
+    gl_FragColor = vec4(floor(255.0 * color * u_opacity) / 255.0);
+  }
+}`);
   var drawProgram = createDrawParticlesProgram(ctx);
 
   loadCodeFromAppState();
@@ -312,8 +391,6 @@ import {
   }
 
   function updateScreenTextures() {
-    var width = gl.canvas.width; 
-    var height = gl.canvas.height;
     var emptyPixels = new Uint8Array(width * height * 4);
     if (screenTexture) {
       gl.deleteTexture(screenTexture);
@@ -324,15 +401,30 @@ import {
 
     screenTexture = util.createTexture(gl, gl.NEAREST, emptyPixels, width, height);
     backgroundTexture = util.createTexture(gl, gl.NEAREST, emptyPixels, width, height);
+
+    if (tempTexture) gl.deleteTexture(tempTexture);
+    tempTexture = util.createTexture(gl, gl.NEAREST, emptyPixels, width, height);
   }
 
   function onResize() {
-    let canvas = gl.canvas;
-    canvas.width = window.innerWidth * pixelRatio;
-    canvas.height = window.innerHeight * pixelRatio;
+    setWidthHeight(window.innerWidth, window.innerHeight);
 
     updateScreenTextures();
     updateBBox();
+  }
+
+  function setWidthHeight(w, h) {
+    var dx = Math.max(w * 0.02, 20);
+    var dy = Math.max(h * 0.02, 20);
+    width = w + 2 * dx;
+    height = h + 2 * dy;
+
+
+    let canvas = gl.canvas;
+    canvas.width = width;
+    canvas.height = height;
+    canvas.style.left = (-dx) + 'px';
+    canvas.style.top = (-dy) + 'px';
   }
 
   function dispose() {
@@ -363,43 +455,95 @@ import {
 
     nextFrame();
   }
+  function saveCurrentPixels() {
+    var container = document.getElementById('canvases');
+    if (!container) return;
+    var w = width;
+    var h = height;
+    var store = new Uint8Array(w * h * 4);
+    gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, store);
+    var c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    var ctx = c.getContext('2d');
+    var imgData = ctx.getImageData(0, 0, w, h)
+    imgData.data.set(store);
+    ctx.putImageData(imgData, 0, 0);
+    container.appendChild(c);
+  }
 
   function drawScreen() {
     // render to the frame buffer
     util.bindFramebuffer(gl, ctx.framebuffer, screenTexture);
 
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-    if (bboxUpdating > 0) {
-      drawTexture(backgroundTexture, 0.7);
-     // drawTexture(backgroundTexture, fadeOpacity)
-      bboxUpdating = 0;
+    gl.viewport(0, 0, width, height);
+    if (bboxUpdating > 0 && lastBbox) {
+      let dx = -(ctx.bbox.minX - lastBbox.minX)/(ctx.bbox.maxX - ctx.bbox.minX);
+      let dy = -(ctx.bbox.minY - lastBbox.minY)/(ctx.bbox.maxY - ctx.bbox.minY);
+      let scale = (ctx.bbox.maxX - ctx.bbox.minX) / (lastBbox.maxX - lastBbox.minX);
+      var applied = {
+        dx: dx, 
+        dy: dy, 
+        scale: scale 
+      };
+      console.log(applied);
+      drawTransformedTexture(backgroundTexture, fadeOpacity, applied);
+      // saveCurrentPixels();
+      textureTransform.dy = 0;
+      textureTransform.dx = 0;
+      textureTransform.scale = 1;
     } else {
-      drawTexture(backgroundTexture, fadeOpacity)
+      drawTexture(backgroundTexture, fadeOpacity, textureTransform)
     }
 
     drawProgram.drawParticles();
 
     util.bindFramebuffer(gl, null);
 
+    lastBbox = Object.assign({}, ctx.bbox);
+
     gl.enable(gl.BLEND); 
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.clearColor(backgroundColor.r/255, backgroundColor.g/255, backgroundColor.b/255, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    drawTexture(screenTexture, 1.0);
+    drawTexture(screenTexture, 1.0, textureTransform);
     gl.disable(gl.BLEND);
+
+    // util.bindFramebuffer(gl, null);
+    // drawTexture(backgroundTexture, 1.0,  textureTransform)
     // swap textures
     var temp = backgroundTexture;
     backgroundTexture = screenTexture;
     screenTexture = temp;
+    bboxUpdating = 0;
   }
 
-  function drawTexture(texture, opacity) {
+
+  function drawTransformedTexture(texture, opacity, textureTransform){
+    var program = movingProgram;
+    gl.useProgram(program.program);
+    util.bindAttribute(gl, ctx.quadBuffer, program.a_pos, 2);
+    util.bindTexture(gl, texture, 2);
+    gl.uniform2f(program.u_min, ctx.bbox.minX, ctx.bbox.minY);
+    gl.uniform2f(program.u_max, ctx.bbox.maxX, ctx.bbox.maxY);
+    gl.uniform1i(program.u_screen, 2);
+    gl.uniform1f(program.u_opacity_border, 0.02);
+    gl.uniform1f(program.u_opacity, opacity);
+    console.log('scale',  textureTransform.scale)
+    gl.uniform3f(program.u_transform, textureTransform.dx, textureTransform.dy, textureTransform.scale);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  }
+  function drawTexture(texture, opacity, textureTransform){
     var program = screenProgram;
     gl.useProgram(program.program);
     util.bindAttribute(gl, ctx.quadBuffer, program.a_pos, 2);
     util.bindTexture(gl, texture, 2);
+    gl.uniform1f(program.u_opacity_border, bboxUpdating ? 0.02 : 0);
+    gl.uniform2f(program.u_min, ctx.bbox.minX, ctx.bbox.minY);
+    gl.uniform2f(program.u_max, ctx.bbox.maxX, ctx.bbox.maxY);
     gl.uniform1i(program.u_screen, 2);
     gl.uniform1f(program.u_opacity, opacity);
+    gl.uniform3f(program.u_transform, textureTransform.dx, textureTransform.dy, textureTransform.scale);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   }
@@ -430,13 +574,13 @@ import {
       sX = savedBBox.maxX - savedBBox.minX;
       sY = savedBBox.maxY - savedBBox.minY;
       // TODO: Not sure if this is really the best way to do it.
-      var ar = window.innerWidth/window.innerHeight;
-      tX = window.innerWidth * (savedBBox.minX + savedBBox.maxX)/2;
-      tY = window.innerHeight * (savedBBox.minY + savedBBox.maxY)/2*ar;
+      var ar = width/height;
+      tX = width * (savedBBox.minX + savedBBox.maxX)/2;
+      tY = height * (savedBBox.minY + savedBBox.maxY)/2*ar;
     }
 
-    var w2 = sX * window.innerWidth/2;
-    var h2 = sY * window.innerHeight/2;
+    var w2 = sX * width/2;
+    var h2 = sY * height/2;
     panzoom.showRectangle({
       left: -w2 + tX,
       top: -h2 - tY,
@@ -445,27 +589,31 @@ import {
     });
   }
 
-  function updateBBox() {
-    bboxUpdating = 30;
+  function updateBBox(relativeChange) {
+    bboxUpdating = 1;
     var tx = transform.dx;
     var ty = transform.dy;
     var s = transform.scale;
 
-    var w = window.innerWidth;
-    var h = window.innerHeight;
-
     var minX = clientX(0);
     var minY = clientY(0);
-    var maxX = clientX(w);
-    var maxY = clientY(h);
+    var maxX = clientX(width);
+    var maxY = clientY(height);
 
-    var ar = w/h;
-    bbox.minX = minX/w
-    bbox.minY =  -minY/h / ar
-    bbox.maxX = maxX/w
-    bbox.maxY =  -maxY/h / ar
+    var ar = width/height;
+    bbox.minX = minX/width;
+    bbox.minY =  -minY/height / ar;
+    bbox.maxX = maxX/width;
+    bbox.maxY =  -maxY/height / ar;
+
 
     appState.saveBBox(bbox);
+
+    if (relativeChange) {
+      textureTransform.dx = relativeChange.dx;
+      textureTransform.dy = relativeChange.dy; // relativeChange.scale;
+      textureTransform.scale = relativeChange.scale;
+    }
     bus.fire('bbox-change', bbox);
 
     function clientX(x) {
@@ -478,8 +626,9 @@ import {
   }
 
   function reset() {
-    var w = window.innerWidth/2;
-    var h = window.innerWidth/2;
+    var w = width/2;
+    var h = height/2;
+
     appState.saveBBox({
       minX: -w,
       minY: -h,
