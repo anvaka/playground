@@ -102,10 +102,12 @@ export default function makeScreenProgram(ctx) {
     var program = screenProgram;
     gl.useProgram(program.program);
     glUtils.bindAttribute(gl, ctx.quadBuffer, program.a_pos, 2);
-    glUtils.bindTexture(gl, texture, 2);
+
+    // TODO: This index is very fragile. I need to find a way
+    glUtils.bindTexture(gl, texture, ctx.screenTextureUnit);
+    gl.uniform1i(program.u_screen, ctx.screenTextureUnit);
 
     gl.uniform1f(program.u_opacity_border, 0.02);
-    gl.uniform1i(program.u_screen, 2);
     gl.uniform1f(program.u_opacity, opacity);
     gl.uniform3f(program.u_transform, textureTransform.dx, textureTransform.dy, textureTransform.scale);
 

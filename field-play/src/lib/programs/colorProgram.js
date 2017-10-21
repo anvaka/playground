@@ -28,7 +28,7 @@ export default function colorProgram(ctx, colorMode) {
     updateCode,
     onUpdateParticles,
     onParticleInit,
-    onBeforeDrawParticles,
+    bindColorTextures,
     requestSpeedUpdate,
     dispose
   };
@@ -53,10 +53,10 @@ export default function colorProgram(ctx, colorMode) {
     }, 50);
   }
 
-  function onBeforeDrawParticles(program) {
-    util.bindTexture(gl, velocityTexture, 2);
+  function bindColorTextures(program) {
+    util.bindTexture(gl, velocityTexture, ctx.colorTextureUnit);
+    gl.uniform1i(program.u_colors, ctx.colorTextureUnit);
     gl.uniform2f(program.u_velocity_range, minV, maxV);
-    gl.uniform1i(program.u_colors, 2);
   }
 
   function onParticleInit() {

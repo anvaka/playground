@@ -70,6 +70,14 @@ export default function initScene(gl) {
 
     colorMode: appState.getColorMode(),
 
+    // This defines texture unit for screen rendering. First few indices are taken by textures
+    // that compute particles position/color
+    // TODO: I need to find a better way to manage this.
+    screenTextureUnit: 3,
+
+    // This is where color texture needs to be bound.
+    colorTextureUnit: 2,
+
     integrationTimeStep: appState.getIntegrationTimeStep(),
 
     // On each frame the likelihood for a particle to reset its position is this:
@@ -309,8 +317,8 @@ export default function initScene(gl) {
 
   function draw() {
     lastAnimationFrame = 0;
+
     drawScreen();
-    drawProgram.onUpdateParticles();
 
     if (currentCapturer) currentCapturer.capture(gl.canvas);
 
@@ -319,10 +327,9 @@ export default function initScene(gl) {
 
   function drawScreen() {
     screenProgram.fadeOutLastFrame()
-
     drawProgram.drawParticles();
-
     screenProgram.renderCurrentScreen();
+    drawProgram.onUpdateParticles();
   }
 
   // TODO: Rename to updateParticlesCount()

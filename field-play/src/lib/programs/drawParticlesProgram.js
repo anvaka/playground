@@ -103,7 +103,7 @@ export default function drawParticlesProgram(ctx) {
     util.bindAttribute(gl, particleIndexBuffer, program.a_index, 1);
     
     updatePositionProgram.bindPositionTexturesToProgram(program);
-    colorProgram.onBeforeDrawParticles(program, updatePositionProgram);
+    colorProgram.bindColorTextures(program, updatePositionProgram);
   
     gl.uniform1f(program.u_h, ctx.integrationTimeStep);
     gl.uniform1f(program.frame, ctx.frame);

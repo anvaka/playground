@@ -38,6 +38,7 @@ export default function updatePositionProgram(ctx) {
       name: 'y',
       particleState: y
     }];
+
     if (readTextures) readTextures.dispose();
     readTextures = textureCollection(gl, dimensions, particleStateResolution);
 
@@ -85,16 +86,12 @@ export default function updatePositionProgram(ctx) {
 }
 
 function textureCollection(gl, dimensions, particleStateResolution) {
-  var index = 1;
-  var textures = dimensions.map(d => {
+  var textures = dimensions.map((d, index) => {
     var textureInfo = {
       texture: util.createTexture(gl, gl.NEAREST, d.particleState, particleStateResolution, particleStateResolution),
       index: index,
       name: d.name
     }
-    // TODO: need to see if I can simplify this. Second slot is taken by color.
-    if (index === 1) index = 2;
-    index += 1;
 
     return textureInfo;
   })
