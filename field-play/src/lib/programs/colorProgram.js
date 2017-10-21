@@ -1,7 +1,7 @@
 import UpdatePositionGraph from '../shaderGraph/updatePositionGraph';
 import util from '../gl-utils';
 import bus from '../bus';
-import {decodeFloatRGBA} from '../floatPacking';
+import {decodeFloatRGBA} from '../utils/floatPacking';
 
 /**
  * This program allows to change color of each particle. It works by

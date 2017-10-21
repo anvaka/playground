@@ -468,15 +468,6 @@ import {
     boundingBoxUpdated = false;
   }
 
-  function saveLastBbox() {
-    if (!lastBbox) lastBbox = {};
-
-    lastBbox.minX = ctx.bbox.minX;
-    lastBbox.minY = ctx.bbox.minY;
-    lastBbox.maxX = ctx.bbox.maxX;
-    lastBbox.maxY = ctx.bbox.maxY;
-  }
-
   function drawTexture(texture, opacity, textureTransform) {
     var program = screenProgram;
     gl.useProgram(program.program);
@@ -490,7 +481,16 @@ import {
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   }
-  
+
+  function saveLastBbox() {
+    if (!lastBbox) lastBbox = {};
+
+    lastBbox.minX = ctx.bbox.minX;
+    lastBbox.minY = ctx.bbox.minY;
+    lastBbox.maxX = ctx.bbox.maxX;
+    lastBbox.maxY = ctx.bbox.maxY;
+  }
+
   function initParticles(numParticles) {
     // we create a square texture where each pixel will hold a particle position encoded as RGBA
     ctx.particleStateResolution = Math.ceil(Math.sqrt(numParticles));

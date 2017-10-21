@@ -3,7 +3,7 @@ import DrawParticleGraph from '../shaderGraph/DrawParticleGraph';
 import defaultColorProgram from './colorProgram';
 import uniformColorProgram from './uniformColorProgram';
 import makeUpdatePositionProgram from './updatePositionProgram';
-import { encodeFloatRGBA } from '../floatPacking.js';
+import { encodeFloatRGBA } from '../utils/floatPacking.js';
 
 import ColorMode from './colorModes';
 

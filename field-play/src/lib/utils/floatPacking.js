@@ -1,6 +1,19 @@
-export function encodeFloatRGBA(val, out, idx) {
+/**
+ * This file encodes/decodes float values into 32bit rgba array
+ * 
+ * It is based on https://computergraphics.stackexchange.com/questions/4151/webgl-packing-unpacking-functions-that-can-roundtrip-all-typical-32-bit-floats
+ * and it is not perfect. If you know how to improve it - please let me know.
+ */
+
+/**
+ * Encodes float value into output array
+ * @param {float} val - value to be encode
+ * @param {Uint8Array} out  - array where encoded value needs to be written.
+ * @param {Number} writeOffset - offset in the original array where values should be written.
+ */
+export function encodeFloatRGBA(val, out, writeOffset) {
   if (val == 0.0) {
-    out[idx + 0] = 0; out[idx + 1] = 0; out[idx + 2] = 0; out[idx + 3] = 0;
+    out[writeOffset + 0] = 0; out[writeOffset + 1] = 0; out[writeOffset + 2] = 0; out[writeOffset + 3] = 0;
   }
 
   var mag = Math.abs(val);
@@ -26,9 +39,17 @@ export function encodeFloatRGBA(val, out, idx) {
   mantissa *= 128.0;
   var d = Math.floor(mantissa) * 2.0 + ((val < 0.0) ? 1: 0);
 
-  out[idx + 0] = a; out[idx + 1] = b; out[idx + 2] = c; out[idx + 3] = d;
+  out[writeOffset + 0] = a; out[writeOffset + 1] = b; out[writeOffset + 2] = c; out[writeOffset + 3] = d;
 }
 
+/**
+ * Given byte values in range [0..255] returns decoded float value.
+ * 
+ * @param {Byte} r 
+ * @param {Byte} g 
+ * @param {Byte} b 
+ * @param {Byte} a 
+ */
 export function decodeFloatRGBA(r, g, b, a) {
   var A = Math.floor(r + 0.5);
   var B = Math.floor(g + 0.5);
