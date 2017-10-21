@@ -22,22 +22,23 @@ export default initScene;
 const NO_TRANSFORM = {dx: 0, dy: 0, scale: 1};
 
 function initScene(gl) {
-  var fadeOpacity = appState.getFadeout();
-  var particleCount = appState.getParticleCount();
-  var currentCode = appState.getCode();
+  // Canvas size management
   var canvasRect = { width: 0, height: 0, top: 0, left: 0 };
-
   setWidthHeight(gl.canvas.width, gl.canvas.height);
-
   window.addEventListener('resize', onResize, true);
 
   gl.disable(gl.DEPTH_TEST);
   gl.disable(gl.STENCIL_TEST); 
     
+  // Video capturing is available in super advanced mode. You'll need to install
+  // and start https://github.com/greggman/ffmpegserver.js 
+  // Then type in the console: window.startRecord();
+  // This will trigger frame-by-frame recording (it is slow). To stop it, call window.stopRecord();
   bus.on('start-record', startRecord);
   bus.on('stop-record', stopRecord);
   var currentCapturer = null;
 
+  // TODO: It feels like bounding box management needs to be moved out from here.
   var boundingBoxUpdated = false;
   var bbox = appState.getBBox() || {};
   var currentPanZoomTransform = {
@@ -46,6 +47,13 @@ function initScene(gl) {
     y: 0
   };
   var lastBbox = null;
+
+  // How quickly we should fade previous frame (from 0..1)
+  var fadeOpacity = appState.getFadeout();
+  // How many particles do we want?
+  var particleCount = appState.getParticleCount();
+  // What is the current code?
+  var currentVectorFieldCode = appState.getCode();
 
   // TODO: Remove local variables in favour of context.
   var ctx = {
@@ -76,7 +84,7 @@ function initScene(gl) {
   setBackgroundColor({ r: 19, g: 41, b: 79, a: 1 });
   
   // screen rendering;
-  var screenTexture, backgroundTexture, tempTexture;
+  var screenTexture, backgroundTexture;
   var boundBoxTextureTransform = {dx: 0, dy: 0, scale: 1};
   updateScreenTextures();
 
@@ -275,14 +283,14 @@ void main() {
     trySetNewCode(appState.getDefaultCode());
   }
 
-  function updateVectorField(vfCode) {
-    if (vfCode === currentCode) return;
+  function updateVectorField(vectorFieldCode) {
+    if (vectorFieldCode === currentVectorFieldCode) return;
 
-    let result = trySetNewCode(vfCode);
+    let result = trySetNewCode(vectorFieldCode);
     if (result && result.error) return result;
 
-    currentCode = vfCode;
-    appState.saveCode(vfCode);
+    currentVectorFieldCode = vectorFieldCode;
+    appState.saveCode(vectorFieldCode);
   }
 
   function trySetNewCode(vectorFieldCode) {
@@ -315,9 +323,6 @@ void main() {
 
     screenTexture = util.createTexture(gl, gl.NEAREST, emptyPixels, width, height);
     backgroundTexture = util.createTexture(gl, gl.NEAREST, emptyPixels, width, height);
-
-    if (tempTexture) gl.deleteTexture(tempTexture);
-    tempTexture = util.createTexture(gl, gl.NEAREST, emptyPixels, width, height);
   }
 
   function onResize() {
