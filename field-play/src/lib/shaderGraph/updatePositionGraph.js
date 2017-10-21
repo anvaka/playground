@@ -39,7 +39,6 @@ void main() {
 
   getFragmentShader() {
     let nodes;
-    debugger;
     if (this.colorMode) {
       nodes = this.getColorShaderNodes(this.colorMode);
     } else {
