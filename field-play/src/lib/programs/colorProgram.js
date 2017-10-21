@@ -16,6 +16,10 @@ export default function colorProgram(ctx, colorMode) {
   var particleStateResolution;
   var pendingSpeedUpdate;
   var numParticles;
+
+  // TODO: do I want to have this independent, or maybe store it in the context?
+  // There is a good amount of overlap with how this shader builder is used
+  // in updatePositionProgram.
   let colorTextureGraph = new UpdatePositionGraph({velocity: true, colorMode});
 
   listenToEvents();
@@ -66,19 +70,21 @@ export default function colorProgram(ctx, colorMode) {
     requestSpeedUpdate();
   }
 
-  function updateCode(vfCode) {
-    if (!vfCode) return;
+  function updateCode(vectorField) {
+    if (!vectorField) return;
 
-    colorTextureGraph.setCustomVelocity(vfCode);
+    colorTextureGraph.setCustomVectorField(vectorField);
     let fragment = colorTextureGraph.getFragmentShader();
     let vertex = colorTextureGraph.getVertexShader();
     let newVelocityProgram = util.createProgram(gl, vertex, fragment);
+
     if (velocityProgram) velocityProgram.unload();
     velocityProgram = newVelocityProgram;
+
     requestSpeedUpdate();
   }
 
-  function onUpdateParticles(updatePositionProgram, frameSeed) {
+  function onUpdateParticles(updatePositionProgram) {
     if (!speedNeedsUpdate) return;
     // We only update speed to know min/max range of velocity.
     util.bindFramebuffer(gl, ctx.framebuffer, velocityTexture);
@@ -90,7 +96,7 @@ export default function colorProgram(ctx, colorMode) {
     updatePositionProgram.bindPositionTexturesToProgram(program);
     util.bindAttribute(gl, ctx.quadBuffer, program.a_pos, 2);
 
-    gl.uniform1f(program.u_rand_seed, frameSeed);
+    gl.uniform1f(program.u_rand_seed, ctx.frameSeed);
     gl.uniform1f(program.u_h, ctx.integrationTimeStep);
     var bbox = ctx.bbox;
     gl.uniform2f(program.u_min, bbox.minX, bbox.minY);

@@ -13,7 +13,7 @@ export default class UserDefinedVelocityFunction extends BaseShaderNode {
 
   getDefines() {
     return `
-uniform float u_time;
+uniform float frame;
 `
   }
 
@@ -22,6 +22,7 @@ uniform float u_time;
   // TODO: Do I need to inject snoise only when it's used?
     return `
 ${snoise}
+
 vec2 get_velocity(const vec2 p) {
   vec2 v = vec2(0.);
   ${this.updateCode ? this.updateCode : ''}

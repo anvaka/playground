@@ -28,18 +28,4 @@ export default {
   // TODO: need to find a better way for this. Maybe it's own graph?
   quadVert: updateGraph.getVertexShader(),
   screenFrag: screenFrag,
-  unsafeBuildShader,
 };
-
-function unsafeBuildShader(vectorField) {
-  updateGraph.setCustomVelocity(vectorField);
-  let fragment = updateGraph.getFragmentShader();
-  let vertex = updateGraph.getVertexShader();
-  // let codeWithLineNumbers = addLineNumbers(code);
-  return {fragment, vertex};
-}
-
-function addLineNumbers(code) {
-  return code.split('\n')
-    .map((line, lineNo) => lineNo + '. ' + line).join('\n');
-}

@@ -1,10 +1,17 @@
+/**
+ * Provides an API to google's shortener.
+ */
+
 // This key is bound to my domain names: anvaka.github.io
 // you'll need to get your own key if you want to use google's shortener.
 const key = 'AIzaSyDXQD27wCjIZLq2gzAUQKeHbIODElpa-4w';
 const endpoint = `https://www.googleapis.com/urlshortener/v1/url?key=${key}`;
 const cache = new Map();
 
-
+/**
+ * @param {String} link that you want to shorten.
+ * @returns {Promise} that is resolved with a shortened link
+ */
 export default function shorten(link) {
   return new Promise((resolve, reject) => {
     let cachedResponse = cache.get(link);

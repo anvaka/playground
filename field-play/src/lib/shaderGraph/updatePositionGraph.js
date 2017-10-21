@@ -9,7 +9,7 @@ import RungeKuttaIntegrator from './RungeKuttaIntegrator';
 export default class UpdatePositionGraph {
   constructor(options) {
     this.readStoredPosition = new TexturePositionNode(/* isDecode = */ true);
-    this.getVelocity = new UserDefinedVelocityFunction();
+    this.udfVelocity = new UserDefinedVelocityFunction();
     this.integratePositions = new RungeKuttaIntegrator();
     this.dropParticles = new RandomParticleDropper();
     this.writeComputedPosition = new TexturePositionNode(/* isDecode = */ false);
@@ -20,8 +20,9 @@ export default class UpdatePositionGraph {
     this.colorMode = options && options.colorMode;
   }
 
-  setCustomVelocity(velocityCode) {
-    this.getVelocity.setNewUpdateCode(velocityCode);
+  
+  setCustomVectorField(velocityCode) {
+    this.udfVelocity.setNewUpdateCode(velocityCode);
   }
 
   getVertexShader () {
@@ -54,7 +55,7 @@ void main() {
       this.readStoredPosition,
       this.dropParticles,
       // this.panZoomDecode,
-      this.getVelocity,
+      this.udfVelocity,
       this.integratePositions, {
         getMainBody() {
           return `
@@ -73,7 +74,7 @@ void main() {
       this.readStoredPosition,
       this.dropParticles,
       // this.panZoomDecode,
-      this.getVelocity,
+      this.udfVelocity,
       this.integratePositions,
       {
         getMainBody() {

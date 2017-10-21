@@ -74,9 +74,12 @@ function initScene(gl) {
     colorMode: appState.getColorMode(),
 
     integrationTimeStep: appState.getIntegrationTimeStep(),
+
     // On each frame the likelihood for a particle to reset its position is this:
     dropProbabilty: appState.getDropProbability(),
-    time: 0
+
+    // current frame number. Reset every time when new shader is compiled
+    frame: 0
   };
 
   var isPaused = false;
@@ -304,7 +307,7 @@ return v;
   globals: `
 import {
   float snoise(vec2 v);
-  float u_time;
+  float frame;
 }
 `
 });

@@ -1,5 +1,7 @@
 import util from '../gl-utils';
-import shaders from '../shaders';
+import UpdatePositionGraph from '../shaderGraph/updatePositionGraph';
+
+const particlePositionShaderCodeBuilder = new UpdatePositionGraph();
 
 export default function updatePositionProgram(ctx) {
   var gl = ctx.gl;
@@ -15,11 +17,13 @@ export default function updatePositionProgram(ctx) {
     commitUpdate
   };
 
-  function updateCode(vfCode) {
-    let update = shaders.unsafeBuildShader(vfCode)
+  function updateCode(vectorField) {
+    particlePositionShaderCodeBuilder.setCustomVectorField(vectorField);
+    let fragment = particlePositionShaderCodeBuilder.getFragmentShader();
+    let vertex = particlePositionShaderCodeBuilder.getVertexShader();
 
-    // TODO: maybe use https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/shaderSource ?
-    let newProgram = util.createProgram(gl, update.vertex, update.fragment);
+    let newProgram = util.createProgram(gl, vertex, fragment);
+
     if (updateProgram) updateProgram.unload();
     updateProgram = newProgram;
   }
@@ -52,7 +56,7 @@ export default function updatePositionProgram(ctx) {
     writeTextures = temp;
   }
 
-  function onUpdateParticles(frameSeed) {
+  function onUpdateParticles() {
     var program = updateProgram;
     gl.useProgram(program.program);
   
@@ -60,9 +64,9 @@ export default function updatePositionProgram(ctx) {
   
     readTextures.assignProgramUniforms(program);
   
-    gl.uniform1f(program.u_rand_seed, frameSeed);
+    gl.uniform1f(program.u_rand_seed, ctx.frameSeed);
     gl.uniform1f(program.u_h, ctx.integrationTimeStep);
-    gl.uniform1f(program.u_time, ctx.time);
+    gl.uniform1f(program.frame, ctx.frame);
 
     var bbox = ctx.bbox;
     gl.uniform2f(program.u_min, bbox.minX, bbox.minY);

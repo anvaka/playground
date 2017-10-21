@@ -15,9 +15,11 @@ export default class DrawParticleGraph {
     var mainBody = [];
 
     if (this.isUniformColor) {
+      // uniform color comes via uniform setting
       variables.push('uniform vec4 u_particle_color;');
       mainBody.push('gl_FragColor = u_particle_color;');
     } else {
+      // Otherwise it comes from a vertex shader
       variables.push('varying vec4 v_particle_color;');
       mainBody.push('gl_FragColor = v_particle_color;');
     }

@@ -43,11 +43,11 @@ export default function drawParticlesProgram(ctx) {
   }
 
   function onUpdateParticles() {
-    ctx.time += 1
-    let frameSeed = Math.random();
+    ctx.frame += 1
+    ctx.frameSeed = Math.random();
   
-    updatePositionProgram.onUpdateParticles(frameSeed);
-    colorProgram.onUpdateParticles(updatePositionProgram, frameSeed);
+    updatePositionProgram.onUpdateParticles();
+    colorProgram.onUpdateParticles(updatePositionProgram);
 
     updatePositionProgram.commitUpdate();
   }
@@ -59,7 +59,7 @@ export default function drawParticlesProgram(ctx) {
   }
 
   function updateCode(vfCode) {
-    ctx.time = 0;
+    ctx.frame = 0;
     currentVectorField = vfCode;
     updatePositionProgram.updateCode(vfCode);
     colorProgram.updateCode(vfCode);
@@ -106,7 +106,7 @@ export default function drawParticlesProgram(ctx) {
     colorProgram.onBeforeDrawParticles(program, updatePositionProgram);
   
     gl.uniform1f(program.u_h, ctx.integrationTimeStep);
-    gl.uniform1f(program.u_time, ctx.time);
+    gl.uniform1f(program.frame, ctx.frame);
     gl.uniform1f(program.u_particles_res, particleStateResolution);
     var bbox = ctx.bbox;
     gl.uniform2f(program.u_min, bbox.minX, bbox.minY);

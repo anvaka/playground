@@ -31,6 +31,8 @@ precision highp float;
 
 uniform sampler2D u_particles_x;
 uniform sampler2D u_particles_y;
+
+// Which coordinate needs to be printed onto the texture
 uniform int u_out_coordinate;
 
 varying vec2 v_tex_pos;
