@@ -472,7 +472,7 @@ import {
     gl.useProgram(program.program);
     util.bindAttribute(gl, ctx.quadBuffer, program.a_pos, 2);
     util.bindTexture(gl, texture, 2);
-    gl.uniform1f(program.u_opacity_border, bboxUpdating ? 0.02 : 0);
+    gl.uniform1f(program.u_opacity_border, 0.02);
     gl.uniform1i(program.u_screen, 2);
     gl.uniform1f(program.u_opacity, opacity);
     gl.uniform3f(program.u_transform, textureTransform.dx, textureTransform.dy, textureTransform.scale);
@@ -495,14 +495,14 @@ import {
   }
 
   function restoreBBox() {
-    let savedBBox = appState.getBBox();
+    var savedBBox = appState.getBBox();
+    var {width, height} = canvasRect;
 
     let sX = Math.PI * Math.E;
     let sY = Math.PI * Math.E;
     let tX = 0;
     let tY = 0;
     if (savedBBox) {
-      var {width, height} = canvasRect;
       sX = savedBBox.maxX - savedBBox.minX;
       sY = savedBBox.maxY - savedBBox.minY;
       // TODO: Not sure if this is really the best way to do it.

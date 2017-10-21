@@ -123,7 +123,7 @@ float rand(const vec2 co) {
 
   // TODO: This can be customized to produce various emitters
   // random_pos is in range from 0..1, we move it to the bounding box:
-  vec2 random_pos = (vec2(rand(seed + 1.9), rand(seed + 8.4)) * (u_max - u_min) + u_min);
+  vec2 random_pos = vec2(rand(seed + 1.9), rand(seed + 8.4)) * (u_max - u_min) + u_min;
   pos = mix(pos, random_pos, drop) ; // todo extend to the box
 `;
   }
