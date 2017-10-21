@@ -15,21 +15,20 @@ import appState from './appState';
 import wglPanZoom from './wglPanZoom';
 import getParsedVectorFieldFunction from './utils/getParsedVectorFieldFunction';
 
+import createScreenProgram from './programs/screenProgram';
 import createDrawParticlesProgram from './programs/drawParticlesProgram';
 
-export default initScene;
-
-const NO_TRANSFORM = {dx: 0, dy: 0, scale: 1};
-
-function initScene(gl) {
+/**
+ * Kicks offs the app rendering. Initialized before even vue is loaded.
+ * 
+ * @param {WebGLRenderingContext} gl 
+ */
+export default function initScene(gl) {
   // Canvas size management
   var canvasRect = { width: 0, height: 0, top: 0, left: 0 };
   setWidthHeight(gl.canvas.width, gl.canvas.height);
   window.addEventListener('resize', onResize, true);
 
-  gl.disable(gl.DEPTH_TEST);
-  gl.disable(gl.STENCIL_TEST); 
-    
   // Video capturing is available in super advanced mode. You'll need to install
   // and start https://github.com/greggman/ffmpegserver.js 
   // Then type in the console: window.startRecord();
@@ -39,28 +38,34 @@ function initScene(gl) {
   var currentCapturer = null;
 
   // TODO: It feels like bounding box management needs to be moved out from here.
-  var boundingBoxUpdated = false;
   var bbox = appState.getBBox() || {};
   var currentPanZoomTransform = {
     scale: 1,
     x: 0,
     y: 0
   };
-  var lastBbox = null;
 
-  // How quickly we should fade previous frame (from 0..1)
-  var fadeOpacity = appState.getFadeout();
   // How many particles do we want?
   var particleCount = appState.getParticleCount();
   // What is the current code?
   var currentVectorFieldCode = appState.getCode();
 
+  gl.disable(gl.DEPTH_TEST);
+  gl.disable(gl.STENCIL_TEST); 
+
   // TODO: Remove local variables in favour of context.
+
+  // Context variable is a way to share rendering state between multiple programs. It has a lot of stuff on it.
+  // I found that it's the easiest way to work in state-full world of WebGL.
+  // Until I discover a better way to write WebGL code.
   var ctx = {
     gl,
     bbox,
+    canvasRect,
 
     framebuffer: gl.createFramebuffer(),
+
+    // This is used only to render full-screen rectangle. Main magic happens inside textures.
     quadBuffer: util.createBuffer(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1])),
 
     colorMode: appState.getColorMode(),
@@ -75,62 +80,22 @@ function initScene(gl) {
 
     // Texture size to store particles' positions
     particleStateResolution: 0,
+
+    // How quickly we should fade previous frame (from 0..1)
+    fadeOpacity: appState.getFadeout()
   };
 
+  // Frame management
+  var lastAnimationFrame;
   var isPaused = false;
 
-  // TODO: Read from query state?
-  let backgroundColor;
-  setBackgroundColor({ r: 19, g: 41, b: 79, a: 1 });
-  
   // screen rendering;
-  var screenTexture, backgroundTexture;
-  var boundBoxTextureTransform = {dx: 0, dy: 0, scale: 1};
-  updateScreenTextures();
-
-  // TODO: Clean up
-  var screenProgram = util.createProgram(gl, `
-  // screen program
-precision highp float;
-
-attribute vec2 a_pos;
-varying vec2 v_tex_pos;
-uniform vec3 u_transform;
-
-void main() {
-    v_tex_pos = a_pos;
-    vec2 pos = a_pos;
-    pos.x = (pos.x - 0.5) / u_transform.z - u_transform.x + 0.5 * u_transform.z;
-    pos.y = pos.y / u_transform.z + u_transform.y;
-    pos = 1.0 - 2.0 * pos;
-    gl_Position = vec4(pos, 0, 1);
-}`, `precision highp float;
-uniform sampler2D u_screen;
-uniform float u_opacity;
-uniform float u_opacity_border;
-
-varying vec2 v_tex_pos;
-
-void main() {
-  vec2 p = 1.0 - v_tex_pos;
-  vec4 color = texture2D(u_screen, p);
-
-  // For some reason particles near border leave trace when we translate the texture
-  // This is my dirty hack to fix it: https://computergraphics.stackexchange.com/questions/5754/fading-particles-and-transition
-  if (p.x < u_opacity_border || p.x > 1. - u_opacity_border || p.y < u_opacity_border || p.y > 1. - u_opacity_border) {
-    gl_FragColor = vec4(0.);
-  } else {
-    // opacity fade out even with a value close to 0.0
-    gl_FragColor = vec4(floor(255.0 * color * u_opacity) / 255.0);
-  }
-}`);
+  var screenProgram = createScreenProgram(ctx);
   var drawProgram = createDrawParticlesProgram(ctx);
 
   loadCodeFromAppState();
 
   // particles
-  var lastAnimationFrame;
-
   initParticles(particleCount);
 
   var api = {
@@ -152,9 +117,6 @@ void main() {
 
     setDropProbability,
     getDropProbability,
-
-    setBackgroundColor,
-    getBackgroundColor,
 
     getIntegrationTimeStep,
     setIntegrationTimeStep,
@@ -214,21 +176,11 @@ void main() {
     nextFrame();
   }
 
-  function setBackgroundColor(newBackground) {
-    backgroundColor = newBackground;
-    let {r, g, b, a} = backgroundColor;
-    document.body.style.background = `rgba(${r}, ${g}, ${b}, ${a})`
-  }
-
-  function getBackgroundColor() {
-    return backgroundColor;
-  }
-
   // Main screen fade out configuration
   function setFadeOutSpeed(x) {
     var f = parseFloat(x);
     if (Number.isFinite(f)) {
-      fadeOpacity = f;
+      ctx.fadeOpacity = f;
       appState.setFadeout(f);
     }
   }
@@ -248,6 +200,7 @@ void main() {
     if (newParticleCount < 1) return;
 
     initParticles(newParticleCount);
+
     particleCount = newParticleCount;
     appState.setParticleCount(newParticleCount);
   }
@@ -311,24 +264,11 @@ void main() {
     }
   }
 
-  function updateScreenTextures() {
-    var {width, height} = canvasRect;
-    var emptyPixels = new Uint8Array(width * height * 4);
-    if (screenTexture) {
-      gl.deleteTexture(screenTexture);
-    }
-    if (backgroundTexture) {
-      gl.deleteTexture(backgroundTexture);
-    }
-
-    screenTexture = util.createTexture(gl, gl.NEAREST, emptyPixels, width, height);
-    backgroundTexture = util.createTexture(gl, gl.NEAREST, emptyPixels, width, height);
-  }
-
   function onResize() {
     setWidthHeight(window.innerWidth, window.innerHeight);
 
-    updateScreenTextures();
+    screenProgram.updateScreenTextures();
+
     updateBoundingBox(currentPanZoomTransform);
   }
 
@@ -378,64 +318,14 @@ void main() {
   }
 
   function drawScreen() {
-    // render to the frame buffer
-    util.bindFramebuffer(gl, ctx.framebuffer, screenTexture);
-    gl.viewport(0, 0, canvasRect.width, canvasRect.height);
-
-    if (boundingBoxUpdated && lastBbox) {
-      // We move the back texture, relative to the bounding box change. This eliminates
-      // particle train artifacts, though, not all of them: https://computergraphics.stackexchange.com/questions/5754/fading-particles-and-transition
-      // If you know how to improve this - please let me know.
-      boundBoxTextureTransform.dx = -(ctx.bbox.minX - lastBbox.minX)/(ctx.bbox.maxX - ctx.bbox.minX);
-      boundBoxTextureTransform.dy = -(ctx.bbox.minY - lastBbox.minY)/(ctx.bbox.maxY - ctx.bbox.minY);
-      boundBoxTextureTransform.scale = (ctx.bbox.maxX - ctx.bbox.minX) / (lastBbox.maxX - lastBbox.minX);
-      drawTexture(backgroundTexture, fadeOpacity, boundBoxTextureTransform);
-    } else {
-      drawTexture(backgroundTexture, fadeOpacity, NO_TRANSFORM)
-    }
+    screenProgram.fadeOutLastFrame()
 
     drawProgram.drawParticles();
 
-    util.bindFramebuffer(gl, null);
-
-    saveLastBbox();
-
-    gl.enable(gl.BLEND); 
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    gl.clearColor(backgroundColor.r/255, backgroundColor.g/255, backgroundColor.b/255, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    drawTexture(screenTexture, 1.0, NO_TRANSFORM);
-    gl.disable(gl.BLEND);
-
-    var temp = backgroundTexture;
-    backgroundTexture = screenTexture;
-    screenTexture = temp;
-    boundingBoxUpdated = false;
+    screenProgram.renderCurrentScreen();
   }
 
-  function drawTexture(texture, opacity, textureTransform) {
-    var program = screenProgram;
-    gl.useProgram(program.program);
-    util.bindAttribute(gl, ctx.quadBuffer, program.a_pos, 2);
-    util.bindTexture(gl, texture, 2);
-
-    gl.uniform1f(program.u_opacity_border, 0.02);
-    gl.uniform1i(program.u_screen, 2);
-    gl.uniform1f(program.u_opacity, opacity);
-    gl.uniform3f(program.u_transform, textureTransform.dx, textureTransform.dy, textureTransform.scale);
-
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-  }
-
-  function saveLastBbox() {
-    if (!lastBbox) lastBbox = {};
-
-    lastBbox.minX = ctx.bbox.minX;
-    lastBbox.minY = ctx.bbox.minY;
-    lastBbox.maxX = ctx.bbox.maxX;
-    lastBbox.maxY = ctx.bbox.maxY;
-  }
-
+  // TODO: Rename to updateParticlesCount()
   function initParticles(numParticles) {
     // we create a square texture where each pixel will hold a particle position encoded as RGBA
     ctx.particleStateResolution = Math.ceil(Math.sqrt(numParticles));
@@ -479,7 +369,8 @@ void main() {
   }
 
   function updateBoundingBox(transform) {
-    boundingBoxUpdated = true;
+    screenProgram.boundingBoxUpdated = true;
+
     currentPanZoomTransform.x = transform.x;
     currentPanZoomTransform.y = transform.y;
     currentPanZoomTransform.scale = transform.scale;

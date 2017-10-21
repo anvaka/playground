@@ -79,7 +79,6 @@ export default {
       particlesCount: 0,
       fadeOutSpeed: 0,
       dropProbability: 0,
-      backgroundColor: '',
       timeStep: 0,
       selectedColorMode: 0
     };
@@ -131,7 +130,6 @@ export default {
     },
 
     updateBackground(rgba) {
-      this.backgroundColor = toColorString(rgba);
       this.scene.setBackgroundColor(rgba);
     },
 
@@ -140,7 +138,6 @@ export default {
       this.particlesCount = scene.getParticlesCount();
       this.fadeOutSpeed = scene.getFadeOutSpeed();
       this.dropProbability = scene.getDropProbability();
-      this.backgroundColor = toColorString(scene.getBackgroundColor());
       this.timeStep = scene.getIntegrationTimeStep();
       this.selectedColorMode = scene.getColorMode();
     },

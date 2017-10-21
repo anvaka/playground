@@ -19,11 +19,11 @@ export default function wglPanZoom(canvas, updateBoundingBoxCallback) {
       var dx = newTransform.x;
       var dy = newTransform.y; 
 
-      if (Math.abs(lastScale - newTransform.scale) < 0.0001 && 
-          Math.abs(dx - lastDx) < transformThreshold &&
-          Math.abs(dy - lastDy) < transformThreshold) {
+      if (Math.abs(lastScale - newTransform.scale) < 0.0001) {
+        if (Math.abs(dx - lastDx) < transformThreshold && Math.abs(dy - lastDy) < transformThreshold) {
           // Wait for larger transform
           return; 
+        }
       }
 
       lastDx = dx;
