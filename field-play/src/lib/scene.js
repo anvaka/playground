@@ -9,12 +9,12 @@
  * Copyright (C) 2017
  */
 import util from './gl-utils';
-import shaders from './shaders';
 import makePanzoom from 'panzoom';
 import bus from './bus';
 import appState from './appState';
+import wglPanZoom from './wglPanZoom';
 
-import createDrawParticlesProgram from './programs/drawParitclesProgram';
+import createDrawParticlesProgram from './programs/drawParticlesProgram';
 
 // TODO: This is naive parser that is being used before
 // main `glsl-parser` is loaded asynchronously. This parser assumes
@@ -36,10 +36,10 @@ require.ensure('glsl-parser', () => {
 })
 
 export default initScene;
+
 const NO_TRANSFORM = {dx: 0, dy: 0, scale: 1};
 
 function initScene(gl) {
-  var bboxUpdating = 0;
   var fadeOpacity = appState.getFadeout();
   var particleCount = appState.getParticleCount();
   var currentCode = appState.getCode();
@@ -56,11 +56,12 @@ function initScene(gl) {
   bus.on('stop-record', stopRecord);
   var currentCapturer = null;
 
+  var boundingBoxUpdated = false;
   var bbox = appState.getBBox() || {};
-  var transform = {
+  var currentPanZoomTransform = {
     scale: 1,
-    dx: 0,
-    dy: 0
+    x: 0,
+    y: 0
   };
   var lastBbox = null;
 
@@ -146,7 +147,6 @@ void main() {
     start: nextFrame,
     stop,
     dispose,
-    transform,
     reset,
 
     setPaused,
@@ -384,7 +384,7 @@ import {
     setWidthHeight(window.innerWidth, window.innerHeight);
 
     updateScreenTextures();
-    updateBBox();
+    updateBoundingBox(currentPanZoomTransform);
   }
 
   function setWidthHeight(w, h) {
@@ -437,7 +437,7 @@ import {
     util.bindFramebuffer(gl, ctx.framebuffer, screenTexture);
     gl.viewport(0, 0, canvasRect.width, canvasRect.height);
 
-    if (bboxUpdating > 0 && lastBbox) {
+    if (boundingBoxUpdated && lastBbox) {
       // We move the back texture, relative to the bounding box change. This eliminates
       // particle train artifacts, though, not all of them: https://computergraphics.stackexchange.com/questions/5754/fading-particles-and-transition
       // If you know how to improve this - please let me know.
@@ -465,7 +465,7 @@ import {
     var temp = backgroundTexture;
     backgroundTexture = screenTexture;
     screenTexture = temp;
-    bboxUpdating = 0;
+    boundingBoxUpdated = false;
   }
 
   function saveLastBbox() {
@@ -500,8 +500,9 @@ import {
   function initPanzoom() {
     let initializedPanzoom = makePanzoom(gl.canvas, {
       zoomSpeed: 0.025,
-      controller: wglPanZoom(gl.canvas, transform, api)
+      controller: wglPanZoom(gl.canvas, updateBoundingBox)
     });
+
     return initializedPanzoom;
   }
 
@@ -532,13 +533,13 @@ import {
     });
   }
 
-  function updateBBox() {
-    bboxUpdating = 1;
+  function updateBoundingBox(transform) {
+    boundingBoxUpdated = true;
+    currentPanZoomTransform.x = transform.x;
+    currentPanZoomTransform.y = transform.y;
+    currentPanZoomTransform.scale = transform.scale;
 
     var {width, height} = canvasRect;
-    var tx = transform.dx;
-    var ty = transform.dy;
-    var s = transform.scale;
 
     var minX = clientX(0);
     var minY = clientY(0);
@@ -557,11 +558,11 @@ import {
     bus.fire('bbox-change', bbox);
 
     function clientX(x) {
-      return (x - tx)/s;
+      return (x - transform.x)/transform.scale;
     }
 
     function clientY(y) {
-      return (y - ty)/s;
+      return (y - transform.y)/transform.scale;
     }
   }
 
@@ -578,37 +579,5 @@ import {
     restoreBBox();
     // a hack to trigger panzoom event
     panzoom.moveBy(0, 0, false);
-  }
-
-  function wglPanZoom(canvas, transform/*, scene */) {
-    var pDx = 0;
-    var pDy = 0;
-    var pScale = 1;
-    var transformThreshold = 2.1;
-
-    return {
-      applyTransform(newT) {
-        var dx = newT.x;
-        var dy = newT.y; 
-
-        if (Math.abs(pScale - newT.scale) < 0.0001) {
-          if (Math.abs(dx - pDx) < transformThreshold &&
-              Math.abs(dy - pDy) < transformThreshold) {
-                return; // Wait for larger transform
-          }
-        }
-        pDx = dx;
-        pDy = dy;
-        pScale = newT.scale;
-        transform.dx = dx;
-        transform.dy = dy;
-        transform.scale = pScale;
-        updateBBox();
-      },
-
-      getOwner() {
-        return canvas
-      }
-    };
   }
 }

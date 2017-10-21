@@ -22,9 +22,9 @@ Did you forget to add a dot symbol? E.g. <span class='hl'>10</span> should be <s
         <div class='col'>Particle color</div>
         <div class='col full'> 
           <select v-model='selectedColorMode' @change='changeColor'>
-              <option value='0'>Uniform</option>
-              <option value='1'>Velocity</option>
-              <option value='2'>Angle</option>
+              <option value='1'>Uniform</option>
+              <option value='2'>Velocity</option>
+              <option value='3'>Angle</option>
 	        </select>
         </div>
       </div>
