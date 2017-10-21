@@ -20,7 +20,7 @@ export default function colorProgram(ctx, colorMode) {
   // TODO: do I want to have this independent, or maybe store it in the context?
   // There is a good amount of overlap with how this shader builder is used
   // in updatePositionProgram.
-  let colorTextureGraph = new UpdatePositionGraph({velocity: true, colorMode});
+  let colorTextureGraph = new UpdatePositionGraph({colorMode});
 
   listenToEvents();
 

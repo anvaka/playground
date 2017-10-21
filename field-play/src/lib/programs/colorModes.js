@@ -1,5 +1,5 @@
 export default {
-  UNIFORM: 0,
-  VELOCITY: 1,
-  ANGLE: 2
+  UNIFORM: 1,
+  VELOCITY: 2,
+  ANGLE: 3
 }

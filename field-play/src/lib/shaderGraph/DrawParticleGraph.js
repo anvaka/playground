@@ -7,7 +7,7 @@ import RungeKuttaIntegrator from './RungeKuttaIntegrator';
 export default class DrawParticleGraph {
   constructor(colorMode) {
     this.colorMode = colorMode;
-    this.isUniformColor = colorMode === ColorModes.UNIFORM;
+    this.isUniformColor = (colorMode === ColorModes.UNIFORM);
   }
 
   getFragmentShader() {
@@ -92,6 +92,7 @@ function textureBasedColor(colorMode, vfCode) {
 
   function getVariables() {
     let defines = '';
+    debugger;
     if (colorMode === ColorModes.ANGLE) {
       defines = `#define M_PI 3.1415926535897932384626433832795`;
     }

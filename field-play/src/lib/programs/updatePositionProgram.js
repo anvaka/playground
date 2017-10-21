@@ -72,7 +72,7 @@ export default function updatePositionProgram(ctx) {
     gl.uniform2f(program.u_min, bbox.minX, bbox.minY);
     gl.uniform2f(program.u_max, bbox.maxX, bbox.maxY);
 
-    gl.uniform1f(program.u_drop_rate, ctx.dropProbabilty);
+    gl.uniform1f(program.u_drop_rate, ctx.dropProbability);
   
     for(var i = 0; i < writeTextures.length; ++i) {
       var writeInfo = writeTextures.get(i);

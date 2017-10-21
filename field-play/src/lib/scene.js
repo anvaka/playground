@@ -36,10 +36,10 @@ require.ensure('glsl-parser', () => {
 })
 
 export default initScene;
+const NO_TRANSFORM = {dx: 0, dy: 0, scale: 1};
 
 function initScene(gl) {
   var bboxUpdating = 0;
-  var textureTransform = {dx: 0, dy: 0, scale: 1};
   var fadeOpacity = appState.getFadeout();
   var particleCount = appState.getParticleCount();
   var currentCode = appState.getCode();
@@ -68,6 +68,7 @@ function initScene(gl) {
   var ctx = {
     gl,
     bbox,
+
     framebuffer: gl.createFramebuffer(),
     quadBuffer: util.createBuffer(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1])),
 
@@ -76,10 +77,13 @@ function initScene(gl) {
     integrationTimeStep: appState.getIntegrationTimeStep(),
 
     // On each frame the likelihood for a particle to reset its position is this:
-    dropProbabilty: appState.getDropProbability(),
+    dropProbability: appState.getDropProbability(),
 
     // current frame number. Reset every time when new shader is compiled
-    frame: 0
+    frame: 0,
+
+    // Texture size to store particles' positions
+    particleStateResolution: 0,
   };
 
   var isPaused = false;
@@ -90,6 +94,7 @@ function initScene(gl) {
   
   // screen rendering;
   var screenTexture, backgroundTexture, tempTexture;
+  var boundBoxTextureTransform = {dx: 0, dy: 0, scale: 1};
   updateScreenTextures();
 
   // TODO: Clean up
@@ -117,11 +122,14 @@ varying vec2 v_tex_pos;
 
 void main() {
   vec2 p = 1.0 - v_tex_pos;
-    vec4 color = texture2D(u_screen , p);
+  vec4 color = texture2D(u_screen, p);
+
+  // For some reason particles near border leave trace when we translate the texture
+  // This is my dirty hack to fix it: https://computergraphics.stackexchange.com/questions/5754/fading-particles-and-transition
   if (p.x < u_opacity_border || p.x > 1. - u_opacity_border || p.y < u_opacity_border || p.y > 1. - u_opacity_border) {
-    gl_FragColor = vec4(floor(255.0 * color * 0.0) / 255.0);
+    gl_FragColor = vec4(0.);
   } else {
-    // a hack to guarantee opacity fade out even with a value close to 1.0
+    // opacity fade out even with a value close to 0.0
     gl_FragColor = vec4(floor(255.0 * color * u_opacity) / 255.0);
   }
 }`);
@@ -260,7 +268,7 @@ void main() {
     if (Number.isFinite(f)) {
       // TODO: Do I need to worry about duplication/clamping?
       appState.setDropProbability(f);
-      ctx.dropProbabilty = f;
+      ctx.dropProbability = f;
     }
   }
 
@@ -430,17 +438,15 @@ import {
     gl.viewport(0, 0, canvasRect.width, canvasRect.height);
 
     if (bboxUpdating > 0 && lastBbox) {
-      let dx = -(ctx.bbox.minX - lastBbox.minX)/(ctx.bbox.maxX - ctx.bbox.minX);
-      let dy = -(ctx.bbox.minY - lastBbox.minY)/(ctx.bbox.maxY - ctx.bbox.minY);
-      let scale = (ctx.bbox.maxX - ctx.bbox.minX) / (lastBbox.maxX - lastBbox.minX);
-      var applied = {
-        dx: dx, 
-        dy: dy, 
-        scale: scale 
-      };
-      drawTexture(backgroundTexture, fadeOpacity, applied);
+      // We move the back texture, relative to the bounding box change. This eliminates
+      // particle train artifacts, though, not all of them: https://computergraphics.stackexchange.com/questions/5754/fading-particles-and-transition
+      // If you know how to improve this - please let me know.
+      boundBoxTextureTransform.dx = -(ctx.bbox.minX - lastBbox.minX)/(ctx.bbox.maxX - ctx.bbox.minX);
+      boundBoxTextureTransform.dy = -(ctx.bbox.minY - lastBbox.minY)/(ctx.bbox.maxY - ctx.bbox.minY);
+      boundBoxTextureTransform.scale = (ctx.bbox.maxX - ctx.bbox.minX) / (lastBbox.maxX - lastBbox.minX);
+      drawTexture(backgroundTexture, fadeOpacity, boundBoxTextureTransform);
     } else {
-      drawTexture(backgroundTexture, fadeOpacity, textureTransform)
+      drawTexture(backgroundTexture, fadeOpacity, NO_TRANSFORM)
     }
 
     drawProgram.drawParticles();
@@ -453,7 +459,7 @@ import {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.clearColor(backgroundColor.r/255, backgroundColor.g/255, backgroundColor.b/255, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    drawTexture(screenTexture, 1.0, textureTransform);
+    drawTexture(screenTexture, 1.0, NO_TRANSFORM);
     gl.disable(gl.BLEND);
 
     var temp = backgroundTexture;
@@ -464,17 +470,19 @@ import {
 
   function saveLastBbox() {
     if (!lastBbox) lastBbox = {};
+
     lastBbox.minX = ctx.bbox.minX;
     lastBbox.minY = ctx.bbox.minY;
     lastBbox.maxX = ctx.bbox.maxX;
     lastBbox.maxY = ctx.bbox.maxY;
   }
 
-  function drawTexture(texture, opacity, textureTransform){
+  function drawTexture(texture, opacity, textureTransform) {
     var program = screenProgram;
     gl.useProgram(program.program);
     util.bindAttribute(gl, ctx.quadBuffer, program.a_pos, 2);
     util.bindTexture(gl, texture, 2);
+
     gl.uniform1f(program.u_opacity_border, 0.02);
     gl.uniform1i(program.u_screen, 2);
     gl.uniform1f(program.u_opacity, opacity);

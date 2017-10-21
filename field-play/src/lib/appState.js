@@ -1,5 +1,6 @@
 import queryState from 'query-state';
 import bus from './bus';
+import ColorModes from './programs/colorModes';
 
 var qs = queryState();
 var currentState = qs.get();
@@ -17,7 +18,7 @@ var defaults = {
   dropProbability: 0.009,
   particleCount: 10000,
   fadeout: .998,
-  colorMode: 0, // Uniform
+  colorMode: ColorModes.UNIFORM
 }
 
 let settingsPanel = {

@@ -16,11 +16,9 @@ export default class UpdatePositionGraph {
     this.panZoomDecode = new PanzoomTransform({decode: true});
     this.panZoomEncode = new PanzoomTransform({decode: false});
 
-    this.colorOnly = options && options.velocity;
     this.colorMode = options && options.colorMode;
   }
 
-  
   setCustomVectorField(velocityCode) {
     this.udfVelocity.setNewUpdateCode(velocityCode);
   }
@@ -41,7 +39,8 @@ void main() {
 
   getFragmentShader() {
     let nodes;
-    if (this.colorOnly) {
+    debugger;
+    if (this.colorMode) {
       nodes = this.getColorShaderNodes(this.colorMode);
     } else {
       nodes = this.getUpdatePositionShaderNodes();
@@ -54,7 +53,6 @@ void main() {
     return [
       this.readStoredPosition,
       this.dropParticles,
-      // this.panZoomDecode,
       this.udfVelocity,
       this.integratePositions, {
         getMainBody() {
@@ -63,7 +61,6 @@ void main() {
   `
         }
       },
-      // this.panZoomEncode,
       this.writeComputedPosition
     ]
   }
@@ -73,7 +70,6 @@ void main() {
     return [
       this.readStoredPosition,
       this.dropParticles,
-      // this.panZoomDecode,
       this.udfVelocity,
       this.integratePositions,
       {
@@ -125,7 +121,7 @@ float rand(const vec2 co) {
   // TODO: This can be customized to produce various emitters
   // random_pos is in range from 0..1, we move it to the bounding box:
   vec2 random_pos = vec2(rand(seed + 1.9), rand(seed + 8.4)) * (u_max - u_min) + u_min;
-  pos = mix(pos, random_pos, drop) ; // todo extend to the box
+  pos = mix(pos, random_pos, drop);
 `;
   }
 
