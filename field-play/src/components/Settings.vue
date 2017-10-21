@@ -5,7 +5,7 @@
       <pre>
 <span class='comment'>// p.x and p.y are current coordinates
 // v.x and v.y is a velocity at point p</span>
-function velocity(<span class='type'>vec2</span> p) {
+function velocity(<span class='type' >vec2</span> p) {
   <span class='type'>vec2</span> v = <span class='type'>vec2</span>(0., 0.);</pre>
       <textarea ref='codeInput' v-model='vectorField' type='text' rows='3' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
 <pre>  return v;
@@ -54,16 +54,19 @@ Did you forget to add a dot symbol? E.g. <span class='hl'>10</span> should be <s
 import bus from '../lib/bus';
 import appState from '../lib/appState';
 import autosize from 'autosize';
+import generateFunction from '../lib/generate-equation';
 
 export default {
   name: 'Settings',
   props: ['scene'],
   mounted() {
     bus.on('scene-ready', this.onSceneReady, this);
+    bus.on('generate-field', this.generateNewFunction, this);
     autosize(this.$refs.codeInput);
   },
   beforeDestroy() {
     bus.off('scene-ready', this.onSceneReady, this);
+    bus.ooff('generate-field', this.generateNewFunction, this);
     autosize.destroy(this.$refs.codeInput);
   },
   data() {
@@ -110,6 +113,9 @@ export default {
     }
   },
   methods: {
+    generateNewFunction() {
+      this.vectorField = generateFunction();
+    },
     reset() {
       // we reset the scene, and let the a.href = # do the rest.
       this.scene.reset();

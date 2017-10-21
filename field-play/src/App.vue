@@ -53,7 +53,9 @@ export default {
 }
 </script>
 
-<style>
+<style lang='styl'>
+@import './components/shared.styl';
+
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -68,6 +70,7 @@ export default {
   padding: 12px;
 }
 a {
+  color: primary-text;
   text-decoration: none;
 }
 a.highlighted {
