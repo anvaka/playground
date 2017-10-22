@@ -18,8 +18,11 @@ var glslParser = {
 
 var vectorFieldGlobals = `
 import {
+
+  float PI;
   float snoise(vec2 v);
   float frame;
+  vec2 rotate(vec2 p,float a);
 }`;
 
 /**

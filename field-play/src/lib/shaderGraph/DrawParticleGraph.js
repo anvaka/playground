@@ -92,9 +92,6 @@ function textureBasedColor(colorMode, vfCode) {
 
   function getVariables() {
     let defines = '';
-    if (colorMode === ColorModes.ANGLE) {
-      defines = `#define M_PI 3.1415926535897932384626433832795`;
-    }
 
     return `
 uniform sampler2D u_colors;
@@ -127,7 +124,7 @@ ${integrate.getFunctions()}
   float speed = (length(velocity) - u_velocity_range[0])/(u_velocity_range[1] - u_velocity_range[0]);
   v_particle_color = vec4(hsv2rgb(vec3(0.05 + (1. - speed) * 0.5, 0.9, 1.)), 1.0);
 ` : `
-  float speed = (atan(velocity.y, velocity.x) + M_PI)/(2.0 * M_PI);
+  float speed = (atan(velocity.y, velocity.x) + PI)/(2.0 * PI);
   v_particle_color = vec4(hsv2rgb(vec3(speed, 0.9, 1.)), 1.0);
 `;
 
