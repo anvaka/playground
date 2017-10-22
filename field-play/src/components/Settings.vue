@@ -90,9 +90,12 @@ export default {
       if (this.pendingSetCode) {
         clearTimeout(this.pendingSetCode);
       }
+
       this.pendingSetCode = setTimeout(() => {
         this.sendVectorField();
         this.pendingSetCode = 0;
+
+        autosize.update(this.$refs.codeInput);
       }, 300);
     },
     particlesCount(newValue, oldValue) {
