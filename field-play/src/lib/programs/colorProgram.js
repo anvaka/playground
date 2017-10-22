@@ -26,7 +26,7 @@ export default function colorProgram(ctx, colorMode) {
 
   return {
     updateCode,
-    onUpdateParticles,
+    updateParticlesPositions,
     onParticleInit,
     bindColorTextures,
     requestSpeedUpdate,
@@ -84,7 +84,7 @@ export default function colorProgram(ctx, colorMode) {
     requestSpeedUpdate();
   }
 
-  function onUpdateParticles(updatePositionProgram) {
+  function updateParticlesPositions(updatePositionProgram) {
     if (!speedNeedsUpdate) return;
     // We only update speed to know min/max range of velocity.
     util.bindFramebuffer(gl, ctx.framebuffer, velocityTexture);

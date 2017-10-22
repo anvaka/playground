@@ -329,7 +329,7 @@ export default function initScene(gl) {
     screenProgram.fadeOutLastFrame()
     drawProgram.drawParticles();
     screenProgram.renderCurrentScreen();
-    drawProgram.onUpdateParticles();
+    drawProgram.updateParticlesPositions();
   }
 
   // TODO: Rename to updateParticlesCount()

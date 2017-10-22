@@ -5,7 +5,7 @@ export default function uniformColor(ctx) {
 
   return {
     updateCode: noop,
-    onUpdateParticles: noop,
+    updateParticlesPositions: noop,
     onParticleInit: noop,
     bindColorTextures,
     requestSpeedUpdate: noop,

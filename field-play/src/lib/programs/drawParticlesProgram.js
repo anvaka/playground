@@ -22,7 +22,7 @@ export default function drawParticlesProgram(ctx) {
 
   return {
     onParticleInit,
-    onUpdateParticles,
+    updateParticlesPositions,
     drawParticles,
     updateCode,
     updateColorMode
@@ -42,12 +42,12 @@ export default function drawParticlesProgram(ctx) {
     drawProgram = util.createProgram(gl, drawGraph.getVertexShader(currentVectorField), drawGraph.getFragmentShader());
   }
 
-  function onUpdateParticles() {
+  function updateParticlesPositions() {
     ctx.frame += 1
     ctx.frameSeed = Math.random();
   
-    updatePositionProgram.onUpdateParticles();
-    colorProgram.onUpdateParticles(updatePositionProgram);
+    updatePositionProgram.updateParticlesPositions();
+    colorProgram.updateParticlesPositions(updatePositionProgram);
 
     updatePositionProgram.commitUpdate();
   }

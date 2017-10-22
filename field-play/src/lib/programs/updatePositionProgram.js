@@ -11,7 +11,7 @@ export default function updatePositionProgram(ctx) {
 
   return {
     updateCode,
-    onUpdateParticles,
+    updateParticlesPositions,
     onParticleInit,
     bindPositionTexturesToProgram,
     commitUpdate
@@ -57,7 +57,7 @@ export default function updatePositionProgram(ctx) {
     writeTextures = temp;
   }
 
-  function onUpdateParticles() {
+  function updateParticlesPositions() {
     var program = updateProgram;
     gl.useProgram(program.program);
   
@@ -75,6 +75,7 @@ export default function updatePositionProgram(ctx) {
 
     gl.uniform1f(program.u_drop_rate, ctx.dropProbability);
   
+    // Draw each coordinate individually
     for(var i = 0; i < writeTextures.length; ++i) {
       var writeInfo = writeTextures.get(i);
       gl.uniform1i(program.u_out_coordinate, i);
