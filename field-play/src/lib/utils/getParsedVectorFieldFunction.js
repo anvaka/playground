@@ -23,6 +23,7 @@ import {
   float snoise(vec2 v);
   float frame;
   vec2 rotate(vec2 p,float a);
+  float audio(float index);
 }`;
 
 /**

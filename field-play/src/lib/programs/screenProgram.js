@@ -64,6 +64,9 @@ export default function makeScreenProgram(ctx) {
     screenTexture = temp;
 
     api.boundingBoxUpdated = false;
+    if (window.audioTexture) {
+      drawTexture(window.audioTexture, 1.0, NO_TRANSFORM);
+    }
   }
 
   function updateScreenTextures() {

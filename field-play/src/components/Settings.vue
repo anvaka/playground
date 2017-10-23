@@ -55,6 +55,8 @@ import bus from '../lib/bus';
 import appState from '../lib/appState';
 import autosize from 'autosize';
 import generateFunction from '../lib/generate-equation';
+// import SoundLoader from '../lib/sound/soundLoader';
+// import SoundCloudAudioSource from '../lib/sound/audioSource';
 
 export default {
   name: 'Settings',
@@ -63,6 +65,15 @@ export default {
     bus.on('scene-ready', this.onSceneReady, this);
     bus.on('generate-field', this.generateNewFunction, this);
     autosize(this.$refs.codeInput);
+    // var playerEl = document.getElementById('player');
+    // var soundLoader = new SoundLoader(playerEl);
+    // //soundLoader.loadStream('https://soundcloud.com/tomday/tom-day-talisman-1').then(e => {
+    // soundLoader.loadStream('https://soundcloud.com/shockone/polygon-shockone-vip').then(e => {
+    //   var audioSource = new SoundCloudAudioSource(playerEl);
+    //   audioSource.playStream(soundLoader.streamUrl());
+    // }).catch(err => {
+    //   console.log(err);
+    // })
   },
   beforeDestroy() {
     bus.off('scene-ready', this.onSceneReady, this);

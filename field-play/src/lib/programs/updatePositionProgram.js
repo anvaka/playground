@@ -57,13 +57,18 @@ export default function updatePositionProgram(ctx) {
     writeTextures = temp;
   }
 
-  function updateParticlesPositions() {
+  function updateParticlesPositions(audio) {
     var program = updateProgram;
     gl.useProgram(program.program);
   
     util.bindAttribute(gl, ctx.quadBuffer, program.a_pos, 2);
   
-    readTextures.assignProgramUniforms(program);
+    if (audio) {
+      util.bindTexture(gl, audio, 5);
+      gl.uniform1i(program['u_audio'], 5);
+    }
+
+    readTextures.bindTextures(gl, program);
   
     gl.uniform1f(program.u_rand_seed, ctx.frameSeed);
     gl.uniform1f(program.u_h, ctx.integrationTimeStep);
