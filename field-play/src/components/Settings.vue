@@ -28,6 +28,16 @@ Did you forget to add a dot symbol? E.g. <span class='hl'>10</span> should be <s
 	        </select>
         </div>
       </div>
+      <div class='row' v-if='soundAvailable'>
+        <div class='col'>SoundCloud track</div>
+        <div class='col full'>
+          <input type='text' v-model='soundCloudLink'>
+          <a href='#' @click.prevent='loadSound'>load</a>
+        </div>
+      </div>
+      <div class='row' v-if='soundAvailable'>
+        <audio ref='player' controls='' autoplay='' preload autobuffer></audio>
+      </div>
       <div class='row'>
         <div class='col'>Particles count </div>
         <div class='col full'><input type='text' v-model='particlesCount' @keyup.enter='onSubmit'></div>
@@ -55,8 +65,12 @@ import bus from '../lib/bus';
 import appState from '../lib/appState';
 import autosize from 'autosize';
 import generateFunction from '../lib/generate-equation';
-// import SoundLoader from '../lib/sound/soundLoader';
-// import SoundCloudAudioSource from '../lib/sound/audioSource';
+import SoundLoader from '../lib/sound/soundLoader';
+import SoundCloudAudioSource from '../lib/sound/audioSource';
+import config from '../lib/config';
+
+// Temporary disable this until API is finished.
+const soundAvailable = config.isAudioEnabled;
 
 export default {
   name: 'Settings',
@@ -65,25 +79,19 @@ export default {
     bus.on('scene-ready', this.onSceneReady, this);
     bus.on('generate-field', this.generateNewFunction, this);
     autosize(this.$refs.codeInput);
-    // var playerEl = document.getElementById('player');
-    // var soundLoader = new SoundLoader(playerEl);
-    // //soundLoader.loadStream('https://soundcloud.com/tomday/tom-day-talisman-1').then(e => {
-    // soundLoader.loadStream('https://soundcloud.com/shockone/polygon-shockone-vip').then(e => {
-    //   var audioSource = new SoundCloudAudioSource(playerEl);
-    //   audioSource.playStream(soundLoader.streamUrl());
-    // }).catch(err => {
-    //   console.log(err);
-    // })
+
+    if (soundAvailable) this.soundLoader = new SoundLoader(this.$refs.player);
   },
   beforeDestroy() {
     bus.off('scene-ready', this.onSceneReady, this);
-    bus.ooff('generate-field', this.generateNewFunction, this);
+    bus.off('generate-field', this.generateNewFunction, this);
     autosize.destroy(this.$refs.codeInput);
   },
   data() {
     return {
       error: '',
       errorDetail: '',
+      soundCloudLink: 'https://soundcloud.com/mrfijiwiji/yours-truly',
       isFloatError: false,
       vectorField: '',
       settingsPanel: appState.settingsPanel,
@@ -91,7 +99,8 @@ export default {
       fadeOutSpeed: 0,
       dropProbability: 0,
       timeStep: 0,
-      selectedColorMode: 0
+      selectedColorMode: 0,
+      soundAvailable: soundAvailable
     };
   },
   watch: {
@@ -126,6 +135,16 @@ export default {
     }
   },
   methods: {
+    loadSound() {
+      if (!this.soundLoader) return;
+      this.soundLoader.loadStream(this.soundCloudLink).then(e => {
+        if (!this.audioSource) {
+          this.audioSource = new SoundCloudAudioSource(this.$refs.player); 
+        }
+        this.audioSource.playStream(this.soundLoader.streamUrl())
+      });
+      // TODO: Error handling
+    },
     generateNewFunction() {
       this.vectorField = generateFunction();
     },
@@ -289,6 +308,9 @@ form.block {
 .row {
   display: flex;
   flex-direction: row;
+}
+audio {
+  width: 100%;
 }
 
 .col {

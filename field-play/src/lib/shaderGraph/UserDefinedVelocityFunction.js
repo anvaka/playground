@@ -30,6 +30,7 @@ vec2 rotate(vec2 p,float a) {
 	return cos(a)*p+sin(a)*vec2(p.y,-p.x);
 }
 
+// TODO: This will change. Don't use it.
 float audio(float index) {
   float rgbI = floor(index/4.);
   vec2 txPos = vec2(fract(rgbI / 8.), floor(rgbI / 8.) / 8.);

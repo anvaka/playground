@@ -1,10 +1,11 @@
 import util from '../gl-utils';
-import bus from '../bus';
 import DrawParticleGraph from '../shaderGraph/DrawParticleGraph';
 import defaultColorProgram from './colorProgram';
 import uniformColorProgram from './uniformColorProgram';
 import makeUpdatePositionProgram from './updatePositionProgram';
 import { encodeFloatRGBA } from '../utils/floatPacking.js';
+import config from '../config';
+import createAudioProgram from './audioProgram';
 
 import ColorMode from './colorModes';
 
@@ -17,9 +18,7 @@ export default function drawParticlesProgram(ctx) {
   var currentVectorField = '';
   var currentColorMode = ctx.colorMode;
   var updatePositionProgram = makeUpdatePositionProgram(ctx);
-  var audioBuffer, audioTexture;
-  var audioDirty = false;
-  bus.on('audio', updateAudioBuffer);
+  var audioProgram;
 
   var drawProgram, colorProgram;
   initPrograms();
@@ -30,11 +29,6 @@ export default function drawParticlesProgram(ctx) {
     drawParticles,
     updateCode,
     updateColorMode
-  }
-
-  function updateAudioBuffer(newBuffer) {
-    audioBuffer = newBuffer;
-    audioDirty = true;
   }
 
   function initPrograms() {
@@ -49,36 +43,25 @@ export default function drawParticlesProgram(ctx) {
     const drawGraph = new DrawParticleGraph(currentColorMode);
     if (drawProgram) drawProgram.unload();
     drawProgram = util.createProgram(gl, drawGraph.getVertexShader(currentVectorField), drawGraph.getFragmentShader());
+
+    if (config.isAudioEnabled) {
+      if (audioProgram) audioProgram.dispose();
+      audioProgram = createAudioProgram(ctx);
+    }
   }
 
   function updateParticlesPositions() {
     ctx.frame += 1
     ctx.frameSeed = Math.random();
 
-    if (audioDirty) {
-      updateAudioTexture();
-      audioDirty = false;
-    }
+    if (audioProgram) audioProgram.updateTextures();
 
-    updatePositionProgram.updateParticlesPositions(audioTexture);
+    updatePositionProgram.updateParticlesPositions();
     colorProgram.updateParticlesPositions(updatePositionProgram);
 
     updatePositionProgram.commitUpdate();
   }
 
-  function updateAudioTexture() {
-    var width = 8, height = 8;
-    if (!audioTexture) {
-      audioTexture = util.createTexture(gl, gl.NEAREST, audioBuffer, width, height);
-     //window.audioTexture = audioTexture;
-    } 
-    else {
-
-      gl.bindTexture(gl.TEXTURE_2D, audioTexture);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, audioBuffer);
-      gl.bindTexture(gl.TEXTURE_2D, null);
-    }
-  }
 
   function updateColorMode(colorMode) {
     currentColorMode = colorMode;

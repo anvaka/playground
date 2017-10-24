@@ -57,14 +57,15 @@ export default function updatePositionProgram(ctx) {
     writeTextures = temp;
   }
 
-  function updateParticlesPositions(audio) {
+  function updateParticlesPositions() {
     var program = updateProgram;
     gl.useProgram(program.program);
   
     util.bindAttribute(gl, ctx.quadBuffer, program.a_pos, 2);
   
-    if (audio) {
-      util.bindTexture(gl, audio, 5);
+    if (ctx.audioTexture) {
+      // TODO: I need to manage inputs better. E.g. color program might also need it.
+      util.bindTexture(gl, ctx.audioTexture, 5);
       gl.uniform1i(program['u_audio'], 5);
     }
 

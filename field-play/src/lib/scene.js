@@ -90,7 +90,12 @@ export default function initScene(gl) {
     particleStateResolution: 0,
 
     // How quickly we should fade previous frame (from 0..1)
-    fadeOpacity: appState.getFadeout()
+    fadeOpacity: appState.getFadeout(),
+
+    // Ignore this one for a moment. Yes, the app support web audio API,
+    // but it's rudimentary, so... shhh! it's a secret.
+    // Don't shhh on me!
+    audioTexture: null
   };
 
   // Frame management
