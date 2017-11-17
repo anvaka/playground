@@ -13,7 +13,9 @@ function getEgoGraph(inFileName) {
     return Promise.reject('in file name is required');
   }
 
-  return forEach(inFileName, row => graph.addNode(row.id))
+  return forEach(inFileName, row => {
+    if (row.id) graph.addNode(row.id)
+  })
     .then(addSecondLevel)
     .then(() => graph);
 
@@ -22,7 +24,7 @@ function getEgoGraph(inFileName) {
       let followers = row.followers && row.followers.accumulator;
       if (followers) {
         const toId = row.id;
-        followers.forEach(f => {
+        if (toId) followers.forEach(f => {
           if (graph.getNode(f)) {
             graph.addLink(f, toId)
           }
