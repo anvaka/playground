@@ -1,11 +1,11 @@
-const readline = require('readline');
-const fs = require('fs');
+var readline = require('readline');
+var fs = require('fs');
 
 module.exports = forEachLine;
 
 function forEachLine(input, callback) {
   return new Promise((resolve, reject) => {
-    const rl = readline.createInterface({
+    var rl = readline.createInterface({
       input: fs.createReadStream(input)
     });
 
