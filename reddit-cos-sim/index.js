@@ -53,18 +53,22 @@ forEachLine(fileName, (line) => {
   normalize();
 
   var scores = new Map();
-  var srcSub = 'videos';
+  var srcSub = 'badmathematics'
   forEachUserWhoPostedTo(srcSub, user => {
-    var currentSubScore = user.subs.get(srcSub);
+    // var currentSubScore = user.subs.get(srcSub);
+    // currentSubScore *=  usersWhoPostedToSubreddit.get(srcSub).size;
 
     forEachSubredditByUser(user, (subScore, subName) => {
       var score = scores.get(subName) || 0;
-      score += subScore * currentSubScore;
+      score += 1; // subScore * currentSubScore * usersWhoPostedToSubreddit.get(subName).size;
       scores.set(subName, score);
     });
   });
+  // var srcSubScore = getSubNormalScore(srcSub);
+  var srcSubScore = usersWhoPostedToSubreddit.get(srcSub).size;
 
-  normalizeScores(scores);
+  // normalizeScores(scores, srcSubScore);
+  jaccardSimilarity(scores, srcSubScore);
 
   console.log(JSON.stringify(Array.from(scores).sort((x, y) => y[1] - x[1]).slice(0, 100)));
   console.log('Done!')
@@ -76,10 +80,17 @@ function normalize() {
   });
 }
 
-function normalizeScores(scores) {
+function jaccardSimilarity(scores, postedToA) {
+  scores.forEach((sharedPosts, subName) => {
+    var postedToB = usersWhoPostedToSubreddit.get(subName).size;
+    scores.set(subName, sharedPosts/(postedToA + postedToB - sharedPosts));
+  });
+}
+
+function normalizeScores(scores, otherScore) {
   // TODO: This probably needs to be multiplied by src subreddit score
   scores.forEach((score, subName) => {
-    scores.set(subName, score/getSubNormalScore(subName));
+    scores.set(subName, score/(otherScore * getSubNormalScore(subName)));
   });
 }
 
