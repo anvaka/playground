@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "build": "node index.js"
+  },
+  "dependencies": {
+    "miserables": "^1.0.0",
+    "ngraph.forcelayout": "^0.2.1",
+    "ngraph.graph": "0.0.14",
+    "pureimage": "^0.1.3"
+  }
+}
