@@ -5,6 +5,7 @@
   "dependencies": {
     "miserables": "^1.0.0",
     "ngraph.forcelayout": "^0.2.1",
+    "ngraph.generators": "0.0.17",
     "ngraph.graph": "0.0.14",
     "pureimage": "^0.1.3"
   }
