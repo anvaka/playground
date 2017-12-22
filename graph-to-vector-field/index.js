@@ -6,10 +6,10 @@ var LAYOUT_ITERATIONS = 1500;
 var OUT_IMAGE_NAME = path.join('out', (new Date()).toISOString().replace(/:/g, '.'));
 
 var generators = require('ngraph.generators');
-// var graph = generators.grid(10, 10);
-// var graph = require('miserables');
-var graph = require('ngraph.graph')();
-graph.addLink(42, 31);
+var graph = generators.grid(10, 10);
+//var graph = require('miserables');
+// var graph = require('ngraph.graph')();
+// graph.addLink(42, 31);
 var layout = layoutGraph(graph);
 
 saveLayoutToVectorField(layout);
@@ -101,13 +101,17 @@ function accumulateVelocities(rect, layout) {
   var maxY = Number.NEGATIVE_INFINITY;
   var minY = Number.POSITIVE_INFINITY;
 
+  var meanX = 0, meanY = 0;
+  var x, y;
   // collect velocities and bounds
-  for (var x = 0; x < width; ++x) {
+  for (x = 0; x < width; ++x) {
     var yVelocity = [];
     velocity.push(yVelocity);
-    for (var y = 0; y < height; ++y) {
+    for (y = 0; y < height; ++y) {
       var v = getVelocity(x + rect.x1, y + rect.y1, layout);
       yVelocity[y] = v;
+      meanX += v.x;
+      meanY += v.y;
       // todo: I need to figure out how to make fields more uniform. Maybe use median?
       // or standardization instead of normalization? Then I could clamp anything beyond 2 sigma.
       // if (v.x < -0.5) v.x = -0.5; if (v.x > 0.5) v.x = 0.5;
@@ -118,23 +122,42 @@ function accumulateVelocities(rect, layout) {
       if (v.y < minY) minY = v.y;
     }
   }
+  var n = height * width
+  meanX /= n;
+  meanY /= n;
 
-  console.log(`X: [${minX}, ${maxX}], Y: [${minY}, ${maxY}]`);
-  // normalize entries:
+  var sigmaX = 0, sigmaY = 0;
+  for (x = 0; x < width; ++x) {
+    for (y = 0; y < height; ++y) {
+      var v = velocity[x][y];
+      sigmaX += (v.x - meanX) * (v.x - meanX);
+      sigmaY += (v.y - meanX) * (v.y - meanX);
+    }
+  }
+  sigmaX = Math.sqrt(sigmaX/(n - 1));
+  sigmaY = Math.sqrt(sigmaY/(n - 1));
+
+  console.log(`X: [${minX}, ${maxX}], Y: [${minY}, ${maxY}]; Mean: (${meanX}, ${meanY}); Sigma: (${sigmaX}, ${sigmaY})`);
+
+  // clamp entries to 3 sigma:
+  minX = meanX - 3 * sigmaX; maxX = meanX + 3 * sigmaX;
+  minY = meanY - 3 * sigmaY; maxY = meanY + 3 * sigmaY;
+  console.log(`Transform min/max: X: [${minX}, ${maxX}], Y: [${minY}, ${maxY}];`);
+
   velocity.forEach(column => {
     column.forEach(pixelVelocity => {
-      pixelVelocity.x = 255 * (pixelVelocity.x - minX)/(maxX - minX);
-      pixelVelocity.y = 255 * (pixelVelocity.y - minY)/(maxY - minY);
+      pixelVelocity.x = clamp(255 * (pixelVelocity.x - minX)/(maxX - minX), 0, 255);
+      pixelVelocity.y = clamp(255 * (pixelVelocity.y - minY)/(maxY - minY), 0, 255);
     });
   })
 
-  // for (var x = 0; x < width; ++x) {
-  //   for (var y = 0; y < height; ++y) {
-  //     if (x < width/2) velocity[x][y] = {x: 0.5, y: 0};
-  //     else velocity[x][y] = {x: 0.5, y: 1};
-  //   }
-  // }
   return velocity;
+}
+
+function clamp(x, min, max) {
+  if (x < min) return min;
+  if (x > max) return max;
+  return x;
 }
 
 function getVelocity(x, y, layout) {
