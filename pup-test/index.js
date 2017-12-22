@@ -1,8 +1,8 @@
 var puppeteer = require('puppeteer');
 var browser, page;
 var viewPort = {
-  width: 500,
-  height: 500
+  width: 1024,
+  height: 768
 }
 puppeteer.launch({args: ['--headless']})
   .then(saveBrowser)
@@ -19,13 +19,12 @@ function runPageScript(p) {
 }
 
 function navigateToPage(){
-  page.goto('https://anvaka.github.io/fieldplay').then(() => {
+  page.goto('https://anvaka.github.io/fieldplay?ui=0').then(() => {
     // Let fieldplay play for a while
-    setTimeout(takeScreenShotAndClose, 1000);
+    setTimeout(takeScreenShotAndClose, 20000);
   })
 }
 
 function takeScreenShotAndClose() {
-  page.$('#scene')
-    .then(canvas => canvas.screenshot({path: 'example.png'}).then(() => browser.close()));
+  page.screenshot({path: 'example.png'}).then(() => browser.close());
 }
