@@ -2,12 +2,14 @@ var fs = require('fs');
 var path = require('path');
 var PImage = require('pureimage');
 
-var LAYOUT_ITERATIONS = 500;
+var LAYOUT_ITERATIONS = 1500;
 var OUT_IMAGE_NAME = path.join('out', (new Date()).toISOString().replace(/:/g, '.'));
 
- var graph = require('miserables');
-// var graph = require('ngraph.graph')();
-// graph.addLink(42, 31);
+var generators = require('ngraph.generators');
+// var graph = generators.grid(10, 10);
+// var graph = require('miserables');
+var graph = require('ngraph.graph')();
+graph.addLink(42, 31);
 var layout = layoutGraph(graph);
 
 saveLayoutToVectorField(layout);
@@ -30,8 +32,21 @@ function saveLayoutToVectorField(layout) {
   var rect = layout.getGraphRect();
   rect.x2 += 10; rect.y2 += 10;
   rect.x1 -= 10; rect.y1 -= 10;
+
+  rect.x1 = Math.floor(rect.x1);
+  rect.y1 = Math.floor(rect.y1);
+  rect.x2 = Math.ceil(rect.x2);
+  rect.y2 = Math.ceil(rect.y2);
   var width = rect.x2 - rect.x1;
   var height = rect.y2 - rect.y1;
+  if (width > height) {
+    rect.y2 = rect.y1 + width;
+    height = width;
+  } else {
+    rect.x2 = rect.x1 + height;
+    width = height;
+  }
+
   var scene = PImage.make(width, height);
 
   console.log('rendering vector field...')
@@ -93,6 +108,10 @@ function accumulateVelocities(rect, layout) {
     for (var y = 0; y < height; ++y) {
       var v = getVelocity(x + rect.x1, y + rect.y1, layout);
       yVelocity[y] = v;
+      // todo: I need to figure out how to make fields more uniform. Maybe use median?
+      // or standardization instead of normalization? Then I could clamp anything beyond 2 sigma.
+      // if (v.x < -0.5) v.x = -0.5; if (v.x > 0.5) v.x = 0.5;
+      // if (v.y > 0.5) v.y = 0.5; if (v.y < -0.5) v.y = -0.5;
       if (v.x > maxX) maxX = v.x;
       if (v.x < minX) minX = v.x;
       if (v.y > maxY) maxY = v.y;
@@ -100,11 +119,12 @@ function accumulateVelocities(rect, layout) {
     }
   }
 
+  console.log(`X: [${minX}, ${maxX}], Y: [${minY}, ${maxY}]`);
   // normalize entries:
   velocity.forEach(column => {
     column.forEach(pixelVelocity => {
-      pixelVelocity.x = (pixelVelocity.x - minX)/(maxX - minX);
-      pixelVelocity.y = (pixelVelocity.y - minY)/(maxY - minY);
+      pixelVelocity.x = 255 * (pixelVelocity.x - minX)/(maxX - minX);
+      pixelVelocity.y = 255 * (pixelVelocity.y - minY)/(maxY - minY);
     });
   })
 
@@ -127,7 +147,7 @@ function getVelocity(x, y, layout) {
     var d = getLength(px, py);
     if (d < 1e-5) return;
 
-    v.x += (py)/(d*d);
+    v.x += -(py)/(d*d);
     v.y += (px)/(d*d);
   });
 
@@ -142,6 +162,16 @@ function encodeVelocity(normalizedVelocity) {
   var x = Math.floor(normalizedVelocity.x * 0xffff);
   var y = Math.floor(normalizedVelocity.y * 0xffff);
 
+  // with this encoding could be restored by something like
+  //  vec4 c = texture2D(input0, vec2(p.x, 1. - p.y));
+  //  v.x = c.g - 0.5;
+  //  v.y = 0.5 - c.b;
+  return {
+    g: normalizedVelocity.x,
+    r: 0,
+    b: normalizedVelocity.y,
+    a: 255
+  }
   return {
     r: (x & 0xFF00) >> 8, 
     g: (x & 0x00FF),
