@@ -5,12 +5,31 @@ var PImage = require('pureimage');
 var LAYOUT_ITERATIONS = 1500;
 var OUT_IMAGE_NAME = path.join('out', (new Date()).toISOString().replace(/:/g, '.'));
 
+// If set to true, then original graph layout is saved into .layout.png file
+var saveOriginalLayout = true;
+
+// If set, then all four color channels are used for vector field encoding.
+// Otherwise only g and b channels are set.
+var USE_RGBA_ENCODING = true;
+
 var generators = require('ngraph.generators');
-var graph = generators.grid(10, 10);
-//var graph = require('miserables');
+// var graph = generators.grid(10, 10);
+var graph = require('miserables');
 // var graph = require('ngraph.graph')();
 // graph.addLink(42, 31);
 var layout = layoutGraph(graph);
+
+function rbf(r) {
+  // return 1./(1 + r * r);
+  return Math.exp(-r * r * 0.01);
+}
+
+function vectorField(x, y) {
+  return {
+    x: -y,
+    y: x
+  }
+}
 
 saveLayoutToVectorField(layout);
 
@@ -83,12 +102,14 @@ function saveLayoutImage(rect, layout) {
     ctx.fillRect(body.pos.x - rect.x1 - 5, body.pos.y - rect.y1 - 5, 10, 10);
   });
 
-  var fileName = OUT_IMAGE_NAME + '.layout.png';
-  PImage.encodePNGToStream(scene, fs.createWriteStream(fileName)).then(()=> {
-      console.log('wrote out the png file to ' + fileName);
-  }).catch(e => {
-    console.log('failed to save layout image', e);
-  });
+  if (saveOriginalLayout) {
+    var fileName = OUT_IMAGE_NAME + '.layout.png';
+    PImage.encodePNGToStream(scene, fs.createWriteStream(fileName)).then(()=> {
+        console.log('wrote out the png file to ' + fileName);
+    }).catch(e => {
+      console.log('failed to save layout image', e);
+    });
+  }
 }
 
 function accumulateVelocities(rect, layout) {
@@ -112,10 +133,7 @@ function accumulateVelocities(rect, layout) {
       yVelocity[y] = v;
       meanX += v.x;
       meanY += v.y;
-      // todo: I need to figure out how to make fields more uniform. Maybe use median?
-      // or standardization instead of normalization? Then I could clamp anything beyond 2 sigma.
-      // if (v.x < -0.5) v.x = -0.5; if (v.x > 0.5) v.x = 0.5;
-      // if (v.y > 0.5) v.y = 0.5; if (v.y < -0.5) v.y = -0.5;
+
       if (v.x > maxX) maxX = v.x;
       if (v.x < minX) minX = v.x;
       if (v.y > maxY) maxY = v.y;
@@ -134,6 +152,7 @@ function accumulateVelocities(rect, layout) {
       sigmaY += (v.y - meanX) * (v.y - meanX);
     }
   }
+
   sigmaX = Math.sqrt(sigmaX/(n - 1));
   sigmaY = Math.sqrt(sigmaY/(n - 1));
 
@@ -146,8 +165,8 @@ function accumulateVelocities(rect, layout) {
 
   velocity.forEach(column => {
     column.forEach(pixelVelocity => {
-      pixelVelocity.x = clamp(255 * (pixelVelocity.x - minX)/(maxX - minX), 0, 255);
-      pixelVelocity.y = clamp(255 * (pixelVelocity.y - minY)/(maxY - minY), 0, 255);
+      pixelVelocity.x = clamp(255 * 255 * (pixelVelocity.x - minX)/(maxX - minX), 0, 255 * 255);
+      pixelVelocity.y = clamp(255 * 255 * (pixelVelocity.y - minY)/(maxY - minY), 0, 255 * 255);
     });
   })
 
@@ -170,8 +189,9 @@ function getVelocity(x, y, layout) {
     var d = getLength(px, py);
     if (d < 1e-5) return;
 
-    v.x += -(py)/(d*d);
-    v.y += (px)/(d*d);
+    var vf = vectorField(px, py);
+    v.x += vf.x * rbf(d);
+    v.y += vf.y * rbf(d);
   });
 
   return v;
@@ -182,23 +202,30 @@ function getLength(x, y) {
 }
 
 function encodeVelocity(normalizedVelocity) {
-  var x = Math.floor(normalizedVelocity.x * 0xffff);
-  var y = Math.floor(normalizedVelocity.y * 0xffff);
 
-  // with this encoding could be restored by something like
-  //  vec4 c = texture2D(input0, vec2(p.x, 1. - p.y));
-  //  v.x = c.g - 0.5;
-  //  v.y = 0.5 - c.b;
-  return {
-    g: normalizedVelocity.x,
-    r: 0,
-    b: normalizedVelocity.y,
-    a: 255
-  }
-  return {
-    r: (x & 0xFF00) >> 8, 
-    g: (x & 0x00FF),
-    b: (y & 0xFF00) >> 8,
-    a: (y & 0x00FF),
+  if (USE_RGBA_ENCODING) {
+    // And this is how you decode 4byte encoding:
+    // vec4 c = texture2D(input0, vec2(p.x, 1. - p.y));
+    // v.x = (c.r + c.g/255.) - 0.5;
+    // v.y = 0.5 - (c.b + c.a/255.);
+    var x = Math.floor(normalizedVelocity.x);
+    var y = Math.floor(normalizedVelocity.y);
+    return {
+      r: (x & 0xFF00) >> 8, 
+      g: (x & 0x00FF),
+      b: (y & 0xFF00) >> 8,
+      a: (y & 0x00FF),
+    }
+  } else {
+    // with this encoding could be restored by something like
+    //  vec4 c = texture2D(input0, vec2(p.x, 1. - p.y));
+    //  v.x = c.g - 0.5;
+    //  v.y = 0.5 - c.b;
+    return {
+      g: normalizedVelocity.x,
+      r: 0,
+      b: normalizedVelocity.y,
+      a: 255
+    }
   }
 }
