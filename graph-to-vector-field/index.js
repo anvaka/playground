@@ -12,6 +12,9 @@ var OUT_IMAGE_NAME = path.join('out', (new Date()).toISOString().replace(/:/g, '
 // of vector field values, and clamp any value beyond this many sigmas.
 var SIGMA = 3;
 
+// How many pixels shall we reserve for texture edges padding?
+var PADDING = 42;
+
 // If set to true, then original graph layout is saved into .layout.png file
 var saveOriginalLayout = true;
 
@@ -25,23 +28,36 @@ var USE_RGBA_ENCODING = true;
 // Bytes per velocity component, translated into possible value range
 var colorRange = (1 << (USE_RGBA_ENCODING ? 2 : 1) * 8) - 1;
 
-// var generators = require('ngraph.generators');
-// var graph = generators.grid(10, 10);
-var graph = require('miserables');
+var generators = require('ngraph.generators');
+var graph = generators.balancedBinTree(5);
+//var graph = require('miserables');
 
 // var graph = require('ngraph.graph')();
 // graph.addLink(42, 31);
 
-function rbf(r) {
-  // return 1./(1 + r * r);
-  return Math.exp(-r * r * 0.01);
-}
 
+/**
+ * Given a pair of points - return a vector associated with the pair. 
+ * I.e. this is the vector field definition
+ * 
+ * @param {Number} x 
+ * @param {Number} y 
+ */
 function vectorField(x, y) {
   return {
-    x: x,
-    y: y
+    x: y,
+    y:-x * Math.abs(x)
   }
+}
+
+/**
+ * Your RBF function to mix vector fields. See https://en.wikipedia.org/wiki/Radial_basis_function
+ * 
+ * @param {Number} r - vector's length
+ */
+function rbf(r) {
+  // return 1./(1 + r * r);
+  return Math.exp(-r * r * 0.001);
 }
 
 // Main code:
@@ -79,8 +95,8 @@ function saveLayoutToVectorFieldTexture(layout) {
   var rect = layout.getGraphRect();
 
   // small padding for aesthetics:
-  rect.x2 += 10; rect.y2 += 10;
-  rect.x1 -= 10; rect.y1 -= 10;
+  rect.x2 += PADDING; rect.y2 += PADDING;
+  rect.x1 -= PADDING; rect.y1 -= PADDING;
 
   // Make texture with equal height/width:
   rect.x1 = Math.floor(rect.x1);
