@@ -28,9 +28,12 @@ var USE_RGBA_ENCODING = true;
 // Bytes per velocity component, translated into possible value range
 var colorRange = (1 << (USE_RGBA_ENCODING ? 2 : 1) * 8) - 1;
 
-var generators = require('ngraph.generators');
-var graph = generators.balancedBinTree(5);
-//var graph = require('miserables');
+var graph = require('miserables');
+
+// Alternative graphs:
+
+// var generators = require('ngraph.generators');
+// var graph = generators.grid(10, 10);
 
 // var graph = require('ngraph.graph')();
 // graph.addLink(42, 31);
@@ -45,8 +48,8 @@ var graph = generators.balancedBinTree(5);
  */
 function vectorField(x, y) {
   return {
-    x: y,
-    y:-x * Math.abs(x)
+    x: -y,
+    y: x
   }
 }
 
@@ -57,7 +60,7 @@ function vectorField(x, y) {
  */
 function rbf(r) {
   // return 1./(1 + r * r);
-  return Math.exp(-r * r * 0.001);
+  return Math.exp(-r * r * 0.01);
 }
 
 // Main code:
@@ -134,8 +137,9 @@ function saveLayoutToVectorFieldTexture(layout) {
   }
 
   // Texture is ready. Dump it onto the file system:
-  PImage.encodePNGToStream(scene, fs.createWriteStream(OUT_IMAGE_NAME + '.png')).then(()=> {
-      console.log('wrote out the png file to ' + OUT_IMAGE_NAME);
+  var textureName = OUT_IMAGE_NAME + '.png';
+  PImage.encodePNGToStream(scene, fs.createWriteStream(textureName)).then(()=> {
+      console.log('wrote out the png file to ' + textureName);
       if (saveOriginalLayout) {
         // This is just for debugging purposes.
         return saveGraphLayoutIntoImage(rect, layout);
