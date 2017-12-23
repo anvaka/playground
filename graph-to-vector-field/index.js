@@ -2,22 +2,35 @@ var fs = require('fs');
 var path = require('path');
 var PImage = require('pureimage');
 
+// How many iterations of force based layout shall we perform?
 var LAYOUT_ITERATIONS = 1500;
+
+// Base file name
 var OUT_IMAGE_NAME = path.join('out', (new Date()).toISOString().replace(/:/g, '.'));
+
+// To prevent vector field from influence of outliers, we compute standard deviation
+// of vector field values, and clamp any value beyond this many sigmas.
+var SIGMA = 3;
 
 // If set to true, then original graph layout is saved into .layout.png file
 var saveOriginalLayout = true;
+
+// If set to true, then layout image will also include Voronoi decomposition.
+var saveVoronoi = false;
 
 // If set, then all four color channels are used for vector field encoding.
 // Otherwise only g and b channels are set.
 var USE_RGBA_ENCODING = true;
 
-var generators = require('ngraph.generators');
+// Bytes per velocity component, translated into possible value range
+var colorRange = (1 << (USE_RGBA_ENCODING ? 2 : 1) * 8) - 1;
+
+// var generators = require('ngraph.generators');
 // var graph = generators.grid(10, 10);
 var graph = require('miserables');
+
 // var graph = require('ngraph.graph')();
 // graph.addLink(42, 31);
-var layout = layoutGraph(graph);
 
 function rbf(r) {
   // return 1./(1 + r * r);
@@ -26,13 +39,22 @@ function rbf(r) {
 
 function vectorField(x, y) {
   return {
-    x: -y,
-    y: x
+    x: x,
+    y: y
   }
 }
 
-saveLayoutToVectorField(layout);
+// Main code:
+var layout = layoutGraph(graph);
+saveLayoutToVectorFieldTexture(layout);
 
+// That's it. Main code is over. Anything beyond is just an implementation.
+
+/**
+ * Performs graph layout.
+ * 
+ * @param {ngraph.graph} graph - graph to be laid out
+ */
 function layoutGraph(graph) {
   console.log('running layout...')
 
@@ -47,11 +69,20 @@ function layoutGraph(graph) {
   return layout;
 }
 
-function saveLayoutToVectorField(layout) {
+/**
+ * Now that we have layout - use it to build composite vector field, and store
+ * the final vector field into a texture.
+ * 
+ * @param {Object} layout - see https://github.com/anvaka/ngraph.forcelayout
+ */
+function saveLayoutToVectorFieldTexture(layout) {
   var rect = layout.getGraphRect();
+
+  // small padding for aesthetics:
   rect.x2 += 10; rect.y2 += 10;
   rect.x1 -= 10; rect.y1 -= 10;
 
+  // Make texture with equal height/width:
   rect.x1 = Math.floor(rect.x1);
   rect.y1 = Math.floor(rect.y1);
   rect.x2 = Math.ceil(rect.x2);
@@ -66,14 +97,18 @@ function saveLayoutToVectorField(layout) {
     width = height;
   }
 
-  var scene = PImage.make(width, height);
+  // Now it's time to go over every single pixel and build a matrix of
+  // velocities. I don['t really care about performance here, as this is
+  // just an experiment.
+  console.log('Collecting velocities...')
+  var velocities = accumulateVelocities(rect, layout);
 
-  console.log('rendering vector field...')
+  // Now that we have all velocities, let's encode them into texture:
+  console.log('Rendering vector field...')
+  var scene = PImage.make(width, height);
 
   var ctx = scene.getContext('2d');
   var imgData = ctx.getImageData();
-
-  var velocities = accumulateVelocities(rect, layout);
 
   for (var x = 0; x < width; ++x) {
     for (var y = 0; y < height; ++y) {
@@ -82,34 +117,85 @@ function saveLayoutToVectorField(layout) {
     }
   }
 
-
+  // Texture is ready. Dump it onto the file system:
   PImage.encodePNGToStream(scene, fs.createWriteStream(OUT_IMAGE_NAME + '.png')).then(()=> {
       console.log('wrote out the png file to ' + OUT_IMAGE_NAME);
-      return saveLayoutImage(rect, layout);
+      if (saveOriginalLayout) {
+        // This is just for debugging purposes.
+        return saveGraphLayoutIntoImage(rect, layout);
+      }
   }).catch(e => {
       console.log('there was an error writing', e);
   });
 }
 
-function saveLayoutImage(rect, layout) {
+function saveGraphLayoutIntoImage(rect, layout) {
   var width = rect.x2 - rect.x1;
   var height = rect.y2 - rect.y1;
   var scene = PImage.make(width, height);
   var ctx = scene.getContext('2d');
-  ctx.fillStyle = 'rgba(0, 200, 230, 1)';
 
+  clearRectangle(ctx, width, height);
+  ctx.fillStyle = 'rgba(0, 200, 230, 1)';
   layout.forEachBody(body => {
     ctx.fillRect(body.pos.x - rect.x1 - 5, body.pos.y - rect.y1 - 5, 10, 10);
   });
 
-  if (saveOriginalLayout) {
-    var fileName = OUT_IMAGE_NAME + '.layout.png';
-    PImage.encodePNGToStream(scene, fs.createWriteStream(fileName)).then(()=> {
-        console.log('wrote out the png file to ' + fileName);
-    }).catch(e => {
-      console.log('failed to save layout image', e);
+  saveVoronoiIfNeeded(ctx, layout, rect);
+
+  var fileName = OUT_IMAGE_NAME + '.layout.png';
+  PImage.encodePNGToStream(scene, fs.createWriteStream(fileName)).then(()=> {
+      console.log('wrote out the png file to ' + fileName);
+  }).catch(e => {
+    console.log('failed to save layout image', e);
+  });
+}
+
+function clearRectangle(ctx, width, height) {
+  var imgData = ctx.getImageData();
+  for (var x = 0; x < width; ++x) {
+    for (var y = 0; y < height; ++y) {
+      imgData.setPixelRGBA_i(x, y, 0, 0, 0, 0);
+    }
+  } 
+}
+
+function saveVoronoiIfNeeded(ctx, layout, rect) {
+  if (!saveVoronoi) return;
+
+  var width = rect.x2 - rect.x1;
+  var height = rect.y2 - rect.y1;
+
+  var voronoi = require('d3-voronoi').voronoi;
+  var points = []
+  layout.forEachBody(body => {
+    points.push({
+      x: body.pos.x - rect.x1,
+      y: body.pos.y - rect.y1,
     });
-  }
+  });
+
+  var v = voronoi()
+    .x(r => r.x)
+    .y(r => r.y)
+    .extent([[0, 0], [width, height]]);
+  var computed = v(points)
+
+  ctx.strokeStyle = 'rgba(255, 255, 255, 1)';
+  computed.polygons().forEach(polygon => {
+    polygon.forEach((point, idx, arr) => {
+      if (idx === 0) {
+        ctx.beginPath()
+        ctx.moveTo(point[0], point[1]);
+        return;
+      }
+      ctx.lineTo(point[0], point[1])
+
+      if (idx === arr.length - 1) {
+        ctx.stroke();
+      }
+    })
+  });
 }
 
 function accumulateVelocities(rect, layout) {
@@ -158,15 +244,15 @@ function accumulateVelocities(rect, layout) {
 
   console.log(`X: [${minX}, ${maxX}], Y: [${minY}, ${maxY}]; Mean: (${meanX}, ${meanY}); Sigma: (${sigmaX}, ${sigmaY})`);
 
-  // clamp entries to 3 sigma:
-  minX = meanX - 3 * sigmaX; maxX = meanX + 3 * sigmaX;
-  minY = meanY - 3 * sigmaY; maxY = meanY + 3 * sigmaY;
+  // clamp entries:
+  minX = meanX - SIGMA * sigmaX; maxX = meanX + SIGMA * sigmaX;
+  minY = meanY - SIGMA * sigmaY; maxY = meanY + SIGMA * sigmaY;
   console.log(`Transform min/max: X: [${minX}, ${maxX}], Y: [${minY}, ${maxY}];`);
 
   velocity.forEach(column => {
     column.forEach(pixelVelocity => {
-      pixelVelocity.x = clamp(255 * 255 * (pixelVelocity.x - minX)/(maxX - minX), 0, 255 * 255);
-      pixelVelocity.y = clamp(255 * 255 * (pixelVelocity.y - minY)/(maxY - minY), 0, 255 * 255);
+      pixelVelocity.x = clamp(colorRange * (pixelVelocity.x - minX)/(maxX - minX), 0, colorRange);
+      pixelVelocity.y = clamp(colorRange * (pixelVelocity.y - minY)/(maxY - minY), 0, colorRange);
     });
   })
 
@@ -201,15 +287,15 @@ function getLength(x, y) {
   return Math.sqrt(x * x + y * y);
 }
 
-function encodeVelocity(normalizedVelocity) {
+function encodeVelocity(velocity) {
 
   if (USE_RGBA_ENCODING) {
-    // And this is how you decode 4byte encoding:
+    // This is how you decode 4-byte encoding:
     // vec4 c = texture2D(input0, vec2(p.x, 1. - p.y));
     // v.x = (c.r + c.g/255.) - 0.5;
     // v.y = 0.5 - (c.b + c.a/255.);
-    var x = Math.floor(normalizedVelocity.x);
-    var y = Math.floor(normalizedVelocity.y);
+    var x = Math.floor(velocity.x);
+    var y = Math.floor(velocity.y);
     return {
       r: (x & 0xFF00) >> 8, 
       g: (x & 0x00FF),
@@ -217,14 +303,15 @@ function encodeVelocity(normalizedVelocity) {
       a: (y & 0x00FF),
     }
   } else {
-    // with this encoding could be restored by something like
+    // This encoding could be restored by something like:
+
     //  vec4 c = texture2D(input0, vec2(p.x, 1. - p.y));
     //  v.x = c.g - 0.5;
     //  v.y = 0.5 - c.b;
     return {
-      g: normalizedVelocity.x,
+      g: velocity.x,
       r: 0,
-      b: normalizedVelocity.y,
+      b: velocity.y,
       a: 255
     }
   }

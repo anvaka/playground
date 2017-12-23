@@ -3,6 +3,7 @@
     "build": "node index.js"
   },
   "dependencies": {
+    "d3-voronoi": "^1.1.2",
     "miserables": "^1.0.0",
     "ngraph.forcelayout": "^0.2.1",
     "ngraph.generators": "0.0.17",
