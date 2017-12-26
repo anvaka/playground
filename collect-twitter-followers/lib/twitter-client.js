@@ -18,7 +18,15 @@ const MAX_FOLLOWERS = 50000;
 module.exports = {
   getAllFollowersByScreenName,
   getAllFollowersByUserId,
+  getTimeline,
   convertIdsToUser
+}
+
+function getTimeline(request) {
+    return T.get('statuses/user_timeline', request).then(resp => {
+      const { data } = resp;
+      return data;
+    })
 }
 
 function convertIdsToUser(ids, visitor) {
