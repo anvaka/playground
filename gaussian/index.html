@@ -16,7 +16,7 @@ var canvas = document.createElement('canvas');
 var ctx;
 var moveFrames = 120;
 var maxColorsInBin = 0;
-var currentFrame = 0;
+var currentStage = 1;
 var width, height;
 
 img.crossOrigin = 'Anonymous';
@@ -60,7 +60,7 @@ function start() {
       pixelInfo.points.push({
         x: x,
         y: y,
-        timeSpan: Math.round(Math.random() * 120),
+        timeSpan: Math.round(Math.random() * 120) + 30,
         frame: 0,
         destX: 0,
         destY: 0,
@@ -74,7 +74,9 @@ function start() {
   computeDestinations();
 
   document.body.appendChild(canvas);
-  requestAnimationFrame(move);
+  setTimeout(() => {
+    requestAnimationFrame(move);
+  }, 1000);
 }
 
 function interploate(t) {
@@ -87,7 +89,7 @@ function lerp(a, b, t) {
 
 function move() {
   var hasMore = false;
-  ctx.fillStyle = '#092650';
+  ctx.fillStyle = '#676767';
   ctx.fillRect(0, 0, width, height);
   var imgData = ctx.getImageData(0, 0, width, height);
   var pixels = imgData.data;
@@ -96,10 +98,14 @@ function move() {
   colorSet.forEach((pixelInfo, colorKey) => {
     pixelInfo.points.forEach((point) => {
       var t = interploate(point.frame/point.timeSpan);
-      if (point.frame < point.timeSpan) {
+      if (currentStage === 1 && point.frame < point.timeSpan) {
         point.frame += 1;
         hasMore = true;
-      } 
+      }  else if (currentStage === 2 & point.frame > 0) {
+        point.frame -= 1;
+        hasMore = true;
+        if (point.frame > 0) point.frame -= 1;
+      }
 
       var x = Math.round(lerp(point.x, point.destX, t));
       var y = Math.round(lerp(point.y, point.destY, t));
@@ -115,14 +121,18 @@ function move() {
 
   ctx.putImageData(imgData, 0, 0);
   
-  if (hasMore) {
+  if (!hasMore) {
+    currentStage = 3 - currentStage;
+    hasMore = true;
+    setTimeout(() => requestAnimationFrame(move), 1000);
+  } else {
     requestAnimationFrame(move);
   }
 }
 
 function computeDestinations() {
   var binCount = 256;
-  var binWidth = Math.ceil(width/binCount);
+  var binWidth = (width/binCount);
 
   colorSet.forEach((pixelInfo, colorKey) => {
     var pointBin = colorKey * binCount;
@@ -131,7 +141,7 @@ function computeDestinations() {
 
     pixelInfo.points.forEach((point, idx) => {
       point.destX = xOffset;
-      point.destY = height - height * idx /maxColorsInBin;
+      point.destY = height * 0.85 - 0.80 * height * idx /maxColorsInBin;
     })
   });
 }
