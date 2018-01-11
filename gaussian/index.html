@@ -4,6 +4,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width">
+  <meta name=Description content="Gaussian distribution...">
+  <meta name=keywords content="joke, animation, Gauss">
+  <meta name=author content="Andrei Kashcha">
   <title>Gaussian Distribution</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/1.3.5/chroma.min.js"></script>
 </head>
@@ -11,16 +14,26 @@
 
 <script id="jsbin-javascript">
 var colorSet = new Map(); // maps color value to pixel info
-var img=document.createElement('img');
+var colorKeyName = 'hsl.l';
+
+var img = document.createElement('img');
 var canvas = document.createElement('canvas');
 var ctx;
-var moveFrames = 120;
-var maxColorsInBin = 0;
+
+// I use state to determine whether it should expand or collapse
 var currentStage = 1;
+
+// This is to properly scale the height of the chart
+var maxColorsInBin = 0;
+
+// Width and height of the working image
 var width, height;
 
+// Make sure image has CORS setup, otherwise we will not have access
+// to it
 img.crossOrigin = 'Anonymous';
 
+// When image is loaded - run the code.
 img.onload = function() {
   width = canvas.width = img.width;
   height = canvas.height = img.height;
@@ -28,18 +41,19 @@ img.onload = function() {
   start();
 }
 
+// Trigger image load. The image was originally taken from
+// https://en.wikipedia.org/wiki/Carl_Friedrich_Gauss
 img.src = 'https://i.imgur.com/iyf2bRA.png';
 
 function start() {
   ctx = canvas.getContext('2d');
-  ctx.drawImage(img,0,0);
 
-  var width = canvas.width;
-  var height = canvas.height;
+  ctx.drawImage(img, 0, 0);
+
   var imgData = ctx.getImageData(0, 0, width, height);
-  
   var pixels = imgData.data;
 
+  // We are going to collect pixel values first
   for (var x = 0; x < width; ++x) {
     for (var y = 0; y < height; ++y) {
       var i = (x + y * width) * 4;
@@ -48,7 +62,7 @@ function start() {
       var b = pixels[i + 2];
       var a = pixels[i + 3];
       var color = chroma(r, g, b) 
-      var colorKey = color.get('hsl.l')
+      var colorKey = color.get(colorKeyName)
       var pixelInfo = colorSet.get(colorKey);
       if (!pixelInfo) {
         pixelInfo = {
@@ -58,60 +72,92 @@ function start() {
       }
 
       pixelInfo.points.push({
+        // original position of a pixel
         x: x,
         y: y,
+
+        // Randomly assign animation lifespan
         timeSpan: Math.round(Math.random() * 120) + 30,
+
+        // current frame number, used for interpolation
         frame: 0,
+
+        // Where this pixel should go? Will be computed by computeDestinations()
         destX: 0,
         destY: 0,
+
+        // Current color
         color: color
       });
 
+      // We need to know the highest point of a chart, to properly scale it inside
+      // available canvas
       if (pixelInfo.points.length > maxColorsInBin) maxColorsInBin = pixelInfo.points.length;
     }
   }
 
+  // Now that we have all pixels collected, lets figure out.
   computeDestinations();
 
   document.body.appendChild(canvas);
-  setTimeout(() => {
-    requestAnimationFrame(move);
-  }, 1000);
+
+  // I did a small pause before initial animation, to set the stage
+  setTimeout(() => { requestAnimationFrame(move); }, 1000);
 }
 
 function interploate(t) {
-  return t<.5 ? 2*t*t : -1+(4-2*t)*t;
+  // This is easeInOutQuad function. See more here https://gist.github.com/gre/1650294
+  return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
 }
 
 function lerp(a, b, t) {
+  // simple linear interploation.
   return b * t + a * (1 - t);
 }
 
+// Main animation loop
 function move() {
+  // When all pixels cannot be moved anymore, we switch the mode.
   var hasMore = false;
+
+  // Need to pick neutral background color to not blend with original colors
   ctx.fillStyle = '#676767';
   ctx.fillRect(0, 0, width, height);
+
   var imgData = ctx.getImageData(0, 0, width, height);
   var pixels = imgData.data;
 
-
+  // Okay, let's move the pixels
   colorSet.forEach((pixelInfo, colorKey) => {
     pixelInfo.points.forEach((point) => {
+      // given current frame, use easing to figure out offset of a pixel
       var t = interploate(point.frame/point.timeSpan);
-      if (currentStage === 1 && point.frame < point.timeSpan) {
+
+      if ((currentStage === 1 || currentStage === 3) && point.frame < point.timeSpan) {
         point.frame += 1;
+        // if at least one point was moved - keep trying on the next frame
         hasMore = true;
       }  else if (currentStage === 2 & point.frame > 0) {
         point.frame -= 1;
         hasMore = true;
+        // I want to restore portrait faster than collapsing it:
         if (point.frame > 0) point.frame -= 1;
       }
 
-      var x = Math.round(lerp(point.x, point.destX, t));
-      var y = Math.round(lerp(point.y, point.destY, t));
-      var pixelIndex = (x + y * width) * 4;
-      var color = point.color.rgba();
+      var x, y;
+      if (currentStage === 3) {
+        x = Math.round(lerp(point.destX, point.gdestX, t));
+        y = Math.round(lerp(point.destY, point.gdestY, t));
+      } else {
+        x = Math.round(lerp(point.x, point.destX, t));
+        y = Math.round(lerp(point.y, point.destY, t));
+      }
 
+      // Color has four components, thus multplying by 4
+      var pixelIndex = (x + y * width) * 4;
+
+
+      var color = currentStage === 3 ? point.gcolor.rgba() : point.color.rgba();
       pixels[pixelIndex + 0] = color[0];
       pixels[pixelIndex + 1] = color[1];
       pixels[pixelIndex + 2] = color[2];
@@ -119,11 +165,24 @@ function move() {
     });
   });
 
+  // All pixels updated on this frame, lets draw them
   ctx.putImageData(imgData, 0, 0);
   
   if (!hasMore) {
-    currentStage = 3 - currentStage;
+    if (currentStage === 1) {
+      colorSet.forEach((pixelInfo, colorKey) => {
+        pixelInfo.points.forEach((point) => {
+          point.frame = 0;
+        })
+      });
+      currentStage = 3;
+    } else if (currentStage === 2){
+      currentStage = 1;
+    } else if (currentStage === 3) {
+      currentStage = 2;
+    }
     hasMore = true;
+    // Start next loop after a little pause
     setTimeout(() => requestAnimationFrame(move), 1000);
   } else {
     requestAnimationFrame(move);
@@ -131,19 +190,89 @@ function move() {
 }
 
 function computeDestinations() {
+  // This function computes where the pixel should go, based on its value
   var binCount = 256;
   var binWidth = (width/binCount);
+  var bins = [];
+  var totalPixels = 0;
 
   colorSet.forEach((pixelInfo, colorKey) => {
     var pointBin = colorKey * binCount;
     var xOffset = pointBin * binWidth;
+    var binId = Math.round(pointBin);
+    if (bins[binId] === undefined) {
+      bins[binId] = [];
+    }
+
+    var bin = bins[binId];
     var yOffset = 1/maxColorsInBin;
 
     pixelInfo.points.forEach((point, idx) => {
       point.destX = xOffset;
+      // I add small coefficients to make a padding.
       point.destY = height * 0.85 - 0.80 * height * idx /maxColorsInBin;
-    })
+      totalPixels+= 1;
+
+      bin.push(point)
+    });
   });
+
+  var currentBin = 0, currentBinIndex = 0;
+  var gausBin = 0;
+  var minX = 0, maxX = 7, maxHeight = 0;
+  var median = (minX + maxX) /2;
+  var d = 1;
+
+  while (gausBin < width) {
+    var gx = minX + (maxX - minX) * gausBin/width;
+    var gy = natural(gx, median, d);
+    if (gy > maxHeight) maxHeight = gy;
+    gausBin += 1;
+  }
+
+var takenPixels = 0;
+  gausBin = 0;
+  var coeff = 0.3585;
+  while (gausBin < width) {
+    var gx = minX + (maxX - minX) * gausBin/width;
+    var gy = natural(gx, median, d);
+    var maxPixelsInBin = height * gy /maxHeight;
+    var cy = 0;
+    while (cy < maxPixelsInBin/coeff) {
+      var point = pickNextPoint();
+      takenPixels +=1;
+      movePointTo(point, gausBin, cy*coeff, gx/(maxX - minX));
+      cy += 1;
+    }
+    gausBin += 1;
+  }
+  console.log(currentBin, currentBinIndex, 'done. taken pixels ', takenPixels, ' out of ', totalPixels, takenPixels / totalPixels)
+
+  function movePointTo(pt, x, y, keyV) {
+    if (!pt) return;
+    pt.gdestX = x;
+    pt.gdestY = height * 0.85 - 0.80 * y;
+    point.gcolor = point.color.set(colorKeyName, keyV);
+  }
+
+  function pickNextPoint() {
+    while (currentBin < binCount) {
+      var bin = bins[currentBin];
+      var pt = bin && bin[currentBinIndex];
+      if (pt) {
+        currentBinIndex += 1;
+        return pt;
+      }
+
+      currentBin += 1;
+      currentBinIndex = 0;
+    }
+  }
+}
+
+function natural(x, m, d) {
+  var dx = x - m;
+  return Math.exp(- dx * dx / (d * d * 2))/Math.sqrt(Math.PI * d * d);
 }
 </script>
 </body>
