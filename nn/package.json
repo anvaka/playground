@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "ngraph.random": "^0.1.0"
+  }
+}
