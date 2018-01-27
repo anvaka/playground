@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta property="og:title" content="Fractal editor" />
+    <meta property="og:image" content="https://github.com/anvaka/pixchart/wiki/images/pixchart_icon.png" />
+    <meta property="og:description" content="Edit fractals online. Uses webgl." />
+    <meta charset="utf-8">
+    <meta http-equiv='content-type' content='text/html; charset=utf-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no'>
+    <meta name="Description" content="This website allows you to edit fractals in your browser">
+    <meta name="keywords" content="fractal, webgl" />
+    <meta name="author" content="Andrei Kashcha">
+    <title>Fractal Editor</title>
+    <style>
+.zodiac { background: #13294F}
+.bunting { background: #24354E}
+.east-bay { background: #475770}
+.carolina-blue { background: #9ABDDE}
+.hippie-blue { background: #51A2A7}
+.wood-bark { background: #312321}
+.white { background: #ffffff}
+.white-lilac { background: #E7E7E7}
+.dark-gray { background: #a8a8a8}
+.charcoal { background: #404040}
+.black20 { background: #212121}
+.black { background: #000000}
+.casablanka { background: #F2AD52}
+.pink { background: #E99E9B}
+.flamingo { background: #EC694D}
+.maroon { background: #BF3558}
+.rose-ebony { background: #664948}
+.espresso { background: #642B1C}
+.drop-help { display: none;}
+body { padding: 0; margin: 0; }
+    </style>
+  </head>
+  <body class='black'>
+    <canvas id='scene'></canvas>
+    <div id="app"></div>
+<script>
+  (function (){
+    // need to set theme here to avoid flickering of the color
+    var themeName = window.location.search.match(/\?.*theme=([^&]+)/);
+    if (!themeName) return; // default theme is fine
+    // Need to consult with the whitelist, to avoid "css injection"
+    var knownThemes = new Set(["zodiac","bunting","east-bay","carolina-blue","hippie-blue","wood-bark","white","white-lilac","dark-gray","charcoal","black20","black","casablanka","pink","flamingo","maroon","rose-ebony","espresso"])
+    if (knownThemes.has(themeName[1])) {
+      document.body.classList.remove('black');
+      document.body.classList.add(themeName[1]);
+    }
+  })();
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-47259320-1', 'anvaka.github.io');
+  ga('send', 'pageview');
+</script>
+  </body>
+</html>
