@@ -8,8 +8,11 @@ var currentState = qs.get();
 var defaultFractal = require('./util/shaders/main.glsl');
 
 var pendingSaveCallback;
-
+var settingsPanel = {
+  collapsed: window.innerWidth < 600 ? true : false,
+};
 module.exports = {
+  settingsPanel,
   getQS() { return qs; },
   saveCode,
   getCode,

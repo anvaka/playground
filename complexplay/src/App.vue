@@ -1,11 +1,21 @@
 <template>
   <div id='app'>
     <div class='controls-container'>
-      <div class='settings'>
-        <div class='block' v-if='fractalCode'>
-          <div class='title'>Fractal</div>
-          <code-editor :model='fractalCode' ></code-editor>
-        </div>
+    <a href='#' @click.prevent='toggleSettings' class='action'>{{(settingsPanel.collapsed ? "Advanced..." : "Hide settings")}}</a>
+    <a href='#' @click.prevent='generateNewFunction'>Randomize</a>
+    <a href='#' @click.prevent='openShareDialog' class='share-btn' title='Share'>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="18" height="18" viewBox="0 0 12 14">
+<path d="M9.5 8q1.039 0 1.77 0.73t0.73 1.77-0.73 1.77-1.77 0.73-1.77-0.73-0.73-1.77q0-0.094 0.016-0.266l-2.812-1.406q-0.719 0.672-1.703 0.672-1.039 0-1.77-0.73t-0.73-1.77 0.73-1.77 1.77-0.73q0.984 0 1.703 0.672l2.812-1.406q-0.016-0.172-0.016-0.266 0-1.039 0.73-1.77t1.77-0.73 1.77 0.73 0.73 1.77-0.73 1.77-1.77 0.73q-0.984 0-1.703-0.672l-2.812 1.406q0.016 0.172 0.016 0.266t-0.016 0.266l2.812 1.406q0.719-0.672 1.703-0.672z"></path>
+</svg>
+</a>
+    </div>
+    <div class='settings' v-if='!settingsPanel.collapsed'>
+      <div class='block' v-if='fractalCode'>
+        <div class='title'>Fractal</div>
+        <code-editor :model='fractalCode' ></code-editor>
+      </div>
+      <div class='block' v-if='fractalCode'>
+        <a href="#" @click.prevent='goToOrigin'>Go to origin</a>
       </div>
     </div>
   </div>
@@ -15,6 +25,7 @@
 import CodeEditor from './components/CodeEditor';
 
 var bus = require('./bus');
+var appState = require('./appState');
 var scene = window.scene;
 
 export default {
@@ -30,12 +41,19 @@ export default {
   },
   data() {
     return {
+      settingsPanel: appState.settingsPanel,
       fractalCode: scene.fractalEditorState
     }
   },
   methods: {
+    toggleSettings() {
+      this.settingsPanel.collapsed = !this.settingsPanel.collapsed;
+    },
     onSceneReady() {
       this.fractalCode = scene.fractalEditorState;
+    },
+    goToOrigin() {
+      scene.goToOrigin();
     }
   }
 }
@@ -50,9 +68,6 @@ export default {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-.controls-container {
   position: absolute;
   max-height: 100%;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
@@ -63,6 +78,9 @@ export default {
   overflow: hidden;
   flex-direction: column;
   display: flex;
+}
+
+.controls-container {
 }
 
 .settings {

@@ -1,6 +1,7 @@
 var fetchGLSL = require('./fetchGLSL.js');
 
 var pragmaInclude = '#include ';
+var defineInclude = '#define ';
 var nullCode = { code: '' }
 
 /**
@@ -26,12 +27,17 @@ function processLineByLine(code) {
   var lines = code.split('\n');
   var outputLines = [];
   var currentIndex = 0;
+  var substitutes = new Map();
+
   lines.forEach((line, index) => {
     currentIndex = index;
     if (line && line[0] === '#') {
       outputLines.push('');
       processPragma(line);
     } else {
+      if (substitutes.size > 0) {
+        line = replaceDefines(line);
+      }
       outputLines.push(line);
     }
   });
@@ -52,6 +58,17 @@ function processLineByLine(code) {
       pending.push(fetchGLSL(include).then(code => {
         outputLines[insertIndex] = code
       }))
+    } else if (line.indexOf(defineInclude) === 0) {
+      var matches = line.match(/#define\s+([^\s].+)\s+(.+)$/)
+      substitutes.set(matches[1], matches[2]);
     }
+  }
+
+  function replaceDefines(line) {
+    // Note: this is very fragile, I know. Feel free to improve it.
+    substitutes.forEach((replacement, key) => {
+      line = line.replace(new RegExp(key, 'g'), replacement);
+    });
+    return line;
   }
 }

@@ -23,6 +23,8 @@ function initScene(canvas) {
     }
   });
 
+  var startTime;
+  var cursor = {currentX: 0, currentY: 0, clickX: 0, clickY: 0};
   var sceneTransform = {x: 0, y: 0, z: 1};
   var sceneWidth = canvas.clientWidth;
   var sceneHeight = canvas.clientHeight;
@@ -47,6 +49,7 @@ function initScene(canvas) {
   var state = {
     sidebarOpen: !config.isSmallScreen(),
     fractalEditorState,
+    goToOrigin,
     dispose
   }
 
@@ -63,14 +66,22 @@ function initScene(canvas) {
     scheduleNextFrame();
   }
 
+  function goToOrigin() {
+    panzoom.showRectangle({
+      left: 0, right: window.innerWidth,
+      top: 0, bottom: window.innerHeight
+    });
+    
+    applyTransform(panzoom.getTransform());
+  }
+
   function updateCode(parserResult) {
     var updateProgram = util.createProgram(gl, shader.vertexShader, parserResult.code);
     if (screenProgram) {
       screenProgram.unload();
     }
+    startTime = window.performance.now();
     screenProgram = updateProgram;
-    // quadBuffer = util.createBuffer(gl, new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]));
-    util.bindAttribute(gl, quadBuffer, screenProgram.a_pos, 2);
     requestSizeUpdate = true;
     requestTransformUpdate = true;
 
@@ -88,14 +99,18 @@ function initScene(canvas) {
     if (requestSizeUpdate) {
       requestSizeUpdate = false;
       gl.viewport(0, 0, sceneWidth, sceneHeight);
-      gl.uniform2f(screenProgram.u_resolution, sceneWidth, sceneHeight);
+      gl.uniform2f(screenProgram.iResolution, sceneWidth, sceneHeight);
     }
+
     if (requestTransformUpdate) {
       requestTransformUpdate = false;
       gl.uniform3f(screenProgram.u_transform, sceneTransform.x, sceneTransform.y, sceneTransform.z);
     }
 
+    var iTime = window.performance.now() - startTime;
+    gl.uniform1f(screenProgram.iTime, iTime/1000);
     gl.uniform1f(screenProgram.u_frame, currentFrameNumber);
+    gl.uniform4f(screenProgram.iMouse, cursor.currentX, cursor.currentY, cursor.clickX, cursor.clickY);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   }
 
@@ -104,8 +119,8 @@ function initScene(canvas) {
     var ty = newTransform.y/sceneHeight;
     var scale = newTransform.scale;
 
-    sceneTransform.x = (tx * 2 - 1)/scale;
-    sceneTransform.y = (ty * 2 - 1)/scale;
+    sceneTransform.x = tx;// (tx * 2 - 1)/scale;
+    sceneTransform.y = ty; //(ty * 2 - 1)/scale;
     sceneTransform.z = scale;
     requestTransformUpdate = true;
     appState.saveTransform(tx, ty, scale);
@@ -113,25 +128,57 @@ function initScene(canvas) {
   }
 
   function restorePanzoom() {
-    panzoom.showRectangle(appState.getVisibleRectangle(sceneWidth, sceneHeight));
+    var rect = appState.getVisibleRectangle(sceneWidth, sceneHeight);
+    if (rect) panzoom.showRectangle(rect);
   }
 
   function dispose() {
     panzoom.dispose();
 
     window.removeEventListener('resize', updateSize);
+    window.removeEventListener('mousemove', onMouseMove);
+    window.removeEventListener('mousedown', onMouseClick);
+    window.removeEventListener('touchstart', onTouchStart);
+    window.removeEventListener('touchmove', onTouchMove);
     cancelAnimationFrame(nextAnimationFrame);
     nextAnimationFrame = 0;
   }
 
   function listenToEvents() {
     window.addEventListener('resize', updateSize);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mousedown', onMouseClick);
+    window.addEventListener('touchstart', onTouchStart);
+    window.addEventListener('touchmove', onTouchMove);
+  }
+
+  function onTouchStart(e) {
+    var firstTouch = e.touches[0];
+    if (!firstTouch) return;
+
+    setClick(firstTouch.clientX, firstTouch.clientY);
+    setHover(firstTouch.clientX, firstTouch.clientY);
+  }
+
+  function onTouchMove(e) {
+    var firstTouch = e.touches[0];
+    if (!firstTouch) return;
+    setHover(firstTouch.clientX, firstTouch.clientY);
+  }
+  function onMouseMove(e) { setHover(e.clientX, e.clientY); }
+  function onMouseClick(e) { setClick(e.clientX, e.clientY); }
+
+  function setHover(ex, ey) {
+    cursor.currentX = ex;
+    cursor.currentY = ey;
+  }
+
+  function setClick(ex, ey) {
+    cursor.clickX = ex;
+    cursor.clickY = ey;
   }
 
   function updateSize() {
-    // var sideBarWidthOffset = (!state.sidebarOpen || config.isSmallScreen ()) ? 0: config.sidebarWidth;
-    // var sideBarHeightOffset = config.isSmallScreen() ? config.sidebarHeight : 0;
-    // setSceneSize(window.innerWidth - sideBarWidthOffset, window.innerHeight - sideBarHeightOffset);
     setSceneSize(window.innerWidth, window.innerHeight);
   }
 
@@ -141,6 +188,7 @@ function initScene(canvas) {
     sceneWidth = width;
     sceneHeight = height;
 
+    restorePanzoom();
     requestSizeUpdate = true;
     scheduleNextFrame();
   }

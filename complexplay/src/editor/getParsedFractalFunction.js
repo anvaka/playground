@@ -30,27 +30,6 @@ require.ensure('glsl-parser', () => {
   bus.fire('glsl-parser-ready'); 
 });
 
-// float PI;
-// float snoise(vec2 v);
-// float frame;
-// vec4 cursor;
-// float rand(const vec2 co);
-var complexGlobals = '';
-//  `
-// import {
-//   float cosh(float val);
-//   float tanh(float val); 
-//   float sinh(float val);
-//   vec2 cosh(vec2 val);
-//   vec2 tanh(vec2 val);
-//   vec2 sinh(vec2 val);
-//   vec2 c_mul(vec2 self, vec2 other) 
-//   vec2 c_div(vec2 self, vec2 other);
-//   vec2 c_sin(vec2 c);
-//   vec2 c_cos(vec2 c);
-//   vec2 c_inv(vec2 c);
-// }`;
-
 /**
  * Given a string, verifies that it is a valid glsl code for a vector field,
  * and then returns code + log.
