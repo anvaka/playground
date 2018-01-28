@@ -3,7 +3,7 @@ var complexLibrary = require('./complex.glsl');
 module.exports = function getFragmentCode(main) {
   var fragmentShader = `
 precision highp float;
-uniform float u_frame;
+uniform float iFrame;
 uniform float iTime;
 uniform vec4 iMouse;
 uniform vec3 u_transform;

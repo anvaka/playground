@@ -9,10 +9,10 @@ function createShaders(main) {
 precision highp float;
 attribute vec2 a_pos;
 
-uniform float u_frame;
-uniform vec2 iResolution;
+uniform float iFrame;
 uniform float iTime;
 uniform vec4 iMouse;
+uniform vec2 iResolution;
 uniform vec3 u_transform;
 
 varying vec2 v_tex_pos;

@@ -109,7 +109,7 @@ function initScene(canvas) {
 
     var iTime = window.performance.now() - startTime;
     gl.uniform1f(screenProgram.iTime, iTime/1000);
-    gl.uniform1f(screenProgram.u_frame, currentFrameNumber);
+    gl.uniform1f(screenProgram.iFrame, currentFrameNumber);
     gl.uniform4f(screenProgram.iMouse, cursor.currentX, cursor.currentY, cursor.clickX, cursor.clickY);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   }

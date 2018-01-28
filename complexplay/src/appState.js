@@ -1,5 +1,6 @@
 var queryState = require('query-state');
 var bus = require('./bus');
+var isSmallScreen = require('./util/isSmallScreen');
 
 var qs = queryState({}, { useSearch: true, });
 
@@ -9,8 +10,9 @@ var defaultFractal = require('./util/shaders/main.glsl');
 
 var pendingSaveCallback;
 var settingsPanel = {
-  collapsed: window.innerWidth < 600 ? true : false,
+  collapsed: isSmallScreen(),
 };
+
 module.exports = {
   settingsPanel,
   getQS() { return qs; },

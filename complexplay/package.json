@@ -1,7 +1,7 @@
 {
-  "name": "complexplay",
+  "name": "pixelplay",
   "version": "1.0.0",
-  "description": "A Vue.js project",
+  "description": "A simple tool to play with shaders and pixels",
   "author": "Andrei Kashcha",
   "private": true,
   "scripts": {
