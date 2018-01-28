@@ -44,11 +44,11 @@ function initScene(canvas) {
 
   listenToEvents();
 
-  var fractalEditorState = createFractalCodeState(updateCode);
+  var codeEditorState = createFractalCodeState(updateCode);
 
   var state = {
     sidebarOpen: !config.isSmallScreen(),
-    fractalEditorState,
+    codeEditorState,
     goToOrigin,
     dispose
   }

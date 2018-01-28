@@ -19,11 +19,11 @@
         </a>
       </div>
       <div class='settings' v-if='!settingsPanel.collapsed'>
-        <div class='block' v-if='fractalCode'>
+        <div class='block' v-if='shaderCode'>
           <div class='title'>Code</div>
-          <code-editor :model='fractalCode' ></code-editor>
+          <code-editor :model='shaderCode' ></code-editor>
         </div>
-        <div class='block top-offset' v-if='fractalCode'>
+        <div class='block top-offset' v-if='shaderCode'>
           <a href="#" @click.prevent='goToOrigin'>Go to origin</a>
         </div>
       </div>
@@ -44,6 +44,7 @@ var MIN_SETTINGS_WIDTH = 456;
 var bus = require('./bus');
 var createDrag = require('./util/drag.js');
 var isSmallScreen = require('./util/isSmallScreen.js');
+var generateRandomScene = require('./util/generateRandomScene.js');
 
 var appState = require('./appState');
 var scene = window.scene;
@@ -75,7 +76,7 @@ export default {
       width: MIN_SETTINGS_WIDTH,
       webGLEnabled: window.webGLEnabled,
       settingsPanel: appState.settingsPanel,
-      fractalCode: scene.fractalEditorState
+      shaderCode: scene.codeEditorState
     }
   },
   methods: {
@@ -91,14 +92,17 @@ export default {
       this.settingsPanel.collapsed = !this.settingsPanel.collapsed;
     },
     onSceneReady() {
-      this.fractalCode = scene.fractalEditorState;
+      this.shaderCode = scene.codeEditorState;
     },
     goToOrigin() {
       scene.goToOrigin();
     },
     openShareDialog() {
       bus.fire('open-share-dialog');
-    }
+    },
+    generateNewFunction() {
+      window.scene.codeEditorState.setCode(generateRandomScene());
+    },
   }
 }
 </script>
@@ -153,6 +157,11 @@ export default {
 }
 a {
   text-decoration: none;
+}
+pre.error {
+  background: #f52c5e;
+  color: #ffff;
+  margin: 0;
 }
 .controls {
   display: flex;

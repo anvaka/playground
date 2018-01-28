@@ -1,4 +1,5 @@
 var complexLibrary = require('./complex.glsl');
+var bezier = require('./bezier.glsl');
 
 module.exports = function getFragmentCode(main) {
   var fragmentShader = `
@@ -17,6 +18,7 @@ vec2 screen2scene(vec2 pos) {
   return vec2(ar*(vt.x - 1.), 1. - vt.y);
 }
 
+${bezier}
 ${complexLibrary}
 ${main}
 
