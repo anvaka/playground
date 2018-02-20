@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<!--
+  Playing with async quicksort
+-->
+<meta name="robots" content="noindex">
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Async quicksort</title>
+<style id="jsbin-css">
+canvas {
+  width: 400px;
+  height: 400px;
+}
+
+.animate {
+  width: 64px;
+  height: 64px;
+  background: orange;
+  animation: spin 1555ms infinite linear;
+  animation-fill-mode: backwards;
+}
+
+</style>
+</head>
+<body>
+<canvas id='scene'></canvas>
+<script>
+var cnv = document.getElementById('scene');
+var w = cnv.width = 800; 
+var h = cnv.height = 800;
+  
+var ctx = cnv.getContext('2d'); 
+var imgData = ctx.getImageData(0, 0, w, h);
+var pixels = imgData.data;
+var idxArray = [];
+//noprotect 
+for (var x = 0; x < w; ++x) {
+  for (var y = 0; y < h; ++y) { 
+    var idx = 4 * (x + y * w); 
+    idxArray.push(idx);
+    pixels[idx + 0] = Math.random() * 255;
+    pixels[idx + 1] = 0 *Math.random() * 255;
+    pixels[idx + 2] =  Math.random() * 255;
+    pixels[idx + 3] = 255; 
+  } 
+}   
+
+console.log(pixels);
+ctx.putImageData(imgData, 0, 0);
+var sortStep = createAsyncSort(idxArray, {
+ compare(idx1, idx2) {
+   return pixels[idxArray[idx1]] - pixels[idxArray[idx2]];
+ },
+ swap(aIdx, bIdx) {
+   var a = idxArray[aIdx];
+   var b = idxArray[bIdx];
+       
+   var tr = pixels[a], tg = pixels[a + 1], tb = pixels[a + 2];
+   pixels[a + 0] = pixels[b + 0]; 
+   pixels[a + 1] = pixels[b + 1]; 
+   pixels[a + 2] = pixels[b + 2];
+   
+   pixels[b + 0] = tr; 
+   pixels[b + 1] = tg;
+   pixels[b + 2] = tb;
+ }  
+});
+
+var frameIdx = 0;
+
+document.addEventListener('click', e => {
+  frame();
+});
+
+function frame() {
+  if(!sortStep()) { 
+    requestAnimationFrame(frame);
+  } 
+  if (frameIdx % 600 === 0) ctx.putImageData(imgData, 0, 0);
+  frameIdx += 1;
+}
+
+function createAsyncSort(A, options) {
+  var maxTime = 30;
+  var compare = options && options.compare || defaultCompare;
+  var swap  = options && options.swap || defaultSwap;
+  var lo_stack = []; 
+  var hi_stack = []; 
+  var stack_idx = 1;
+  var isInpartition = false;
+  var lo, hi, p, startTime;
+  var part_i, part_j;
+  
+  lo_stack.push(0);
+  hi_stack.push(A.length - 1);
+  
+  var nextFunction = performSort;
+
+  return function() { 
+    startTime = performance.now();
+    return nextFunction(); 
+  };
+  
+  function performSort() {
+    while (stack_idx > 0) {
+      stack_idx -= 1;
+      lo = lo_stack[stack_idx];
+      hi = hi_stack[stack_idx];
+
+      if (lo < hi) {
+        if (!partition(lo - 1, hi + 1)) {
+          return false;
+        }
+
+        lo_stack[stack_idx] = p + 1;
+        hi_stack[stack_idx] = hi;
+
+        stack_idx += 1;
+        lo_stack[stack_idx] = lo;
+        hi_stack[stack_idx] = p;
+
+        stack_idx += 1;
+      }
+
+      if (performance.now() - startTime > maxTime) {
+        nextFunction = performSort;
+        return false;
+      }
+    } 
+
+    return true;
+  }
+  
+  function partition(i, j) {
+    while (true) {
+      do { i += 1; } while (compare(i, lo) < 0);
+      do { j -= 1; } while (compare(j, lo) > 0);
+      if (i >= j) {
+        p = j;
+        return true;
+      }
+      swap(i, j);
+      if (performance.now() - startTime > maxTime) {
+        part_i = i;
+        part_j = j;
+        nextFunction = resumePartition;
+        return false;
+      }
+    }
+  }
+
+  function resumePartition() {
+    if (!partition(part_i, part_j)) {
+      return false;
+    }
+    lo_stack[stack_idx] = p + 1;
+    hi_stack[stack_idx] = hi;
+
+    stack_idx += 1;
+    lo_stack[stack_idx] = lo;
+    hi_stack[stack_idx] = p;
+
+    stack_idx += 1; 
+
+    return performSort();
+  }
+
+  function defaultSwap(i, j) {
+    var t = A[i];
+    A[i] = A[j];
+    A[j] = t;
+  }
+  
+  function defaultCompare(i, j) {
+    return A[i] - A[j];
+  }
+}
+
+</script>
+</body>
+</html>
