@@ -57,6 +57,7 @@ function processQueue(queue) {
   function processNext(queue, idx, seen) {
     if (idx >= queue.length) {
       console.log('All done');
+      return;
     }
     console.log('Processing ' + idx + '/' + queue.length + ';');
 
