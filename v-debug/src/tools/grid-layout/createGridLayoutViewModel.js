@@ -1,7 +1,7 @@
 module.exports = createGridLayoutViewModel;
 
 var bus = require('../../lib/bus');
-var gridRoads = require('./gridRoads');
+var gridRoads = require('./fieldRoads');
 var forEachRectangleNode = require('./forEachRectangle');
 var getGridLines = require('./getGridLines');
 var getBBoxAndRects = require('./getBBoxAndRects');
