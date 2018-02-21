@@ -1,12 +1,14 @@
-const Twit = require('twit')
+var createMultiKeyClient = require('./multi-key-account');
 
-const T = new Twit({
-  consumer_key:        process.env.TWITTER_CONSUMER_KEY,
-  consumer_secret:     process.env.TWITTER_CONSUMER_SECRET,
-  access_token:        process.env.TWITTER_ACCESS_TOKEN,
-  access_token_key:    process.env.TWITTER_ACCESS_TOKEN,
-  access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
-});
+// const client = createMultiKeyClient([{
+//   consumer_key:        process.env.TWITTER_CONSUMER_KEY,
+//   consumer_secret:     process.env.TWITTER_CONSUMER_SECRET,
+//   access_token:        process.env.TWITTER_ACCESS_TOKEN,
+// //  access_token_key:    process.env.TWITTER_ACCESS_TOKEN,
+//   access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
+// }]);
+//
+const client = createMultiKeyClient(require('/home/pnaka/twitter/arr.js'));
 
 const RATE_LIMIT_EXCEEDED = 88;
 const NOT_FOUND = 34;
@@ -23,7 +25,7 @@ module.exports = {
 }
 
 function getTimeline(request) {
-    return T.get('statuses/user_timeline', request).then(resp => {
+    return client.get('statuses/user_timeline', request).then(resp => {
       const { data } = resp;
       return data;
     })
@@ -44,17 +46,13 @@ function convertIdsToUser(ids, visitor) {
 
   function schedule(user_id) {
     let request = { user_id };
-    return T.get('users/lookup', request)
+    return client.get('users/lookup', request)
       .then(resp => {
         const { data } = resp;
         if (data.errors) {
           // todo: this may need more handling
-          const error = data.errors[0];
-          if (error.code === RATE_LIMIT_EXCEEDED) {
-            console.log('Rate limit exceeded at', new Date());
-            let waitTime = getWaitTime(resp.resp.headers);
-            return wait(waitTime).then(() => schedule(user_id));
-          }
+          console.error(data.errors);
+          throw new Error(data.errors);
         }
         data.forEach(user => visitor(user));
       });
@@ -80,15 +78,13 @@ function getAllFollowers(request) {
 		request.count = 5000;
     console.log('followers/ids', request);
 
-    return T.get('followers/ids', request).then(resp => {
+    return client.get('followers/ids', request).then(resp => {
       const { data } = resp;
 
       if (data.errors) {
         const error = data.errors[0];
         if(error.code === RATE_LIMIT_EXCEEDED) {
-          console.log('Rate limit exceeded at', new Date());
-          let waitTime = getWaitTime(resp.resp.headers);
-          return wait(waitTime).then(() => getAll(request));
+          throw new Error('This should not be possible');
         } else if (error.code === NOT_FOUND) {
           console.log('Not found ', request);
           return {
@@ -137,27 +133,4 @@ function getAllFollowers(request) {
       return followersObject;
     });
   }
-}
-
-function wait(ms) {
-  if (!ms) {
-    ms = 2000;
-  }
-  const until = new Date(ms + (+new Date()));
-
-  console.log('Waiting for ' + ms + 'ms; Until: ', until);
-  return new Promise(resolve => {
-    setTimeout(() => resolve(), ms);
-  });
-}
-
-function getWaitTime(headers) {
-  let resetAt = Number.parseInt(headers['x-rate-limit-reset'], 10);
-  if (Number.isFinite(resetAt)) {
-    // give it one second to clear up
-    return resetAt * 1000 - new Date() + 1000;
-  }
-
-  // wait X seconds
-  return 30 * 1000;
 }
