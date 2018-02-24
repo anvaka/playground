@@ -3,6 +3,7 @@ var npath = require('ngraph.path');
 var CELL_WIDTH = 1;
 
 var simplifyPointsPath = require('./simplify');
+var createBlockPlacement = require('./blockPlacement');
 const getBBoxAndRects = require('./getBBoxAndRects');
 
 module.exports = fieldRoads;
@@ -32,10 +33,13 @@ function fieldRoads(graph, layout) {
     }
   });
 
-  var edges = routeEdges(layout, graph);
-  return edges;
+  var route = runRouting(layout, graph);
+  return {
+    lines: route.edges,
+    nodes: route.nodes
+  }
 
-  function routeEdges(layout, graph) {
+  function runRouting(layout, graph) {
     var linksCount = graph.getLinksCount();
     var processed = 0;
     graph.forEachLink(link => {
@@ -47,7 +51,7 @@ function fieldRoads(graph, layout) {
       var gridTo = getGridNode(toPos);
 
       let npath = pathFinder.find(gridFrom, gridTo);
-      pathMemory.rememberPath(npath, link.fromId, link.toId);
+      pathMemory.rememberPath(npath, graph.getNode(link.toId), graph.getNode(link.fromId));
     });
 
     return saveRoutes();
@@ -67,14 +71,14 @@ function fieldRoads(graph, layout) {
   }
 
   function saveRoutes() {
-    var edges = []
+    var edges = [], nodes = [];
 
     pathMemory.simplify();
 
     pathMemory.forEachEdge(v => {
       var from = v.fromId.split(',').map(v => Number.parseFloat(v));
       var to = v.toId.split(',').map(v => Number.parseFloat(v));
-      var lineWidth = Math.round(Math.pow(Math.round(2 * v.data/pathMemory.getMaxSeen()), 1.4)) + 1;
+      var lineWidth = pathMemory.getEdgeWidth(v);
       edges.push({ 
         from: {
           x: from[0] + bbox.left,
@@ -87,8 +91,19 @@ function fieldRoads(graph, layout) {
         width: lineWidth
       });
     });
+    pathMemory.moveRootsOut();
+    pathMemory.forEachRoot(root => {
+      var pos = root.pos;
+      nodes.push({
+        id: root.id,
+        x: pos.center.x + bbox.left,
+        y: pos.center.y + bbox.top
+      });
+      //ctx.fillText(root.id, pos.center.x, pos.center.y)
+    });
 
-    return edges;
+
+    return {edges, nodes};
   }
 
 
@@ -178,9 +193,8 @@ function getGridNodeKey(col, row) {
   return `${col},${row}`;
 }
 
-
 function createPathMemory() {
-  var roots = new Set(); // where the paths start and end.
+  var roots = new Map(); // where the paths start and end.
   var maxSeenValue = 0;
   var pathGraph = createGraph();
 
@@ -188,10 +202,64 @@ function createPathMemory() {
     rememberPath,
     getSeenCount,
     simplify,
+    moveRootsOut,
+    forEachRoot,
     forEachEdge,
-    getMaxSeen() {
-      return maxSeenValue;
-    }
+    getEdgeWidth: getEdgeWidth
+  }
+
+  function moveRootsOut() {
+    var edges = [];
+    var snapLength = 32;
+
+    pathGraph.forEachLink(link => {
+      var xy1 = getXY(link.fromId);
+      var xy2 = getXY(link.toId);
+      var dx = (xy2[0] - xy1[0]);
+      var dy = (xy2[1] - xy1[1]);
+      var l = Math.sqrt(dx * dx + dy * dy);
+      var parts = Math.ceil(l/snapLength)
+      var minX = xy1[0], minY = xy1[1];
+      var maxX = xy2[0], maxY = xy2[1];
+
+      while (parts > 0) {
+        var maxX = dx < 0 ? 
+                    Math.max(minX + snapLength * dx/l, xy2[0]) :
+                    Math.min(minX + snapLength * dx/l, xy2[0]);
+        var maxY = dy < 0 ? 
+                    Math.max(minY + snapLength * dy / l, xy2[1]) :
+                    Math.min(minY + snapLength * dy / l, xy2[1]);
+
+        var l0 = Math.sqrt((maxX - minX) * (maxX - minX) + (maxY - minY) * (maxY - minY));
+        edges.push({
+          minX: Math.min(minX, maxX),
+          minY: Math.min(minY, maxY),
+          maxX: Math.max(maxX, minX),
+          maxY: Math.max(maxY, minY),
+          line: { 
+            length: l0, 
+            minX, minY, maxX, maxY,
+            width: getEdgeWidth(link) 
+          }
+        });
+        minX = maxX; minY = maxY;
+        parts -= 1;
+      }
+    });
+
+    var placement = createBlockPlacement(edges);
+    var rootSortedBySize = [];
+    // TODO: Sort by size.
+    forEachRoot(root => { rootSortedBySize.push(root); });
+    rootSortedBySize.sort((a, b) => b.size - a.size);
+    rootSortedBySize.forEach(root => {
+      var pos = getXY(root.internalId);
+      placement.place(root, pos);
+    });
+  }
+
+  function forEachRoot(callback) {
+    roots.forEach(callback);
   }
 
   function forEachPathFrom(node, callback) {
@@ -259,129 +327,84 @@ function createPathMemory() {
 
   function simplify() {
     console.log('Simplifying graph with ', pathGraph.getLinksCount() + ' edges, ' + pathGraph.getNodesCount() + ' nodes');
+    printEdgeStats();
     var totalRemoved = 0;
-
-    roots.forEach(nodeId => { 
-      var node = pathGraph.getNode(nodeId);
-      if (!node) throw new Error('Nodes should never be removed');
-      forEachPathFrom(node, path => {
-        if (path.length < 3) return;
-
-        if (path[0].id === '132,102') debugger;
-        // console.log('Path from ', node.id);
-        // console.log('Actual:', path);
-        var simplifiedPath = simplifyPointsPath(path, 3);
-        // console.log('Simplified:', simplifiedPath)
-        var prev = path[0];
-        var removedWeight = 0;
-        var removed = 0;
-        var simplifiedPathIndex = 1; // start from 1 since 0 should be the same as start
-        if (!pointEqual(simplifiedPath[0], path[0])) throw new Error('Your expectations are wrong');
-        if (!pointEqual(simplifiedPath[simplifiedPath.length - 1], path[path.length - 1])) throw new Error('Your expectations are wrong');
-
-        for (var pathIndex = 1; pathIndex < path.length; ++pathIndex) {
-          var originalPoint = path[pathIndex];
-          if (pointEqual(simplifiedPath[simplifiedPathIndex], originalPoint)) {
-            if (removed > 0) {
-              pathGraph.addLink(prev.id, originalPoint.id, removedWeight/removed);
-            }
-            simplifiedPathIndex += 1;
-            prev = originalPoint;
-            removedWeight = 0;
-            removed = 0;
-          } else {
-            if (roots.has(originalPoint.id)) debugger;
-            pathGraph.removeNode(originalPoint.id);
-            removed += 1;
-            totalRemoved += 1;
-            removedWeight += originalPoint.weight;
-          }
-        }
-      });
-    });
-
-    /*
-    do {
-      removedCount = 0;
+    for (var factor = 0; factor < 1; ++factor) {
       pathGraph.forEachNode(node => { 
-        if (!node.links) throw new Error('Node without links? How so?');
-        if (!node.data && node.links.length === 2 && canRemove(node.links[0], node.links[1])) {
-          // this is potential candidate
-          var mergedLink = getMergedLink(node.links[0], node.links[1])
-          pathGraph.removeNode(node.id);
-          removedCount += 1;
-          pathGraph.addLink(mergedLink.fromId, mergedLink.toId, mergedLink.data);
-        }
+        if (!node) return; // Likely was already simplified.
+        forEachPathFrom(node, path => {
+          if (path.length < 3) return;
+
+          var simplifiedPath = simplifyPointsPath(path, 3, true);
+          var prev = path[0];
+          var removedWeight = 0;
+          var removed = 0;
+          var simplifiedPathIndex = 1; // start from 1 since 0 should be the same as start
+          if (!pointEqual(simplifiedPath[0], path[0])) throw new Error('Your expectations are wrong');
+          if (!pointEqual(simplifiedPath[simplifiedPath.length - 1], path[path.length - 1])) throw new Error('Your expectations are wrong');
+
+          for (var pathIndex = 1; pathIndex < path.length; ++pathIndex) {
+            var originalPoint = path[pathIndex];
+            if (pointEqual(simplifiedPath[simplifiedPathIndex], originalPoint)) {
+              if (removed > 0) {
+                pathGraph.addLink(prev.id, originalPoint.id, removedWeight/removed);
+              }
+              simplifiedPathIndex += 1;
+              prev = originalPoint;
+              removedWeight = 0;
+              removed = 0;
+            } else {
+              pathGraph.removeNode(originalPoint.id);
+              removed += 1;
+              totalRemoved += 1;
+              removedWeight += originalPoint.weight;
+            }
+          }
+        });
       });
-      totalRemoved += removedCount;
-    } while(removedCount > 0)
-    */
+
+      printEdgeStats();
+    }
 
     console.log('After simplification: ', pathGraph.getLinksCount() + ' edges, ' + pathGraph.getNodesCount() + ' nodes');
     console.log('Removed nodes: ' + totalRemoved)
   }
 
-  function canRemove(edge1, edge2) {
-    // TODO: This should probably be moved out of here.
-    // The idea here, is that we don't want to remove edges that point to different
-    // directions.
-    var angle1 = getAngle(edge1.fromId, edge1.toId);
-    var angle2 = getAngle(edge2.fromId, edge2.toId);
-
-    return Math.abs(angle1 - angle2) < 0.001;
-  }
-
-  function getAngle(a, b) {
-    var xy1 = getXY(a);
-    var xy2 = getXY(b);
-    if (xy1.length !== 2 || xy2.length !== 2) throw new Error('Invalid edge key: ' + a + ',' + b);
-
-    return Math.atan2(xy2[0] - xy1[0], xy2[1] - xy2[1]);
+  function printEdgeStats() {
+    var sum = 0;
+    var count = 0;
+    var lengths = [];
+    pathGraph.forEachLink(link => {
+      count += 1;
+      var xy1 = getXY(link.fromId);
+      var xy2 = getXY(link.toId);
+      var dx = (xy1[0] - xy2[0]);
+      var dy = (xy1[1] - xy2[1]);
+      var l = Math.sqrt(dx * dx + dy * dy);
+      lengths.push(l);
+      sum += l;
+    });
+    lengths.sort((x, y) => x - y);
+    console.log('avg link length = ' + sum/count);
+    console.log('p50: ' + lengths[Math.floor(lengths.length / 2)]);
+    console.log('min: ' + lengths[0]);
+    console.log('max: ' + lengths[lengths.length - 1]);
+    //console.log(lengths.filter(x => x > 1));
   }
 
   function getXY(a) {
     return a.split(',').map(v => Number.parseFloat(v));
   }
 
-  function getMergedLink(edge1, edge2) {
-    var data = (edge1.data + edge2.data)/2;
-    var fromId, toId;
-    // we remove shared part:
-    if (edge1.toId == edge2.fromId) {
-      fromId = edge1.fromId;
-      toId = edge2.toId;
-    } else if (edge1.fromId === edge2.toId) {
-      fromId = edge1.toId;
-      toId = edge2.fromId;
-    } else if (edge1.fromId === edge2.fromId) {
-      fromId = edge1.toId;
-      toId = edge2.toId;
-    } else if (edge2.toId === edge1.toId) {
-      fromId = edge2.fromId;
-      toId = edge1.fromId;
-    } else {
-      throw new Error('No shared part between edges.')
-    }
-    // make sure we order edges according to our rules:
-
-    if(fromId >= toId) {
-      var t = fromId;
-      fromId = toId;
-      toId = t;
-    }
-    return {
-      fromId: fromId,
-      toId: toId,
-      data: data
-    }
+  function getEdgeWidth(edge) {
+    return Math.round(Math.pow(Math.round(4 * edge.data/maxSeenValue), 1.4)) + 1;
   }
 
   function forEachEdge(cb) {
     pathGraph.forEachLink(cb);
-    //seenCount.forEach(cb);
   }
 
-  function rememberPath(path, startId, endId) {
+  function rememberPath(path, startNode, endNode) {
     if (path.length < 1) throw new Error('Empty path?');
 
     var from = path[0];
@@ -393,12 +416,20 @@ function createPathMemory() {
 
     // Remember bound nodes.
     var node = pathGraph.getNode(path[0].id);
-    node.data = { node: startId }
-    roots.add(node.id);
+    node.data = { node: startNode.id }
+    roots.set(node.id, {
+      internalId: node.id,
+      id: startNode.id,
+      size: startNode.data.size
+    });
 
     node = pathGraph.getNode(path[path.length - 1].id);
-    node.data = { node: endId }
-    roots.add(node.id);
+    node.data = { node: endNode.id }
+    roots.set(node.id, {
+      internalId: node.id,
+      id: endNode.id,
+      size: endNode.data.size
+    });
   }
 
   function getSeenCount(from, to) {
@@ -430,9 +461,5 @@ function createPathMemory() {
 
   function getTo(from, to) {
     return from.id < to.id ? to.id : from.id;
-  }
-
-  function getEdgeKey(from, to) {
-    return from.id < to.id ? from.id + ';' + to.id : to.id + ';' + from.id;
   }
 }
