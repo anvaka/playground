@@ -32,7 +32,7 @@ if (fs.existsSync(queueFile)) {
 } else if (argv._.length) {
   const screen_name = argv._[0];
   console.log('Queue file is missing. Creating a new queue file for ' + screen_name);
-  getAllFollowersByScreenName(screen_name).then(result => {
+  getAllFollowersByScreenName(screen_name, 400000).then(result => {
     const follower_ids = result.accumulator;
     console.log('Done. Saving into ' + queueFile);
     fs.writeFileSync(queueFile, JSON.stringify(follower_ids));
