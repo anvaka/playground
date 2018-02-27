@@ -1,6 +1,7 @@
 var fromJson = require('ngraph.fromjson');
 var fromDot = require('ngraph.fromdot');
-var data = require('../data/anvaka_twitter.json')
+//var data = require('../data/anvaka_twitter.json')
+var data = require('../data/anvaka_2.json')
 var createGraph = require('ngraph.graph');
 
 module.exports = getGraph; //getDot(require('./data/substack'));

@@ -20,6 +20,7 @@
     "ngraph.forcelayout": "^0.2.1",
     "ngraph.fromdot": "^0.1.6",
     "ngraph.fromjson": "^0.1.8",
+    "ngraph.graph": "0.0.14",
     "ngraph.kruskal": "^1.0.0",
     "ngraph.louvain": "^1.0.1",
     "ngraph.pagerank": "^0.1.4",
@@ -29,7 +30,7 @@
     "ngraph.tojson": "^0.1.4",
     "panzoom": "^3.0.0",
     "pathfinding": "^0.4.18",
-    "rbush": "^2.0.1",
+    "rbush": "^2.0.2",
     "rbush-knn": "^2.0.0",
     "vue": "^2.3.3",
     "wgl": "0.0.3"
