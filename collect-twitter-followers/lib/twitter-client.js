@@ -4,7 +4,6 @@ var createMultiKeyClient = require('./multi-key-account');
 //   consumer_key:        process.env.TWITTER_CONSUMER_KEY,
 //   consumer_secret:     process.env.TWITTER_CONSUMER_SECRET,
 //   access_token:        process.env.TWITTER_ACCESS_TOKEN,
-// //  access_token_key:    process.env.TWITTER_ACCESS_TOKEN,
 //   access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
 // }]);
 //
@@ -64,18 +63,19 @@ function getAllFollowersByUserId(user_id) {
   return getAllFollowers(request);
 }
 
-function getAllFollowersByScreenName(screen_name) {
+function getAllFollowersByScreenName(screen_name, max) {
   let request = { screen_name };
-  return getAllFollowers(request);
+  return getAllFollowers(request, max);
 }
 
-function getAllFollowers(request) {
+function getAllFollowers(request, max) {
   let accumulator = [];
 
   return getAll(request);
 
   function getAll(request) {
 		request.count = 5000;
+    request.stringify_ids = true;
     console.log('followers/ids', request);
 
     return client.get('followers/ids', request).then(resp => {
@@ -115,9 +115,10 @@ function getAllFollowers(request) {
       // save everyone we've got.
       data.ids.forEach(id => accumulator.push(id));
 
+      var maxCount = max || MAX_FOLLOWERS
       // and iterate if we have more
       const { next_cursor } = data;
-      const needMore = next_cursor && accumulator.length < MAX_FOLLOWERS;
+      const needMore = next_cursor && accumulator.length < maxCount;
       if (needMore) return getAll(Object.assign({}, request, { cursor: next_cursor }));
 
       // if no more pages, just return what we've collected
@@ -125,7 +126,7 @@ function getAllFollowers(request) {
         accumulator
       };
 
-      if (accumulator.length < MAX_FOLLOWERS && next_cursor) {
+      if (accumulator.length < maxCount && next_cursor) {
         // this means that we stopped early.
         followersObject.next_cursor = next_cursor; // save next cursor if we ever decide to resume
       }

@@ -9,15 +9,29 @@ function createMultiKeyAccount(keys) {
     var auth = {
       consumer_key:        key.consumer_key,
       consumer_secret:     key.consumer_secret,
-      access_token:        key.access_token,
-      access_token_key:    key.access_token_key,
-      access_token_secret: key.access_token_secret
+      app_only_auth: true,
+      // access_token:        key.access_token,
+      // access_token_secret: key.access_token_secret
     };
     return {
       resetAt: 0,
       auth: auth,
       T: new Twit(auth)
     }
+  });
+
+  keys.forEach(key => {
+    var auth = {
+      consumer_key:        key.consumer_key,
+      consumer_secret:     key.consumer_secret,
+      access_token:        key.access_token,
+      access_token_secret: key.access_token_secret
+    };
+    clients.push({
+      resetAt: 0,
+      auth: auth,
+      T: new Twit(auth)
+    })
   });
 
   var current = 0 ;

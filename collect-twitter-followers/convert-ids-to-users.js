@@ -44,14 +44,13 @@ function readInputFile(alreadyProcessed) {
   console.log('reading file ', inputFileName);
   return forEachLine(inputFileName, l => {
     if (!(l in alreadyProcessed)) {
-     console.log(l);
       lines.push(l);
     }
   }).then(() => lines);
 }
 
 function indexRemaining(work) {
-  console.log(work.length);
+  console.log('Found ' + work.length + ' users');
   convertIdsToUser(work, user => { outStream.write(user); });
 }
 
