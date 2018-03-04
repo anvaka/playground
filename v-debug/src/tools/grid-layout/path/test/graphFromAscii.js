@@ -10,7 +10,7 @@ module.exports = {
 };
 
 function graphFromTextArray(lines) {
-  let graph = createGraph({uniqueLinkIds: false});
+  let graph = createGraph();
   let cols = 0;
   let rows = lines.length;
 

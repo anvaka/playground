@@ -30,7 +30,7 @@ function gridRoads(graph, layout, useGrid = true) {
     grid = createGridGraph(bbox, cellSize) ;
     mergeDelaunayIntoGrid(grid, delaunay);
   } else {
-    grid = createGraph({uniqueLinkId: false});
+    grid = createGraph();
     mergeDelaunayIntoGrid(grid, delaunay);
   }
 

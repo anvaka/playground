@@ -8,7 +8,7 @@ function createGridGraph(bbox, cellSize) {
   let cols = Math.ceil(width/cellSize);
   let rows = Math.ceil(height/cellSize);
 
-  let grid = createGraph({uniqueLinkIds: false }); 
+  let grid = createGraph(); 
   let x0 = bbox.minX;
   let y0 = bbox.minY;
 
