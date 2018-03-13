@@ -1,5 +1,5 @@
 var eventify = require('ngraph.events');
-var wgl = require('wgl');
+var wgl = require('w-gl');
 var ActivePoints = require('./wgl/input/ActivePoints');
 
 module.exports = renderGraph;

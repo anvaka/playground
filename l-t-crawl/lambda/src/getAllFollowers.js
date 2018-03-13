@@ -7,13 +7,14 @@ let MAX_FOLLOWERS = 50000;
 
 module.exports = getAllFollowers;
 
-function getAllFollowers(T, request) {
+function getAllFollowers(T, request, max) {
   let accumulator = [];
 
   return getAll(request);
 
   function getAll(request) {
 		request.count = 5000;
+    request.stringify_ids = true;
     console.log('followers/ids', request);
 
     return T.get('followers/ids', request).then(resp => {
@@ -55,9 +56,10 @@ function getAllFollowers(T, request) {
       // save everyone we've got.
       data.ids.forEach(id => accumulator.push(id));
 
+      var maxCount = max || MAX_FOLLOWERS
       // and iterate if we have more
       let { next_cursor } = data;
-      let needMore = next_cursor && accumulator.length < MAX_FOLLOWERS;
+      let needMore = next_cursor && accumulator.length < maxCount;
       if (needMore) return getAll(Object.assign({}, request, { cursor: next_cursor }));
 
       // if no more pages, just return what we've collected
@@ -65,7 +67,7 @@ function getAllFollowers(T, request) {
         accumulator
       };
 
-      if (accumulator.length < MAX_FOLLOWERS && next_cursor) {
+      if (accumulator.length < maxCount && next_cursor) {
         // this means that we stopped early.
         followersObject.next_cursor = next_cursor; // save next cursor if we ever decide to resume
       }

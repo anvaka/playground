@@ -7,7 +7,7 @@ function getDelaunayGraph(vertices, getX, getY) {
   const delaunay = new Delaunay(vertices, getX, getY);
   const triangles = delaunay.triangles;
   // const triangles = Delaunay.triangulate(vertices)
-  const triangulationGraph = createGraph({ uniqueLinkId: false })
+  const triangulationGraph = createGraph()
   vertices.forEach(v => {
     triangulationGraph.addNode(v.id, v);
   });

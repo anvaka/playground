@@ -3,7 +3,7 @@ const createGraph = require('ngraph.graph')
 module.exports = makeSpanningTree
 
 function makeSpanningTree (mstEdges) {
-  const graph = createGraph({ uniqueLinkId: false });
+  const graph = createGraph();
 
   mstEdges.forEach(e => {
     graph.addLink(e.from.id, e.to.id)

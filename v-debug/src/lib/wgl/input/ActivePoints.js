@@ -1,13 +1,13 @@
-var Element = require('wgl').Element;
+var Element = require('w-gl').Element;
 var createTree = require('d3-quadtree').quadtree;
 
 /**
  * Add this element to your scene to get `point-enter`, `point-leave`,
  * `point-click` events from PointCollection elements.
  * 
- * Note: current implementation is suboptimal and used for debugging
+ * Note: current implementation is sub-optimal and used for debugging
  * only. More work needs to be done before I can recommend it to anyone.
- * (see TODOs in the file)
+ * (see TODOs in the file).
  */
 class ActivePoints extends Element {
   constructor(scene) {

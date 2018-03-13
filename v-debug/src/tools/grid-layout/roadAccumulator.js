@@ -8,7 +8,7 @@ const cellKey = require('./cellKey');
 
 class RoadAccumulator {
   constructor() {
-    this.graph = createGraph({ uniqueLinkId : false });
+    this.graph = createGraph();
     this.maxSeen = 0;
   }
 

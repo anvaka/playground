@@ -8,14 +8,13 @@ Outputs:
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Stage/followers"
 
 Resources:
-  PostStreakAPI:
+  CollectFollowersAPI:
     Type: 'AWS::Serverless::Function'
     Properties:
       Handler: index.handler
       Runtime: nodejs6.10
       CodeUri: ./src/
       Description: 'Collects follower ids'
-      Policies: AmazonDynamoDBFullAccess
       MemorySize: 128
       Timeout: 60
       Events:
