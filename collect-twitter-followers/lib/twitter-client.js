@@ -39,6 +39,7 @@ function convertIdsToUser(ids, visitor) {
     if (currentIndex < ids.length) {
       let slice = ids.slice(currentIndex, currentIndex + 100)
       currentIndex += 100;
+      console.log('processing ' + currentIndex + ' out of ' + ids.length);
       return schedule(slice).then(processNext);
     } 
   }
@@ -84,6 +85,7 @@ function getAllFollowers(request, max) {
       if (data.errors) {
         const error = data.errors[0];
         if(error.code === RATE_LIMIT_EXCEEDED) {
+          // Impossible, because rate limit is handled by multi-key-account.js
           throw new Error('This should not be possible');
         } else if (error.code === NOT_FOUND) {
           console.log('Not found ', request);
