@@ -1,0 +1,15 @@
+{
+  "scripts": {
+    "start": "browserify index.js > bundle.js"
+  },
+  "dependencies": {
+    "d3-voronoi": "^1.1.2",
+    "ngraph.graph": "0.0.14",
+    "ngraph.path": "^1.0.2",
+    "simplify-js": "^1.2.3"
+  },
+  "devDependencies": {
+    "panzoom": "^4.2.0",
+    "simplesvg": "^0.1.1"
+  }
+}
