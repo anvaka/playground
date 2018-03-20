@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "ngraph.graph": "0.0.14",
+    "ngraph.offline.layout": "^1.1.1",
+    "ngraph.tobinary": "^1.0.1",
+    "ngraph.todot": "^0.3.0"
+  }
+}
