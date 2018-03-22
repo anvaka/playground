@@ -9,7 +9,7 @@
     "simplify-js": "^1.2.3"
   },
   "devDependencies": {
-    "panzoom": "^4.2.0",
+    "panzoom": "^4.3.1",
     "simplesvg": "^0.1.1"
   }
 }
