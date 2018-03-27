@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "start": "browserify index.js > bundle.js"
+  }
+}
