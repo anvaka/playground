@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width">
   <title>Rules of Machine Learning</title>
   <style>
-  body {
+body {
   padding: 0;
   margin: 0;
 }
@@ -16,13 +16,16 @@
 
 }
 .level-1 {
-  opacity: 0.9
+  opacity: 0.9;
+  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=90)"
 }
 .level-0 { 
-  opacity: 0.8
+  opacity: 0.8; 
+  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=80)"
 }
 .level-2 {
-  opacity: 0.95
+  opacity: 0.95;
+  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=95)"
 }
 
 .arc, circle {
@@ -30,6 +33,7 @@
 }
 .arc:hover {
   opacity: 1;
+  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=100)";
   stroke-width: 2px;
 }
 
@@ -45,37 +49,61 @@
   z-index: 3;
 }
 .content {
-  position: absolute;
-  left: 0;
-  top: 0;
   width: 380px;
   background: white;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  padding: 8px;
   bottom: 0;
-  z-index: 2;
   display: none;
-  flex-direction: column;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+}
+.scene-container {
+  -webkit-box-flex: 1;
+      -ms-flex: 1;
+          flex: 1;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
 }
 
 .content-header {
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
-  justify-content: space-between;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
   height: 42px;
-  align-items: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  border-bottom: 1px solid #eee;
+  padding: 0 8px;
 }
 .details-container {
+  padding: 0 8px;
   overflow-y: auto;
-  flex: 1;
+  -webkit-box-flex: 1;
+      -ms-flex: 1;
+          flex: 1;
 }
 .content-header a {
   line-height: 24px;
   text-decoration: none;
-  flex: 1;
+  -webkit-box-flex: 1;
+      -ms-flex: 1;
+          flex: 1;
 }
 
 .close {
   text-align: center;
+  color: #a9a9a9;
 }
 
 .next {
@@ -97,11 +125,19 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 body {
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
-  flex-direction: column;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: row;
+          flex-direction: row;
 }
+
 svg {
-  flex: 1;
+  -webkit-box-flex: 1;
+      -ms-flex: 1;
+          flex: 1;
 }
 
 h2, h3 {
@@ -111,7 +147,8 @@ h2, h3 {
 .about {
   position: absolute;
   bottom: 8px;
-  left: 8px;
+  right: 8px;
+  text-align: right;
 }
 .about p {
   margin: 0;
@@ -132,22 +169,62 @@ a.fourth-part {
   background-color: #F2BD42;
   color: white;
 }
+@media screen and (max-width: 700px) {
+  body {
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: reverse;
+        -ms-flex-direction: column-reverse;
+            flex-direction: column-reverse;
+  }
+  .content {
+    -webkit-box-flex: 1;
+        -ms-flex: 1;
+            flex: 1;
+    width: 100%;
+    margin-bottom: 42px;
+    box-shadow: none;
+    border-bottom: 1px solid #eee;
+  }
+  .scene-container {
+    -webkit-box-flex: 1;
+        -ms-flex: 1;
+            flex: 1;
+  }
+
+  body.content-open .scene-container .header {
+    display: none;
+  }
+
+  body.content-open .scene-container {
+    -webkit-box-flex: 0;
+        -ms-flex: 0;
+            flex: 0;
+  }
+  .about {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    width: 100%;
+    -ms-flex-pack: distribute;
+        justify-content: space-around;
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
+    padding: 0 8px;
+    font-size: 12px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 42px;
+  }
+}
   </style>
 </head>
 <body>
-<div class="header">
-  <h2>Rules of Machine Learning</h2>
-  <h3>Best Practices for ML Engineering</h3>
-</div>
-<svg viewBox='-250 -250 500 500'>
-<g id='scene'>
-  
-</g>
-  </svg>
-  <div class="content">
+  <div class='content'>
     <div class="content-header">
       <a href='#' class='prev'></a>
-      <a href='#' class='close'>CLOSE</a>
+      <a href='#' class='close'>close</a>
       <a href='#' class='next'></a>
     </div>
     <div class='details-container'>
@@ -155,11 +232,39 @@ a.fourth-part {
       <div class='details'></div>
     </div>
   </div>
+  <div class='scene-container'>
+    <div class="header">
+      <h2>Rules of Machine Learning</h2>
+      <h3>Best Practices for ML Engineering</h3>
+    </div>
+    <svg viewBox='-250 -250 500 500'>
+      <g id='scene'></g>
+    </svg>
+  </div>
   <div class="tooltip"></div>
   <div class='about'>
     <p>content: <a href='http://martin.zinkevich.org/'>Martin Zinkevich</a></p>
     <p>visualization: <a href='https://twitter.com/anvaka'>Andrei Kashcha</a></p>
   </div>
   <script src='bundle.js'></script>
+  <script>
+    (function (){
+      // need to set theme here to avoid flickering of the color
+      var themeName = window.location.search.match(/\?.*theme=([^&]+)/);
+      if (!themeName) return; // default theme is fine
+      // Need to consult with the whitelist, to avoid "css injection"
+      var knownThemes = new Set(["zodiac","bunting","east-bay","carolina-blue","hippie-blue","wood-bark","white","white-lilac","dark-gray","charcoal","black20","black","casablanka","pink","flamingo","maroon","rose-ebony","espresso"])
+      if (knownThemes.has(themeName[1])) {
+        document.body.classList.remove('zodiac');
+        document.body.classList.add(themeName[1]);
+      }
+    })();
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-47259320-1', 'anvaka.github.io');
+    ga('send', 'pageview');
+  </script>
   </body>
 </html>

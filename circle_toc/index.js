@@ -23,6 +23,7 @@ document.querySelector('.close').addEventListener('click', closeDetails);
 function closeDetails() {
   textReader.hide();
 }
+
 function handleMouseClick(e) {
   var path = e.target.getAttribute('data-path');
   if (!path) {
@@ -32,6 +33,7 @@ function handleMouseClick(e) {
 
   var treeElement = getTreeElementByPath(path);
   textReader.show(treeElement);
+  tooltipManager.hide();
 }
 
 function createTextReader(domEl) {
@@ -46,9 +48,12 @@ function createTextReader(domEl) {
   };
 
   function show(tree) {
+    document.body.classList.add('content-open');
     domEl.style.display = 'flex';
     content.innerHTML = tree.html;
     header.innerText = tree.name;
+    content.parentElement.scrollTop = 0;
+
     var next = orderedChildren.getNext(tree)
     if (!next) next = tree;
     if (next) {
@@ -71,6 +76,7 @@ function createTextReader(domEl) {
   }
   function hide() {
     domEl.style.display = 'none';
+    document.body.classList.remove('content-open');
   }
 }
 

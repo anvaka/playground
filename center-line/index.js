@@ -254,7 +254,6 @@ function pointInPolygon(x, y, polygon) {
   return inside;
 }
 
-
 function getIntersect(
     p0_x, p0_y, p1_x, p1_y, 
     p2_x, p2_y, p3_x, p3_y) {
