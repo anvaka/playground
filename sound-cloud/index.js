@@ -15,6 +15,7 @@ downloadNext().then(() => {
 function downloadNext() {
   return downloadUsers(offset).then(x => {
     x.forEach(u => all.push(u));
+
     if (x.length > 0) {
       offset += 200;
       return downloadNext();
@@ -23,30 +24,26 @@ function downloadNext() {
 }
 
 function downloadUsers(offset) {
+  let endpoint = 'http://api.soundcloud.com/users/';
   return new Promise((resolve, reject) => {
-    let endpoint = 'http://api.soundcloud.com/users/';
-    console.log('Downloading at offset ' + offset);
+    var url = endpoint + '?limit=200&client_id=' + client_id + '&offset=' + offset;
+    console.log('Downloading ' + url)
 
-    const req = client.get(endpoint + '?limit=200&client_id=' + client_id + '&offset=' + offset, (res) => {
+    const req = client.get(url, (res) => {
       const chunks = [];
 
-      res.on('data', (d) => {
-        chunks.push(d);
-      });
+      res.on('data', (d) => { chunks.push(d); });
       res.on('end', () => {
         let res = JSON.parse(Buffer.concat(chunks).toString('utf8'));
         resolve(res);
       });
     });
+
     req.on('error', (e) => {
       console.error(e);
       reject(e);
     });
 
     req.end();
-
-    function urlArg(obj) {
-      return encodeURIComponent(JSON.stringify(obj));
-    }
   });
 }
