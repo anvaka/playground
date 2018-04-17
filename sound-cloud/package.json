@@ -1,1 +1,8 @@
-{}
+{
+  "dependencies": {
+    "ngraph.graph": "0.0.14",
+    "ngraph.todot": "^0.3.0",
+    "ngraph.tojson": "^0.1.4",
+    "yargs": "^11.0.0"
+  }
+}
