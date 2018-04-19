@@ -1,5 +1,8 @@
 {
   "dependencies": {
+    "JSONStream": "^1.3.2",
+    "event-stream": "^3.3.4",
+    "for-each-line": "^1.0.0",
     "ngraph.graph": "0.0.14",
     "ngraph.todot": "^0.3.0",
     "ngraph.tojson": "^0.1.4",

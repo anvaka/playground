@@ -41,7 +41,7 @@ graph.addNode(startFrom, {
 });
 
 
-processQueue(saveGraph);
+processQueue();
 
 function enqueue(userId) {
   if (enqueued.has(userId)) return;
