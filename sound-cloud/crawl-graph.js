@@ -16,8 +16,11 @@ var client_id = argv.client || process.env.SOUND_CLOUD_CLIENT_ID;
 if (!client_id) {
   throw new Error('Please set SOUND_CLOUD_CLIENT_ID environment variable to start');
 }
+
 var client = sc(client_id);
 
+var maxActive = 5;
+var currentActive = 0;
 let indexedUsers, queue, usersStream, graphStream;
 
 readIndexedSoFar()
@@ -26,14 +29,26 @@ readIndexedSoFar()
     queue = result.queue;
   })
   .then(initOutStreams)
-  .then(processQueue);
+  .then(runWorkers);
+
+function runWorkers() {
+  while (currentActive < maxActive) {
+    if (!processQueue()) {
+      // we are done!
+      return;
+    }
+  }
+}
 
 function processQueue() {
   if (queue.length === 0) {
     console.log('All done. Congrats!');
-    return;
+    return false;
   }
+
+  currentActive += 1;
   var startFrom = queue.shift();
+  indexedUsers.add(startFrom);
   console.log('Queue length: ', queue.length);
 
   client.get('followings', startFrom).then(followers => {
@@ -47,13 +62,17 @@ function processQueue() {
     let followersIds = followers.map(f => f.id).join(',');
     graphStream.write(`${startFrom}->${followersIds}\n`)
 
-    processQueue();
+    currentActive -= 1;
+    runWorkers();
   }).catch(err => {
     console.log('Failed to download: ', startFrom);
     console.log('Error was: ', err);
 
-    processQueue();
+    currentActive -= 1;
+    runWorkers();
   });
+
+  return true;
 }
 
 function readIndexedSoFar() {
