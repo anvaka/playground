@@ -21,7 +21,7 @@ function parseOldPage($, results) {
   Array.from(products).forEach(p => {
     const product = $(p);
     var raw = product.html();
-    var productInfo = { raw };
+    var productInfo = { raw, variant: 1 };
     try {
       var asin = JSON.parse(product.attr('data-p13n-asin-metadata')).asin;
       var img = $(product.find('img'));
@@ -36,9 +36,64 @@ function parseOldPage($, results) {
 
     results.products.push(productInfo);
   });
+
+  parseTree($, results);
 }
 
 function parseNewPage($, results) {
-  console.log($.html())
-  throw new Error('implement me');
+  var products = $('.zg-item');
+  Array.from(products).forEach(p => {
+    const product = $(p);
+    var productInfo = {
+      raw: product.html(),
+      variant: 2
+    };
+    const img = $(product.find('a img'));
+    const title = img.attr('alt');
+    const imgUrl = img.attr('src');
+    const href = $(img.parent().parent().parent()).attr('href');
+    const asin = getAsinFromHref(href);
+    productInfo.parsed = {
+      asin,
+      title,
+      img: imgUrl
+    };
+
+    results.products.push(productInfo);
+  });
+
+  parseTree($, results);
+}
+
+function getAsinFromHref(href) {
+  if (!href) throw new Error('No href');
+  const match = href.match(/\/(.{10})\/ref/);
+  if (!match) throw new Error('no match ' + href);
+
+  return match[1];
+}
+
+function parseTree($, results) {
+  var path = getPath($);
+  var currentNode = $('span.zg_selected');
+  path.push(currentNode.html().trim());
+  var children = Array.from(currentNode.parent().parent().find('ul li a'));
+  children.forEach(child => {
+    var aTag = $(child)
+    results.children.push({
+      href: aTag.attr('href'),
+      name: aTag.text()
+    });
+  });
+  results.parents = results.parents.concat(path);
+}
+
+function getPath($, parents) {
+  var parents = Array.from($('.zg_browseUp'));
+  var path = [];
+  parents.forEach(p => {
+    var nameTag = $($(p).find('a'));
+    path.push(nameTag.html());
+  });
+  return path;
 }
