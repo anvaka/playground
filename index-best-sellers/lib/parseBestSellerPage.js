@@ -81,7 +81,7 @@ function parseTree($, results) {
   children.forEach(child => {
     var aTag = $(child)
     results.children.push({
-      href: aTag.attr('href'),
+      href: aTag.attr('href').replace(/\/ref=zg.+$/, ''),
       name: aTag.text()
     });
   });
