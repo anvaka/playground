@@ -10,15 +10,14 @@ var defaultStartFrom = 'https://www.amazon.com/best-sellers-books-Amazon/zgbs/bo
 var queue = [];
 var outgoing;
 
-// We likely not gonna need this - it looks to be a tree, not a graph, so there should be
-// no cycles.
 var indexedSoFar = new Map();
+var enqueued = new Set();
 
 readIndexedSoFar().then(crawlInfo => {
   queue = crawlInfo.queue;
-  indexedSoFar = crawlInfo.indexedPages;
   outgoing = createOutStream();
 
+  console.log('queue length', queue.length);
   processQueue();
 });
 
@@ -45,23 +44,22 @@ function processQueue() {
 
 function readIndexedSoFar() {
   var queue = [];
-  var indexedPages = new Map();
   if (!fs.existsSync(processedFileName)) {
     queue.push(defaultStartFrom);
 
-    return Promise.resolve({ indexedPages, queue });
+    return Promise.resolve({ queue });
   }
 
   return readIndexedPages().then(buildQueue)
 }
 
-function buildQueue(indexedPages) {
-  indexedPages.forEach((treeChildren) => {
+function buildQueue() {
+  indexedSoFar.forEach((treeChildren) => {
     enqueueWhatIsNeeded(treeChildren);
   });
 
   return {
-    queue, indexedPages
+    queue
   }
 }
 
@@ -69,12 +67,14 @@ function buildQueue(indexedPages) {
 function enqueueWhatIsNeeded(treeChildren) {
   treeChildren.forEach(child => {
     if (indexedSoFar.has(child.href)) return;
+    if (enqueued.has(child.href)) return;
+    enqueued.add(child.href);
     queue.push(child.href);
   });
 }
 
 function readIndexedPages() {
-  var indexedPages = new Map();
+  var dupesCount = 0;
 
   console.log('Parsing indexed pages...');
   return new Promise(resolve => {
@@ -84,12 +84,15 @@ function readIndexedPages() {
       .on('end', done);
 
     function markProcessed(page) {
-      indexedPages.set(page.id, page.children);
+      if (indexedSoFar.has(page.id)) {
+        dupesCount += 1;
+      }
+      indexedSoFar.set(page.id, page.children);
     }
 
     function done() {
-      console.log('Read ' + indexedPages.size + ' pages');
-      resolve(indexedPages);
+      console.log('Read ' + indexedSoFar.size + ' pages. Dupes: ' + dupesCount);
+      resolve();
     }
   })
 }
