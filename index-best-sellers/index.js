@@ -10,8 +10,6 @@ var defaultStartFrom = 'https://www.amazon.com/best-sellers-books-Amazon/zgbs/bo
 var queue = [];
 var outgoing;
 
-// We likely not gonna need this - it looks to be a tree, not a graph, so there should be
-// no cycles.
 var indexedSoFar = new Map();
 
 readIndexedSoFar().then(crawlInfo => {
