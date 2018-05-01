@@ -6,17 +6,23 @@ var removeOverlaps = require('./overlaps/removeOverlaps');
 const toolsToInit = require('../tools/index.js');
 
 function init(rootGraph, autoCluster = false) {
+  removeIsolates(rootGraph);
   peprocessGraphNodeSize(rootGraph);
   var root = new GraphLayer(rootGraph);
 
+//  autoCluster = true;
   if (autoCluster) {
     var newRoot;
 
     do {
       // todo: i need to ignore isolated clusters, and add them at the end.
-      newRoot = root.split();
+      newRoot = root.split(/* deep = */ true);
       if (newRoot) root = newRoot;
     } while (newRoot)
+
+    if (root.children) {
+      root.children.forEach(splitDown);
+    }
   }
 
 
@@ -156,4 +162,29 @@ function peprocessGraphNodeSize(graph) {
 function getBucket(value, min, max, bucketsCount) {
   let slice = (value - min) / (max - min);
   return Math.round(slice * bucketsCount);
+}
+
+
+function removeIsolates(graph) {
+  graph.forEachNode(node => {
+    if (!node.links) graph.removeNode(node.id);
+  })
+}
+
+function splitDown(cluster) {
+  if (cluster.children) {
+    cluster.children.forEach(splitDown);
+    return;
+  } 
+  if (cluster.graph.getNodesCount() < 200) return;
+
+  let newSplit = cluster.split();
+  if (newSplit) {
+    let parent = cluster.parent;
+    parent.removeChild(cluster);
+    parent.appendChild(newSplit);
+    parent.children.forEach(splitDown);
+  } else {
+    console.error('cannot split anymore - no modularity gain');
+  }
 }

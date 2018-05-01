@@ -15,6 +15,7 @@ class GraphLayer {
     this.children = null;
     this.childrenLookup = new Map();
     this.layout = null;
+    // Initial positions
     this.initialPositions = initialPositions;
     this.modularityImproved = false;
 
@@ -154,17 +155,18 @@ class GraphLayer {
   }
 
   /**
-   * Splits current graph into clsuters, returns parent graph layer.
+   * Splits current graph into clusters, returns parent graph layer.
    */
   split() {
     let clusters = detectClusters(this.graph);
     let clusterGraph = clusters.clusterGraph;
-    if (!clusters.modularityImproved) return false;
+    if (!clusters.modularityImproved || clusters.modularityDiff < 0.1) return false;
 
     let currentLevel = this.level;
     let parent = new GraphLayer(clusterGraph, currentLevel + 1);
     parent.settings.selectedLayout = this.settings.selectedLayout;
     if (this.parent) {
+      // TODO: this looks wrong for internal clusters
       parent.id = this.id;
     }
 
@@ -355,6 +357,7 @@ function detectClusters(srcGraph) {
 
   return {
     modularityImproved: clusters.canCoarse(),
+    modularityDiff: Math.abs(clusters.newModularity - clusters.originalModularity),
     clusterGraph
   }
 }

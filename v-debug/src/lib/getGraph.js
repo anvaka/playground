@@ -5,6 +5,7 @@ var data = require('../data/anvaka_2.json')
 var createGraph = require('ngraph.graph');
 
 module.exports = getGraph; //getDot(require('./data/substack'));
+//module.exports = getDot(require('../data/jdalton.dot.js'));
 
 let useSmall = false;
 

@@ -1,11 +1,14 @@
 module.exports = createGridLayoutViewModel;
 
+var createGraph = require('ngraph.graph');
+var createLayout = require('ngraph.forcelayout');
 var bus = require('../../lib/bus');
 var gridRoads = require('./fieldRoads');
 var forEachRectangleNode = require('./forEachRectangle');
 var getGridLines = require('./getGridLines');
 var getBBoxAndRects = require('./getBBoxAndRects');
 var getTesselationLines = require('./getTesselationLines');
+var findCircleIntersection = require('./findCircleIntersection');
 
 function createGridLayoutViewModel(appModel) {
   var api = {
@@ -65,16 +68,93 @@ function createGridLayoutViewModel(appModel) {
     let graph = selectedCluster.graph;
     let layout = selectedCluster.layout;
     let offset = selectedCluster.getOwnOffset();
-    let roadLayout = gridRoads(graph, layout, useGrid);
+    // TODO: need to augment graph with outgoing edges, so that highways are rendered correctly
+    var clusterRect = layout.getGraphRect();
+    var r = Math.max(clusterRect.x2 - clusterRect.x1, clusterRect.y2 - clusterRect.y1)/2;
+
+    let globalPositions = appModel.root.buildNodePositions();
+    let rootGraph = appModel.rootGraph;
+    var helpLines = [];
+    var augmentedGraph = createGraph();
+    var segmentsCount = 6;
+    graph.forEachNode(node => {
+      augmentedGraph.addNode(node.id, node.data);
+      var ourPos = globalPositions.get(node.id);
+
+      // traverse connections in the top level graph
+      rootGraph.forEachLinkedNode(node.id, other => {
+        if (graph.getNode(other.id)) return; // this connection is in-cluster - no need to process it.
+        var otherPos = globalPositions.get(other.id);
+        // find where the other pos intersects our own circle
+        var circleIntersection = findCircleIntersection(offset.x, offset.y, r, ourPos.x, ourPos.y, otherPos.x, otherPos.y);
+        if (!circleIntersection) {
+          console.error('Cluster circle is not intersected. How so?');
+          return;
+        }
+        var rx = circleIntersection.x - offset.x;
+        var ry = circleIntersection.y - offset.y;
+        var angle = Math.atan2(ry, rx);
+        if (angle < 0) angle = Math.PI * 2 + angle;
+        var bucket = Math.round(segmentsCount * angle/(2 * Math.PI));
+        var bucketNodeId = '!!bucket_' + bucket;
+        var bucketNode = augmentedGraph.getNode(bucketNodeId);
+        if (!bucketNode) {
+          bucketNode = augmentedGraph.addNode(bucketNodeId, {size: 1});
+          bucketNode.data.isBucket = true;
+          bucketNode.data.pos = {
+            x: r * Math.cos(bucket*(Math.PI * 2)/segmentsCount),
+            y: r * Math.sin(bucket*(Math.PI * 2)/segmentsCount)
+          }
+          helpLines.push({
+            from: {
+              x: offset.x,
+              y: offset.y
+            }, 
+            to: {
+              x: bucketNode.data.pos.x + offset.x,
+              y: bucketNode.data.pos.y + offset.y
+            }
+          })
+        }
+        augmentedGraph.addLink(node.id, bucketNodeId);
+      })
+    });
+    // bus.fire('draw-lines', helpLines, {
+    //   key: 'help-lines',
+    //   color: {r: 0.3, g: 0.3, b: 0.6, a: 0.3},
+    //   sendToBack: true
+    // });
+
+    graph.forEachLink(link => {
+      augmentedGraph.addLink(link.fromId, link.toId, link.data);
+    });
+    var settings = Object.assign({}, layout.simulator.settings);
+    delete settings.nodeMass;
+    // we just copy the layout, we will not run it - needed to set augmented node positions
+    var augmentedLayout = createLayout(augmentedGraph, settings)
+    augmentedGraph.forEachNode(node => {
+      var p;
+      if (node.data.isBucket) {
+        p = node.data.pos;
+      } else {
+        p = layout.getNodePosition(node.id);
+      }
+      augmentedLayout.setNodePosition(node.id, p.x, p.y);
+    })
+
+    let roadLayout = gridRoads(augmentedGraph, augmentedLayout, useGrid);
 
     var lines = roadLayout.lines;
     translateLines(roadLayout.lines, offset);
     var nodes = roadLayout.nodes;
     nodes.forEach(node => {
-      var pos = layout.getNodePosition(node.id);
-      pos.x = node.x; //+ offset.x;
-      pos.y = node.y;// + offset.y;
-      layout.setNodePosition(node.id, pos.x, pos.y);
+      //var pos = augmentedLayout.getNodePosition(node.id);
+      // pos.x = node.x; //+ offset.x;
+      // pos.y = node.y;// + offset.y;
+      var pos = node; // comes from fieldRoads.
+      if (graph.getNode(node.id)) {
+        layout.setNodePosition(node.id, pos.x, pos.y);
+      }
     });
 
     bus.fire('draw-lines', lines, {
@@ -87,7 +167,6 @@ function createGridLayoutViewModel(appModel) {
         a: 0.4 
       }
     });
-
   }
 
   function translateLines(lines, offset) {
@@ -125,8 +204,9 @@ function createGridLayoutViewModel(appModel) {
        }
 
        seenPos.add(key);
-       pos.x = x + nodeSize;
-       pos.y = y + nodeSize;
+      //  pos.x = x + nodeSize;
+      //  pos.y = y + nodeSize;
+       layout.setNodePosition(node.id, x + nodeSize, y + nodeSize)
      })
    }
 
