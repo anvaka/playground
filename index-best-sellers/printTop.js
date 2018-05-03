@@ -49,23 +49,31 @@ function makeCrossReferencesForNodes({graph, root}) {
       return;
     }
     visitedNodes.add(from.id);
-    from.data.products.forEach((product, idx) => mapProductTo(product, idx * divider));
+    from.data.products.forEach((product, idx) => {
+      mapProductTo(product, (idx + 1) * divider, from.data.parents, idx)
+    });
 
     graph.forEachLinkedNode(from.id, (node) => {
       assignProductScores(node, level + 1);
     }, true);
   }
 
-  function mapProductTo(product, levelRank) {
+  function mapProductTo(product, levelRank, parents, levelIndex) {
     let {asin} = product.parsed;
     if (!asin) throw new Error('no asin?');
 
+
     let currentRecord = productToLayer.get(asin);
     if (!currentRecord) {
-      currentRecord = Object.assign({score: levelRank}, product.parsed);
+      currentRecord = Object.assign({
+          score: levelRank,
+          seenPath: makeTree(levelIndex, parents)
+        }, product.parsed
+      );
       productToLayer.set(asin, currentRecord);
     } else {
       currentRecord.score += levelRank;
+      makeTree(levelIndex, parents, currentRecord.seenPath);
     }
   }
 }
@@ -124,4 +132,18 @@ function readIndexedPages(fileName) {
 
     return root;
   }
+}
+
+function makeTree(leafScore, parents, root = Object.create(null)) {
+  var currentNode = root;
+  parents.forEach(child => {
+    child = child.replace(/\&amp;/g, '&');
+    if (!currentNode[child]) {
+      currentNode[child] = Object.create(null);
+    }
+    currentNode = currentNode[child]
+  });
+  currentNode._score = leafScore;
+  return root;
+
 }
