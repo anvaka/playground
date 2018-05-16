@@ -5,7 +5,7 @@ var query_overpass = require('./lib/query-op.js');
 var areaId = process.argv[2];
 
 if (!areaId) {
-  console.error('Please pass area id as the first argumnet to this script');
+  console.error('Please pass area id as the first argument to this script');
   console.error('To find required area id, run:');
   console.error('  node 2.download-roads.js 3600197198 > data/3600197198.json');
   process.exit(1);

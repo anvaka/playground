@@ -8,8 +8,8 @@ var graph = require('ngraph.graph')();
 var nodes = new Map();
 var BBox = require('./bbox.js');
 var bbox = new BBox();
- 
-var parser = osmread.parse({
+
+osmread.parse({
   filePath: inFileName,
   endDocument: saveResults,
   node: processOSMNode,

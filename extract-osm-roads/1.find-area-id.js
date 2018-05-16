@@ -3,7 +3,7 @@ var query_overpass = require('./lib/query-op.js');
 
 var cityName = process.argv[2];
 if (!cityName) {
-  console.error('Please pass city name as the first argumnet to this script');
+  console.error('Please pass city name as the first argument to this script');
   console.error('E.g. this will find all areas with Amsterdam as a name:');
   console.error('  node 1.find-area-id.js "Amsterdam"');
   process.exit(1);
