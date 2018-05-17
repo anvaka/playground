@@ -12,8 +12,8 @@ if (!cityName) {
 console.error('Searching for ' + cityName);
 
 query_overpass(`
-  (area["name"="${cityName}"]);
-  out body;
+area["name"="${cityName}"];
+out body;
 `).then(print).catch(e => console.log(e));
 
 function print(res) {

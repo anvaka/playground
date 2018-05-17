@@ -7,7 +7,7 @@ var request = require('request');
 
 module.exports = function(query, options) {
   options = options || {};
-  var overpassUrl = options.overpassUrl || 'http://overpass-api.de/api/interpreter'
+  var overpassUrl = options.overpassUrl || 'https://lz4.overpass-api.de/api/interpreter'
   var timeout = options.timeout || 25000;
   var format = options.format || 'json';
   var outStream = options.out || process.stdout;
