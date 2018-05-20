@@ -1,4 +1,6 @@
-export default function postData(url, data) {
+const url = 'https://overpass-api.de/api/interpreter' ;
+
+export default function postData(data) {
   return fetch(url, {
     body: 'data=' + encodeURIComponent(data),
     cache: 'no-cache',

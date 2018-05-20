@@ -1,5 +1,5 @@
 /* global mapboxgl */
-import getAreasAround from './lib/getAreasAround';
+import * as osm from './lib/osm';
 import appState from './appState';
 import bus from './bus';
 
@@ -26,16 +26,26 @@ scrollingDiv.addEventListener('touchmove', function(event){
 });
 
 map.on('click', function(e) {
+  removeHighlight();
   appState.currentState = 'loading';
+  appState.selected = null;
 
-  getAreasAround(e.lngLat, map.getBounds())
+  osm.getAreasAround(e.lngLat, map.getBounds())
     .then(showRegionOptions) 
     .catch(error => console.error(error))
 });
 
 bus.on('highlight-bounds', (el) => {
-  highlightLayer(el.bounds);
+  highlightLayer(el.id);
 });
+
+bus.on('download-roads', (el) => {
+  downloadRoads(el.id);
+});
+
+function downloadRoads(relId) {
+  osm.getRoadsInRelationship(relId).then(d => console.log(d));
+}
 
 function showRegionOptions(data) {
   appState.chooseFrom = [];
@@ -53,37 +63,52 @@ function showRegionOptions(data) {
   appState.currentState = appState.chooseFrom.length > 0 ? 'choose' : '';
 }
 
-function highlightLayer(bounds) {
-    var b = bounds;
-    if (map.getLayer('highlight')) {
-      map.removeLayer('highlight');
-      map.removeSource('highlight');
-    }
-    map.addLayer({
-      id: 'highlight',
-      type: 'fill',
-      source: {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            geometry: {
-              type: 'Polygon',
-              coordinates: [
-                [
-                  [ b.minlon, b.minlat],
-                  [ b.maxlon, b.minlat],
-                  [ b.maxlon, b.maxlat],
-                  [ b.minlon, b.maxlat],
-                  [ b.minlon, b.minlat],
-                ]
-              ]
+function removeHighlight() {
+  if (map.getLayer('highlight')) {
+    map.removeLayer('highlight');
+    map.removeSource('highlight');
+  }
+}
+
+function highlightLayer(relationId) {
+    osm.getRelationBoundary(relationId)
+      .then(buildPolygon)
+      .then(drawPolygonHighlight);
+
+    function drawPolygonHighlight(features) {
+      map.addLayer({
+        id: 'highlight',
+        type: 'line',
+        source: {
+            type: 'geojson',
+            data: {
+              type: 'FeatureCollection',
+              features: features
             }
-          }
-      },
-      layout: {},
-      paint: {
-        'fill-color': '#088',
-        'fill-opacity': 0.8
-      }
+        },
+        layout: {},
+        paint: {
+          'line-width': 3,
+          'line-color': '#A33F6F',
+        }
+      });
+    }
+  }
+
+  function buildPolygon(osmBounds) {
+    var {nodes, ways} = osmBounds;
+    return ways.map(way => {
+
+      let coordinates = way.nodes.map(node => {
+        var n = nodes.get(node)
+        return [n.lon, n.lat]
+      });
+      return {
+        type: 'Feature',
+        geometry: {
+          type: 'LineString',
+          coordinates: coordinates
+        }
+      };
     });
   }

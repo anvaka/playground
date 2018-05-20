@@ -1,6 +1,7 @@
 var appState = {
   currentState: '',
-  chooseFrom: []
+  chooseFrom: [],
+  selected: null
 };
 
 export default appState;
