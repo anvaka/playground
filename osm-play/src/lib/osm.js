@@ -38,12 +38,34 @@ out skel;`).then(response => {
 }
 
 export function getRoadsInRelationship(relId) {
+  let highwayTags = [
+    'motorway',
+    'motorway_link',
+    'trunk',
+    'trunk_link',
+    'primary',
+    'primary_link',
+    'secondary',
+    'secondary_link',
+    'tertiary',
+    'tertiary_link',
+    'unclassified',
+    'unclassified_link',
+    'residential',
+    'residential_link',
+    'service',
+    'service_link',
+    'living_street',
+    'pedestrian',
+    'road'
+  ].join('|');
+
   return postData(
   `[timeout:10][out:json];
 rel(${relId});
 map_to_area->.a;
 (
- way["highway"="road"](area.a);
+ way["highway"~"${highwayTags}"](area.a);
  node(w);
 );
 out skel;`);

@@ -15,7 +15,6 @@
       <h4>Step 2: Download roads</h4>
       <a href="#" @click.prevent='downloadRoads(selected)'>Build roads for {{selected.name}}</a>
     </div>
-    <canvas ref='canvas' class='absolute'></canvas>
   </div>
 </template>
 
@@ -33,7 +32,7 @@ export default {
   components: {
   },
   mounted() {
-    this.webGLEnabled = wgl.isWebGLEnabled(this.$refs.canvas);
+    this.webGLEnabled = wgl.isWebGLEnabled(document.querySelector('canvas'));
     bus.on('graph-loaded', this.createScene, this);
   },
   beforeDestroy() {
@@ -58,20 +57,23 @@ export default {
 
     createScene() {
       this.ensurePreviousSceneDestroyed();
-      let canvas = this.$refs.canvas;
+      let canvas = document.querySelector('canvas');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
       this.graphLoaded = true;
       this.scene = wgl.scene(canvas);
       let scene = this.scene;
 
       let bbox = this.getGraphBBox();
-      let initialSceneSize = bbox.width/8;
-      scene.setViewBox({
-        left:  -initialSceneSize,
-        top:   -initialSceneSize,
-        right:  initialSceneSize,
-        bottom: initialSceneSize,
-      })
-      let graph = api.getGraph();
+      // let initialSceneSize = bbox.width/8;
+      scene.setViewBox(bbox);
+      // scene.setViewBox({
+      //   left:  -initialSceneSize,
+      //   top:   -initialSceneSize,
+      //   right:  initialSceneSize,
+      //   bottom: initialSceneSize,
+      // })
+      let graph = this.getGraph();
       let linksCount = graph.getLinksCount();
       let lines = new wgl.WireCollection(linksCount);
       lines.color = {r: 0.8, g: 0.8, b: 0.8, a: 0.7}
