@@ -10,8 +10,11 @@
     "build": "node build/build.js"
   },
   "dependencies": {
+    "d3-geo": "^1.10.0",
     "ngraph.events": "0.0.4",
-    "vue": "^2.5.2"
+    "ngraph.graph": "0.0.14",
+    "vue": "^2.5.2",
+    "w-gl": "0.0.5"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.2",

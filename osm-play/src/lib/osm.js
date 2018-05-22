@@ -43,8 +43,8 @@ export function getRoadsInRelationship(relId) {
 rel(${relId});
 map_to_area->.a;
 (
- way(area.a)["highway"="pathway"];
- node(area.a);
+ way["highway"="road"](area.a);
+ node(w);
 );
 out skel;`);
 }

@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="app" class='absolute'>
     <div v-if='currentState === "loading"'>
       Loading...
     </div>
@@ -15,13 +15,15 @@
       <h4>Step 2: Download roads</h4>
       <a href="#" @click.prevent='downloadRoads(selected)'>Build roads for {{selected.name}}</a>
     </div>
-    
+    <canvas ref='canvas' class='absolute'></canvas>
   </div>
 </template>
 
 <script>
 import appState from './appState';
 import bus from './bus';
+
+const wgl = require('w-gl');
 
 export default {
   name: 'App',
@@ -30,6 +32,14 @@ export default {
   },
   components: {
   },
+  mounted() {
+    this.webGLEnabled = wgl.isWebGLEnabled(this.$refs.canvas);
+    bus.on('graph-loaded', this.createScene, this);
+  },
+  beforeDestroy() {
+    bus.off('graph-loaded', this.createScene);
+    this.ensurePreviousSceneDestroyed();
+  },
   methods: {
     highlightBounds(item) {
       appState.selected = item;
@@ -37,7 +47,42 @@ export default {
     },
     downloadRoads(item) {
       bus.fire('download-roads', item.el);
-    }
+    },
+
+    ensurePreviousSceneDestroyed() {
+      if (this.scene) {
+        this.scene.dispose();
+        this.scene = null;
+      }
+    },
+
+    createScene() {
+      this.ensurePreviousSceneDestroyed();
+      let canvas = this.$refs.canvas;
+      this.graphLoaded = true;
+      this.scene = wgl.scene(canvas);
+      let scene = this.scene;
+
+      let bbox = this.getGraphBBox();
+      let initialSceneSize = bbox.width/8;
+      scene.setViewBox({
+        left:  -initialSceneSize,
+        top:   -initialSceneSize,
+        right:  initialSceneSize,
+        bottom: initialSceneSize,
+      })
+      let graph = api.getGraph();
+      let linksCount = graph.getLinksCount();
+      let lines = new wgl.WireCollection(linksCount);
+      lines.color = {r: 0.8, g: 0.8, b: 0.8, a: 0.7}
+      // lines.color = {r: 0.1, g: 0.1, b: 0.1, a: 0.9}
+      graph.forEachLink(function (link) {
+        let from = graph.getNode(link.fromId).data;
+        let to = graph.getNode(link.toId).data
+        lines.add({ from, to });
+      });
+      scene.appendChild(lines);
+    },
   }
 }
 </script>

@@ -2,6 +2,10 @@
 import * as osm from './lib/osm';
 import appState from './appState';
 import bus from './bus';
+import BBox from './lib/bbox';
+import createProjector from './lib/createProjector';
+
+var createGraph = require('ngraph.graph');
 
 require.ensure('@/vueApp.js', () => {
   // Settings UI is ready, initialize vue.js application
@@ -44,7 +48,42 @@ bus.on('download-roads', (el) => {
 });
 
 function downloadRoads(relId) {
-  osm.getRoadsInRelationship(relId).then(d => console.log(d));
+  var lonLatBbox = new BBox();
+
+  osm.getRoadsInRelationship(relId)
+    .then(d => {
+      d.elements.forEach(element => {
+        if (element.type === 'node') {
+          lonLatBbox.addPoint(element.lon, element.lat);
+        }
+      });
+      return d;
+    })
+    .then(d => {
+      var graph = createGraph();
+      var project = createProjector(lonLatBbox);
+      var offset = new BBox();
+
+      d.elements.forEach(element => {
+        if (element.type === 'node') {
+          var nodeData = project(element.lon, element.lat);
+          offset.addPoint(nodeData.x, nodeData.y);
+          graph.addNode(element.id, nodeData)
+        } else if (element.type === 'way') {
+          element.nodes.forEach((node, idx) => {
+            if (idx > 0) {
+              graph.addLink(element.nodes[idx - 1], element.nodes[idx]);
+            } 
+          })
+        }
+      });
+
+      return {graph, bounds: offset};
+    }).then(({graph, bounds}) => {
+      appState.setGraph(graph, bounds);
+      bus.fire('graph-loaded');
+    });
+
 }
 
 function showRegionOptions(data) {
@@ -71,12 +110,14 @@ function removeHighlight() {
 }
 
 function highlightLayer(relationId) {
-    osm.getRelationBoundary(relationId)
-      .then(buildPolygon)
-      .then(drawPolygonHighlight);
+  removeHighlight();
 
-    function drawPolygonHighlight(features) {
-      map.addLayer({
+  osm.getRelationBoundary(relationId)
+    .then(buildPolygon)
+    .then(drawPolygonHighlight);
+
+  function drawPolygonHighlight(features) {
+    map.addLayer({
         id: 'highlight',
         type: 'line',
         source: {
