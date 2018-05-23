@@ -61,7 +61,7 @@ export function getRoadsInRelationship(relId) {
   ].join('|');
 
   return postData(
-  `[timeout:10][out:json];
+  `[timeout:900][out:json];
 rel(${relId});
 map_to_area->.a;
 (

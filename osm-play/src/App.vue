@@ -32,7 +32,7 @@ export default {
   components: {
   },
   mounted() {
-    this.webGLEnabled = wgl.isWebGLEnabled(document.querySelector('canvas'));
+    this.webGLEnabled = wgl.isWebGLEnabled(document.querySelector('.scene-roads'));
     bus.on('graph-loaded', this.createScene, this);
   },
   beforeDestroy() {
@@ -57,21 +57,26 @@ export default {
 
     createScene() {
       this.ensurePreviousSceneDestroyed();
-      let canvas = document.querySelector('canvas');
+      let canvas = document.querySelector('.scene-roads');
+      debugger;
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       this.graphLoaded = true;
       this.scene = wgl.scene(canvas);
       let scene = this.scene;
+      // bug in w-gl
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      scene.setPixelRatio(1);
 
       let bbox = this.getGraphBBox();
       // let initialSceneSize = bbox.width/8;
       scene.setViewBox(bbox);
       // scene.setViewBox({
-      //   left:  -initialSceneSize,
-      //   top:   -initialSceneSize,
-      //   right:  initialSceneSize,
-      //   bottom: initialSceneSize,
+      //   left:  bbox.left/4,
+      //   top:   bbox.top/4,
+      //   right:  bbox.right/4,
+      //   bottom: bbox.bottom/4,
       // })
       let graph = this.getGraph();
       let linksCount = graph.getLinksCount();
