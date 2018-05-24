@@ -1,19 +1,25 @@
 <template>
   <div id="app" class='absolute'>
-    <div v-if='currentState === "loading"'>
-      Loading...
+    <div v-if='currentState === "intro"' class='step'>
+      Click anywhere on the map to show available regions
     </div>
-    <div v-if='currentState === "choose"'>
-      <h4>Step 1: Select a boundary</h4>
+    <div v-if='currentState === "loading-regions"' class='step'>
+      Loading regions...
+    </div>
+    <div v-if='currentState === "choose"' class='step'>
+      <h4>Step 1: Select a region</h4>
       <ul>
         <li v-for="item in chooseFrom">
           <a href='#' @click.prevent='highlightBounds(item)'>{{item.name}}</a>
         </li>
       </ul>
     </div>
-    <div v-if='selected'>
+    <div v-if='selected' class='step'>
       <h4>Step 2: Download roads</h4>
       <a href="#" @click.prevent='downloadRoads(selected)'>Build roads for {{selected.name}}</a>
+      <div v-if='downloadOsmProgress'>
+        Downloading
+      </div>
     </div>
   </div>
 </template>
@@ -58,7 +64,6 @@ export default {
     createScene() {
       this.ensurePreviousSceneDestroyed();
       let canvas = document.querySelector('.scene-roads');
-      debugger;
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       this.graphLoaded = true;
@@ -102,5 +107,9 @@ export default {
   color: #2c3e50;
   width: 400px;
   background: white;
+  padding: 12px 0;
+}
+.step {
+  padding: 0 12px;
 }
 </style>

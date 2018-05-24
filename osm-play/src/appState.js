@@ -1,7 +1,8 @@
 var appState = {
-  currentState: '',
+  currentState: 'intro',
   chooseFrom: [],
   selected: null,
+  downloadOsmProgress: null,
   getGraphBBox,
   getGraph,
   setGraph

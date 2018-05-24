@@ -31,7 +31,7 @@ scrollingDiv.addEventListener('touchmove', function(event){
 
 map.on('click', function(e) {
   removeHighlight();
-  appState.currentState = 'loading';
+  appState.currentState = 'loading-regions';
   appState.selected = null;
 
   osm.getAreasAround(e.lngLat, map.getBounds())
@@ -40,7 +40,7 @@ map.on('click', function(e) {
 });
 
 bus.on('highlight-bounds', (el) => {
-  highlightLayer(el.id);
+  highlightLayer(el.id, el.bounds);
 });
 
 bus.on('download-roads', (el) => {
@@ -109,8 +109,9 @@ function removeHighlight() {
   }
 }
 
-function highlightLayer(relationId) {
+function highlightLayer(relationId, bounds) {
   removeHighlight();
+  map.fitBounds([bounds.minlon, bounds.minlat, bounds.maxlon, bounds.maxlat]);
 
   osm.getRelationBoundary(relationId)
     .then(buildPolygon)
