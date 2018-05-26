@@ -2,10 +2,12 @@ var appState = {
   currentState: 'intro',
   chooseFrom: [],
   selected: null,
+  point: null,
   downloadOsmProgress: null,
   getGraphBBox,
   getGraph,
-  setGraph
+  setGraph,
+  startOver,
 };
 
 var graph;
@@ -22,12 +24,13 @@ function getGraph() {
 function setGraph(newGraph, bounds) {
   graph = newGraph;
   graphBounds = bounds;
-  // graph.forEachNode(node => {
-  //   node.data.x -= bounds.minX - w/2;
-  //   node.data.y -= bounds.minY - h/2;
-  // })
-  // graphWidth = Math.max(w, h);
 }
 
+function startOver() {
+  appState.currentState = 'intro';
+  appState.selected =  null;
+  appState.chooseFrom = [];
+  appState.downloadOsmProgress = null;
+}
 
 export default appState;

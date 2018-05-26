@@ -4,6 +4,7 @@ import appState from './appState';
 import bus from './bus';
 import BBox from './lib/bbox';
 import createProjector from './lib/createProjector';
+import createBoundaryHighlighter from './lib/createBoundaryHighlighter';
 
 var createGraph = require('ngraph.graph');
 
@@ -20,6 +21,8 @@ var map = new mapboxgl.Map({
     hash: true
 });
 
+const highlighter = createBoundaryHighlighter(map);
+
 map.addControl(new mapboxgl.NavigationControl({
   showCompass: false
 }));
@@ -30,8 +33,10 @@ scrollingDiv.addEventListener('touchmove', function(event){
 });
 
 map.on('click', function(e) {
-  removeHighlight();
+  highlighter.removeHighlight();
+
   appState.currentState = 'loading-regions';
+  appState.point = e.lngLat.lat + ', ' + e.lngLat.lng
   appState.selected = null;
 
   osm.getAreasAround(e.lngLat, map.getBounds())
@@ -40,12 +45,17 @@ map.on('click', function(e) {
 });
 
 bus.on('highlight-bounds', (el) => {
-  highlightLayer(el.id, el.bounds);
+  highlighter.highlight(el.id, el.bounds);
 });
 
 bus.on('download-roads', (el) => {
   downloadRoads(el.id);
 });
+
+bus.on('start-over', () => {
+  highlighter.removeHighlight();
+  appState.startOver();
+})
 
 function downloadRoads(relId) {
   var lonLatBbox = new BBox();
@@ -101,56 +111,3 @@ function showRegionOptions(data) {
 
   appState.currentState = appState.chooseFrom.length > 0 ? 'choose' : '';
 }
-
-function removeHighlight() {
-  if (map.getLayer('highlight')) {
-    map.removeLayer('highlight');
-    map.removeSource('highlight');
-  }
-}
-
-function highlightLayer(relationId, bounds) {
-  removeHighlight();
-  map.fitBounds([bounds.minlon, bounds.minlat, bounds.maxlon, bounds.maxlat]);
-
-  osm.getRelationBoundary(relationId)
-    .then(buildPolygon)
-    .then(drawPolygonHighlight);
-
-  function drawPolygonHighlight(features) {
-    map.addLayer({
-        id: 'highlight',
-        type: 'line',
-        source: {
-            type: 'geojson',
-            data: {
-              type: 'FeatureCollection',
-              features: features
-            }
-        },
-        layout: {},
-        paint: {
-          'line-width': 3,
-          'line-color': '#A33F6F',
-        }
-      });
-    }
-  }
-
-  function buildPolygon(osmBounds) {
-    var {nodes, ways} = osmBounds;
-    return ways.map(way => {
-
-      let coordinates = way.nodes.map(node => {
-        var n = nodes.get(node)
-        return [n.lon, n.lat]
-      });
-      return {
-        type: 'Feature',
-        geometry: {
-          type: 'LineString',
-          coordinates: coordinates
-        }
-      };
-    });
-  }

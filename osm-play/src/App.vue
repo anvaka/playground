@@ -4,7 +4,7 @@
       Click anywhere on the map to show available regions
     </div>
     <div v-if='currentState === "loading-regions"' class='step'>
-      Loading regions...
+      Loading regions around {{point}}...
     </div>
     <div v-if='currentState === "choose"' class='step'>
       <h4>Step 1: Select a region</h4>
@@ -20,6 +20,9 @@
       <div v-if='downloadOsmProgress'>
         Downloading
       </div>
+    </div>
+    <div v-if='currentState !== "intro"' class='start-over'>
+      <a href='#' @click.prevent='resetAllAndStartOver'>Start over</a>
     </div>
   </div>
 </template>
@@ -38,7 +41,7 @@ export default {
   components: {
   },
   mounted() {
-    this.webGLEnabled = wgl.isWebGLEnabled(document.querySelector('.scene-roads'));
+    this.webGLEnabled = wgl.isWebGLEnabled(getRoadsCanvas());
     bus.on('graph-loaded', this.createScene, this);
   },
   beforeDestroy() {
@@ -53,41 +56,39 @@ export default {
     downloadRoads(item) {
       bus.fire('download-roads', item.el);
     },
-
     ensurePreviousSceneDestroyed() {
       if (this.scene) {
         this.scene.dispose();
         this.scene = null;
       }
+      var canvas = getRoadsCanvas();
+      canvas.style.display = 'none';
     },
-
+    resetAllAndStartOver() {
+      this.ensurePreviousSceneDestroyed();
+      bus.fire('start-over');
+    },
     createScene() {
       this.ensurePreviousSceneDestroyed();
-      let canvas = document.querySelector('.scene-roads');
+      let canvas = getRoadsCanvas();
+      canvas.style.display = 'block';
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       this.graphLoaded = true;
       this.scene = wgl.scene(canvas);
       let scene = this.scene;
+      scene.setClearColor(1, 1, 1, 1);
       // bug in w-gl
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       scene.setPixelRatio(1);
 
       let bbox = this.getGraphBBox();
-      // let initialSceneSize = bbox.width/8;
       scene.setViewBox(bbox);
-      // scene.setViewBox({
-      //   left:  bbox.left/4,
-      //   top:   bbox.top/4,
-      //   right:  bbox.right/4,
-      //   bottom: bbox.bottom/4,
-      // })
       let graph = this.getGraph();
       let linksCount = graph.getLinksCount();
       let lines = new wgl.WireCollection(linksCount);
-      lines.color = {r: 0.8, g: 0.8, b: 0.8, a: 0.7}
-      // lines.color = {r: 0.1, g: 0.1, b: 0.1, a: 0.9}
+      lines.color = {r: 0, g: 0, b: 0, a: 0.8}
       graph.forEachLink(function (link) {
         let from = graph.getNode(link.fromId).data;
         let to = graph.getNode(link.toId).data
@@ -96,6 +97,10 @@ export default {
       scene.appendChild(lines);
     },
   }
+}
+
+function getRoadsCanvas() {
+  return document.querySelector('.scene-roads');
 }
 </script>
 
@@ -108,8 +113,17 @@ export default {
   width: 400px;
   background: white;
   padding: 12px 0;
+  z-index: 4;
 }
 .step {
   padding: 0 12px;
+}
+.start-over {
+  text-align: center;
+  padding-top: 8px;
+  border-top: 1px solid gray;
+}
+.scene-roads {
+  z-index: 3;
 }
 </style>
