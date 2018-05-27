@@ -97,9 +97,16 @@ function readIndexedPages(fileName) {
 
       // nodes without data could have been added by `addLink` operation
       // So we need to add page data as well
+      if (page.id === 'https://www.amazon.com/Best-Sellers-Books-French-Horns/zgbs/books/8622772011') {
+        console.log(page);
+        console.log('baaa');
+      }
 
       graph.addNode(page.id, page);
       page.children.forEach(child => {
+        if (child.href === 'https://www.amazon.com/Best-Sellers-Books-French-Horns/zgbs/books/8622772011') {
+          console.log('chiiild');
+        }
         graph.addLink(page.id, child.href);
       });
     }

@@ -21,9 +21,13 @@
         Downloading
       </div>
     </div>
+
+    <a href="#" @click.prevent='downloadAllRoads()'>Load all roads in this area</a>
+
     <div v-if='currentState !== "intro"' class='start-over'>
       <a href='#' @click.prevent='resetAllAndStartOver'>Start over</a>
     </div>
+
   </div>
 </template>
 
@@ -55,6 +59,9 @@ export default {
     },
     downloadRoads(item) {
       bus.fire('download-roads', item.el);
+    },
+    downloadAllRoads() {
+      bus.fire('download-all-roads');
     },
     ensurePreviousSceneDestroyed() {
       if (this.scene) {

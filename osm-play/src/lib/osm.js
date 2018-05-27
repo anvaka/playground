@@ -1,5 +1,27 @@
 import postData from './postData';
 
+const highwayTags = [
+  'motorway',
+  'motorway_link',
+  'trunk',
+  'trunk_link',
+  'primary',
+  'primary_link',
+  'secondary',
+  'secondary_link',
+  'tertiary',
+  'tertiary_link',
+  'unclassified',
+  'unclassified_link',
+  'residential',
+  'residential_link',
+  'service',
+  'service_link',
+  'living_street',
+  'pedestrian',
+  'road'
+].join('|');
+
 export function getAreasAround(lonLat, bounds) {
   var sw = bounds.getSouthWest();
   var ne = bounds.getNorthEast()
@@ -37,29 +59,23 @@ out skel;`).then(response => {
 })
 }
 
-export function getRoadsInRelationship(relId) {
-  let highwayTags = [
-    'motorway',
-    'motorway_link',
-    'trunk',
-    'trunk_link',
-    'primary',
-    'primary_link',
-    'secondary',
-    'secondary_link',
-    'tertiary',
-    'tertiary_link',
-    'unclassified',
-    'unclassified_link',
-    'residential',
-    'residential_link',
-    'service',
-    'service_link',
-    'living_street',
-    'pedestrian',
-    'road'
-  ].join('|');
+export function getRoadsInBoundingBox(bounds) {
+  var sw = bounds.getSouthWest();
+  var ne = bounds.getNorthEast()
+  var bbox = `${sw.lat},${sw.lng},${ne.lat},${ne.lng}`;
+  // TODO: also try
+ // way["building"](${bbox});
+ // way["waterway"](${bbox});
+  return postData(
+    `[timeout:9000][out:json];
+(
+ way["highway"~"${highwayTags}"](${bbox});
+ node(w);
+);
+out skel;`);
+}
 
+export function getRoadsInRelationship(relId) {
   return postData(
   `[timeout:9000][out:json];
 rel(${relId});

@@ -57,43 +57,49 @@ bus.on('start-over', () => {
   appState.startOver();
 })
 
+bus.on('download-all-roads', () => {
+  renderAfterResolution(osm.getRoadsInBoundingBox(map.getBounds()));
+});
+
 function downloadRoads(relId) {
+  renderAfterResolution(osm.getRoadsInRelationship(relId));
+}
+
+function renderAfterResolution(promise) {
   var lonLatBbox = new BBox();
 
-  osm.getRoadsInRelationship(relId)
-    .then(d => {
-      d.elements.forEach(element => {
-        if (element.type === 'node') {
-          lonLatBbox.addPoint(element.lon, element.lat);
-        }
-      });
-      return d;
-    })
-    .then(d => {
-      var graph = createGraph();
-      var project = createProjector(lonLatBbox);
-      var offset = new BBox();
+  promise.then(d => {
+    d.elements.forEach(element => {
+      if (element.type === 'node') {
+        lonLatBbox.addPoint(element.lon, element.lat);
+      }
+    });
+    return d;
+  })
+  .then(d => {
+    var graph = createGraph();
+    var project = createProjector(lonLatBbox);
+    var offset = new BBox();
 
-      d.elements.forEach(element => {
-        if (element.type === 'node') {
-          var nodeData = project(element.lon, element.lat);
-          offset.addPoint(nodeData.x, nodeData.y);
-          graph.addNode(element.id, nodeData)
-        } else if (element.type === 'way') {
-          element.nodes.forEach((node, idx) => {
-            if (idx > 0) {
-              graph.addLink(element.nodes[idx - 1], element.nodes[idx]);
-            } 
-          })
-        }
-      });
-
-      return {graph, bounds: offset};
-    }).then(({graph, bounds}) => {
-      appState.setGraph(graph, bounds);
-      bus.fire('graph-loaded');
+    d.elements.forEach(element => {
+      if (element.type === 'node') {
+        var nodeData = project(element.lon, element.lat);
+        offset.addPoint(nodeData.x, nodeData.y);
+        graph.addNode(element.id, nodeData)
+      } else if (element.type === 'way') {
+        element.nodes.forEach((node, idx) => {
+          if (idx > 0) {
+            graph.addLink(element.nodes[idx - 1], element.nodes[idx]);
+          } 
+        })
+      }
     });
 
+    return {graph, bounds: offset};
+  }).then(({graph, bounds}) => {
+    appState.setGraph(graph, bounds);
+    bus.fire('graph-loaded');
+  });
 }
 
 function showRegionOptions(data) {
