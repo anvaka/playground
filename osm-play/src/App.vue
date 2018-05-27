@@ -1,28 +1,12 @@
 <template>
   <div id="app" class='absolute'>
     <div v-if='currentState === "intro"' class='step'>
-      Click anywhere on the map to show available regions
+      Align the map and click "Download" to download 
+      all roads in printable format.
     </div>
-    <div v-if='currentState === "loading-regions"' class='step'>
-      Loading regions around {{point}}...
+    <div class='download'>
+      <a href="#" @click.prevent='downloadAllRoads()'>Download</a>
     </div>
-    <div v-if='currentState === "choose"' class='step'>
-      <h4>Step 1: Select a region</h4>
-      <ul>
-        <li v-for="item in chooseFrom">
-          <a href='#' @click.prevent='highlightBounds(item)'>{{item.name}}</a>
-        </li>
-      </ul>
-    </div>
-    <div v-if='selected' class='step'>
-      <h4>Step 2: Download roads</h4>
-      <a href="#" @click.prevent='downloadRoads(selected)'>Build roads for {{selected.name}}</a>
-      <div v-if='downloadOsmProgress'>
-        Downloading
-      </div>
-    </div>
-
-    <a href="#" @click.prevent='downloadAllRoads()'>Load all roads in this area</a>
 
     <div v-if='currentState !== "intro"' class='start-over'>
       <a href='#' @click.prevent='resetAllAndStartOver'>Start over</a>
@@ -111,7 +95,7 @@ function getRoadsCanvas() {
 }
 </script>
 
-<style>
+<style lang='styl'>
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -123,7 +107,8 @@ function getRoadsCanvas() {
   z-index: 4;
 }
 .step {
-  padding: 0 12px;
+  padding: 12px;
+  border-bottom: 1px solid gray;
 }
 .start-over {
   text-align: center;
@@ -132,5 +117,15 @@ function getRoadsCanvas() {
 }
 .scene-roads {
   z-index: 3;
+}
+.download {
+  display: flex;
+  align-items: stretch;
+
+  a {
+    flex: 1;
+    text-align: center;
+    padding-top: 7px;
+  }
 }
 </style>

@@ -32,17 +32,17 @@ scrollingDiv.addEventListener('touchmove', function(event){
     event.stopPropagation();
 });
 
-map.on('click', function(e) {
-  highlighter.removeHighlight();
+// map.on('click', function(e) {
+//   highlighter.removeHighlight();
 
-  appState.currentState = 'loading-regions';
-  appState.point = e.lngLat.lat + ', ' + e.lngLat.lng
-  appState.selected = null;
+//   appState.currentState = 'loading-regions';
+//   appState.point = e.lngLat.lat + ', ' + e.lngLat.lng
+//   appState.selected = null;
 
-  osm.getAreasAround(e.lngLat, map.getBounds())
-    .then(showRegionOptions) 
-    .catch(error => console.error(error))
-});
+//   osm.getAreasAround(e.lngLat, map.getBounds())
+//     .then(showRegionOptions) 
+//     .catch(error => console.error(error))
+// });
 
 bus.on('highlight-bounds', (el) => {
   highlighter.highlight(el.id, el.bounds);

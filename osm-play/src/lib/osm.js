@@ -64,12 +64,12 @@ export function getRoadsInBoundingBox(bounds) {
   var ne = bounds.getNorthEast()
   var bbox = `${sw.lat},${sw.lng},${ne.lat},${ne.lng}`;
   // TODO: also try
- // way["building"](${bbox});
  // way["waterway"](${bbox});
+ //way["highway"~"${highwayTags}"](${bbox});
   return postData(
-    `[timeout:9000][out:json];
+    `[timeout:9000][maxsize:2000000000][out:json];
 (
- way["highway"~"${highwayTags}"](${bbox});
+ way["highway"](${bbox});
  node(w);
 );
 out skel;`);
@@ -77,11 +77,11 @@ out skel;`);
 
 export function getRoadsInRelationship(relId) {
   return postData(
-  `[timeout:9000][out:json];
+  `[timeout:9000][maxsize:2000000000][out:json];
 rel(${relId});
 map_to_area->.a;
 (
- way["highway"~"${highwayTags}"](area.a);
+ way["waterway"](area.a);
  node(w);
 );
 out skel;`);
