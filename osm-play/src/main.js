@@ -58,14 +58,24 @@ bus.on('start-over', () => {
 })
 
 bus.on('download-all-roads', () => {
-  renderAfterResolution(osm.getRoadsInBoundingBox(map.getBounds()));
+  const bounds = map.getBounds();
+  const sw = bounds.getSouthWest();
+  const ne = bounds.getNorthEast()
+  const boundingBox = `${sw.lat},${sw.lng},${ne.lat},${ne.lng}`;
+  appState.building = true;
+
+  const downloadPromise = osm.getRoadsInBoundingBox(boundingBox);
+  renderAfterResolution(downloadPromise, el => {
+    return el.lon >= sw.lng && el.lon <= ne.lng &&
+           el.lat >= sw.lat && el.lat <= ne.lat;
+  });
 });
 
 function downloadRoads(relId) {
   renderAfterResolution(osm.getRoadsInRelationship(relId));
 }
 
-function renderAfterResolution(promise) {
+function renderAfterResolution(promise, filter) {
   var lonLatBbox = new BBox();
 
   promise.then(d => {
@@ -83,13 +93,20 @@ function renderAfterResolution(promise) {
 
     d.elements.forEach(element => {
       if (element.type === 'node') {
+        if (filter && !filter(element)) {
+          return;
+        }
         var nodeData = project(element.lon, element.lat);
         offset.addPoint(nodeData.x, nodeData.y);
         graph.addNode(element.id, nodeData)
       } else if (element.type === 'way') {
         element.nodes.forEach((node, idx) => {
           if (idx > 0) {
-            graph.addLink(element.nodes[idx - 1], element.nodes[idx]);
+            const from = element.nodes[idx - 1];
+            const to = element.nodes[idx];
+            if (graph.getNode(from) && graph.getNode(to)) {
+              graph.addLink(from, to);
+            }
           } 
         })
       }
@@ -98,6 +115,7 @@ function renderAfterResolution(promise) {
     return {graph, bounds: offset};
   }).then(({graph, bounds}) => {
     appState.setGraph(graph, bounds);
+    appState.building = false;
     bus.fire('graph-loaded');
   });
 }

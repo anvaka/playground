@@ -4,6 +4,7 @@ var appState = {
   selected: null,
   point: null,
   downloadOsmProgress: null,
+  building: false,
   getGraphBBox,
   getGraph,
   setGraph,

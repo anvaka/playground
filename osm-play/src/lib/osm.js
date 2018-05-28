@@ -59,10 +59,7 @@ out skel;`).then(response => {
 })
 }
 
-export function getRoadsInBoundingBox(bounds) {
-  var sw = bounds.getSouthWest();
-  var ne = bounds.getNorthEast()
-  var bbox = `${sw.lat},${sw.lng},${ne.lat},${ne.lng}`;
+export function getRoadsInBoundingBox(bbox) {
   // TODO: also try
  // way["waterway"](${bbox});
  //way["highway"~"${highwayTags}"](${bbox});
