@@ -63,13 +63,30 @@ bus.on('download-all-roads', () => {
   const ne = bounds.getNorthEast()
   const boundingBox = `${sw.lat},${sw.lng},${ne.lat},${ne.lng}`;
   appState.building = true;
+  appState.buildingMessage = 'Processing query...'
+  appState.blank = false;
 
-  const downloadPromise = osm.getRoadsInBoundingBox(boundingBox);
+  const downloadPromise = osm.getRoadsInBoundingBox(boundingBox, progress);
   renderAfterResolution(downloadPromise, el => {
     return el.lon >= sw.lng && el.lon <= ne.lng &&
            el.lat >= sw.lat && el.lat <= ne.lat;
   });
+
+  function progress(p) {
+    let loaded = formatNumber(p.loaded);
+
+    if (p.lengthComputable) {
+      let total = formatNumber(p.total);
+      appState.buildingMessage = `Downloading data: ${p.percent * 100}% (${loaded} of ${total} bytes)`;
+    } else {
+      appState.buildingMessage = `Downloading data: ${loaded} bytes so far`;
+    }
+  }
 });
+
+function formatNumber(x) {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
 
 function downloadRoads(relId) {
   renderAfterResolution(osm.getRoadsInRelationship(relId));
@@ -116,22 +133,13 @@ function renderAfterResolution(promise, filter) {
   }).then(({graph, bounds}) => {
     appState.setGraph(graph, bounds);
     appState.building = false;
-    bus.fire('graph-loaded');
+
+    if (graph.getLinksCount() === 0) {
+      appState.blank = true;
+    } else {
+      appState.currentState = 'canvas';
+      appState.blank = false;
+      bus.fire('graph-loaded');
+    }
   });
-}
-
-function showRegionOptions(data) {
-  appState.chooseFrom = [];
-
-  data.elements.forEach(element => {
-    var tags = element.tags;
-    if (!tags) return;
-    if (element.tags.boundary !== 'administrative') return;
-    appState.chooseFrom.push({
-      name: tags['name:en'] || tags.name,
-      el: element,
-    });
-  });
-
-  appState.currentState = appState.chooseFrom.length > 0 ? 'choose' : '';
 }

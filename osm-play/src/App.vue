@@ -1,20 +1,23 @@
 <template>
   <div id="app" class='absolute'>
-    <div v-if='currentState === "intro"' class='step'>
+    <div v-if='currentState === "intro"' class='step padded'>
       Align the map and click "Build" to build 
       all roads in printable format.
     </div>
-    <div class='download' v-if='!building'>
+    <div v-if='currentState === "canvas"' class='padded canvas-step'>
+      Now you can right click on a canvas and save it. Or
+      <a href='#' @click.prevent='resetAllAndStartOver'>choose a different area</a>.
+    </div>
+    <div class='download' v-if='!building && currentState === "intro"'>
       <a href="#" @click.prevent='downloadAllRoads()'>Build</a>
+    </div>
+    <div v-if='blank' class='no-roads padded'>
+      Hm... There is nothing here. Try a different area?
     </div>
     <div class="loading" v-if='building'>
       <div class="loader"></div>
+      {{buildingMessage}}
     </div>
-
-    <div v-if='currentState !== "intro"' class='start-over'>
-      <a href='#' @click.prevent='resetAllAndStartOver'>Start over</a>
-    </div>
-
   </div>
 </template>
 
@@ -64,6 +67,7 @@ export default {
     },
     createScene() {
       this.ensurePreviousSceneDestroyed();
+      let graph = this.getGraph();
       let canvas = getRoadsCanvas();
       canvas.style.display = 'block';
       canvas.width = window.innerWidth;
@@ -79,7 +83,6 @@ export default {
 
       let bbox = this.getGraphBBox();
       scene.setViewBox(bbox);
-      let graph = this.getGraph();
       let linksCount = graph.getLinksCount();
       let lines = new wgl.WireCollection(linksCount);
       lines.color = {r: 0, g: 0, b: 0, a: 0.8}
@@ -110,7 +113,6 @@ function getRoadsCanvas() {
   z-index: 4;
 }
 .step {
-  padding: 12px;
   border-bottom: 1px solid gray;
 }
 .start-over {
@@ -121,6 +123,16 @@ function getRoadsCanvas() {
 .scene-roads {
   z-index: 3;
 }
+.canvas-step {
+}
+
+.padded {
+  padding: 12px;
+}
+.no-roads {
+  color: orangered;
+}
+
 .download {
   display: flex;
   align-items: stretch;

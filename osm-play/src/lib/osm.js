@@ -22,6 +22,24 @@ const highwayTags = [
   'road'
 ].join('|');
 
+const countryLevelHighways = [
+  'motorway',
+//  'trunk',
+  // 'primary',
+  // 'secondary',
+  // 'tertiary',
+  // 'tertiary_link',
+  // 'unclassified',
+  // 'unclassified_link',
+  // 'residential',
+  // 'residential_link',
+  // 'service',
+  // 'service_link',
+  // 'living_street',
+  // 'pedestrian',
+  // 'road'
+].join('|');
+
 export function getAreasAround(lonLat, bounds) {
   var sw = bounds.getSouthWest();
   var ne = bounds.getNorthEast()
@@ -59,7 +77,7 @@ out skel;`).then(response => {
 })
 }
 
-export function getRoadsInBoundingBox(bbox) {
+export function getRoadsInBoundingBox(bbox, progress) {
   // TODO: also try
  // way["waterway"](${bbox});
  //way["highway"~"${highwayTags}"](${bbox});
@@ -69,7 +87,7 @@ export function getRoadsInBoundingBox(bbox) {
  way["highway"](${bbox});
  node(w);
 );
-out skel;`);
+out skel;`, progress);
 }
 
 export function getRoadsInRelationship(relId) {

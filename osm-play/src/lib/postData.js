@@ -1,12 +1,10 @@
 const url = 'https://overpass-api.de/api/interpreter' ;
 
-export default function postData(data) {
+export default function postData(data, progress) {
   return request(url, {
     method: 'POST',
     responseType: 'json',
-    progress(p) {
-      console.log(p)
-    },
+    progress,
     headers: {
       'Content-type': 'application/x-www-form-urlencoded; charset=UTF-8'
     },
@@ -24,6 +22,7 @@ function request(url, options) {
 
     if (typeof options.progress === 'function') {
       req.addEventListener('progress', updateProgress, false);
+      // req.upload.addEventListener('progress', updateProgress, false);
     }
 
     req.addEventListener('load', transferComplete, false);
@@ -49,7 +48,13 @@ function request(url, options) {
         options.progress({
           loaded: e.loaded,
           total: e.total,
-          percent: e.loaded / e.total
+          percent: e.loaded / e.total,
+          lengthComputable: true
+        });
+      } else {
+        options.progress({
+          loaded: e.loaded,
+          lengthComputable: false
         });
       }
     }

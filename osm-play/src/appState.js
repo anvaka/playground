@@ -1,10 +1,11 @@
 var appState = {
   currentState: 'intro',
-  chooseFrom: [],
   selected: null,
+  blank: false,
   point: null,
   downloadOsmProgress: null,
   building: false,
+  buildingMessage: '',
   getGraphBBox,
   getGraph,
   setGraph,
@@ -29,8 +30,7 @@ function setGraph(newGraph, bounds) {
 
 function startOver() {
   appState.currentState = 'intro';
-  appState.selected =  null;
-  appState.chooseFrom = [];
+  appState.blank = false,
   appState.downloadOsmProgress = null;
 }
 
