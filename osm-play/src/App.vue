@@ -4,9 +4,23 @@
       Align the map and click "Build" to build 
       all roads in printable format.
     </div>
-    <div v-if='currentState === "canvas"' class='padded canvas-step'>
-      Now you can right click on a canvas and save it. Or
-      <a href='#' @click.prevent='resetAllAndStartOver'>choose a different area</a>.
+    <div v-if='currentState === "canvas"'>
+      <div class='padded canvas-step'>
+        Now you can right click on a canvas and save it. Or
+        <a href='#' @click.prevent='resetAllAndStartOver'>choose a different area</a>.
+      </div>
+      <div class='row padded'>
+        <div class='col'>Background</div>
+        <div class='col'>
+          <color-picker v-model='backgroundColor' @input='updateBackground'></color-picker>
+        </div>
+      </div>
+      <div class='row padded'>
+        <div class='col'>Foreground</div>
+        <div class='col'>
+          <color-picker v-model='lineColor' @input='updateLinesColor'></color-picker>
+        </div>
+      </div>
     </div>
     <div class='download' v-if='!building && currentState === "intro"'>
       <a href="#" @click.prevent='downloadAllRoads()'>Build</a>
@@ -14,8 +28,8 @@
     <div v-if='blank' class='no-roads padded'>
       Hm... There is nothing here. Try a different area?
     </div>
-    <div class="loading" v-if='building'>
-      <div class="loader"></div>
+    <div class='loading padded' v-if='building'>
+      <div class='loader'></div>
       {{buildingMessage}}
     </div>
   </div>
@@ -24,6 +38,7 @@
 <script>
 import appState from './appState';
 import bus from './bus';
+import {Chrome} from 'vue-color';
 
 const wgl = require('w-gl');
 
@@ -33,6 +48,7 @@ export default {
     return appState;
   },
   components: {
+    'color-picker': Chrome
   },
   mounted() {
     this.webGLEnabled = wgl.isWebGLEnabled(getRoadsCanvas());
@@ -43,6 +59,24 @@ export default {
     this.ensurePreviousSceneDestroyed();
   },
   methods: {
+    updateBackground(x) {
+      if (!this.scene) return;
+
+      const bg = appState.backgroundColor.rgba;
+      this.scene.setClearColor(bg.r/255, bg.g/255, bg.b/255, bg.a);
+      this.scene.renderFrame();
+    },
+    updateLinesColor(x) {
+      if (!this.lines) return;
+
+      const {rgba: {r, g, b, a}} = appState.lineColor;
+      const lineColor = this.lines.color;
+      lineColor.r = r/255;
+      lineColor.g = g/255;
+      lineColor.b = b/255;
+      lineColor.a = a;
+      this.scene.renderFrame();
+    },
     highlightBounds(item) {
       appState.selected = item;
       bus.fire('highlight-bounds', item.el);
@@ -57,6 +91,7 @@ export default {
       if (this.scene) {
         this.scene.dispose();
         this.scene = null;
+        this.lines = null;
       }
       var canvas = getRoadsCanvas();
       canvas.style.display = 'none';
@@ -75,7 +110,9 @@ export default {
       this.graphLoaded = true;
       this.scene = wgl.scene(canvas);
       let scene = this.scene;
-      scene.setClearColor(1, 1, 1, 1);
+
+      let bg = appState.backgroundColor.rgba;
+      scene.setClearColor(bg.r/255, bg.g/255, bg.b/255, bg.a);
       // bug in w-gl
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -85,7 +122,10 @@ export default {
       scene.setViewBox(bbox);
       let linksCount = graph.getLinksCount();
       let lines = new wgl.WireCollection(linksCount);
-      lines.color = {r: 0, g: 0, b: 0, a: 0.8}
+      this.lines = lines;
+      let lc = appState.lineColor.rgba;
+      lines.color = {r: lc.r/255, g: lc.g/255, b: lc.b/255, a: lc.a}
+
       graph.forEachLink(function (link) {
         let from = graph.getNode(link.fromId).data;
         let to = graph.getNode(link.toId).data
@@ -101,7 +141,7 @@ function getRoadsCanvas() {
 }
 </script>
 
-<style lang='styl'>
+<style lang='stylus'>
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
