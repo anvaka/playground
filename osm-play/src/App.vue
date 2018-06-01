@@ -30,7 +30,10 @@
     </div>
     <div class='loading padded' v-if='building'>
       <div class='loader'></div>
-      {{buildingMessage}}
+      <div>{{buildingMessage}}</div>
+      <div v-if='memoryInfo'>
+        {{memoryInfo}}
+      </div>
     </div>
   </div>
 </template>

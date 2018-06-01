@@ -4,19 +4,31 @@ var createGraph = require('ngraph.graph');
 var asyncFor = require('rafor');
 
 export default function constructGraph(osmResponse, filter, progress) {
-  var lonLatBoundingBox = new BBox();
-
   var {elements} = osmResponse;
 
-  elements.forEach(element => {
-    if (element.type === 'node') {
-      lonLatBoundingBox.addPoint(element.lon, element.lat);
+  return computeBoundingBox().then(constructGraphAndBounds);
+
+  function computeBoundingBox() {
+    var lonLatBoundingBox = new BBox();
+
+    return new Promise(resolve => {
+      asyncFor(elements, addToBoundingBox, () => {
+          resolve(lonLatBoundingBox);
+        }
+      );
+    });
+
+    function addToBoundingBox(element, elementIdx) {
+      if (element.type === 'node') {
+        lonLatBoundingBox.addPoint(element.lon, element.lat);
+      }
+      if ((elementIdx % 50000) === 0) {
+        progress(elementIdx, elements.length, 'bounds');
+      }
     }
-  });
+  }
 
-  return constructGraphAndBounds();
-
-  function constructGraphAndBounds() {
+  function constructGraphAndBounds(lonLatBoundingBox) {
     var project = createProjector(lonLatBoundingBox);
     var graph = createGraph();
     var offset = new BBox();
@@ -49,7 +61,7 @@ export default function constructGraph(osmResponse, filter, progress) {
       }
 
       if ((elementIdx % 50000) === 0) {
-        progress(elementIdx, elements.length);
+        progress(elementIdx, elements.length, 'graph');
       }
     }
   }

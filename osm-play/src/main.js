@@ -4,6 +4,8 @@ import appState from './appState';
 import bus from './bus';
 import constructGraph from './lib/constructGraph';
 import createBoundaryHighlighter from './lib/createBoundaryHighlighter';
+import formatNumber from './lib/formatNumber';
+import getMemoryInfo from './lib/getMemoryInfo';
 
 require.ensure('@/vueApp.js', () => {
   // Settings UI is ready, initialize vue.js application
@@ -69,10 +71,6 @@ bus.on('download-all-roads', () => {
   }
 });
 
-function formatNumber(x) {
-  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
 function downloadRoads(relId) {
   renderAfterResolution(osm.getRoadsInRelationship(relId));
 }
@@ -94,8 +92,15 @@ function renderAfterResolution(promise, filter) {
   });
 }
 
-function updateConstructionProgress(current, total) {
+function updateConstructionProgress(current, total, kind) {
   let totalStr = formatNumber(total);
   let currentStr = formatNumber(current);
-  appState.buildingMessage = `Processing data: ${currentStr} of ${totalStr} records`;
+  if (kind === 'graph') {
+    appState.buildingMessage = `Making graph: ${currentStr} of ${totalStr} records`;
+  } else {
+    appState.buildingMessage = `Computing bounds: ${currentStr} of ${totalStr} records`;
+  }
+  if (appState.memoryInfo) {
+    appState.memoryInfo = getMemoryInfo();
+  }
 }
