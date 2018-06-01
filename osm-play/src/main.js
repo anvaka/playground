@@ -2,11 +2,8 @@
 import * as osm from './lib/osm';
 import appState from './appState';
 import bus from './bus';
-import BBox from './lib/bbox';
-import createProjector from './lib/createProjector';
+import constructGraph from './lib/constructGraph';
 import createBoundaryHighlighter from './lib/createBoundaryHighlighter';
-
-var createGraph = require('ngraph.graph');
 
 require.ensure('@/vueApp.js', () => {
   // Settings UI is ready, initialize vue.js application
@@ -32,18 +29,6 @@ scrollingDiv.addEventListener('touchmove', function(event){
     event.stopPropagation();
 });
 
-// map.on('click', function(e) {
-//   highlighter.removeHighlight();
-
-//   appState.currentState = 'loading-regions';
-//   appState.point = e.lngLat.lat + ', ' + e.lngLat.lng
-//   appState.selected = null;
-
-//   osm.getAreasAround(e.lngLat, map.getBounds())
-//     .then(showRegionOptions) 
-//     .catch(error => console.error(error))
-// });
-
 bus.on('highlight-bounds', (el) => {
   highlighter.highlight(el.id, el.bounds);
 });
@@ -63,7 +48,7 @@ bus.on('download-all-roads', () => {
   const ne = bounds.getNorthEast()
   const boundingBox = `${sw.lat},${sw.lng},${ne.lat},${ne.lng}`;
   appState.building = true;
-  appState.buildingMessage = 'Processing query...'
+  appState.buildingMessage = 'Sending query to OSM...'
   appState.blank = false;
 
   const downloadPromise = osm.getRoadsInBoundingBox(boundingBox, progress);
@@ -93,43 +78,8 @@ function downloadRoads(relId) {
 }
 
 function renderAfterResolution(promise, filter) {
-  var lonLatBbox = new BBox();
-
-  promise.then(d => {
-    d.elements.forEach(element => {
-      if (element.type === 'node') {
-        lonLatBbox.addPoint(element.lon, element.lat);
-      }
-    });
-    return d;
-  })
-  .then(d => {
-    var graph = createGraph();
-    var project = createProjector(lonLatBbox);
-    var offset = new BBox();
-
-    d.elements.forEach(element => {
-      if (element.type === 'node') {
-        if (filter && !filter(element)) {
-          return;
-        }
-        var nodeData = project(element.lon, element.lat);
-        offset.addPoint(nodeData.x, nodeData.y);
-        graph.addNode(element.id, nodeData)
-      } else if (element.type === 'way') {
-        element.nodes.forEach((node, idx) => {
-          if (idx > 0) {
-            const from = element.nodes[idx - 1];
-            const to = element.nodes[idx];
-            if (graph.getNode(from) && graph.getNode(to)) {
-              graph.addLink(from, to);
-            }
-          } 
-        })
-      }
-    });
-
-    return {graph, bounds: offset};
+  promise.then(osmResponse => {
+    return constructGraph(osmResponse, filter, updateConstructionProgress);
   }).then(({graph, bounds}) => {
     appState.setGraph(graph, bounds);
     appState.building = false;
@@ -142,4 +92,10 @@ function renderAfterResolution(promise, filter) {
       bus.fire('graph-loaded');
     }
   });
+}
+
+function updateConstructionProgress(current, total) {
+  let totalStr = formatNumber(total);
+  let currentStr = formatNumber(current);
+  appState.buildingMessage = `Processing data: ${currentStr} of ${totalStr} records`;
 }

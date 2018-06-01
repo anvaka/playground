@@ -13,6 +13,7 @@
     "d3-geo": "^1.10.0",
     "ngraph.events": "0.0.4",
     "ngraph.graph": "0.0.14",
+    "rafor": "^1.0.2",
     "vue": "^2.5.2",
     "vue-color": "^2.4.6",
     "w-gl": "0.0.5"
