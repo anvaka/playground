@@ -66,7 +66,7 @@ bus.on('download-all-roads', () => {
       let total = formatNumber(p.total);
       appState.buildingMessage = `Downloading data: ${p.percent * 100}% (${loaded} of ${total} bytes)`;
     } else {
-      appState.buildingMessage = `Downloading data: ${loaded} bytes so far`;
+      appState.buildingMessage = `Downloading data: ${loaded} bytes so far...`;
     }
   }
 });
