@@ -1,130 +1,124 @@
 <template>
-    <div class="input-group color-picker-component">
-        <input type="text"
-            class="form-control"
-            title="Color Picker"
-            :value="colorString"
-            @focus="showPicker(item)"
-            @blur="displayPicker = false"
-            @change="updateFromInput"
-        />
-        <span class="input-group-addon color-picker-container">
-            <span class="current-color"
-                :style="'background-color: ' + colorString"
-                @click="showPicker(item)"
-            ></span>
-                <material-picker :value="colors"
-                    @input="updateFromPicker"
-                    v-if="picker === 'material' && displayPicker"></material-picker>
-
-                <compact-picker :value="colors"
-                    @input="updateFromPicker"
-                    v-if="picker === 'compact' && displayPicker"></compact-picker>
-
-                <swatches-picker :value="colors"
-                    @input="updateFromPicker"
-                    v-if="picker === 'swatches' && displayPicker"></swatches-picker>
-
-                <slider-picker :value="colors"
-                    @input="updateFromPicker"
-                    v-if="picker === 'slider' && displayPicker"></slider-picker>
-
-                <sketch-picker :value="colors"
-                    @input="updateFromPicker"
-                    v-if="picker === 'sketch' && displayPicker"></sketch-picker>
-
-                <chrome-picker :value="colors"
-                    @input="updateFromPicker"
-                    v-if="picker === 'chrome' && displayPicker"></chrome-picker>
-
-                <photoshop-picker :value="colors"
-                    @input="updateFromPicker"
-                    v-if="picker === 'photoshop' && displayPicker"></photoshop-picker>
-
-        </span>
-    </div>
+<div class='vue-colorpicker' @click='showPicker = !showPicker' v-click-outside='hide'>
+  <span class='vue-colorpicker-btn' :style='btnStyle'></span>
+  <div class='vue-colorpicker-panel' v-show='showPicker'>
+    <component :is='pickerType' v-model='colors' @input='changColor'></component>
+  </div>
+</div>
 </template>
+
 <script>
-import * as picker from 'vue-color';
+import tinycolor from 'tinycolor2'
+import { Sketch } from 'vue-color'
+import ClickOutside from './clickOutside.js'
 
 export default {
-  name: 'ColorPicker',
+  name: 'vue-colorpicker',
+  components: {
+    'sketch-picker': Sketch,
+  },
+  directives: { ClickOutside },
   props: {
-    picker: {
+    value: {
       type: String,
-      required: true,
-    },
-    color: {
-      type: Object,
-      required: true,
     },
   },
-  data() {
+  data () {
     return {
-      colors: {},
-      displayPicker: false,
+      showPicker: false,
+      colors: {
+        hex: '#FFFFFF',
+        a: 1
+      },
+      colorValue: '#FFFFFF'
     }
   },
   computed: {
-    colorType() {
-      return this.item.colorType;
+    pickerType () {
+      return 'sketch-picker';
     },
-
-    colorString() {
-      if (!this.colors[this.colorType]) {
-        return '';
+    isTransparent () {
+      return this.colors.a === 0;
+    },
+    btnStyle () {
+      if (this.isTransparent) {
+        return {
+          background: '#eee',
+          backgroundImage: 'linear-gradient(45deg, rgba(0,0,0,.25) 25%, transparent 0, transparent 75%,rgba(0,0,0,.25)0), linear-gradient(45deg, rgba(0,0,0,.25)25%,transparent 0, transparent 75%,rgba(0,0,0,.25)0)',
+          backgroundPosition: '0 0, 11px 11px',
+          backgroundSize: '22px 22px'
+        }
       }
-
-      if (this.colorType === 'hex') {
-        return this.colors.hex;
+      return {
+        background: this.colorValue
       }
-
-      return this.colorType + '(' + Object.values(this.colors[this.colorType]).join(',') + ')';
     },
   },
+  watch: {
+    showPicker (newVal) {
+    //  this.updatePopper()
+    },
+    value (val, oldVal) {
+      if (val !== oldVal) {
+        this.updateColorObject(val)
+      }
+    }
+  },
+
   methods: {
-    showPicker(item) {
-      if (item.color) {
-        this.colors = item.color;
+    hide () {
+      this.showPicker = false
+    },
+    changeColor (data) {
+      this.colorValue = tinycolor(data.rgba).toRgbString()
+      this.$emit('input', this.colorValue)
+      this.$emit('change', this.colorValue)
+    },
+    updateColorObject (color) {
+      if (!color) return
+      const colorObj = tinycolor(color || 'transparent')
+      if (!color || color === 'transparent') {
+        this.colors = {
+          hex: '#FFFFFF',
+          hsl: { h: 0, s: 0, l: 1, a: 0 },
+          hsv: { h: 0, s: 0, v: 1, a: 0 },
+          rgba: { r: 255, g: 255, b: 255, a: 0 },
+          a: 0
+        }
+      } else {
+        this.colors = {
+          hex: colorObj.toHexString(),
+          hsl: colorObj.toHsl(),
+          hsv: colorObj.toHsv(),
+          rgba: colorObj.toRgb(),
+          a: colorObj.getAlpha()
+        }
       }
-
-      this.displayPicker = true;
-    },
-
-    updateFromPicker(value) {
-      this.colors = value;
-    },
-
-    updateFromInput(event) {
-    },
+      this.colorValue = colorObj.toRgbString()
+    }
   },
-  components: {
-    'material-picker': picker.Material,
-    'compact-picker': picker.Compact,
-    'swatches-picker': picker.Swatches,
-    'slider-picker': picker.Slider,
-    'sketch-picker': picker.Sketch,
-    'chrome-picker': picker.Chrome,
-    'photoshop-picker': picker.Photoshop,
-  },
+  mounted () {
+    this.updateColorObject(this.value)
+  }
 }
 </script>
 
-<style lang="stylus">
-    .color-picker-component{
-        .current-color {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            background-color: #000;
-            cursor: pointer;
-        }
-
-        .vue-color__chrome {
-            position: absolute;
-            left: 0;
-            top: calc(100% + 10px);
-            z-index: 100;
-        }
-    }
+<style lang="stylus" scoped>
+.vue-colorpicker {
+  display: inline-block;
+  box-sizing: border-box;
+  height: 36px;
+  padding: 6px;
+  border: 1px solid #bfcbd9;
+  border-radius: 4px;
+  font-size: 0;
+  cursor: pointer;
+  &-btn {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    border: 1px solid #666;
+    background: #FFFFFF;
+  }
+}
 </style>

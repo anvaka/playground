@@ -42,8 +42,8 @@
 import appState from './appState';
 import bus from './bus';
 // import {Sketch} from 'vue-color';
-import { VueColorpicker } from 'vue-pop-colorpicker'
-// import ColorPicker from './components/ColorPicker';
+// import { VueColorpicker } from 'vue-pop-colorpicker'
+import ColorPicker from './components/ColorPicker';
 
 const wgl = require('w-gl');
 
@@ -54,7 +54,7 @@ export default {
   },
   components: {
     //'color-picker': Sketch,
-     'color-picker': VueColorpicker
+     'color-picker': ColorPicker
   },
   mounted() {
     this.webGLEnabled = wgl.isWebGLEnabled(getRoadsCanvas());
