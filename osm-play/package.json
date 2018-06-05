@@ -16,6 +16,7 @@
     "rafor": "^1.0.2",
     "vue": "^2.5.2",
     "vue-color": "^2.4.6",
+    "vue-pop-colorpicker": "^1.0.2",
     "w-gl": "0.0.5"
   },
   "devDependencies": {

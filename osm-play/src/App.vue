@@ -12,13 +12,13 @@
       <div class='row padded'>
         <div class='col'>Background</div>
         <div class='col'>
-          <color-picker v-model='backgroundColor' @input='updateBackground'></color-picker>
+          <color-picker v-model='computedBackgroundColor'></color-picker>
         </div>
       </div>
       <div class='row padded'>
         <div class='col'>Foreground</div>
         <div class='col'>
-          <color-picker v-model='lineColor' @input='updateLinesColor'></color-picker>
+          <color-picker v-model='computedLineColor'></color-picker>
         </div>
       </div>
     </div>
@@ -41,7 +41,9 @@
 <script>
 import appState from './appState';
 import bus from './bus';
-import {Chrome} from 'vue-color';
+// import {Sketch} from 'vue-color';
+import { VueColorpicker } from 'vue-pop-colorpicker'
+// import ColorPicker from './components/ColorPicker';
 
 const wgl = require('w-gl');
 
@@ -51,7 +53,8 @@ export default {
     return appState;
   },
   components: {
-    'color-picker': Chrome
+    //'color-picker': Sketch,
+     'color-picker': VueColorpicker
   },
   mounted() {
     this.webGLEnabled = wgl.isWebGLEnabled(getRoadsCanvas());
