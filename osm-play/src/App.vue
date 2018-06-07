@@ -12,13 +12,13 @@
       <div class='row padded'>
         <div class='col'>Background</div>
         <div class='col'>
-          <color-picker v-model='computedBackgroundColor'></color-picker>
+          <color-picker v-model='backgroundColor' @change='updateBackground'></color-picker>
         </div>
       </div>
       <div class='row padded'>
         <div class='col'>Foreground</div>
         <div class='col'>
-          <color-picker v-model='computedLineColor'></color-picker>
+          <color-picker v-model='lineColor' @change='updateLinesColor'></color-picker>
         </div>
       </div>
     </div>
@@ -68,14 +68,14 @@ export default {
     updateBackground(x) {
       if (!this.scene) return;
 
-      const bg = appState.backgroundColor.rgba;
+      const bg = appState.backgroundColor;
       this.scene.setClearColor(bg.r/255, bg.g/255, bg.b/255, bg.a);
       this.scene.renderFrame();
     },
     updateLinesColor(x) {
       if (!this.lines) return;
 
-      const {rgba: {r, g, b, a}} = appState.lineColor;
+      const {r, g, b, a} = appState.lineColor;
       const lineColor = this.lines.color;
       lineColor.r = r/255;
       lineColor.g = g/255;
@@ -117,7 +117,7 @@ export default {
       this.scene = wgl.scene(canvas);
       let scene = this.scene;
 
-      let bg = appState.backgroundColor.rgba;
+      let bg = appState.backgroundColor;
       scene.setClearColor(bg.r/255, bg.g/255, bg.b/255, bg.a);
       // bug in w-gl
       canvas.width = window.innerWidth;
@@ -129,7 +129,7 @@ export default {
       let linksCount = graph.getLinksCount();
       let lines = new wgl.WireCollection(linksCount);
       this.lines = lines;
-      let lc = appState.lineColor.rgba;
+      let lc = appState.lineColor;
       lines.color = {r: lc.r/255, g: lc.g/255, b: lc.b/255, a: lc.a}
 
       graph.forEachLink(function (link) {
@@ -158,6 +158,20 @@ function getRoadsCanvas() {
   padding: 12px 0;
   z-index: 4;
 }
+.col {
+    align-items: center;
+    display: flex;
+    flex: 1;
+    select {
+      margin-left: 14px;
+    }
+  }
+  .row {
+    margin-top: 4px;
+    display: flex;
+    flex-direction: row;
+    height: 32px;
+  }
 .step {
   border-bottom: 1px solid gray;
 }

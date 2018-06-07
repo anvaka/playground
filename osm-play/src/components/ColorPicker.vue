@@ -1,8 +1,8 @@
 <template>
-<div class='vue-colorpicker' @click='showPicker = !showPicker' v-click-outside='hide'>
+<div class='vue-colorpicker' @click='showPicker = true' v-click-outside='hide'>
   <span class='vue-colorpicker-btn' :style='btnStyle'></span>
   <div class='vue-colorpicker-panel' v-show='showPicker'>
-    <component :is='pickerType' v-model='colors' @input='changColor'></component>
+    <component :is='pickerType' v-model='colors' @input='changeColor'></component>
   </div>
 </div>
 </template>
@@ -20,7 +20,7 @@ export default {
   directives: { ClickOutside },
   props: {
     value: {
-      type: String,
+      type: Object,
     },
   },
   data () {
@@ -49,34 +49,32 @@ export default {
           backgroundSize: '22px 22px'
         }
       }
+      let {r, g, b, a} = this.colorValue;
       return {
-        background: this.colorValue
+        background: `rgba(${r}, ${g}, ${b}, ${a})`
       }
     },
   },
   watch: {
-    showPicker (newVal) {
-    //  this.updatePopper()
-    },
     value (val, oldVal) {
       if (val !== oldVal) {
-        this.updateColorObject(val)
+        this.updateColorObject(val);
       }
     }
   },
 
   methods: {
     hide () {
-      this.showPicker = false
+      this.showPicker = false;
     },
     changeColor (data) {
-      this.colorValue = tinycolor(data.rgba).toRgbString()
+      this.colorValue = data.rgba;
       this.$emit('input', this.colorValue)
       this.$emit('change', this.colorValue)
     },
     updateColorObject (color) {
       if (!color) return
-      const colorObj = tinycolor(color || 'transparent')
+      const colorObj = tinycolor(`rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})` || 'transparent');
       if (!color || color === 'transparent') {
         this.colors = {
           hex: '#FFFFFF',
@@ -84,7 +82,7 @@ export default {
           hsv: { h: 0, s: 0, v: 1, a: 0 },
           rgba: { r: 255, g: 255, b: 255, a: 0 },
           a: 0
-        }
+        };
       } else {
         this.colors = {
           hex: colorObj.toHexString(),
@@ -92,9 +90,9 @@ export default {
           hsv: colorObj.toHsv(),
           rgba: colorObj.toRgb(),
           a: colorObj.getAlpha()
-        }
+        };
       }
-      this.colorValue = colorObj.toRgbString()
+      this.colorValue = this.colors.rgba;
     }
   },
   mounted () {
@@ -107,15 +105,12 @@ export default {
 .vue-colorpicker {
   display: inline-block;
   box-sizing: border-box;
-  height: 36px;
   padding: 6px;
-  border: 1px solid #bfcbd9;
-  border-radius: 4px;
   font-size: 0;
   cursor: pointer;
   &-btn {
     display: inline-block;
-    width: 22px;
+    width: 30px;
     height: 22px;
     border: 1px solid #666;
     background: #FFFFFF;

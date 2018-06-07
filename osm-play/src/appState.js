@@ -13,10 +13,10 @@ var appState = {
   setGraph,
   startOver,
   backgroundColor: {
-    rgba: { r: 255, g: 255, b: 255, a: 1 },
+    r: 255, g: 255, b: 255, a: 1
   },
   lineColor: {
-    rgba: { r: 22, g: 22, b: 22, a: 1 },
+    r: 22, g: 22, b: 22, a: 1
   },
   memoryInfo: getMemoryInfo()
 };
