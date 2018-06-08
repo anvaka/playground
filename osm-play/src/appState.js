@@ -1,5 +1,3 @@
-import getMemoryInfo from './lib/getMemoryInfo';
-
 var appState = {
   currentState: 'intro',
   selected: null,
@@ -18,7 +16,6 @@ var appState = {
   lineColor: {
     r: 22, g: 22, b: 22, a: 1
   },
-  memoryInfo: getMemoryInfo()
 };
 
 var graph;

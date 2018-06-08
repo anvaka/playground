@@ -5,7 +5,6 @@ import bus from './bus';
 import constructGraph from './lib/constructGraph';
 import createBoundaryHighlighter from './lib/createBoundaryHighlighter';
 import formatNumber from './lib/formatNumber';
-import getMemoryInfo from './lib/getMemoryInfo';
 
 require.ensure('@/vueApp.js', () => {
   // Settings UI is ready, initialize vue.js application
@@ -99,8 +98,5 @@ function updateConstructionProgress(current, total, kind) {
     appState.buildingMessage = `Making graph: ${currentStr} of ${totalStr} records`;
   } else {
     appState.buildingMessage = `Computing bounds: ${currentStr} of ${totalStr} records`;
-  }
-  if (appState.memoryInfo) {
-    appState.memoryInfo = getMemoryInfo();
   }
 }
