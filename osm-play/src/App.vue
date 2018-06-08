@@ -4,18 +4,19 @@
       Align the map and click "Build" to build 
       all roads in printable format.
     </div>
-    <div v-if='currentState === "canvas"'>
-      <div class='padded canvas-step'>
+    <div v-if='currentState === "canvas"' class='canvas-settings'>
+      <div class='padded step'>
         Now you can right click on a canvas and save it. Or
         <a href='#' @click.prevent='resetAllAndStartOver'>choose a different area</a>.
       </div>
-      <div class='row padded'>
+      <h3 class='left-right-padded'>Customize</h3>
+      <div class='row left-right-padded'>
         <div class='col'>Background</div>
         <div class='col'>
           <color-picker v-model='backgroundColor' @change='updateBackground'></color-picker>
         </div>
       </div>
-      <div class='row padded'>
+      <div class='row left-right-padded'>
         <div class='col'>Foreground</div>
         <div class='col'>
           <color-picker v-model='lineColor' @change='updateLinesColor'></color-picker>
@@ -29,7 +30,7 @@
       Hm... There is nothing here. Try a different area?
     </div>
     <div class='loading padded' v-if='building'>
-      <div class='loader'></div>
+      <loading></loading>
       <div>{{buildingMessage}}</div>
       <div v-if='memoryInfo'>
         {{memoryInfo}}
@@ -41,9 +42,8 @@
 <script>
 import appState from './appState';
 import bus from './bus';
-// import {Sketch} from 'vue-color';
-// import { VueColorpicker } from 'vue-pop-colorpicker'
 import ColorPicker from './components/ColorPicker';
+import Loading from './components/Loading';
 
 const wgl = require('w-gl');
 
@@ -53,8 +53,8 @@ export default {
     return appState;
   },
   components: {
-    //'color-picker': Sketch,
-     'color-picker': ColorPicker
+    Loading,
+    ColorPicker
   },
   mounted() {
     this.webGLEnabled = wgl.isWebGLEnabled(getRoadsCanvas());
@@ -155,8 +155,9 @@ function getRoadsCanvas() {
   color: #2c3e50;
   width: 400px;
   background: white;
-  padding: 12px 0;
+  padding: 12px 0 0 0;
   z-index: 4;
+  box-shadow: 0 0 20px rgba(0,0,0,.3);
 }
 .col {
     align-items: center;
@@ -173,17 +174,19 @@ function getRoadsCanvas() {
     height: 32px;
   }
 .step {
-  border-bottom: 1px solid gray;
+  border-bottom: 1px solid #d8d8d8;
+}
+.left-right-padded {
+  padding-left: 12px;
+  padding-right: 12px;
 }
 .start-over {
   text-align: center;
   padding-top: 8px;
-  border-top: 1px solid gray;
+  border-top: 1px solid #d8d8d8;
 }
 .scene-roads {
   z-index: 3;
-}
-.canvas-step {
 }
 
 .padded {
@@ -196,70 +199,21 @@ function getRoadsCanvas() {
 .download {
   display: flex;
   align-items: stretch;
+  height: 42px;
 
   a {
-    flex: 1;
     text-align: center;
-    padding-top: 7px;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 }
-
-.loader,
-.loader:before,
-.loader:after {
-  border-radius: 50%;
-  width: 2.5em;
-  height: 2.5em;
-  -webkit-animation-fill-mode: both;
-  animation-fill-mode: both;
-  -webkit-animation: load7 1.8s infinite ease-in-out;
-  animation: load7 1.8s infinite ease-in-out;
+a {
+  color: #ff4081;
+  text-decoration: none;
 }
-.loader {
-  color: #404041;
-  font-size: 10px;
-  margin: 80px auto;
-  position: relative;
-  text-indent: -9999em;
-  -webkit-transform: translateZ(0);
-  -ms-transform: translateZ(0);
-  transform: translateZ(0);
-  -webkit-animation-delay: -0.16s;
-  animation-delay: -0.16s;
+.canvas-settings {
+  padding-bottom: 12px;
 }
-.loader:before,
-.loader:after {
-  content: '';
-  position: absolute;
-  top: 0;
-}
-.loader:before {
-  left: -3.5em;
-  -webkit-animation-delay: -0.32s;
-  animation-delay: -0.32s;
-}
-.loader:after {
-  left: 3.5em;
-}
-@-webkit-keyframes load7 {
-  0%,
-  80%,
-  100% {
-    box-shadow: 0 2.5em 0 -1.3em;
-  }
-  40% {
-    box-shadow: 0 2.5em 0 0;
-  }
-}
-@keyframes load7 {
-  0%,
-  80%,
-  100% {
-    box-shadow: 0 2.5em 0 -1.3em;
-  }
-  40% {
-    box-shadow: 0 2.5em 0 0;
-  }
-}
-
 </style>
