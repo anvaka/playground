@@ -9,17 +9,25 @@
         Now you can right click on a canvas and save it. Or
         <a href='#' @click.prevent='resetAllAndStartOver'>choose a different area</a>.
       </div>
-      <h3 class='left-right-padded'>Customize</h3>
-      <div class='row left-right-padded'>
-        <div class='col'>Background</div>
-        <div class='col'>
-          <color-picker v-model='backgroundColor' @change='updateBackground'></color-picker>
+      <div class='step'>
+        <h3 class='left-right-padded'>Customize</h3>
+        <div class='row left-right-padded'>
+          <div class='col'>Background</div>
+          <div class='col'>
+            <color-picker v-model='backgroundColor' @change='updateBackground'></color-picker>
+          </div>
+        </div>
+        <div class='row left-right-padded'>
+          <div class='col'>Foreground</div>
+          <div class='col'>
+            <color-picker v-model='lineColor' @change='updateLinesColor'></color-picker>
+          </div>
         </div>
       </div>
-      <div class='row left-right-padded'>
-        <div class='col'>Foreground</div>
-        <div class='col'>
-          <color-picker v-model='lineColor' @change='updateLinesColor'></color-picker>
+      <div>
+        <a href="#" @click.prevent='upload'>Generate preview url</a>
+        <div v-if='zazzleLink'>
+          <a :href='zazzleLink' target='_blank'>Preview Mug</a>
         </div>
       </div>
     </div>
@@ -89,6 +97,9 @@ export default {
     },
     downloadAllRoads() {
       bus.fire('download-all-roads');
+    },
+    upload() {
+      bus.fire('upload', getRoadsCanvas());
     },
     ensurePreviousSceneDestroyed() {
       if (this.scene) {

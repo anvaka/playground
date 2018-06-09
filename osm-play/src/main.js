@@ -5,6 +5,7 @@ import bus from './bus';
 import constructGraph from './lib/constructGraph';
 import createBoundaryHighlighter from './lib/createBoundaryHighlighter';
 import formatNumber from './lib/formatNumber';
+import generateZazzleLink from './lib/getZazzleLink';
 
 require.ensure('@/vueApp.js', () => {
   // Settings UI is ready, initialize vue.js application
@@ -33,6 +34,13 @@ scrollingDiv.addEventListener('touchmove', function(event){
 bus.on('highlight-bounds', (el) => {
   highlighter.highlight(el.id, el.bounds);
 });
+
+bus.on('upload', canvas => {
+  appState.zazzleLink = null;
+  generateZazzleLink(canvas).then(link => {
+    appState.zazzleLink = link;
+  })
+})
 
 bus.on('download-roads', (el) => {
   downloadRoads(el.id);

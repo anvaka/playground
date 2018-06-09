@@ -6,6 +6,7 @@ var appState = {
   downloadOsmProgress: null,
   building: false,
   buildingMessage: '',
+  zazzleLink: null,
   getGraphBBox,
   getGraph,
   setGraph,
