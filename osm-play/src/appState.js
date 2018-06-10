@@ -36,6 +36,7 @@ function setGraph(newGraph, bounds) {
 }
 
 function startOver() {
+  appState.zazzleLink = null;
   appState.currentState = 'intro';
   appState.blank = false,
   appState.downloadOsmProgress = null;
