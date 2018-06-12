@@ -24,8 +24,9 @@
           </div>
         </div>
       </div>
-      <div>
-        <a href="#" @click.prevent='upload'>Generate preview url</a>
+      <div class='left-right-padded'>
+        <a href="#" @click.prevent='upload' v-if='!generatingPreview'>Generate preview url</a>
+        <loading v-if='generatingPreview'></loading>
         <div v-if='zazzleLink'>
           <a :href='zazzleLink' target='_blank'>Preview Mug</a>
         </div>

@@ -11,6 +11,7 @@ var appState = {
   getGraph,
   setGraph,
   startOver,
+  generatingPreview: false,
   backgroundColor: {
     r: 255, g: 255, b: 255, a: 1
   },
@@ -37,6 +38,7 @@ function setGraph(newGraph, bounds) {
 
 function startOver() {
   appState.zazzleLink = null;
+  appState.generatingPreview = false;
   appState.currentState = 'intro';
   appState.blank = false,
   appState.downloadOsmProgress = null;

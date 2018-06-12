@@ -37,8 +37,10 @@ bus.on('highlight-bounds', (el) => {
 
 bus.on('upload', canvas => {
   appState.zazzleLink = null;
+  appState.generatingPreview = true;
   generateZazzleLink(canvas).then(link => {
     appState.zazzleLink = link;
+    appState.generatingPreview = false;
   })
 })
 
