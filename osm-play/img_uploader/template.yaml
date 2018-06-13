@@ -1,0 +1,34 @@
+AWSTemplateFormatVersion : '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Creates a handler to upload temporary images to s3
+
+Outputs:
+  ApiEndpoint:
+    Description: "Stage API endpoint"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Stage/put_image"
+
+Resources:
+  PostImageAPI:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs8.10
+      CodeUri: ./handler/
+      Description: 'Put Image API POST handler'
+      # Policies:
+      #   - S3CrudPolicy:
+      #       BucketName: !Ref InputBucketName
+
+      MemorySize: 128
+      Timeout: 6
+      Events:
+        PostResource:
+          Type: Api
+          Properties:
+            Path: /put_image
+            Method: POST
+
+  # InputBucket:
+  #     Type: AWS::S3::Bucket
+  #     Properties:
+  #       BucketName: !Ref InputBucketName
