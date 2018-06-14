@@ -32,9 +32,8 @@ export default function generateZazzleLink(canvas) {
     // },
     body: form,
   }, 'POST').then(x => {
-    // if (!x.success) throw new Error('Failed to upload image');
-    // let link = x.data.link; // imgur
-    let link = x.data;
+    if (!x.success) throw new Error('Failed to upload image');
+    let link = x.data.link; 
     return getZazzleLink('mug', link);
   }).catch(e => {
     console.log('error', e);
