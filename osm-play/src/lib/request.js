@@ -19,9 +19,11 @@ export default function request(url, options) {
     if (options.responseType) {
       req.responseType = options.responseType;
     }
-    Object.keys(options.headers).forEach(key => {
-      req.setRequestHeader(key, options.headers[key]);
-    });
+    if (options.headers) {
+      Object.keys(options.headers).forEach(key => {
+        req.setRequestHeader(key, options.headers[key]);
+      });
+    }
 
     if (options.method === 'POST') {
       req.send(options.body);

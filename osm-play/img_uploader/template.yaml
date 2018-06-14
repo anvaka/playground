@@ -15,9 +15,8 @@ Resources:
       Runtime: nodejs8.10
       CodeUri: ./handler/
       Description: 'Put Image API POST handler'
-      # Policies:
-      #   - S3CrudPolicy:
-      #       BucketName: !Ref InputBucketName
+      Policies: 
+        - AmazonS3FullAccess
 
       MemorySize: 128
       Timeout: 6
@@ -28,7 +27,23 @@ Resources:
             Path: /put_image
             Method: POST
 
+  OptionsImageAPI:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: options.handler
+      Runtime: nodejs8.10
+      CodeUri: ./handler/
+      Description: 'Put Image API OPTIONS handler'
+      MemorySize: 128
+      Timeout: 6
+      Events:
+        OptionsResource:
+          Type: Api
+          Properties:
+            Path: /put_image
+            Method: OPTIONS
+
   # InputBucket:
   #     Type: AWS::S3::Bucket
   #     Properties:
-  #       BucketName: !Ref InputBucketName
+  #       BucketName: osm-play-v1
