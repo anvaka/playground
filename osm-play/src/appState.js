@@ -3,6 +3,7 @@ var appState = {
   selected: null,
   blank: false,
   point: null,
+  error: null,
   downloadOsmProgress: null,
   building: false,
   buildingMessage: '',

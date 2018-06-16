@@ -4,6 +4,7 @@
       Align the map and click "Build" to build 
       all roads in printable format.
     </div>
+
     <div v-if='currentState === "canvas"' class='canvas-settings'>
       <div class='padded step'>
         Now you can right click on a canvas and save it. Or
@@ -41,6 +42,10 @@
     <div class='loading padded' v-if='building'>
       <loading></loading>
       <div>{{buildingMessage}}</div>
+    </div>
+    <div class='error padded' v-if='error'>
+      <h5>Error occured:</h5>
+      <pre>{{error}}</pre>
     </div>
   </div>
 </template>
@@ -224,5 +229,8 @@ a {
 }
 .canvas-settings {
   padding-bottom: 12px;
+}
+.error pre {
+  overflow-x: auto;
 }
 </style>

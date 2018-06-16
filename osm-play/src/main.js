@@ -63,8 +63,10 @@ bus.on('download-all-roads', () => {
   appState.building = true;
   appState.buildingMessage = 'Sending query to OSM...'
   appState.blank = false;
+  appState.error = null;
 
   const downloadPromise = osm.getRoadsInBoundingBox(boundingBox, progress);
+
   renderAfterResolution(downloadPromise, el => {
     return el.lon >= sw.lng && el.lon <= ne.lng &&
            el.lat >= sw.lat && el.lat <= ne.lat;
@@ -100,6 +102,9 @@ function renderAfterResolution(promise, filter) {
       appState.blank = false;
       bus.fire('graph-loaded');
     }
+  }).catch(err => {
+    appState.building = false;
+    appState.error = err;
   });
 }
 
