@@ -25,13 +25,11 @@
           </div>
         </div>
       </div>
-      <div class='left-right-padded'>
+      <div class='left-right-padded preview-actions'>
         <a href="#" @click.prevent='upload' v-if='!generatingPreview'>Generate preview url</a>
-        <loading v-if='generatingPreview'></loading>
-        <div v-if='zazzleLink'>
-          <a :href='zazzleLink' target='_blank'>Preview Mug</a>
-        </div>
+        <a v-if='zazzleLink' :href='zazzleLink' target='_blank'>Preview Mug</a>
       </div>
+      <loading v-if='generatingPreview'></loading>
     </div>
     <div class='download' v-if='!building && currentState === "intro"'>
       <a href="#" @click.prevent='downloadAllRoads()'>Build</a>
@@ -189,6 +187,19 @@ function getRoadsCanvas() {
   }
 .step {
   border-bottom: 1px solid #d8d8d8;
+}
+.preview-actions {
+  display: flex;
+  flex-direction: row;
+  height: 32px;
+  align-items: stretch;
+  
+  a {
+    flex: 1;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+  }
 }
 .left-right-padded {
   padding-left: 12px;
