@@ -5,7 +5,6 @@ import bus from './bus';
 import constructGraph from './lib/constructGraph';
 import createBoundaryHighlighter from './lib/createBoundaryHighlighter';
 import formatNumber from './lib/formatNumber';
-import generateZazzleLink from './lib/getZazzleLink';
 
 require.ensure('@/vueApp.js', () => {
   // Settings UI is ready, initialize vue.js application
@@ -38,12 +37,6 @@ bus.on('highlight-bounds', (el) => {
 });
 
 bus.on('upload', canvas => {
-  appState.zazzleLink = null;
-  appState.generatingPreview = true;
-  generateZazzleLink(canvas).then(link => {
-    appState.zazzleLink = link;
-    appState.generatingPreview = false;
-  })
 })
 
 bus.on('download-roads', (el) => {

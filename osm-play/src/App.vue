@@ -25,11 +25,14 @@
           </div>
         </div>
       </div>
-      <div class='left-right-padded preview-actions'>
+      <div class='preview-actions'>
         <a href="#" @click.prevent='upload' v-if='!generatingPreview'>Generate preview url</a>
-        <a v-if='zazzleLink' :href='zazzleLink' target='_blank'>Preview Mug</a>
+        <a v-if='zazzleLink' :href='zazzleLink' target='_blank' class='preview-btn'>Preview Mug</a>
       </div>
-      <loading v-if='generatingPreview'></loading>
+      <div v-if='generatingPreview'>
+        <loading></loading>
+        <div class='align-center'>Generating preview url...</div>
+      </div>
     </div>
     <div class='download' v-if='!building && currentState === "intro"'>
       <a href="#" @click.prevent='downloadAllRoads()'>Build</a>
@@ -53,6 +56,7 @@ import appState from './appState';
 import bus from './bus';
 import ColorPicker from './components/ColorPicker';
 import Loading from './components/Loading';
+import generateZazzleLink from './lib/getZazzleLink';
 
 const wgl = require('w-gl');
 
@@ -103,7 +107,17 @@ export default {
       bus.fire('download-all-roads');
     },
     upload() {
-      bus.fire('upload', getRoadsCanvas());
+      let canvas = getRoadsCanvas();
+      let appState = this;
+      appState.zazzleLink = null;
+      appState.generatingPreview = true;
+      this.scene.renderFrame();
+      requestAnimationFrame(() => {
+        generateZazzleLink(canvas).then(link => {
+          appState.zazzleLink = link;
+          appState.generatingPreview = false;
+        });
+      })
     },
     ensurePreviousSceneDestroyed() {
       if (this.scene) {
@@ -160,6 +174,8 @@ function getRoadsCanvas() {
 </script>
 
 <style lang='stylus'>
+border-color = #d8d8d8;
+
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -186,7 +202,7 @@ function getRoadsCanvas() {
     height: 32px;
   }
 .step {
-  border-bottom: 1px solid #d8d8d8;
+  border-bottom: 1px solid border-color;
 }
 .preview-actions {
   display: flex;
@@ -199,7 +215,14 @@ function getRoadsCanvas() {
     align-items: center;
     display: flex;
     justify-content: center;
+    border-bottom: 1px solid border-color;
   }
+  .preview-btn {
+    border-left: 1px solid border-color;
+  }
+}
+.align-center {
+  text-align: center;
 }
 .left-right-padded {
   padding-left: 12px;

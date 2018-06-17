@@ -5,7 +5,7 @@ var getCorsDomain = require('./getCorsDomain');
 
 var s3 = new AWS.S3();
 
-var signedUrlExpireSeconds = 60 * 5;
+var signedUrlExpireSeconds = 60 * 24;
 var bucket = 'osm-play-v1'
 
 function putObjectToS3(key, data){
