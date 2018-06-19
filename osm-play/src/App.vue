@@ -1,52 +1,60 @@
 <template>
-  <div id="app" class='absolute'>
-    <div v-if='currentState === "intro"' class='step padded'>
-      Align the map and click "Build" to build 
-      all roads in printable format.
+  <div class='app-container'>
+    <div class='guidelines' :style='getGuideLineStyle()'>
+      <div class='label'>printable area</div>
     </div>
+    <div id="app" class='absolute' :class='{moving: mapMoving}'> 
+      <div v-if='currentState === "intro"' class='step padded'>
+        <div>
+          Align the map and click "Build" to build 
+          all roads in printable format.
+        </div>
+      </div>
 
-    <div v-if='currentState === "canvas"' class='canvas-settings'>
-      <div class='padded step'>
-        Now you can right click on a canvas and save it. Or
-        <a href='#' @click.prevent='resetAllAndStartOver'>choose a different area</a>.
-      </div>
-      <div class='step'>
-        <h3 class='left-right-padded'>Customize</h3>
-        <div class='row left-right-padded'>
-          <div class='col'>Background</div>
-          <div class='col'>
-            <color-picker v-model='backgroundColor' @change='updateBackground'></color-picker>
+      <div v-if='currentState === "canvas"' class='canvas-settings'>
+        <div class='padded step'>
+          Now you can right click on a canvas and save it. Or
+          <a href='#' @click.prevent='resetAllAndStartOver'>choose a different area</a>.
+        </div>
+        <div class='step'>
+          <h3 class='left-right-padded'>Customize</h3>
+          <div class='row left-right-padded'>
+            <div class='col'>Background</div>
+            <div class='col'>
+              <color-picker v-model='backgroundColor' @change='updateBackground'></color-picker>
+            </div>
+          </div>
+          <div class='row left-right-padded'>
+            <div class='col'>Foreground</div>
+            <div class='col'>
+              <color-picker v-model='lineColor' @change='updateLinesColor'></color-picker>
+            </div>
           </div>
         </div>
-        <div class='row left-right-padded'>
-          <div class='col'>Foreground</div>
-          <div class='col'>
-            <color-picker v-model='lineColor' @change='updateLinesColor'></color-picker>
-          </div>
+        <div class='preview-actions'>
+          <a href="#" @click.prevent='upload' v-if='!generatingPreview'>Generate preview url</a>
+          <a v-if='zazzleLink' :href='zazzleLink' target='_blank' class='preview-btn'>Preview Mug</a>
+        </div>
+        <div v-if='generatingPreview'>
+          <loading></loading>
+          <div class='align-center'>Generating preview url...</div>
         </div>
       </div>
-      <div class='preview-actions'>
-        <a href="#" @click.prevent='upload' v-if='!generatingPreview'>Generate preview url</a>
-        <a v-if='zazzleLink' :href='zazzleLink' target='_blank' class='preview-btn'>Preview Mug</a>
+      <div class='download' v-if='!building && currentState === "intro"'>
+        <a href="#" @click.prevent='downloadAllRoads()'>Build</a>
       </div>
-      <div v-if='generatingPreview'>
+      <div v-if='blank' class='no-roads padded'>
+        Hm... There is nothing here. Try a different area?
+      </div>
+      <div class='loading padded' v-if='building'>
         <loading></loading>
-        <div class='align-center'>Generating preview url...</div>
+        <div>{{buildingMessage}}</div>
       </div>
-    </div>
-    <div class='download' v-if='!building && currentState === "intro"'>
-      <a href="#" @click.prevent='downloadAllRoads()'>Build</a>
-    </div>
-    <div v-if='blank' class='no-roads padded'>
-      Hm... There is nothing here. Try a different area?
-    </div>
-    <div class='loading padded' v-if='building'>
-      <loading></loading>
-      <div>{{buildingMessage}}</div>
-    </div>
-    <div class='error padded' v-if='error'>
-      <h5>Error occured:</h5>
-      <pre>{{error}}</pre>
+      <div class='error padded' v-if='error'>
+        <h5>Error occured:</h5>
+        <pre>{{error}}</pre>
+      </div>
+
     </div>
   </div>
 </template>
@@ -78,6 +86,18 @@ export default {
     this.ensurePreviousSceneDestroyed();
   },
   methods: {
+    getGuideLineStyle() {
+      let {innerWidth: w, innerHeight: h} = window;
+      let desiredRatio = 540/230; // mug ratio on zazzle. TODO: Customize for other products.
+      let guidelineHeight = w / desiredRatio;
+      let top = (h - guidelineHeight)/2;
+      return {
+        top: `${top}px`,
+        left: '0px',
+        width: `${innerWidth}px`,
+        height: `${guidelineHeight}px`,
+      }
+    },
     updateBackground(x) {
       if (!this.scene) return;
 
@@ -176,16 +196,22 @@ function getRoadsCanvas() {
 <style lang='stylus'>
 border-color = #d8d8d8;
 
-#app {
+.app-container {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
+}
+
+#app {
   width: 400px;
   background: white;
   padding: 12px 0 0 0;
   z-index: 4;
   box-shadow: 0 0 20px rgba(0,0,0,.3);
+}
+#app.moving {
+  opacity: 0.2;
 }
 .col {
     align-items: center;
@@ -266,5 +292,18 @@ a {
 }
 .error pre {
   overflow-x: auto;
+}
+.guidelines {
+  position: absolute;
+  border: 2px solid gray;
+  pointer-events: none;
+
+  .label {
+    text-align: center;
+    padding: 2px 10px;
+    background: rgba(255, 255, 255, 0.3);
+    position: absolute;
+    bottom: 0;
+  }
 }
 </style>

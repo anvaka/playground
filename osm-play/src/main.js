@@ -27,6 +27,13 @@ map.addControl(new mapboxgl.NavigationControl({
   showCompass: false
 }));
 
+map.on('movestart', () => {
+  appState.mapMoving = true;
+});
+map.on('moveend', () => {
+  appState.mapMoving = false;
+})
+
 var scrollingDiv = document.body;
 scrollingDiv.addEventListener('touchmove', function(event){
     event.stopPropagation();
@@ -35,9 +42,6 @@ scrollingDiv.addEventListener('touchmove', function(event){
 bus.on('highlight-bounds', (el) => {
   highlighter.highlight(el.id, el.bounds);
 });
-
-bus.on('upload', canvas => {
-})
 
 bus.on('download-roads', (el) => {
   downloadRoads(el.id);

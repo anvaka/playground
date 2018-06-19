@@ -1,8 +1,9 @@
-var appState = {
+// const ratio = 540/230 - mug
+const appState = {
   currentState: 'intro',
+  mapMoving: false,
   selected: null,
   blank: false,
-  point: null,
   error: null,
   downloadOsmProgress: null,
   building: false,
