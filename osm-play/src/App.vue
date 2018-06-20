@@ -1,8 +1,10 @@
 <template>
   <div class='app-container'>
-    <div class='guidelines' :style='getGuideLineStyle()'>
+    <div id='map' :style='getGuideLineStyle()'></div>
+    <canvas class='absolute scene-roads' :style='getGuideLineStyle()'></canvas>
+    <!-- <div class='guidelines' :style='getGuideLineStyle()'>
       <div class='label'>printable area</div>
-    </div>
+    </div> -->
     <div id="app" class='absolute' :class='{moving: mapMoving}'> 
       <div v-if='currentState === "intro"' class='step padded'>
         <div>
@@ -80,6 +82,9 @@ export default {
   mounted() {
     this.webGLEnabled = wgl.isWebGLEnabled(getRoadsCanvas());
     bus.on('graph-loaded', this.createScene, this);
+    this.init();
+    //setMapSize();
+    //window.addEventListener('resize', setMapSize); 
   },
   beforeDestroy() {
     bus.off('graph-loaded', this.createScene);
@@ -87,17 +92,15 @@ export default {
   },
   methods: {
     getGuideLineStyle() {
-      let {innerWidth: w, innerHeight: h} = window;
-      let desiredRatio = 540/230; // mug ratio on zazzle. TODO: Customize for other products.
-      let guidelineHeight = w / desiredRatio;
-      let top = (h - guidelineHeight)/2;
+      let d = getCanvasDimensions();
       return {
-        top: `${top}px`,
-        left: '0px',
-        width: `${innerWidth}px`,
-        height: `${guidelineHeight}px`,
-      }
+        top: px(d.top),
+        left: px(d.left),
+        width: px(d.width),
+        height: px(d.height)
+      };
     },
+
     updateBackground(x) {
       if (!this.scene) return;
 
@@ -188,6 +191,31 @@ export default {
   }
 }
 
+function setMapSize() {
+  let map = document.getElementById('map');
+  let d = getCanvasDimensions();
+  map.style.left = px(d.left);
+  map.style.top = px(d.top);
+  map.style.width = px(d.width);
+  map.style.height = px(d.height);
+}
+
+function px(x) {
+  return x + 'px';
+}
+
+function getCanvasDimensions() {
+  let {innerWidth: w, innerHeight: h} = window;
+  let desiredRatio = 540/230; // mug ratio on zazzle. TODO: Customize for other products.
+  let guidelineHeight = w / desiredRatio;
+  let top = (h - guidelineHeight)/2;
+  return {
+    width: innerWidth,
+    height: guidelineHeight,
+    left: 0,
+    top: top
+  };
+}
 function getRoadsCanvas() {
   return document.querySelector('.scene-roads');
 }
@@ -260,6 +288,7 @@ border-color = #d8d8d8;
   border-top: 1px solid #d8d8d8;
 }
 .scene-roads {
+  display: none;
   z-index: 3;
 }
 

@@ -11,44 +11,49 @@ require.ensure('@/vueApp.js', () => {
   require('@/vueApp.js');
 });
 
-mapboxgl.accessToken = 'pk.eyJ1IjoiYW52YWthIiwiYSI6ImNqaWUzZmhqYzA1OXMza213YXh2ZzdnOWcifQ.t5yext53zn1c9Ixd7Y41Dw';
-var map = new mapboxgl.Map({
-    container: 'map',
-//    style: './static/style.json',
-    style: 'mapbox://styles/mapbox/streets-v9',
-    center: [8.538961,47.372476],
-    zoom: 2,
-    hash: true
-});
+let map;
 
-const highlighter = createBoundaryHighlighter(map);
+appState.init = function() {
+  mapboxgl.accessToken = 'pk.eyJ1IjoiYW52YWthIiwiYSI6ImNqaWUzZmhqYzA1OXMza213YXh2ZzdnOWcifQ.t5yext53zn1c9Ixd7Y41Dw';
+  map = new mapboxgl.Map({
+      container: 'map',
+  //    style: './static/style.json',
+      style: 'mapbox://styles/mapbox/streets-v9',
+      center: [8.538961,47.372476],
+      zoom: 2,
+      hash: true
+  });
 
-map.addControl(new mapboxgl.NavigationControl({
-  showCompass: false
-}));
+//  const highlighter = createBoundaryHighlighter(map);
 
-map.on('movestart', () => {
-  appState.mapMoving = true;
-});
-map.on('moveend', () => {
-  appState.mapMoving = false;
-})
+  map.addControl(new mapboxgl.NavigationControl({
+    showCompass: false
+  }));
+
+  map.on('movestart', () => {
+    appState.mapMoving = true;
+  });
+
+  map.on('moveend', () => {
+    appState.mapMoving = false;
+  });
+};
 
 var scrollingDiv = document.body;
 scrollingDiv.addEventListener('touchmove', function(event){
     event.stopPropagation();
 });
 
-bus.on('highlight-bounds', (el) => {
-  highlighter.highlight(el.id, el.bounds);
-});
+// bus.on('highlight-bounds', (el) => {
+//   highlighter.highlight(el.id, el.bounds);
+// });
 
 bus.on('download-roads', (el) => {
   downloadRoads(el.id);
 });
 
 bus.on('start-over', () => {
-  highlighter.removeHighlight();
+//  highlighter.removeHighlight();
   appState.startOver();
 })
 
