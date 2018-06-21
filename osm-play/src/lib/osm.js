@@ -85,7 +85,7 @@ export function getRoadsInBoundingBox(bbox, progress) {
   return postData(
     `[timeout:9000][maxsize:2000000000][out:json];
 (
- way(${bbox});
+ way["waterway"](${bbox});
  node(w);
 );
 out skel;`, progress);

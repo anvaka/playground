@@ -5,7 +5,7 @@
     <!-- <div class='guidelines' :style='getGuideLineStyle()'>
       <div class='label'>printable area</div>
     </div> -->
-    <div id="app" class='absolute' :class='{moving: mapMoving}'> 
+    <div id="app" class='absolute'> 
       <div v-if='currentState === "intro"' class='step padded'>
         <div>
           Align the map and click "Build" to build 

@@ -32,6 +32,7 @@ appState.init = function() {
 
   map.on('movestart', () => {
     appState.mapMoving = true;
+    appState.zazzleLink = null;
   });
 
   map.on('moveend', () => {
