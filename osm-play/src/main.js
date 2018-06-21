@@ -40,6 +40,7 @@ appState.init = function() {
   });
 };
 
+var cancelDownload;
 var scrollingDiv = document.body;
 scrollingDiv.addEventListener('touchmove', function(event){
     event.stopPropagation();
@@ -56,6 +57,12 @@ bus.on('download-roads', (el) => {
 bus.on('start-over', () => {
 //  highlighter.removeHighlight();
   appState.startOver();
+})
+
+bus.on('cancel-download-all-roads', () => {
+  if (cancelDownload) {
+    cancelDownload();
+  }
 })
 
 bus.on('download-all-roads', () => {
@@ -92,7 +99,12 @@ function downloadRoads(relId) {
 }
 
 function renderAfterResolution(promise, filter) {
+  cancelDownload = promise.cancel;
+  appState.showCancelDownload = true;
+
   promise.then(osmResponse => {
+    cancelDownload = null;
+    appState.showCancelDownload = false;
     return constructGraph(osmResponse, filter, updateConstructionProgress);
   }).then(({graph, bounds}) => {
     appState.setGraph(graph, bounds);
@@ -106,8 +118,14 @@ function renderAfterResolution(promise, filter) {
       bus.fire('graph-loaded');
     }
   }).catch(err => {
-    appState.building = false;
-    appState.error = err;
+    if (err && err.cancelled) {
+      cancelDownload = null;
+      appState.building = false;
+      appState.showCancelDownload = false;
+    } else {
+      appState.building = false;
+      appState.error = err;
+    }
   });
 }
 

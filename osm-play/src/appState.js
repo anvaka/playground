@@ -9,6 +9,7 @@ const appState = {
   building: false,
   buildingMessage: '',
   zazzleLink: null,
+  showCancelDownload: false,
   getGraphBBox,
   getGraph,
   setGraph,

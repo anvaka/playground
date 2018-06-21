@@ -1,10 +1,19 @@
 export default function request(url, options) {
   if (!options) options = {};
+  let req;
+  let cancelable = new Promise(download);
+  cancelable.cancel = cancel;
 
-  return new Promise(download);
+  return cancelable;
+
+  function cancel() {
+    if (req) {
+      req.abort();
+    }
+  }
 
   function download(resolve, reject) {
-    var req = new XMLHttpRequest();
+    req = new XMLHttpRequest();
 
     if (typeof options.progress === 'function') {
       req.addEventListener('progress', updateProgress, false);
@@ -67,7 +76,10 @@ export default function request(url, options) {
     }
 
     function transferCanceled() {
-      reject(`Cancelled download of ${url}`);
+      reject({
+        cancelled: true,
+        message: `Cancelled download of ${url}`
+      });
     }
   }
 }

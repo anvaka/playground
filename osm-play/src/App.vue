@@ -51,9 +51,10 @@
       <div class='loading padded' v-if='building'>
         <loading></loading>
         <div>{{buildingMessage}}</div>
+        <a href="#" @click.prevent='cancelDownload()' v-if='showCancelDownload'>Cancel</a>
       </div>
       <div class='error padded' v-if='error'>
-        <h5>Error occured:</h5>
+        <h5>Error occurred:</h5>
         <pre>{{error}}</pre>
       </div>
 
@@ -128,6 +129,9 @@ export default {
     },
     downloadAllRoads() {
       bus.fire('download-all-roads');
+    },
+    cancelDownload() {
+      bus.fire('cancel-download-all-roads');
     },
     upload() {
       let canvas = getRoadsCanvas();
