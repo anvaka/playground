@@ -11,10 +11,6 @@
       </div>
 
       <div v-if='currentState === "canvas"' class='canvas-settings'>
-        <div class='padded step'>
-          Now you can right click on a canvas and save it. Or
-          <a href='#' @click.prevent='resetAllAndStartOver'>choose a different area</a>.
-        </div>
         <div class='step'>
           <h3 class='left-right-padded'>Customize</h3>
           <div class='row left-right-padded'>
@@ -31,11 +27,11 @@
           </div>
         </div>
         <div class='preview-actions'>
-          <a href="#" @click.prevent='previewOrOpen' v-if='!generatingPreview'>Preview mug</a>
+          <a href='#' @click.prevent='previewOrOpen' v-if='!generatingPreview'>Preview mug</a>
+          <a href='#' @click.prevent='resetAllAndStartOver'>Start over</a>.
         </div>
-        <div v-if='generatingPreview'>
-          <loading></loading>
-          <div class='align-center'>Generating preview url...</div>
+        <div v-if='generatingPreview' class='loading-container'>
+          <loading></loading> Generating preview url...
         </div>
       </div>
       <div class='download' v-if='!building && currentState === "intro"'>
@@ -45,9 +41,8 @@
         Hm... There is nothing here. Try a different area?
       </div>
       <div class='loading padded' v-if='building'>
-        <loading></loading>
-        <div>{{buildingMessage}}</div>
-        <a href="#" @click.prevent='cancelDownload()' v-if='showCancelDownload'>Cancel</a>
+        <div class='loading-container'><loading></loading> {{buildingMessage}}</div>
+        <a href="#" @click.prevent='cancelDownload()' v-if='showCancelDownload' class='align-center cancel-button'>Cancel</a>
       </div>
       <div class='error padded' v-if='error'>
         <h5>Error occurred:</h5>
@@ -278,11 +273,11 @@ border-color = #d8d8d8;
 }
 .preview-actions {
   display: flex;
-  flex-direction: row;
-  height: 32px;
+  flex-direction: column;
   align-items: stretch;
   
   a {
+    height: 32px;
     flex: 1;
     align-items: center;
     display: flex;
@@ -292,6 +287,11 @@ border-color = #d8d8d8;
   .preview-btn {
     border-left: 1px solid border-color;
   }
+}
+.cancel-button {
+    width: 100%;
+    display: block;
+    margin-top: 8px;
 }
 .align-center {
   text-align: center;
@@ -351,6 +351,14 @@ a {
     background: rgba(255, 255, 255, 0.3);
     position: absolute;
     bottom: 0;
+  }
+}
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  svg {
+    margin-right: 12px;
   }
 }
 </style>
