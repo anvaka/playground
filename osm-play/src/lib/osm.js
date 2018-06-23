@@ -81,11 +81,10 @@ export function getRoadsInBoundingBox(bbox, progress) {
   // TODO: also try
  // way["waterway"](${bbox});
  //way["highway"~"${highwayTags}"](${bbox});
- //way["highway"~"${highwayTags}"](${bbox});
   return postData(
     `[timeout:9000][maxsize:2000000000][out:json];
 (
- way["waterway"](${bbox});
+ way["highway"~"${highwayTags}"](${bbox});
  node(w);
 );
 out skel;`, progress);

@@ -2,9 +2,6 @@
   <div class='app-container'>
     <div id='map' :style='getGuideLineStyle()'></div>
     <canvas class='absolute scene-roads' :style='getGuideLineStyle()'></canvas>
-    <!-- <div class='guidelines' :style='getGuideLineStyle()'>
-      <div class='label'>printable area</div>
-    </div> -->
     <div id="app" class='absolute'> 
       <div v-if='currentState === "intro"' class='step padded'>
         <div>
@@ -34,8 +31,7 @@
           </div>
         </div>
         <div class='preview-actions'>
-          <a href="#" @click.prevent='upload' v-if='!generatingPreview'>Generate preview url</a>
-          <a v-if='zazzleLink' :href='zazzleLink' target='_blank' class='preview-btn'>Preview Mug</a>
+          <a href="#" @click.prevent='previewOrOpen' v-if='!generatingPreview'>Preview mug</a>
         </div>
         <div v-if='generatingPreview'>
           <loading></loading>
@@ -133,16 +129,21 @@ export default {
     cancelDownload() {
       bus.fire('cancel-download-all-roads');
     },
-    upload() {
+    previewOrOpen() {
+      if (this.zazzleLink) {
+        window.open(this.zazzleLink, '_blank');
+        return;
+      }
+
       let canvas = getRoadsCanvas();
       let appState = this;
-      appState.zazzleLink = null;
       appState.generatingPreview = true;
       this.scene.renderFrame();
       requestAnimationFrame(() => {
         generateZazzleLink(canvas).then(link => {
           appState.zazzleLink = link;
           appState.generatingPreview = false;
+          window.open(link, '_blank');
         });
       })
     },
@@ -179,6 +180,9 @@ export default {
 
       let bbox = this.getGraphBBox();
       scene.setViewBox(bbox);
+      scene.on('transform', () => {
+        this.zazzleLink = null;
+      })
       let linksCount = graph.getLinksCount();
       let lines = new wgl.WireCollection(linksCount);
       this.lines = lines;
@@ -212,11 +216,21 @@ function getCanvasDimensions() {
   let {innerWidth: w, innerHeight: h} = window;
   let desiredRatio = 540/230; // mug ratio on zazzle. TODO: Customize for other products.
   let guidelineHeight = w / desiredRatio;
+
+  let guideLineWidth = w;
+  let left = 0;
+
+  if (guidelineHeight > h) {
+    guidelineHeight = h;
+    guideLineWidth = guidelineHeight * desiredRatio;
+    left = (w - guideLineWidth) / 2;
+  }
+
   let top = (h - guidelineHeight)/2;
   return {
-    width: innerWidth,
+    width: guideLineWidth,
     height: guidelineHeight,
-    left: 0,
+    left: left,
     top: top
   };
 }

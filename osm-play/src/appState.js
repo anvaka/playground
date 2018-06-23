@@ -1,7 +1,6 @@
 // const ratio = 540/230 - mug
 const appState = {
   currentState: 'intro',
-  mapMoving: false,
   selected: null,
   blank: false,
   error: null,

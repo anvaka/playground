@@ -19,8 +19,8 @@ appState.init = function() {
       container: 'map',
   //    style: './static/style.json',
       style: 'mapbox://styles/mapbox/streets-v9',
-      center: [8.538961,47.372476],
-      zoom: 2,
+      center: [-122.2381,47.624],
+      zoom: 11.32,
       hash: true
   });
 
@@ -31,12 +31,7 @@ appState.init = function() {
   }));
 
   map.on('movestart', () => {
-    appState.mapMoving = true;
     appState.zazzleLink = null;
-  });
-
-  map.on('moveend', () => {
-    appState.mapMoving = false;
   });
 };
 
