@@ -27,8 +27,14 @@
           </div>
         </div>
         <div class='preview-actions'>
-          <a href='#' @click.prevent='previewOrOpen' v-if='!generatingPreview'>Preview mug</a>
-          <a href='#' @click.prevent='resetAllAndStartOver'>Start over</a>.
+          <a href='#' @click.prevent='previewOrOpen' v-if='!generatingPreview && !zazzleLink' class='action' :class='{"has-link": zazzleLink}'>
+            Preview mug
+          </a>
+          <div v-if='zazzleLink' class='padded popup-help'>
+            If your browser has blocked the new window, please <a :href='zazzleLink' target='_blank'>click here</a>
+            to open it.
+          </div>
+          <a href='#' @click.prevent='resetAllAndStartOver' v-if='!generatingPreview' class='action'>Start over</a>
         </div>
         <div v-if='generatingPreview' class='loading-container'>
           <loading></loading> Generating preview url...
@@ -247,7 +253,6 @@ border-color = #d8d8d8;
 #app {
   width: 400px;
   background: white;
-  padding: 12px 0 0 0;
   z-index: 4;
   box-shadow: 0 0 20px rgba(0,0,0,.3);
 }
@@ -268,15 +273,15 @@ border-color = #d8d8d8;
     flex-direction: row;
     height: 32px;
   }
-.step {
-  border-bottom: 1px solid border-color;
-}
+
 .preview-actions {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  border-top: 1px solid border-color;
+  margin-top: 12px;
   
-  a {
+  a.action {
     height: 32px;
     flex: 1;
     align-items: center;
@@ -284,8 +289,16 @@ border-color = #d8d8d8;
     justify-content: center;
     border-bottom: 1px solid border-color;
   }
+  a.action.has-link {
+    border-bottom: none;
+  }
+
   .preview-btn {
     border-left: 1px solid border-color;
+  }
+  .popup-help {
+    border-bottom: 1px solid border-color;
+    text-align: center;
   }
 }
 .cancel-button {
