@@ -4,14 +4,16 @@
     <canvas class='absolute scene-roads' :style='getGuideLineStyle()'></canvas>
     <div id="app" class='absolute'> 
       <div v-if='currentState === "intro"' class='step padded'>
+        <h3>You are designing <strong>a mug</strong></h3>
         <div>
-          Align the map and click "Build" to build 
-          all roads in printable format.
+          Align the map and click "Build" to get 
+          all roads in the area.
         </div>
       </div>
 
       <div v-if='currentState === "canvas"' class='canvas-settings'>
         <div class='step'>
+          <a href='#' @click.prevent='resetAllAndStartOver' v-if='!generatingPreview' class='start-over'>Start over</a>
           <h3 class='left-right-padded'>Customize</h3>
           <div class='row left-right-padded'>
             <div class='col'>Background</div>
@@ -34,10 +36,9 @@
             If your browser has blocked the new window, please <a :href='zazzleLink' target='_blank'>click here</a>
             to open it.
           </div>
-          <a href='#' @click.prevent='resetAllAndStartOver' v-if='!generatingPreview' class='action'>Start over</a>
-        </div>
-        <div v-if='generatingPreview' class='loading-container'>
-          <loading></loading> Generating preview url...
+          <div v-if='generatingPreview' class='loading-container'>
+            <loading></loading> Generating preview url...
+          </div>
         </div>
       </div>
       <div class='download' v-if='!building && currentState === "intro"'>
@@ -314,9 +315,11 @@ border-color = #d8d8d8;
   padding-right: 12px;
 }
 .start-over {
-  text-align: center;
-  padding-top: 8px;
-  border-top: 1px solid #d8d8d8;
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  display: block;
+  font-size: 12px;
 }
 .scene-roads {
   display: none;
