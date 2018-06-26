@@ -4,6 +4,20 @@ const appState = {
   selected: null,
   blank: false,
   error: null,
+  currentScript: 'roads',
+  possibleScripts: {
+    selected: 'roads',
+    options: [{
+      value: 'roads',
+      text: 'Roads'
+    }, {
+      value: 'buildings',
+      text: 'Buildings'
+    }, {
+      value: 'railway',
+      text: 'Railway'
+    }]
+  },
   downloadOsmProgress: null,
   building: false,
   buildingMessage: '',

@@ -1,44 +1,6 @@
 import postData from './postData';
 
-const highwayTags = [
-  'motorway',
-  'motorway_link',
-  'trunk',
-  'trunk_link',
-  'primary',
-  'primary_link',
-  'secondary',
-  'secondary_link',
-  'tertiary',
-  'tertiary_link',
-  'unclassified',
-  'unclassified_link',
-  'residential',
-  'residential_link',
-  'service',
-  'service_link',
-  'living_street',
-  'pedestrian',
-  'road'
-].join('|');
-
-const countryLevelHighways = [
-  'motorway',
-//  'trunk',
-  // 'primary',
-  // 'secondary',
-  // 'tertiary',
-  // 'tertiary_link',
-  // 'unclassified',
-  // 'unclassified_link',
-  // 'residential',
-  // 'residential_link',
-  // 'service',
-  // 'service_link',
-  // 'living_street',
-  // 'pedestrian',
-  // 'road'
-].join('|');
+import queryPresets from './query-presets';
 
 export function getAreasAround(lonLat, bounds) {
   var sw = bounds.getSouthWest();
@@ -77,17 +39,8 @@ out skel;`).then(response => {
 })
 }
 
-export function getRoadsInBoundingBox(bbox, progress) {
-  // TODO: also try
- // way["waterway"](${bbox});
- //way["highway"~"${highwayTags}"](${bbox});
-  return postData(
-    `[timeout:9000][maxsize:2000000000][out:json];
-(
- way["highway"~"${highwayTags}"](${bbox});
- node(w);
-);
-out skel;`, progress);
+export function getRoadsInBoundingBox(scriptKind, boundingBox, progress) {
+  return postData(queryPresets[scriptKind](boundingBox) , progress);
 }
 
 export function getRoadsInRelationship(relId) {

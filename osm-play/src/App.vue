@@ -7,7 +7,9 @@
         <h3>You are designing <strong>a mug</strong></h3>
         <div>
           Align the map and click "Build" to get 
-          all roads in the area.
+          all <select v-model='possibleScripts.selected' class='script-presets'>
+            <option v-for='groupBy in possibleScripts.options' :value='groupBy.value'>{{groupBy.text}}</option>
+	        </select> in the area.
         </div>
       </div>
 
@@ -376,5 +378,8 @@ a {
   svg {
     margin-right: 12px;
   }
+}
+.script-presets {
+  display: inline-block;
 }
 </style>

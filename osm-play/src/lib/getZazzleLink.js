@@ -1,8 +1,6 @@
 import request from './request';
 
-const imgurClientId = '8dcb8da0d86146b';
-// const imgurUrl = 'https://api.imgur.com/3/image';
-let imgurUrl = 'https://edi6jgnosf.execute-api.us-west-2.amazonaws.com/Stage/put_image'
+let imageUrl = 'https://edi6jgnosf.execute-api.us-west-2.amazonaws.com/Stage/put_image'
 
 const productKinds = {
   mug: '168739066664861503'
@@ -23,13 +21,10 @@ export default function generateZazzleLink(canvas) {
   const form = new FormData();
   form.append('image', imageContent);
 
-  return request(imgurUrl, {
+  return request(imageUrl, {
     method: 'POST',
     responseType: 'json',
     progress,
-    // headers: {
-    //   Authorization: `Client-ID ${imgurClientId}`
-    // },
     body: form,
   }, 'POST').then(x => {
     if (!x.success) throw new Error('Failed to upload image');

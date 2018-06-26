@@ -69,8 +69,9 @@ bus.on('download-all-roads', () => {
   appState.buildingMessage = 'Sending query to OSM...'
   appState.blank = false;
   appState.error = null;
+  let scriptKind = appState.possibleScripts.selected;
 
-  const downloadPromise = osm.getRoadsInBoundingBox(boundingBox, progress);
+  const downloadPromise = osm.getRoadsInBoundingBox(scriptKind, boundingBox, progress);
 
   renderAfterResolution(downloadPromise, el => {
     return el.lon >= sw.lng && el.lon <= ne.lng &&
