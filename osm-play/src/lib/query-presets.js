@@ -48,10 +48,10 @@ out skel;`
 );
 out skel;`
   },
-  railway(bbox) {
+  rivers(bbox) {
     return `${metaTags}
 (
-  way["railway"](${bbox});
+  way["waterway"="river"](${bbox});
   node(w);
 );
 out skel;`

@@ -14,8 +14,8 @@ const appState = {
       value: 'buildings',
       text: 'Buildings'
     }, {
-      value: 'railway',
-      text: 'Railway'
+      value: 'rivers',
+      text: 'Rivers'
     }]
   },
   downloadOsmProgress: null,
