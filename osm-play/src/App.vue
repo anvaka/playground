@@ -148,6 +148,9 @@ export default {
           appState.zazzleLink = link;
           appState.generatingPreview = false;
           window.open(link, '_blank');
+        }).catch(e => {
+          appState.error = e;
+          appState.generatingPreview = false;
         });
       })
     },
@@ -259,9 +262,10 @@ border-color = #d8d8d8;
   z-index: 4;
   box-shadow: 0 0 20px rgba(0,0,0,.3);
 }
-#app.moving {
-  opacity: 0.2;
+h3 {
+  margin: 12px 0;
 }
+
 .col {
     align-items: center;
     display: flex;
@@ -270,12 +274,12 @@ border-color = #d8d8d8;
       margin-left: 14px;
     }
   }
-  .row {
-    margin-top: 4px;
-    display: flex;
-    flex-direction: row;
-    height: 32px;
-  }
+.row {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: row;
+  height: 32px;
+}
 
 .preview-actions {
   display: flex;
@@ -375,6 +379,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 12px;
   svg {
     margin-right: 12px;
   }
