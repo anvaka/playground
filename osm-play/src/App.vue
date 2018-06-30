@@ -29,6 +29,10 @@
               <color-picker v-model='lineColor' @change='updateLinesColor'></color-picker>
             </div>
           </div>
+          <div>
+            <label class='browse-btn primary-text' for="local-files-button">Add KML file</label>
+            <input type='file' id='local-files-button' class='nodisplay' name="files[]" @change='onFilePickerChanged'>
+          </div>
         </div>
         <div class='preview-actions'>
           <a href='#' @click.prevent='previewOrOpen' v-if='!generatingPreview && !zazzleLink' class='action' :class='{"has-link": zazzleLink}'>
@@ -68,6 +72,7 @@ import bus from './bus';
 import ColorPicker from './components/ColorPicker';
 import Loading from './components/Loading';
 import generateZazzleLink from './lib/getZazzleLink';
+import createWglScene from './lib/createWglScene'
 
 const wgl = require('w-gl');
 
@@ -92,6 +97,9 @@ export default {
     this.ensurePreviousSceneDestroyed();
   },
   methods: {
+    onFilePickerChanged(e) {
+      console.log(e);
+    },
     getGuideLineStyle() {
       let d = getCanvasDimensions();
       return {
@@ -104,21 +112,14 @@ export default {
 
     updateBackground(x) {
       if (!this.scene) return;
+      this.scene.setBackgroundColor(appState.backgroundColor);
+      // const bg = appState.backgroundColor;
 
-      const bg = appState.backgroundColor;
-      this.scene.setClearColor(bg.r/255, bg.g/255, bg.b/255, bg.a);
-      this.scene.renderFrame();
+      // this.scene.setClearColor(bg.r/255, bg.g/255, bg.b/255, bg.a);
+      // this.scene.renderFrame();
     },
     updateLinesColor(x) {
-      if (!this.lines) return;
-
-      const {r, g, b, a} = appState.lineColor;
-      const lineColor = this.lines.color;
-      lineColor.r = r/255;
-      lineColor.g = g/255;
-      lineColor.b = b/255;
-      lineColor.a = a;
-      this.scene.renderFrame();
+      this.scene.setLinesColor(appState.lineColor);
     },
     highlightBounds(item) {
       appState.selected = item;
@@ -140,9 +141,10 @@ export default {
       }
 
       let canvas = getRoadsCanvas();
-      let appState = this;
       appState.generatingPreview = true;
+
       this.scene.renderFrame();
+
       requestAnimationFrame(() => {
         generateZazzleLink(canvas).then(link => {
           appState.zazzleLink = link;
@@ -158,8 +160,8 @@ export default {
       if (this.scene) {
         this.scene.dispose();
         this.scene = null;
-        this.lines = null;
       }
+
       var canvas = getRoadsCanvas();
       canvas.style.display = 'none';
     },
@@ -167,41 +169,12 @@ export default {
       this.ensurePreviousSceneDestroyed();
       bus.fire('start-over');
     },
+
     createScene() {
       this.ensurePreviousSceneDestroyed();
-      let graph = this.getGraph();
-      let canvas = getRoadsCanvas();
-      canvas.style.display = 'block';
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
       this.graphLoaded = true;
-      this.scene = wgl.scene(canvas);
-      let scene = this.scene;
-
-      let bg = appState.backgroundColor;
-      scene.setClearColor(bg.r/255, bg.g/255, bg.b/255, bg.a);
-      // bug in w-gl
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      scene.setPixelRatio(1);
-
-      let bbox = this.getGraphBBox();
-      scene.setViewBox(bbox);
-      scene.on('transform', () => {
-        this.zazzleLink = null;
-      })
-      let linksCount = graph.getLinksCount();
-      let lines = new wgl.WireCollection(linksCount);
-      this.lines = lines;
-      let lc = appState.lineColor;
-      lines.color = {r: lc.r/255, g: lc.g/255, b: lc.b/255, a: lc.a}
-
-      graph.forEachLink(function (link) {
-        let from = graph.getNode(link.fromId).data;
-        let to = graph.getNode(link.toId).data
-        lines.add({ from, to });
-      });
-      scene.appendChild(lines);
+      this.scene = createWglScene(getRoadsCanvas(), appState);
+      this.scene.getWGLScene().on('transform', () => { appState.zazzleLink = null; })
     },
   }
 }
