@@ -48,7 +48,8 @@ exports.handler = (event, context, callback) => {
         data: {link}
       }),
       headers: {
-        'Access-Control-Allow-Origin': getCorsDomain(event.headers)
+        'Access-Control-Allow-Origin': getCorsDomain(event.headers),
+        'X-Content-Type-Options': 'nosniff'
       }
     });
   })
