@@ -111,23 +111,12 @@ export default {
     },
 
     updateBackground(x) {
-      if (!this.scene) return;
       this.scene.setBackgroundColor(appState.backgroundColor);
-      // const bg = appState.backgroundColor;
-
-      // this.scene.setClearColor(bg.r/255, bg.g/255, bg.b/255, bg.a);
-      // this.scene.renderFrame();
     },
     updateLinesColor(x) {
       this.scene.setLinesColor(appState.lineColor);
     },
-    highlightBounds(item) {
-      appState.selected = item;
-      bus.fire('highlight-bounds', item.el);
-    },
-    downloadRoads(item) {
-      bus.fire('download-roads', item.el);
-    },
+
     downloadAllRoads() {
       bus.fire('download-all-roads');
     },
@@ -156,6 +145,7 @@ export default {
         });
       })
     },
+
     ensurePreviousSceneDestroyed() {
       if (this.scene) {
         this.scene.dispose();
@@ -165,13 +155,15 @@ export default {
       var canvas = getRoadsCanvas();
       canvas.style.display = 'none';
     },
+
     resetAllAndStartOver() {
       this.ensurePreviousSceneDestroyed();
-      bus.fire('start-over');
+      appState.startOver();
     },
 
     createScene() {
       this.ensurePreviousSceneDestroyed();
+
       this.graphLoaded = true;
       this.scene = createWglScene(getRoadsCanvas(), appState);
       this.scene.getWGLScene().on('transform', () => { appState.zazzleLink = null; })

@@ -17,14 +17,12 @@ appState.init = function() {
   mapboxgl.accessToken = 'pk.eyJ1IjoiYW52YWthIiwiYSI6ImNqaWUzZmhqYzA1OXMza213YXh2ZzdnOWcifQ.t5yext53zn1c9Ixd7Y41Dw';
   map = new mapboxgl.Map({
       container: 'map',
-  //    style: './static/style.json',
       style: 'mapbox://styles/mapbox/streets-v9',
       center: [-122.2381,47.624],
       zoom: 11.32,
       hash: true
   });
 
-//  const highlighter = createBoundaryHighlighter(map);
 
   map.addControl(new mapboxgl.NavigationControl({
     showCompass: false
@@ -35,32 +33,15 @@ appState.init = function() {
   });
 };
 
+document.body.addEventListener('touchmove', (event) => event.stopPropagation());
+
 var cancelDownload;
-var scrollingDiv = document.body;
-scrollingDiv.addEventListener('touchmove', function(event){
-    event.stopPropagation();
-});
-
-// bus.on('highlight-bounds', (el) => {
-//   highlighter.highlight(el.id, el.bounds);
-// });
-
-bus.on('download-roads', (el) => {
-  downloadRoads(el.id);
-});
-
-bus.on('start-over', () => {
-//  highlighter.removeHighlight();
-  appState.startOver();
-})
-
+bus.on('download-all-roads', downloadRoads);
 bus.on('cancel-download-all-roads', () => {
-  if (cancelDownload) {
-    cancelDownload();
-  }
-})
+  if (cancelDownload) cancelDownload();
+});
 
-bus.on('download-all-roads', () => {
+function downloadRoads() {
   const bounds = map.getBounds();
   const sw = bounds.getSouthWest();
   const ne = bounds.getNorthEast()
@@ -69,29 +50,25 @@ bus.on('download-all-roads', () => {
   appState.buildingMessage = 'Sending query to OSM...'
   appState.blank = false;
   appState.error = null;
-  let scriptKind = appState.possibleScripts.selected;
 
-  const downloadPromise = osm.getRoadsInBoundingBox(scriptKind, boundingBox, progress);
+  let scriptKind = appState.possibleScripts.selected;
+  const downloadPromise = osm.getRoadsInBoundingBox(scriptKind, boundingBox, updateDownloadProgress);
 
   renderAfterResolution(downloadPromise, el => {
     return el.lon >= sw.lng && el.lon <= ne.lng &&
            el.lat >= sw.lat && el.lat <= ne.lat;
   });
+}
 
-  function progress(p) {
-    let loaded = formatNumber(p.loaded);
+function updateDownloadProgress(p) {
+  let loaded = formatNumber(p.loaded);
 
-    if (p.lengthComputable) {
-      let total = formatNumber(p.total);
-      appState.buildingMessage = `Downloading data: ${p.percent * 100}% (${loaded} of ${total} bytes)`;
-    } else {
-      appState.buildingMessage = `Downloading data: ${loaded} bytes so far...`;
-    }
+  if (p.lengthComputable) {
+    let total = formatNumber(p.total);
+    appState.buildingMessage = `Downloading data: ${p.percent * 100}% (${loaded} of ${total} bytes)`;
+  } else {
+    appState.buildingMessage = `Downloading data: ${loaded} bytes so far...`;
   }
-});
-
-function downloadRoads(relId) {
-  renderAfterResolution(osm.getRoadsInRelationship(relId));
 }
 
 function renderAfterResolution(promise, filter) {
