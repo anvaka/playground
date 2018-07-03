@@ -2,6 +2,7 @@
   <div class='app-container'>
     <div id='map' :style='getGuideLineStyle()'></div>
     <canvas class='absolute scene-roads' :style='getGuideLineStyle()'></canvas>
+    <canvas class='absolute ctx2d' :style='getGuideLineStyle()'></canvas>
     <div id="app" class='absolute'> 
       <div v-if='currentState === "intro"' class='step padded'>
         <h3>You are designing <strong>a mug</strong></h3>
@@ -165,7 +166,7 @@ export default {
       this.ensurePreviousSceneDestroyed();
 
       this.graphLoaded = true;
-      this.scene = createWglScene(getRoadsCanvas(), appState);
+      this.scene = createWglScene(getRoadsCanvas(), get2dCanvas(), appState);
       this.scene.getWGLScene().on('transform', () => { appState.zazzleLink = null; })
     },
   }
@@ -208,6 +209,10 @@ function getCanvasDimensions() {
 }
 function getRoadsCanvas() {
   return document.querySelector('.scene-roads');
+}
+
+function get2dCanvas() {
+  return document.querySelector('.ctx2d');
 }
 </script>
 
@@ -351,5 +356,9 @@ a {
 }
 .script-presets {
   display: inline-block;
+}
+.ctx2d {
+  z-index: 3;
+  pointer-events: none;
 }
 </style>

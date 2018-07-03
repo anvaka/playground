@@ -1,7 +1,9 @@
+import TextCanvasElement from './scene-parts/text';
+import CanvasLayer from './scene-parts/canvas-layer';
+
 const wgl = require('w-gl');
 
-export default function createWglScene(canvas, appState) {
-  debugger;
+export default function createWglScene(canvas, canvas2d, appState) {
   let scene;
   let lines = null;
   let graph = appState.getGraph();
@@ -53,8 +55,8 @@ export default function createWglScene(canvas, appState) {
 
   function init() {
     canvas.style.display = 'block';
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    canvas2d.width = canvas.width = window.innerWidth;
+    canvas2d.height = canvas.height = window.innerHeight;
     scene = wgl.scene(canvas);
 
     let bg = appState.backgroundColor;
@@ -69,6 +71,13 @@ export default function createWglScene(canvas, appState) {
 
     let lineColor = appState.lineColor;
     makeLines(lineColor);
+
+    let ctx2d = canvas2d.getContext('2d');
+    let canvasLayer = new CanvasLayer(ctx2d);
+    let textElement = new TextCanvasElement(ctx2d);
+    canvasLayer.appendChild(textElement);
+
+    scene.appendChild(canvasLayer);
   }
 
   function makeLines(lineColor) {
@@ -81,5 +90,16 @@ export default function createWglScene(canvas, appState) {
       lines.add({ from, to });
     });
     scene.appendChild(lines);
+
+    let guideline = new wgl.WireCollection(1);
+    guideline.color = {r: 1, g: 0, b: 0, a: 1};
+    guideline.add({from: {x: 0, y: 0}, to: {x: 100, y: 0}});
+    scene.appendChild(guideline);
+
+    guideline = new wgl.WireCollection(1);
+    guideline.color = {r: 0, g: 1, b: 0, a: 1};
+    guideline.add({from: {x: 0, y: -100}, to: {x: 100, y: -100}});
+    scene.appendChild(guideline);
+
   }
 }
