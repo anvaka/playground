@@ -18,13 +18,18 @@ function parseFile(file) {
     var reader = new FileReader();
     reader.onload = function(){
       var kmlXMLString = reader.result;
-      // var parser = tinyxml(kmlXMLString)
-      // var lineStrings = parser.selectNodes('LineString');
-      // console.log(lineStrings);
+      var parser = tinyxml(kmlXMLString)
+      var lineStrings = parser.selectNodes('LineString');
+      let paths = [];
+      lineStrings.forEach(lineNode => {
+        let c = lineNode.querySelector('coordinates');
+        paths.push(c.textContent);
+      })
+      console.log(lineStrings);
 
       resolve({
         name:file.name,
-        content: kmlXMLString
+        paths: paths
       });
     };
     reader.readAsText(file);
