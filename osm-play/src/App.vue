@@ -73,7 +73,8 @@ import bus from './bus';
 import ColorPicker from './components/ColorPicker';
 import Loading from './components/Loading';
 import generateZazzleLink from './lib/getZazzleLink';
-import createWglScene from './lib/createWglScene'
+import createWglScene from './lib/createWglScene';
+import addKMLFiles from './lib/addKMLFiles.js';
 
 const wgl = require('w-gl');
 
@@ -99,6 +100,7 @@ export default {
   },
   methods: {
     onFilePickerChanged(e) {
+      addKMLFiles(e.target.files);
       console.log(e);
     },
     getGuideLineStyle() {

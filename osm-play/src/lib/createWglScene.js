@@ -2,6 +2,7 @@ import TextCanvasElement from './scene-parts/text';
 import CanvasLayer from './scene-parts/canvas-layer';
 
 const wgl = require('w-gl');
+const DEBUG_LINES = false;
 
 export default function createWglScene(canvas, canvas2d, appState) {
   let scene;
@@ -55,8 +56,8 @@ export default function createWglScene(canvas, canvas2d, appState) {
 
   function init() {
     canvas.style.display = 'block';
-    canvas2d.width = canvas.width = window.innerWidth;
-    canvas2d.height = canvas.height = window.innerHeight;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
     scene = wgl.scene(canvas);
 
     let bg = appState.backgroundColor;
@@ -66,6 +67,9 @@ export default function createWglScene(canvas, canvas2d, appState) {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
+    canvas2d.width = canvas.offsetWidth;
+    canvas2d.height = canvas.offsetHeight;
+
     scene.setPixelRatio(1);
     scene.setViewBox(appState.getGraphBBox());
 
@@ -74,7 +78,7 @@ export default function createWglScene(canvas, canvas2d, appState) {
 
     let ctx2d = canvas2d.getContext('2d');
     let canvasLayer = new CanvasLayer(ctx2d);
-    let textElement = new TextCanvasElement(ctx2d);
+    let textElement = new TextCanvasElement("Hello world");
     canvasLayer.appendChild(textElement);
 
     scene.appendChild(canvasLayer);
@@ -91,15 +95,18 @@ export default function createWglScene(canvas, canvas2d, appState) {
     });
     scene.appendChild(lines);
 
-    let guideline = new wgl.WireCollection(1);
-    guideline.color = {r: 1, g: 0, b: 0, a: 1};
-    guideline.add({from: {x: 0, y: 0}, to: {x: 100, y: 0}});
-    scene.appendChild(guideline);
+    // Use these to debug 
+    if (DEBUG_LINES) {
+      // Couple lines with distinct colors to debug placement of canvas layer.
+      let guideline = new wgl.WireCollection(1);
+      guideline.color = {r: 1, g: 0, b: 0, a: 1};
+      guideline.add({from: {x: 0, y: 0}, to: {x: 100, y: 0}});
+      scene.appendChild(guideline);
 
-    guideline = new wgl.WireCollection(1);
-    guideline.color = {r: 0, g: 1, b: 0, a: 1};
-    guideline.add({from: {x: 0, y: -100}, to: {x: 100, y: -100}});
-    scene.appendChild(guideline);
-
+      guideline = new wgl.WireCollection(1);
+      guideline.color = {r: 0, g: 1, b: 0, a: 1};
+      guideline.add({from: {x: 0, y: -100}, to: {x: 100, y: -100}});
+      scene.appendChild(guideline);
+    }
   }
 }
