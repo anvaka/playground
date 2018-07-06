@@ -79,8 +79,8 @@ function renderAfterResolution(promise, filter) {
     cancelDownload = null;
     appState.showCancelDownload = false;
     return constructGraph(osmResponse, filter, updateConstructionProgress);
-  }).then(({graph, bounds}) => {
-    appState.setGraph(graph, bounds);
+  }).then(({graph, bounds, projector}) => {
+    appState.setGraph(graph, bounds, projector);
     appState.building = false;
 
     if (graph.getLinksCount() === 0) {

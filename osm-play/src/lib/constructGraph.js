@@ -29,15 +29,16 @@ export default function constructGraph(osmResponse, filter, progress) {
   }
 
   function constructGraphAndBounds(lonLatBoundingBox) {
-    var project = createProjector(lonLatBoundingBox);
+    var projector = createProjector(lonLatBoundingBox);
     var graph = createGraph();
     var offset = new BBox();
 
     return new Promise(resolve => {
-      asyncFor(elements, visit, () => {
-          resolve({graph, bounds: offset});
-        }
-      );
+      asyncFor(elements, visit, () => resolve({
+        graph, 
+        projector,
+        bounds: offset
+      }));
     })
 
     function visit(element, elementIdx) {
@@ -45,7 +46,7 @@ export default function constructGraph(osmResponse, filter, progress) {
         if (filter && !filter(element)) {
           return;
         }
-        var nodeData = project(element.lon, element.lat);
+        var nodeData = projector(element.lon, element.lat);
         offset.addPoint(nodeData.x, nodeData.y);
         graph.addNode(element.id, nodeData)
       } else if (element.type === 'way') {

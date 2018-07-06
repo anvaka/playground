@@ -4,6 +4,7 @@ const appState = {
   selected: null,
   blank: false,
   error: null,
+  kmlLayers: [],
   currentScript: 'roads',
   possibleScripts: {
     selected: 'roads',
@@ -34,10 +35,17 @@ const appState = {
   lineColor: {
     r: 22, g: 22, b: 22, a: 1
   },
+
+  getProjector,
+
+  addKMLLayer,
+  removeKMLLayer
 };
 
 var graph;
 var graphBounds;
+// projects lon/lat into current XY plane
+var projector;
 
 function getGraphBBox() {
   return graphBounds;
@@ -47,9 +55,14 @@ function getGraph() {
   return graph;
 }
 
-function setGraph(newGraph, bounds) {
+function setGraph(newGraph, bounds, newProjector) {
   graph = newGraph;
   graphBounds = bounds;
+  projector = newProjector;
+}
+
+function getProjector() {
+  return projector;
 }
 
 function startOver() {
@@ -58,6 +71,34 @@ function startOver() {
   appState.currentState = 'intro';
   appState.blank = false,
   appState.downloadOsmProgress = null;
+  appState.kmlLayers = [];
+}
+
+
+function addKMLLayer(name, layer) {
+  appState.kmlLayers.push(makeKMLLayerViewModel(name, layer));
+}
+function removeKMLLayer(layerModel) {
+  let layerIndex = appState.kmlLayers.indexOf(layerModel);
+  if (layerIndex < 0) {
+    throw new Error('Invalid layer to remove');
+  }
+  appState.kmlLayers.splice(layerIndex, 1);
 }
 
 export default appState;
+
+function makeKMLLayerViewModel(name, layer) {
+  const viewModel = {
+    name,
+    color: layer.color,
+    width: layer.width,
+    updateColor() {
+      layer.updateColor(viewModel.color);
+    },
+
+    getKMLLayer() { return layer }
+  }
+
+  return viewModel;
+}

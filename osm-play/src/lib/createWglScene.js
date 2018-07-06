@@ -1,5 +1,7 @@
-import TextCanvasElement from './scene-parts/text';
+// import TextCanvasElement from './scene-parts/text';
 import CanvasLayer from './scene-parts/canvas-layer';
+import KMLLayer from './scene-parts/kml-layer';
+import MergeCanvasLayer from './scene-parts/merge-canvas-layer';
 
 const wgl = require('w-gl');
 const DEBUG_LINES = false;
@@ -7,6 +9,7 @@ const DEBUG_LINES = false;
 export default function createWglScene(canvas, canvas2d, appState) {
   let scene;
   let lines = null;
+  let canvasLayer, mergeLayer;
   let graph = appState.getGraph();
 
   init();
@@ -16,8 +19,27 @@ export default function createWglScene(canvas, canvas2d, appState) {
     setLinesColor,
     renderFrame,
     getWGLScene,
-    dispose
+    dispose,
+
+    addKMLLayer,
+    removeKMLLayer,
+
+    prepareForExport,
+    cleanAfterExport
   };
+
+  function prepareForExport() {
+    mergeLayer = new MergeCanvasLayer(canvasLayer.ctx.canvas);
+    scene.appendChild(mergeLayer)
+    scene.renderFrame();
+  }
+
+  function cleanAfterExport() {
+    if (mergeLayer) {
+      // scene.removeChild(mergeLayer);
+      // mergeLayer = null;
+    }
+  }
 
   function dispose() {
     scene.dispose();
@@ -77,11 +99,23 @@ export default function createWglScene(canvas, canvas2d, appState) {
     makeLines(lineColor);
 
     let ctx2d = canvas2d.getContext('2d');
-    let canvasLayer = new CanvasLayer(ctx2d);
-    let textElement = new TextCanvasElement("Hello world");
-    canvasLayer.appendChild(textElement);
+    canvasLayer = new CanvasLayer(ctx2d);
+    // let textElement = new TextCanvasElement("Hello world");
+    // canvasLayer.appendChild(textElement);
 
     scene.appendChild(canvasLayer);
+  }
+
+  function addKMLLayer(file) {
+    let layer = new KMLLayer(file, appState.getProjector());
+    appState.addKMLLayer(file.name, layer);
+    canvasLayer.appendChild(layer);
+  }
+
+  function removeKMLLayer(layerModel) {
+    let layer = layerModel.getKMLLayer();
+    canvasLayer.removeChild(layer);
+    appState.removeKMLLayer(layerModel);
   }
 
   function makeLines(lineColor) {

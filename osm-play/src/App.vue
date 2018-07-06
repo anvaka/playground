@@ -34,6 +34,13 @@
             <label class='browse-btn primary-text' for="local-files-button">Add KML file</label>
             <input type='file' id='local-files-button' class='nodisplay' name="files[]" @change='onFilePickerChanged'>
           </div>
+          <div v-if='kmlLayers.length'>
+            <div v-for='layer in kmlLayers'>
+              <div>{{layer.name}}</div>
+              <color-picker v-model='layer.color' @change='updateLayerColor(layer)'></color-picker>
+              <a href="#" @click.prevent='removeLayer(layer)'>Remove</a>
+            </div>
+          </div>
         </div>
         <div class='preview-actions'>
           <a href='#' @click.prevent='previewOrOpen' v-if='!generatingPreview && !zazzleLink' class='action' :class='{"has-link": zazzleLink}'>
@@ -74,7 +81,7 @@ import ColorPicker from './components/ColorPicker';
 import Loading from './components/Loading';
 import generateZazzleLink from './lib/getZazzleLink';
 import createWglScene from './lib/createWglScene';
-import addKMLFiles from './lib/addKMLFiles.js';
+import parseKMLFile from './lib/parseKMLFile.js';
 
 const wgl = require('w-gl');
 
@@ -91,8 +98,6 @@ export default {
     this.webGLEnabled = wgl.isWebGLEnabled(getRoadsCanvas());
     bus.on('graph-loaded', this.createScene, this);
     this.init();
-    //setMapSize();
-    //window.addEventListener('resize', setMapSize); 
   },
   beforeDestroy() {
     bus.off('graph-loaded', this.createScene);
@@ -100,9 +105,22 @@ export default {
   },
   methods: {
     onFilePickerChanged(e) {
-      addKMLFiles(e.target.files);
-      console.log(e);
+      let scene = this.scene;
+      parseKMLFile(e.target.files).then(kmlFiles => {
+        kmlFiles.forEach(file => {
+          scene.addKMLLayer(file);
+        });
+      })
     },
+
+    removeLayer(layer) {
+      this.scene.removeKMLLayer(layer);
+    },
+    updateLayerColor(layer) {
+      layer.updateColor();
+      this.scene.renderFrame();
+    },
+
     getGuideLineStyle() {
       let d = getCanvasDimensions();
       return {
@@ -116,6 +134,7 @@ export default {
     updateBackground(x) {
       this.scene.setBackgroundColor(appState.backgroundColor);
     },
+
     updateLinesColor(x) {
       this.scene.setLinesColor(appState.lineColor);
     },
@@ -123,9 +142,11 @@ export default {
     downloadAllRoads() {
       bus.fire('download-all-roads');
     },
+
     cancelDownload() {
       bus.fire('cancel-download-all-roads');
     },
+
     previewOrOpen() {
       if (this.zazzleLink) {
         window.open(this.zazzleLink, '_blank');
@@ -135,14 +156,17 @@ export default {
       let canvas = getRoadsCanvas();
       appState.generatingPreview = true;
 
-      this.scene.renderFrame();
+      const scene = this.scene;
+      scene.prepareForExport();
 
       requestAnimationFrame(() => {
         generateZazzleLink(canvas).then(link => {
+          scene.cleanAfterExport();
           appState.zazzleLink = link;
           appState.generatingPreview = false;
           window.open(link, '_blank');
         }).catch(e => {
+          scene.cleanAfterExport();
           appState.error = e;
           appState.generatingPreview = false;
         });
