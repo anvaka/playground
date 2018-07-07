@@ -120,9 +120,9 @@ attribute vec4 a_position;
 varying vec2 v_texcoord;
  
 void main() {
-  //  gl_Position = u_matrix * a_position;
-  //  v_texcoord = a_texcoord;
-  gl_Position = a_position; // vec4(a_position, 0, 1);
+  vec2 xy = 1. - 2.0 * a_position.xy;
+  gl_Position =  vec4(-xy.x, xy.y, 0.0, 1.0);
+
   v_texcoord = a_position.xy;
 }
 `

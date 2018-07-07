@@ -36,8 +36,8 @@ export default function createWglScene(canvas, canvas2d, appState) {
 
   function cleanAfterExport() {
     if (mergeLayer) {
-      // scene.removeChild(mergeLayer);
-      // mergeLayer = null;
+      scene.removeChild(mergeLayer);
+      mergeLayer = null;
     }
   }
 
