@@ -30,9 +30,9 @@
               <color-picker v-model='lineColor' @change='updateLinesColor'></color-picker>
             </div>
           </div>
-          <div>
-            <label class='browse-btn primary-text' for="local-files-button">Add KML file</label>
-            <input type='file' id='local-files-button' class='nodisplay' name="files[]" @change='onFilePickerChanged'>
+          <div class='row left-right-padded'>
+            <label class='browse-btn primary-text' for="local-files-button">Add KML file...</label>
+            <input type='file' id='local-files-button' class='nodisplay' name="files[]" @change='onFilePickerChanged' accept='.kml'>
           </div>
           <div v-if='kmlLayers.length'>
             <div v-for='layer in kmlLayers'>
@@ -193,7 +193,9 @@ export default {
 
       this.graphLoaded = true;
       this.scene = createWglScene(getRoadsCanvas(), get2dCanvas(), appState);
-      this.scene.getWGLScene().on('transform', () => { appState.zazzleLink = null; })
+      this.scene.getWGLScene().on('transform', () => { 
+        appState.zazzleLink = null; 
+      });
     },
   }
 }
@@ -244,6 +246,7 @@ function get2dCanvas() {
 
 <style lang='stylus'>
 border-color = #d8d8d8;
+primary-action-color = #ff4081;
 
 .app-container {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
@@ -283,9 +286,9 @@ h3 {
   align-items: stretch;
   border-top: 1px solid border-color;
   margin-top: 12px;
+  height: 32px;
   
   a.action {
-    height: 32px;
     flex: 1;
     align-items: center;
     display: flex;
@@ -349,7 +352,7 @@ h3 {
   }
 }
 a {
-  color: #ff4081;
+  color: primary-action-color;
   text-decoration: none;
 }
 .canvas-settings {
@@ -386,5 +389,11 @@ a {
 .ctx2d {
   z-index: 3;
   pointer-events: none;
+}
+.nodisplay {
+  display: none;
+}
+.browse-btn {
+  color: primary-action-color;
 }
 </style>
