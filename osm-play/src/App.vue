@@ -35,7 +35,7 @@
             <input type='file' id='local-files-button' class='nodisplay' name="files[]" @change='onFilePickerChanged' accept='.kml'>
           </div>
           <div v-if='kmlLayers.length'>
-            <div v-for='layer in kmlLayers'>
+            <div v-for='layer in kmlLayers' class='file-row'>
               <div>{{layer.name}}</div>
               <color-picker v-model='layer.color' @change='updateLayerColor(layer)'></color-picker>
               <a href="#" @click.prevent='removeLayer(layer)'>Remove</a>
@@ -116,6 +116,7 @@ export default {
     removeLayer(layer) {
       this.scene.removeKMLLayer(layer);
     },
+
     updateLayerColor(layer) {
       layer.updateColor();
       this.scene.renderFrame();
@@ -163,8 +164,8 @@ export default {
         generateZazzleLink(canvas).then(link => {
           scene.cleanAfterExport();
           appState.zazzleLink = link;
-          appState.generatingPreview = false;
           window.open(link, '_blank');
+          appState.generatingPreview = false;
         }).catch(e => {
           scene.cleanAfterExport();
           appState.error = e;
@@ -193,9 +194,6 @@ export default {
 
       this.graphLoaded = true;
       this.scene = createWglScene(getRoadsCanvas(), get2dCanvas(), appState);
-      this.scene.getWGLScene().on('transform', () => { 
-        appState.zazzleLink = null; 
-      });
     },
   }
 }
@@ -280,13 +278,19 @@ h3 {
   height: 32px;
 }
 
+.file-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
 .preview-actions {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   border-top: 1px solid border-color;
   margin-top: 12px;
-  height: 32px;
+  min-height: 32px;
   
   a.action {
     flex: 1;
@@ -395,5 +399,6 @@ a {
 }
 .browse-btn {
   color: primary-action-color;
+  cursor: pointer;
 }
 </style>

@@ -27,10 +27,6 @@ appState.init = function() {
   map.addControl(new mapboxgl.NavigationControl({
     showCompass: false
   }));
-
-  map.on('movestart', () => {
-    appState.zazzleLink = null;
-  });
 };
 
 document.body.addEventListener('touchmove', (event) => event.stopPropagation());
@@ -51,7 +47,7 @@ function downloadRoads() {
   appState.blank = false;
   appState.error = null;
 
-  let scriptKind = appState.possibleScripts.selected;
+  const scriptKind = appState.possibleScripts.selected;
   const downloadPromise = osm.getRoadsInBoundingBox(scriptKind, boundingBox, updateDownloadProgress);
 
   renderAfterResolution(downloadPromise, el => {

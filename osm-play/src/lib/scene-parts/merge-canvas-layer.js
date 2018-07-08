@@ -35,6 +35,9 @@ function makeLayerPrimitives(gl, canvas) {
 function drawImage(gl, ctx) {
   let {tex, program, positionBuffer, textureLocation, positionLocation} = ctx;
 
+  gl.enable(gl.BLEND); 
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
   gl.bindTexture(gl.TEXTURE_2D, tex.texture);
  
   // Tell WebGL to use our shader program pair
@@ -44,12 +47,7 @@ function drawImage(gl, ctx) {
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
   gl.enableVertexAttribArray(positionLocation);
   gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-  // gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
-  // gl.enableVertexAttribArray(texcoordLocation);
-  // gl.vertexAttribPointer(texcoordLocation, 2, gl.FLOAT, false, 0, 0);
- 
-  // gl.uniformMatrix4fv(matrixLocation, false, matrix);
- 
+
   // Tell the shader to get the texture from texture unit 0
   gl.uniform1i(textureLocation, 0);
  

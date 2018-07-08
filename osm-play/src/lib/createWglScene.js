@@ -104,6 +104,9 @@ export default function createWglScene(canvas, canvas2d, appState) {
     // canvasLayer.appendChild(textElement);
 
     scene.appendChild(canvasLayer);
+    scene.on('transform', () => { 
+      appState.zazzleLink = null; 
+    });
   }
 
   function addKMLLayer(file) {

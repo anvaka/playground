@@ -35,7 +35,5 @@ export default function generateZazzleLink(canvas) {
     throw e;
   });
 
-  function progress() {
-    console.log(arguments);
-  }
+  function progress() {}
 }
