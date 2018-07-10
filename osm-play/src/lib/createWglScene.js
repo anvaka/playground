@@ -42,6 +42,7 @@ export default function createWglScene(canvas, canvas2d, appState) {
   }
 
   function dispose() {
+
     scene.dispose();
 
     lines = null;
@@ -100,8 +101,6 @@ export default function createWglScene(canvas, canvas2d, appState) {
 
     let ctx2d = canvas2d.getContext('2d');
     canvasLayer = new CanvasLayer(ctx2d);
-    // let textElement = new TextCanvasElement("Hello world");
-    // canvasLayer.appendChild(textElement);
 
     scene.appendChild(canvasLayer);
     scene.on('transform', () => { 

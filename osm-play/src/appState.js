@@ -6,6 +6,7 @@ const appState = {
   error: null,
   kmlLayers: [],
   currentScript: 'roads',
+  showZoomWarning: false,
   possibleScripts: {
     selected: 'roads',
     options: [{
@@ -79,6 +80,7 @@ function startOver() {
 function addKMLLayer(name, layer) {
   appState.kmlLayers.push(makeKMLLayerViewModel(name, layer));
 }
+
 function removeKMLLayer(layerModel) {
   let layerIndex = appState.kmlLayers.indexOf(layerModel);
   if (layerIndex < 0) {

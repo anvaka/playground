@@ -27,6 +27,8 @@ appState.init = function() {
   map.addControl(new mapboxgl.NavigationControl({
     showCompass: false
   }));
+  map.on('zoom', updateZoomWarning);
+  updateZoomWarning();
 };
 
 document.body.addEventListener('touchmove', (event) => event.stopPropagation());
@@ -36,6 +38,11 @@ bus.on('download-all-roads', downloadRoads);
 bus.on('cancel-download-all-roads', () => {
   if (cancelDownload) cancelDownload();
 });
+
+function updateZoomWarning() {
+  appState.showZoomWarning = map.getZoom() < 9.7;
+  console.log(appState.showZoomWarning);
+}
 
 function downloadRoads() {
   const bounds = map.getBounds();

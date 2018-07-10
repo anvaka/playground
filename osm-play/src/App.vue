@@ -71,6 +71,12 @@
       </div>
 
     </div>
+
+    <div class='zoom-warning' v-if='showZoomWarning'>
+      <h4>Note:</h4>
+      <div>Large zoom levels can result in excessive data download and slow website.</div>
+      <strong>We recommend to zoom in closer. </strong>
+    </div>
   </div>
 </template>
 
@@ -400,5 +406,18 @@ a {
 .browse-btn {
   color: primary-action-color;
   cursor: pointer;
+}
+.zoom-warning {
+  position: absolute;
+  z-index: 10;
+  bottom: 10px;
+  padding: 7px;
+  right: 0;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  h4 {
+    margin: 7px 0;
+  }
 }
 </style>
