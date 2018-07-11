@@ -251,6 +251,7 @@ function get2dCanvas() {
 <style lang='stylus'>
 border-color = #d8d8d8;
 primary-action-color = #ff4081;
+small-screen = 500px;
 
 .app-container {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
@@ -418,6 +419,12 @@ a {
   color: white;
   h4 {
     margin: 7px 0;
+  }
+}
+
+@media (max-width: small-screen) {
+  #app {
+    width: 100%;
   }
 }
 </style>
