@@ -31,7 +31,7 @@ appState.init = function() {
   updateZoomWarning();
 };
 
-document.body.addEventListener('touchmove', (event) => event.stopPropagation());
+// document.body.addEventListener('touchmove', (event) => event.stopPropagation());
 
 var cancelDownload;
 bus.on('download-all-roads', downloadRoads);
@@ -41,7 +41,6 @@ bus.on('cancel-download-all-roads', () => {
 
 function updateZoomWarning() {
   appState.showZoomWarning = map.getZoom() < 9.7;
-  console.log(appState.showZoomWarning);
 }
 
 function downloadRoads() {
