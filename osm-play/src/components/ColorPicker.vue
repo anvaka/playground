@@ -1,7 +1,7 @@
 <template>
-<div class='vue-colorpicker' @click='showPicker = true' v-click-outside='hide'>
-  <span class='vue-colorpicker-btn' :style='btnStyle'></span>
-  <div class='vue-colorpicker-panel' v-show='showPicker'>
+<div class='vue-colorpicker' @click='showPicker = true' v-click-outside='hide' >
+  <span class='vue-colorpicker-btn' :style='btnStyle' ref='triggerButton'></span>
+  <div class='vue-colorpicker-panel' v-show='showPicker' :style="{left: panelLeft}">
     <component :is='pickerType' v-model='colors' @input='changeColor'></component>
   </div>
 </div>
@@ -30,7 +30,8 @@ export default {
         hex: '#FFFFFF',
         a: 1
       },
-      colorValue: '#FFFFFF'
+      colorValue: '#FFFFFF',
+      panelLeft: '0px'
     }
   },
   computed: {
@@ -59,6 +60,17 @@ export default {
     value (val, oldVal) {
       if (val !== oldVal) {
         this.updateColorObject(val);
+      }
+    },
+    showPicker(newVal) {
+      if (!newVal) return;
+
+      const PICKER_WIDTH = 220;
+      let triggerRect = this.$refs.triggerButton.getBoundingClientRect();
+      if (triggerRect.x + PICKER_WIDTH > window.innerWidth) {
+        this.panelLeft = (window.innerWidth - PICKER_WIDTH) + 'px';
+      } else {
+        this.panelLeft = triggerRect.x + 'px';
       }
     }
   },
@@ -114,6 +126,10 @@ export default {
     height: 22px;
     border: 1px solid #666;
     background: #FFFFFF;
+  }
+
+  .vue-colorpicker-panel {
+    position: absolute;
   }
 }
 </style>

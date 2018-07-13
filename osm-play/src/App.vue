@@ -199,7 +199,10 @@ export default {
       this.ensurePreviousSceneDestroyed();
 
       this.graphLoaded = true;
-      this.scene = createWglScene(getRoadsCanvas(), get2dCanvas(), appState);
+
+      const roadsCanvas = getRoadsCanvas();    
+      roadsCanvas.style.display = 'block';
+      this.scene = createWglScene(roadsCanvas, get2dCanvas(), appState);
     },
   }
 }

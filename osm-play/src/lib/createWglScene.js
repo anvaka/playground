@@ -78,17 +78,11 @@ export default function createWglScene(canvas, canvas2d, appState) {
   }
 
   function init() {
-    canvas.style.display = 'block';
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    debugger;
     scene = wgl.scene(canvas);
 
     let bg = appState.backgroundColor;
     scene.setClearColor(bg.r/255, bg.g/255, bg.b/255, bg.a);
-
-    // bug in w-gl
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
 
     canvas2d.width = canvas.offsetWidth;
     canvas2d.height = canvas.offsetHeight;
