@@ -412,7 +412,7 @@ a {
   cursor: pointer;
 }
 .zoom-warning {
-  position: absolute;
+  position: fixed;
   z-index: 10;
   bottom: 10px;
   padding: 7px;
