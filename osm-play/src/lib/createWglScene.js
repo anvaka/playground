@@ -78,7 +78,6 @@ export default function createWglScene(canvas, canvas2d, appState) {
   }
 
   function init() {
-    debugger;
     scene = wgl.scene(canvas);
 
     let bg = appState.backgroundColor;
