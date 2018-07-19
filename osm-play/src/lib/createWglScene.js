@@ -78,13 +78,18 @@ export default function createWglScene(canvas, canvas2d, appState) {
   }
 
   function init() {
-    scene = wgl.scene(canvas);
+    scene = wgl.scene(canvas, {
+      size: {
+        width: 1440,
+        height: 613
+      }
+    });
 
     let bg = appState.backgroundColor;
     scene.setClearColor(bg.r/255, bg.g/255, bg.b/255, bg.a);
 
-    canvas2d.width = canvas.offsetWidth;
-    canvas2d.height = canvas.offsetHeight;
+    canvas2d.width = canvas.width;
+    canvas2d.height = canvas.height;
 
     scene.setPixelRatio(1);
     scene.setViewBox(appState.getGraphBBox());
