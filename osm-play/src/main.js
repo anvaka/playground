@@ -12,6 +12,7 @@ require.ensure('@/vueApp.js', () => {
 });
 
 let map;
+var cancelDownload;
 
 appState.init = function() {
   mapboxgl.accessToken = 'pk.eyJ1IjoiYW52YWthIiwiYSI6ImNqaWUzZmhqYzA1OXMza213YXh2ZzdnOWcifQ.t5yext53zn1c9Ixd7Y41Dw';
@@ -29,15 +30,14 @@ appState.init = function() {
   }));
   map.on('zoom', updateZoomWarning);
   updateZoomWarning();
+
+  bus.on('download-all-roads', downloadRoads);
+  bus.on('cancel-download-all-roads', () => {
+    if (cancelDownload) cancelDownload();
+  });
 };
 
 // document.body.addEventListener('touchmove', (event) => event.stopPropagation());
-
-var cancelDownload;
-bus.on('download-all-roads', downloadRoads);
-bus.on('cancel-download-all-roads', () => {
-  if (cancelDownload) cancelDownload();
-});
 
 function updateZoomWarning() {
   appState.showZoomWarning = map.getZoom() < 9.7;

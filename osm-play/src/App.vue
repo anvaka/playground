@@ -1,8 +1,8 @@
 <template>
   <div class='app-container'>
-    <div id='map' :style='getGuideLineStyle()'></div>
-    <canvas class='absolute scene-roads' :style='getGuideLineStyle()'></canvas>
-    <canvas class='absolute ctx2d' :style='getGuideLineStyle()'></canvas>
+    <div id='map' ref='map'></div>
+    <canvas class='absolute scene-roads' ref='roadsCanvas'></canvas>
+    <canvas class='absolute ctx2d' ref='canvasLayer'></canvas>
     <div id="app" class='absolute'> 
       <div v-if='currentState === "intro"' class='step padded'>
         <h3>You are designing <strong>a mug</strong></h3>
@@ -103,11 +103,15 @@ export default {
   mounted() {
     this.webGLEnabled = wgl.isWebGLEnabled(getRoadsCanvas());
     bus.on('graph-loaded', this.createScene, this);
+    updateSizes(this.$refs);
     this.init();
+    this.onResize = () => updateSizes(this.$refs);
+    window.addEventListener('resize', this.onResize, true);
   },
   beforeDestroy() {
     bus.off('graph-loaded', this.createScene);
     this.ensurePreviousSceneDestroyed();
+    window.removeEventListener('resize', this.onResize, true);
   },
   methods: {
     onFilePickerChanged(e) {
@@ -206,14 +210,18 @@ export default {
     },
   }
 }
+function updateSizes(refs) {
+  let dimensions = getCanvasDimensions();
+  setGuideLineSize(refs.map, dimensions);
+  setGuideLineSize(refs.roadsCanvas, dimensions);
+  setGuideLineSize(refs.canvasLayer, dimensions);
+}
 
-function setMapSize() {
-  let map = document.getElementById('map');
-  let d = getCanvasDimensions();
-  map.style.left = px(d.left);
-  map.style.top = px(d.top);
-  map.style.width = px(d.width);
-  map.style.height = px(d.height);
+function setGuideLineSize(el, dimensions) {
+  el.style.left = px(dimensions.left);
+  el.style.top = px(dimensions.top);
+  el.style.width = px(dimensions.width);
+  el.style.height = px(dimensions.height);
 }
 
 function px(x) {
@@ -235,6 +243,7 @@ function getCanvasDimensions() {
   }
 
   let top = (h - guidelineHeight)/2;
+
   return {
     width: guideLineWidth,
     height: guidelineHeight,
