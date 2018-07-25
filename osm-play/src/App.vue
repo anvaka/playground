@@ -4,8 +4,8 @@
     <canvas class='absolute scene-roads' ref='roadsCanvas'></canvas>
     <canvas class='absolute ctx2d' ref='canvasLayer'></canvas>
     <div id="app" class='absolute'> 
-      <div v-if='currentState === "intro"' class='step padded'>
-        <h3>You are designing <strong>a mug</strong></h3>
+      <div v-if='currentState === "intro"' class='step left-right-padded'>
+        <h3>Design <strong>a mug</strong></h3>
         <div>
           Align the map and click "Build" to get 
           all <select v-model='possibleScripts.selected' class='script-presets'>
@@ -30,15 +30,17 @@
               <color-picker v-model='lineColor' @change='updateLinesColor'></color-picker>
             </div>
           </div>
-          <div class='row left-right-padded'>
-            <label class='browse-btn primary-text' for="local-files-button">Add KML file...</label>
-            <input type='file' id='local-files-button' class='nodisplay' name="files[]" @change='onFilePickerChanged' accept='.kml'>
-          </div>
-          <div v-if='kmlLayers.length'>
-            <div v-for='layer in kmlLayers' class='file-row'>
-              <div>{{layer.name}}</div>
-              <color-picker v-model='layer.color' @change='updateLayerColor(layer)'></color-picker>
-              <a href="#" @click.prevent='removeLayer(layer)'>Remove</a>
+          <div v-if='false'>
+            <div class='row left-right-padded'>
+              <label class='browse-btn primary-text' for="local-files-button">Add KML file...</label>
+              <input type='file' id='local-files-button' class='nodisplay' name="files[]" @change='onFilePickerChanged' accept='.kml'>
+            </div>
+            <div v-if='kmlLayers.length'>
+              <div v-for='layer in kmlLayers' class='file-row'>
+                <div>{{layer.name}}</div>
+                <color-picker v-model='layer.color' @change='updateLayerColor(layer)'></color-picker>
+                <a href="#" @click.prevent='removeLayer(layer)'>Remove</a>
+              </div>
             </div>
           </div>
         </div>
