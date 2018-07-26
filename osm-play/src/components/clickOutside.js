@@ -11,7 +11,16 @@ document.addEventListener('mouseup', e => {
   nodeList.forEach(node => node[ctx].documentHandler(e, startClick));
 });
 
+// Also hide when tapped outside.
+document.addEventListener('touchstart', e => {
+  startClick = e;
+});
+document.addEventListener('touchend', e => {
+  nodeList.forEach(node => node[ctx].documentHandler(e, startClick));
+});
+
 function createDocumentHandler(el, binding, vnode) {
+
   return function(mouseup = {}, mousedown = {}) {
     if (!vnode || !vnode.context ||
       !mouseup.target || !mousedown.target ||

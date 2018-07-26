@@ -24,11 +24,14 @@ appState.init = function() {
       hash: true
   });
 
-
   map.addControl(new mapboxgl.NavigationControl({
     showCompass: false
   }));
   map.on('zoom', updateZoomWarning);
+  debugger;
+  map.dragRotate.disable();
+  map.touchZoomRotate.disableRotation();
+
   updateZoomWarning();
 
   bus.on('download-all-roads', downloadRoads);
