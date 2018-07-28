@@ -4,14 +4,12 @@
     <canvas class='absolute scene-roads' ref='roadsCanvas'></canvas>
     <canvas class='absolute ctx2d' ref='canvasLayer'></canvas>
     <div id="app" class='absolute'> 
-      <div v-if='currentState === "intro"' class='step left-right-padded'>
-        <h3>Design <strong>a mug</strong></h3>
-        <div>
-          Align the map and click "Build" to get 
-          all <select v-model='possibleScripts.selected' class='script-presets'>
+      <div v-if='currentState === "intro"' class='step padded'>
+        <!--h3>Design <strong>a mug</strong> from </h3-->
+
+      Design a mug from all <select v-model='possibleScripts.selected' class='script-presets'>
             <option v-for='groupBy in possibleScripts.options' :value='groupBy.value'>{{groupBy.text}}</option>
-	        </select> in the area.
-        </div>
+	        </select> in the area
       </div>
 
       <div v-if='currentState === "canvas"' class='canvas-settings'>
@@ -58,7 +56,7 @@
         </div>
       </div>
       <div class='download' v-if='!building && currentState === "intro"'>
-        <a href="#" @click.prevent='downloadAllRoads()'>Build</a>
+        <a href="#" @click.prevent='downloadAllRoads()'>Start</a>
       </div>
       <div v-if='blank' class='no-roads padded'>
         Hm... There is nothing here. Try a different area?
@@ -74,6 +72,8 @@
 
     </div>
 
+    <div class='intro-help' v-if='currentState === "intro"' >
+    </div>
     <div class='zoom-warning' v-if='showZoomWarning'>
       <h4>Note:</h4>
       <div>Large zoom levels can result in excessive data download and slow website.</div>
@@ -434,6 +434,11 @@ a {
   h4 {
     margin: 7px 0;
   }
+}
+.intro-help {
+  position: absolute;
+  top: 12px;
+  left: 50%;
 }
 
 @media (max-width: small-screen) {
