@@ -28,7 +28,6 @@ appState.init = function() {
     showCompass: false
   }));
   map.on('zoom', updateZoomWarning);
-  debugger;
   map.dragRotate.disable();
   map.touchZoomRotate.disableRotation();
 
