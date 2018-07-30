@@ -63,7 +63,6 @@ res.edges.forEach(edge => {
   } 
   
   // TODO: Optimize this lookup?
-  if (edge[0][0] === 450.41384705462923) debugger;
   var intersection = getIntersectionPoint(edge, pathData);
   var isInside = false;
   if (!intersection) {
