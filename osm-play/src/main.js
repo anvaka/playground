@@ -25,8 +25,8 @@ appState.init = function() {
   });
 
   map.addControl(new mapboxgl.NavigationControl({
-    showCompass: false
-  }));
+    showCompass: false,
+  }), 'bottom-right');
   map.on('zoom', updateZoomWarning);
   map.dragRotate.disable();
   map.touchZoomRotate.disableRotation();

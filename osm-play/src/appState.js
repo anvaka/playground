@@ -2,6 +2,7 @@
 const appState = {
   currentState: 'intro',
   selected: null,
+  aboutVisible: false,
   blank: false,
   error: null,
   kmlLayers: [],

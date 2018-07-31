@@ -4,10 +4,8 @@
     <canvas class='absolute scene-roads' ref='roadsCanvas'></canvas>
     <canvas class='absolute ctx2d' ref='canvasLayer'></canvas>
     <div id="app" class='absolute'> 
-      <div v-if='currentState === "intro"' class='step padded'>
-        <!--h3>Design <strong>a mug</strong> from </h3-->
-
-      Design a mug from all <select v-model='possibleScripts.selected' class='script-presets'>
+      <div v-if='currentState === "intro"' class='step padded title'>
+            Design a mug from all <select v-model='possibleScripts.selected' class='script-presets'>
             <option v-for='groupBy in possibleScripts.options' :value='groupBy.value'>{{groupBy.text}}</option>
 	        </select> in the area
       </div>
@@ -15,16 +13,14 @@
       <div v-if='currentState === "canvas"' class='canvas-settings'>
         <div class='step'>
           <a href='#' @click.prevent='resetAllAndStartOver' v-if='!generatingPreview' class='start-over'>Start over</a>
-          <h3 class='left-right-padded'>Customize</h3>
+          <h3 class='left-right-padded'>Tune Color</h3>
           <div class='row left-right-padded'>
-            <div class='col'>Background</div>
             <div class='col'>
+              Background
               <color-picker v-model='backgroundColor' @change='updateBackground'></color-picker>
             </div>
-          </div>
-          <div class='row left-right-padded'>
-            <div class='col'>Foreground</div>
             <div class='col'>
+              Foreground
               <color-picker v-model='lineColor' @change='updateLinesColor'></color-picker>
             </div>
           </div>
@@ -79,6 +75,17 @@
       <div>Large zoom levels can result in excessive data download and slow website.</div>
       <strong>We recommend to zoom in closer. </strong>
     </div>
+    <div class='about-line'>
+      <a class='about-link' href='#' @click.prevent='aboutVisible = true'>about...</a>
+      <a class='bold' href='http://github.com/anvaka/map-print'>source code</a>
+    </div>
+    <div class='osm-note' v-if='currentState === "canvas"'>
+      Graph was extracted from <a href='https://www.openstreetmap.org' target='_blank'>www.openstreetmap.org</a>.
+      It is made available under <a href='https://opendatacommons.org/licenses/odbl/summary/' target='_blank'>ODbL</a>
+    </div>
+
+    <about v-if='aboutVisible' @close='aboutVisible = false'></about>
+
   </div>
 </template>
 
@@ -87,6 +94,7 @@ import appState from './appState';
 import bus from './bus';
 import ColorPicker from './components/ColorPicker';
 import Loading from './components/Loading';
+import About from './components/About';
 import generateZazzleLink from './lib/getZazzleLink';
 import createWglScene from './lib/createWglScene';
 import parseKMLFile from './lib/parseKMLFile.js';
@@ -100,6 +108,7 @@ export default {
   },
   components: {
     Loading,
+    About,
     ColorPicker
   },
   mounted() {
@@ -440,10 +449,44 @@ a {
   top: 12px;
   left: 50%;
 }
+.about-line {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+
+  top: 12px;
+  right: 10px;
+  font-size: 14px;
+}
+.osm-note {
+  position: fixed;
+  padding: 12px;
+
+  bottom: 0;
+  right: 0;
+  font-size: 12px;
+}
+.title {
+  font-size: 18px;
+}
 
 @media (max-width: small-screen) {
   #app {
     width: 100%;
+  }
+
+.title {
+  font-size: 16px;
+}
+  .about-line {
+    display: flex;
+    flex-direction: row;
+    bottom: 50px;
+    top: inherit;
+    left: 0;
+    right: 0;
+    justify-content: space-between;
+    padding: 12px;
   }
 }
 </style>

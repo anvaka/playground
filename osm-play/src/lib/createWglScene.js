@@ -60,6 +60,7 @@ export default function createWglScene(canvas, canvas2d, appState) {
   function setLinesColor(newColor) {
     if (!lines) return;
 
+    resetLink();
     const {r, g, b, a} = newColor;
     const lineColor = lines.color;
 
@@ -72,8 +73,9 @@ export default function createWglScene(canvas, canvas2d, appState) {
   }
 
   function setBackgroundColor(color) {
-      scene.setClearColor(color.r/255, color.g/255, color.b/255, color.a);
+      resetLink();
 
+      scene.setClearColor(color.r/255, color.g/255, color.b/255, color.a);
       scene.renderFrame();
   }
 
@@ -101,9 +103,11 @@ export default function createWglScene(canvas, canvas2d, appState) {
     canvasLayer = new CanvasLayer(ctx2d);
 
     scene.appendChild(canvasLayer);
-    scene.on('transform', () => { 
-      appState.zazzleLink = null; 
-    });
+    scene.on('transform', resetLink);
+  }
+
+  function resetLink() { 
+    appState.zazzleLink = null; 
   }
 
   function addKMLLayer(file) {
