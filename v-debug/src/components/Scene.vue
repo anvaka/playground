@@ -6,9 +6,9 @@
 </template>
 
 <script>
-const renderGraph = require('../lib/renderGraph');
-const bus = require('../lib/bus');
-const Rect = require('../lib/geom/Rect');
+import renderGraph from '../lib/renderGraph';
+import bus from '../lib/bus';
+import Rect from '../lib/geom/Rect';
 
 export default {
   name: 'Scene',

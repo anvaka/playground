@@ -1,15 +1,15 @@
-var fromJson = require('ngraph.fromjson');
-var fromDot = require('ngraph.fromdot');
+import fromJson from 'ngraph.fromjson';
+import fromDot from 'ngraph.fromdot';
 //var data = require('../data/anvaka_twitter.json')
-var data = require('../data/anvaka_2.json')
-var createGraph = require('ngraph.graph');
+import data from '../data/anvaka_2.json';
+import createGraph from 'ngraph.graph';
 
-module.exports = getGraph; //getDot(require('./data/substack'));
+// module.exports = getGraph; //getDot(require('./data/substack'));
 //module.exports = getDot(require('../data/jdalton.dot.js'));
 
 let useSmall = false;
 
-function getGraph() {
+export default function getGraph() {
   let graph = useSmall ? smallGraph() : fromJson(data);
   return graph;
 }

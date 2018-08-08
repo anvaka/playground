@@ -1,7 +1,7 @@
-module.exports = createGridLayout;
+export default createGridLayout;
 
-var GridLayoutSettings = require('./GridLayoutSettings.vue');
-var createGridLayoutViewModel = require('./createGridLayoutViewModel');
+import GridLayoutSettings from './GridLayoutSettings.vue';
+import createGridLayoutViewModel from './createGridLayoutViewModel';
 
 function createGridLayout(appModel) {
   return {

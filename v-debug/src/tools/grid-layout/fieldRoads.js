@@ -1,14 +1,13 @@
-var createGraph = require('ngraph.graph');
-var npath = require('ngraph.path');
+import createGraph from 'ngraph.graph';
+import { aStar } from 'ngraph.path';
+
+import simplifyPointsPath from './simplify';
+import createBlockPlacement from './blockPlacement';
+import getBBoxAndRects from './getBBoxAndRects';
+
 var CELL_WIDTH = 1;
 
-var simplifyPointsPath = require('./simplify');
-var createBlockPlacement = require('./blockPlacement');
-const getBBoxAndRects = require('./getBBoxAndRects');
-
-module.exports = fieldRoads;
-
-function fieldRoads(graph, layout) {
+export default function fieldRoads(graph, layout) {
   let {bbox} = getBBoxAndRects(graph, layout);
   var width = bbox.width;
   var height = bbox.height;
@@ -16,13 +15,13 @@ function fieldRoads(graph, layout) {
   var gridGraph = makeGridGraph(layout);
   var pathMemory = createPathMemory();
 
-  var pathFinder = npath.aStar(gridGraph, {
+  var pathFinder = aStar(gridGraph, {
     distance(fromNode, toNode, link) {
       var seenCount = pathMemory.getSeenCount(fromNode, toNode);
       var lengthReducer = seenCount === 0 ? 1 : (Math.exp(-0.8 * seenCount + Math.log(1 - 0.5)) + 0.5)
       var fromPos = fromNode.data;
       var toPos = toNode.data;
-      var dist = npath.aStar.l2(fromPos, toPos)
+      var dist = aStar.l2(fromPos, toPos)
       return link.data.cost * dist * lengthReducer;
     },
     heuristic(from, to) {
@@ -193,7 +192,7 @@ function getGridNodeKey(col, row) {
   return `${col},${row}`;
 }
 
-var getXY = require('./getXY');
+import getXY from './getXY';
 
 function createPathMemory() {
   var roots = new Map(); // where the paths start and end.

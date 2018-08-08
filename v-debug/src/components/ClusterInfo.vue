@@ -39,10 +39,10 @@
 </template>
 <script>
 
-var NLayoutSettings = require('./NLayoutSettings');
-var D3LayoutSettings = require('./D3LayoutSettings');
-var bus = require('../lib/bus');
-var toDot = require('ngraph.todot');
+import NLayoutSettings from './NLayoutSettings';
+import D3LayoutSettings from './D3LayoutSettings';
+import bus from '../lib/bus';
+import toDot from 'ngraph.todot';
 
 export default {
   props: ['cluster', 'model'],

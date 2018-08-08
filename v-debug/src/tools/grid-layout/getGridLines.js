@@ -1,4 +1,4 @@
-module.exports = getGridLines;
+export default getGridLines;
 
 function getGridLines(offset, bbox, cellSize) {
   let cols = Math.ceil(bbox.width/cellSize);

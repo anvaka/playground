@@ -17,8 +17,9 @@
 </div>
 </template>
 <script>
-var fromDot = require('ngraph.fromdot');
-var bus = require('../lib/bus');
+import fromDot from 'ngraph.fromdot';
+import fromJson from 'ngraph.fromjson';
+import bus from '../lib/bus';
 
 export default {
   props: ['content'],
@@ -40,14 +41,30 @@ export default {
     },
     useIt() {
       this.error = '';
-      try {
-        let graph = fromDot(this.ourContent);
-        bus.fire('load-graph', graph);
-        this.close();
-      } catch (e) {
-        this.error = e.message;
-      }
+      if (this.ourContent && this.ourContent[0] === '{') {
+        tryLoadJson(this.ourContent, this);
+      } else tryLoadDot(this.ourContent, this);
     }
+  }
+}
+
+function tryLoadDot(content, self) {
+  try {
+    let graph = fromDot(self.ourContent);
+    bus.fire('load-graph', graph);
+    self.close();
+  } catch (e) {
+    self.error = e.message;
+  }
+}
+
+function tryLoadJson(content, self) {
+  try {
+    let graph = fromJson(self.ourContent);
+    bus.fire('load-graph', graph);
+    self.close();
+  } catch (e) {
+    self.error = e.message;
   }
 }
 </script>

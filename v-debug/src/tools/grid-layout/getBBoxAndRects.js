@@ -1,7 +1,7 @@
-const BBox = require('../../lib/geom/BBox');
-const forEachRectangleNode = require('./forEachRectangle');
+import BBox from '../../lib/geom/BBox';
+import forEachRectangleNode from './forEachRectangle';
 
-module.exports = getBBoxAndRects;
+export default getBBoxAndRects;
 
 function getBBoxAndRects(graph, layout) {
   let rects = [];

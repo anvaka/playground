@@ -1,6 +1,6 @@
-var FibonacciHeap = require('@tyriar/fibonacci-heap');
+import FibonacciHeap from '@tyriar/fibonacci-heap';
 
-module.exports = shortestPaths;
+export default shortestPaths;
 
 function shortestPaths (graph, getEdgeLength, customExit) {
   // maps from node id to shortest path algorithm state.

@@ -1,8 +1,6 @@
 const createGraph = require('ngraph.graph')
 
-module.exports = makeSpanningTree
-
-function makeSpanningTree (mstEdges) {
+export default function makeSpanningTree (mstEdges) {
   const graph = createGraph();
 
   mstEdges.forEach(e => {

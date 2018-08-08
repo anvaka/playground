@@ -1,16 +1,14 @@
-module.exports = createGridLayoutViewModel;
+import createGraph from 'ngraph.graph';
+import createLayout from 'ngraph.forcelayout';
+import bus from '../../lib/bus';
+import gridRoads from './fieldRoads';
+import forEachRectangleNode from './forEachRectangle';
+import getGridLines from './getGridLines';
+import getBBoxAndRects from './getBBoxAndRects';
+import getTesselationLines from './getTesselationLines';
+import findCircleIntersection from './findCircleIntersection';
 
-var createGraph = require('ngraph.graph');
-var createLayout = require('ngraph.forcelayout');
-var bus = require('../../lib/bus');
-var gridRoads = require('./fieldRoads');
-var forEachRectangleNode = require('./forEachRectangle');
-var getGridLines = require('./getGridLines');
-var getBBoxAndRects = require('./getBBoxAndRects');
-var getTesselationLines = require('./getTesselationLines');
-var findCircleIntersection = require('./findCircleIntersection');
-
-function createGridLayoutViewModel(appModel) {
+export default function createGridLayoutViewModel(appModel) {
   var api = {
     moveToPosition,
     pullNodes,

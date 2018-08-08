@@ -1,4 +1,4 @@
 var eventify = require('ngraph.events');
-var bus = eventify({});
+const bus = eventify({});
 
-module.exports = bus;
+export default bus;

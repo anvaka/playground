@@ -1,15 +1,14 @@
-var eventify = require('ngraph.events');
-var wgl = require('w-gl');
-var ActivePoints = require('./wgl/input/ActivePoints');
+import eventify from 'ngraph.events';
+import { scene as _scene, LineCollection, PointCollection, WireCollection, Element } from 'w-gl';
+import ActivePoints from './wgl/input/ActivePoints';
 
-module.exports = renderGraph;
 
 const niceColors = getNiceColors(); 
 
 const appendSceneDebugElements = false;
 
-function renderGraph(model, canvas) {
-  let scene = wgl.scene(canvas);
+export default function renderGraph(model, canvas) {
+  let scene = _scene(canvas);
   // scene.setClearColor(28/255, 32/255, 59/255, 1)
   scene.setClearColor(12/255, 41/255, 82/255, 1)
   // scene.setClearColor(223/255, 223/255, 223/255);
@@ -58,7 +57,7 @@ function renderGraph(model, canvas) {
     }
 
     let width = options.width || 1;
-    let wglLines = new wgl.LineCollection(lines.length);
+    let wglLines = new LineCollection(lines.length);
     if (options.color) {
       wglLines.color = options.color;
     }
@@ -100,7 +99,7 @@ function renderGraph(model, canvas) {
       return;
     }
 
-    let rectangles = new wgl.LineCollection(rects.length * 4);
+    let rectangles = new LineCollection(rects.length * 4);
     if (options.color) {
       rectangles.color = options.color;
     }
@@ -127,7 +126,7 @@ function renderGraph(model, canvas) {
     }
     if (!positions) return; // they wanted to remove highlight. That's it.
 
-    let nodes = new wgl.PointCollection(positions.size);
+    let nodes = new PointCollection(positions.size);
     positions.forEach((pos, id) => {
       pos.size = 30;
       let ui = nodes.add(pos, id);
@@ -148,7 +147,7 @@ function renderGraph(model, canvas) {
 
     let globalPositions = model.root.buildNodePositions();
     let rootGraph = model.rootGraph;
-    let lines = new wgl.WireCollection(rootGraph.getLinksCount());
+    let lines = new WireCollection(rootGraph.getLinksCount());
     lines.color.a = 0.04;
     rootGraph.forEachLink(function (link) {
       let from = globalPositions.get(link.fromId);
@@ -205,7 +204,7 @@ function renderGraph(model, canvas) {
     let linksCount = graph.getLinksCount()
     let lines;
     if (linksCount > 0) {
-      lines = new wgl.LineCollection(graph.getLinksCount());
+      lines = new LineCollection(graph.getLinksCount());
       if (color) {
         lines.color.r = color.r;
         lines.color.g = color.g;
@@ -238,7 +237,7 @@ function renderGraph(model, canvas) {
 
     function appendGroup(node, idx) {
       var point = layout.getNodePosition(node.id);
-      let rootUI = new wgl.Element();
+      let rootUI = new Element();
       rootUI.transform.dx = point.x;
       rootUI.transform.dy = point.y;
 
@@ -284,7 +283,7 @@ function renderGraph(model, canvas) {
     let {graph} = level;
 
     let nodeCount = graph.getNodesCount();
-    let nodes = new wgl.PointCollection(nodeCount + 1);
+    let nodes = new PointCollection(nodeCount + 1);
     let nodeIdToUI = new Map();
     let linkIdToUI = new Map();
 
@@ -330,7 +329,7 @@ function renderGraph(model, canvas) {
     //   r: 1, g: 0, b: 0
     // });
 
-    let lines = new wgl.WireCollection(graph.getLinksCount());
+    let lines = new WireCollection(graph.getLinksCount());
     if (color) {
       lines.color.r = color.r;
       lines.color.g = color.g;
@@ -372,26 +371,26 @@ function renderGraph(model, canvas) {
 }
 
 function addDebugElements(scene) {
-  let first = new wgl.Element();
+  let first = new Element();
   first.transform.dx = 100;
   first.transform.dy = 0;
   first.transform.scale = 1;
-  let fp = new wgl.PointCollection(1);
+  let fp = new PointCollection(1);
   fp.add({
     x: 0, y: 0, size: 15
   });
 
-  let lines = new wgl.WireCollection(1);
+  let lines = new WireCollection(1);
   lines.add({
      from: {x: -100, y: 0},
      to: {x: 100, y: 0},
   })
 
-  let second = new wgl.Element();
+  let second = new Element();
   second.transform.dx = -100;
   second.transform.dy = 0;
   second.transform.scale = 1;
-  let sp = new wgl.PointCollection(1);
+  let sp = new PointCollection(1);
   sp.add({
     x: 0, y: 0, size: 15
   });
@@ -403,11 +402,11 @@ function addDebugElements(scene) {
   scene.appendChild(lines);
 
 
-  let third = new wgl.Element();
+  let third = new Element();
   third.transform.dx = 0;
   third.transform.dy = -10;
   third.transform.scale = 1;
-  sp = new wgl.PointCollection(2);
+  sp = new PointCollection(2);
   sp.add({
     x: -100, y: 0, size: 5
   });
@@ -415,7 +414,7 @@ function addDebugElements(scene) {
     x: 100, y: 0, size: 5
   });
   third.appendChild(sp);
-  lines = new wgl.WireCollection(1);
+  lines = new WireCollection(1);
   lines.add({
      from: {x: -100, y: 0},
      to: {x: 100, y: 0},

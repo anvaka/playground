@@ -1,7 +1,7 @@
 /**
  * Bounding box computation for a set of points
  */
-class BBox {
+export default class BBox {
   constructor() {
     this.minX = Number.POSITIVE_INFINITY;
     this.minY = Number.POSITIVE_INFINITY;
@@ -79,5 +79,3 @@ class BBox {
     if (otherBBox.maxY > this.maxY) this.maxY = otherBBox.maxY;
   }
 }
-
-module.exports = BBox;

@@ -1,7 +1,7 @@
-const getBBoxAndRects = require('./getBBoxAndRects');
-const getDelaunayTesselation = require('./tesselation/getDelaunayTesselation');
+import getBBoxAndRects from './getBBoxAndRects';
+import getDelaunayTesselation from './tesselation/getDelaunayTesselation';
 
-module.exports = getTesselationLines;
+export default getTesselationLines;
 
 function getTesselationLines(graph, layout, offset) {
   let {bbox, rects} = getBBoxAndRects(graph, layout);

@@ -15,9 +15,9 @@
 </template>
 
 <script>
-var bus = require('../lib/bus');
-var ClusterInfo = require('./ClusterInfo');
-var NodeInfo = require('./NodeInfo');
+import bus from '../lib/bus';
+import ClusterInfo from './ClusterInfo';
+import NodeInfo from './NodeInfo';
 
 export default {
   props: ['model'],

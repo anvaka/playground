@@ -1,13 +1,13 @@
-var louvain = require('ngraph.louvain');
-var coarsen = require('ngraph.coarsen');
-var buildNodeMassFunction = require('./buildNodeMassFunction');
-var makeLayout = require('./makeLayout');
-var Rect = require('../geom/Rect')
-var BBox = require('../geom/BBox');
-var removeOverlaps = require('../overlaps/removeOverlaps');
-var tojson = require('ngraph.tojson');
+import louvain from 'ngraph.louvain';
+import coarsen, { getSubgraphs } from 'ngraph.coarsen';
+import buildNodeMassFunction from './buildNodeMassFunction';
+import makeLayout from './makeLayout';
+import Rect from '../geom/Rect';
+import BBox from '../geom/BBox';
+import removeOverlaps from '../overlaps/removeOverlaps';
+import tojson from 'ngraph.tojson';
 
-class GraphLayer {
+export default class GraphLayer {
   constructor(graph, level = 0, initialPositions) {
     this.graph = graph;
     this.level = level;
@@ -171,7 +171,7 @@ class GraphLayer {
     }
 
     // This is our new set of top level nodes
-    let subgraphs = coarsen.getSubgraphs(clusterGraph);
+    let subgraphs = getSubgraphs(clusterGraph);
 
     let layout = this.layout;
     let ownChildren = this.childrenLookup;
@@ -361,5 +361,3 @@ function detectClusters(srcGraph) {
     clusterGraph
   }
 }
-
-module.exports = GraphLayer;

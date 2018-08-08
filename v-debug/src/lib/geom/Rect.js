@@ -1,7 +1,7 @@
 /**
  * A rectangle.
  */
-class Rect {
+export default class Rect {
   constructor (params) {
     Object.assign(this, params)
     if (!isNumber(this.left)) throw new Error('Left is wrong')
@@ -34,8 +34,6 @@ class Rect {
     this.top = y - this.height / 2
   }
 }
-
-module.exports = Rect
 
 function isNumber (x) {
   if (!Number.isFinite(x)) return false

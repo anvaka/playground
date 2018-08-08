@@ -7,12 +7,12 @@
 </template>
 
 <script>
-const Scene = require('./components/Scene');
-const DotWindow = require('./components/DotWindow');
-const GraphSettings = require('./components/GraphSettings');
-const getGraph = require('./lib/getGraph.js');
-const initAppModel = require('./lib/appModel.js');
-const bus = require('./lib/bus');
+import Scene from './components/Scene';
+import DotWindow from './components/DotWindow';
+import GraphSettings from './components/GraphSettings';
+import getGraph from './lib/getGraph.js';
+import initAppModel from './lib/appModel.js';
+import bus from './lib/bus';
 
 const graph = getGraph();
 console.log('Graph loaded. Links count: ' + graph.getLinksCount() + '; nodes count: ' + graph.getNodesCount());

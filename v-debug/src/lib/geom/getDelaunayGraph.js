@@ -1,9 +1,7 @@
-const Delaunay = require('delaunator');
-const createGraph = require('ngraph.graph')
+import Delaunay from 'delaunator';
+import createGraph from 'ngraph.graph';
 
-module.exports = getDelaunayGraph;
-
-function getDelaunayGraph(vertices, getX, getY) {
+export default function getDelaunayGraph(vertices, getX, getY) {
   const delaunay = new Delaunay(vertices, getX, getY);
   const triangles = delaunay.triangles;
   // const triangles = Delaunay.triangulate(vertices)

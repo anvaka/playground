@@ -1,4 +1,4 @@
-module.exports = findIntersection;
+export default findIntersection;
 
 //https://stackoverflow.com/questions/1073336/circle-line-segment-collision-detection-algorithm
 // cx, cy = center of the circle

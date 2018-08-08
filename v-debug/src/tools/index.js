@@ -1,5 +1,5 @@
-let gridLayout = require('./grid-layout');
+import gridLayout from './grid-layout';
 
-module.exports = [
+export default [
   gridLayout
 ];

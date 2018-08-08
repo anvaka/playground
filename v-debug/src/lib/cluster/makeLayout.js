@@ -1,11 +1,9 @@
-var ngraphLayout = require('ngraph.forcelayout');
-var d3 = require('d3-force');
-var getFloatOrDefault = require('../getFloatOrDefault');
+import ngraphLayout from 'ngraph.forcelayout';
+import { forceLink, forceManyBody, forceSimulation, forceCenter } from 'd3-force';
+import getFloatOrDefault from '../getFloatOrDefault';
 // const setInitialLayout = require('./setInitialLayout');
 
-module.exports = makeLayout;
-
-function makeLayout(graph, settings) {
+export default function makeLayout(graph, settings) {
   if (settings.selectedLayout === 'ngraph') {
     return ngraphLayout(graph, extractSettings(settings));
   }
@@ -54,19 +52,19 @@ function d3Layout(graph, settings) {
   })
 
   var springLength = getFloatOrDefault(settings.springLength,  30);
-  var link = d3.forceLink(links).distance(function() {
+  var link = forceLink(links).distance(function() {
     return springLength;
   });
   var gravity = getFloatOrDefault(settings.gravity, -30);
-  var nbody = d3.forceManyBody()
+  var nbody = forceManyBody()
     .theta(getFloatOrDefault(settings.theta, 0.8))
     .strength(function() {
       return gravity;
     })
-  var simulation = d3.forceSimulation(nodes)
+  var simulation = forceSimulation(nodes)
     .force("charge", nbody)
     .force("link", link)
-    .force("center", d3.forceCenter());
+    .force("center", forceCenter());
 
   simulation.stop()
 

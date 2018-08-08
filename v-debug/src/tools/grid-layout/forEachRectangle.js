@@ -1,6 +1,6 @@
-const Rect = require('../../lib/geom/Rect');
+import Rect from '../../lib/geom/Rect';
 
-module.exports = forEachRectangleNode
+export default forEachRectangleNode
 
 function forEachRectangleNode(graph, layout, callback) {
   graph.forEachNode(node => {

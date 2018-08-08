@@ -1,17 +1,17 @@
-const findShortestPaths = require('./findShortestPath');
-const cellKey = require('./cellKey');
-const createGridGraph = require('./createGridGraph');
-const getBBoxAndRects = require('./getBBoxAndRects');
-const RoadAccumulator = require('./roadAccumulator') ;
-const Rect = require('../../lib/geom/Rect')
-const bus = require('../../lib/bus')
-const getDelaunayTesselation = require('./tesselation/getDelaunayTesselation');
-const createGraph = require('ngraph.graph');
+import findShortestPaths from './findShortestPath';
+import cellKey from './cellKey';
+import createGridGraph from './createGridGraph';
+import getBBoxAndRects from './getBBoxAndRects';
+import RoadAccumulator from './roadAccumulator';
+import Rect from '../../lib/geom/Rect';
+import { fire } from '../../lib/bus';
+import getDelaunayTesselation from './tesselation/getDelaunayTesselation';
+import createGraph from 'ngraph.graph';
 // const aStar = require('./path/a-star/bidirectional');
-const aStar = require('./path/a-star/index');
-const finder = require('ngraph.path').aStar;
+import { l2 } from './path/a-star/index';
+import { aStar as finder } from 'ngraph.path';
 
-module.exports = gridRoads;
+export default gridRoads;
 
 const drawDebugRects = false;
 
@@ -70,7 +70,7 @@ function gridRoads(graph, layout, useGrid = true) {
   });
 
   if (drawDebugRects) {
-    bus.fire('draw-rectangles', visRect, {
+    fire('draw-rectangles', visRect, {
       key: 'rects', 
       color: {
         r: 1, g: 0, b: 0, a: 1.0
@@ -117,7 +117,7 @@ function gridRoads(graph, layout, useGrid = true) {
         heuristic(from, to) {
           let fromPos = from.data;
           let toPos = to.data;
-          return aStar.l2(fromPos, toPos) * maxReducer * 0.9;
+          return l2(fromPos, toPos) * maxReducer * 0.9;
         },
         distance: getCityEdgeLength
     })

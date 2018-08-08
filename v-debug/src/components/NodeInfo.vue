@@ -12,7 +12,7 @@
   </div>
 </template>
 <script>
-const bus = require('../lib/bus');
+import bus from '../lib/bus';
 
 export default {
   props: ['point', 'model'],

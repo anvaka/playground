@@ -1,9 +1,7 @@
-const createGraph = require('ngraph.graph');
-const cellKey = require('./cellKey');
+import createGraph from 'ngraph.graph';
+import cellKey from './cellKey';
 
-module.exports = createGridGraph;
-
-function createGridGraph(bbox, cellSize) {
+export default function createGridGraph(bbox, cellSize) {
   let {width, height} = bbox;
   let cols = Math.ceil(width/cellSize);
   let rows = Math.ceil(height/cellSize);

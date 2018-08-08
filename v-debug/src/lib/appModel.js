@@ -1,9 +1,9 @@
-var GraphLayer = require('./cluster/GraphLayer');
-var pagerank = require('ngraph.pagerank');
-var Rect = require('./geom/Rect');
-var removeOverlaps = require('./overlaps/removeOverlaps');
+import GraphLayer from './cluster/GraphLayer';
+import pagerank from 'ngraph.pagerank';
+import Rect from './geom/Rect';
 
-const toolsToInit = require('../tools/index.js');
+import removeOverlaps from './overlaps/removeOverlaps';
+
 
 function init(rootGraph, autoCluster = false) {
   removeIsolates(rootGraph);
@@ -36,7 +36,7 @@ function init(rootGraph, autoCluster = false) {
     tools: tools,
   };
 
-  toolsToInit.forEach(createTool => {
+  require('../tools/index.js').default.forEach(createTool => {
     tools.push(createTool(api));
   });
 
@@ -133,7 +133,7 @@ function tightenUp(points) {
   })
 }
 
-module.exports = init;
+export default init;
 
 function peprocessGraphNodeSize(graph) {
   let score = pagerank(graph);

@@ -1,8 +1,6 @@
-module.exports = makeNoise;
-
 const random = require('ngraph.random').random(42)
 
-function makeNoise(x0, y0, x1, y1, v, n, out) {
+export default function makeNoise(x0, y0, x1, y1, v, n, out) {
   let start = {
     x: x0,
     y: y0

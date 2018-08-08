@@ -1,4 +1,4 @@
-var Element = require('w-gl').Element;
+var wgl = require('w-gl');
 var createTree = require('d3-quadtree').quadtree;
 
 /**
@@ -9,7 +9,7 @@ var createTree = require('d3-quadtree').quadtree;
  * only. More work needs to be done before I can recommend it to anyone.
  * (see TODOs in the file).
  */
-class ActivePoints extends Element {
+export default class ActivePoints extends wgl.Element {
   constructor(scene) {
     super();
 
@@ -100,5 +100,3 @@ class ActivePoints extends Element {
     }
   }
 }
-
-module.exports = ActivePoints;

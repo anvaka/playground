@@ -1,10 +1,8 @@
-const findMinimumSpanningTree = require('ngraph.kruskal')
-const getDelaunayGraph = require('../geom/getDelaunayGraph');
-const makeSpanningTree = require('./spanningTree.js')
-const rbush = require('rbush');
-const knn = require('rbush-knn');
-
-module.exports = removeOverlaps
+import findMinimumSpanningTree from 'ngraph.kruskal';
+import getDelaunayGraph from '../geom/getDelaunayGraph';
+import makeSpanningTree from './spanningTree.js';
+import rbush from 'rbush';
+import knn from 'rbush-knn';
 
 class EdgeModel {
   constructor (from, to) {
@@ -18,7 +16,7 @@ class EdgeModel {
  *
  * @param {Map} rectangles - rectId -> Rectangle mapping
  */
-function removeOverlaps (rectangles, options) {
+export default function removeOverlaps (rectangles, options) {
   // Convert rectangle centers into vertices, that we can feed into Delaunay
   // triangulation
   const vertices = []

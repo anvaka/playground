@@ -107,5 +107,4 @@ function simplify(points, tolerance, highestQuality) {
     return points;
 }
 
-module.exports = simplify;
-module.exports.default = simplify;
+export default simplify;

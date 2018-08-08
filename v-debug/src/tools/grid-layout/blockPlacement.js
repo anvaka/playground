@@ -1,10 +1,8 @@
 var rbush = require('rbush');
 
-module.exports = createBlockPlacement;
-
 var searchRadius = 20;
 
-function createBlockPlacement(edges) {
+export default function createBlockPlacement(edges) {
   var tree = rbush();
   tree.load(edges);
 

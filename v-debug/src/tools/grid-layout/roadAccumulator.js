@@ -3,8 +3,8 @@
  * appears
  */
 
-const createGraph = require('ngraph.graph');
-const cellKey = require('./cellKey');
+import createGraph from 'ngraph.graph';
+import cellKey from './cellKey';
 
 class RoadAccumulator {
   constructor() {
@@ -49,4 +49,4 @@ class RoadAccumulator {
 
 
 
-module.exports = RoadAccumulator;
+export default RoadAccumulator;
