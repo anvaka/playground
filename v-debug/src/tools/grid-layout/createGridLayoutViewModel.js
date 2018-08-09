@@ -73,6 +73,7 @@ export default function createGridLayoutViewModel(appModel) {
     let globalPositions = appModel.root.buildNodePositions();
     let rootGraph = appModel.rootGraph;
     var helpLines = [];
+    // augmented graph includes nodes that are on the boundary between clusters
     var augmentedGraph = createGraph();
     var segmentsCount = 6;
     graph.forEachNode(node => {
@@ -146,12 +147,11 @@ export default function createGridLayoutViewModel(appModel) {
     translateLines(roadLayout.lines, offset);
     var nodes = roadLayout.nodes;
     nodes.forEach(node => {
-      //var pos = augmentedLayout.getNodePosition(node.id);
-      // pos.x = node.x; //+ offset.x;
-      // pos.y = node.y;// + offset.y;
       var pos = node; // comes from fieldRoads.
-      if (graph.getNode(node.id)) {
+      var originalNode = graph.getNode(node.id);
+      if (originalNode) {
         layout.setNodePosition(node.id, pos.x, pos.y);
+        pos.size = originalNode.data.size;
       }
     });
 
@@ -272,4 +272,36 @@ function getOverlapFactor (a, b) {
 
   const t = Math.min(wx / dx, wy / dy)
   return t
+}
+
+function saveSvg(nodes, lines, graph) {
+  var svg = ['<svg xmlns="http://www.w3.org/2000/svg"> '];
+  var prefix = '  ';
+
+  svg.push(prefix + '<g id="lines">')
+  prefix = '    ';
+  lines.forEach(line => {
+    svg.push(`${prefix}<path d="M${line.from.x} ${line.from.y} L${line.to.x} ${line.to.y}" stroke-width="${line.width}" stroke="black" fill="transparent"></path>`);
+  })
+  svg.push(prefix + '</g>') // lines
+
+  prefix = '  ';
+  svg.push(prefix + '<g id="nodes">')
+  prefix = '    ';
+  nodes.forEach(node => {
+    let attr = graph.getNode(node.id).data;
+    if (attr && attr.product) {
+      var img = attr.product.image;
+      var maxW = 10;
+      var scale = maxW/img.Width
+      svg.push(`${prefix}<image x="${node.x - maxW/2}" y="${node.y - maxW/2}" width="10" height="${img.Height * scale}" xlink:href="${img.URL}"></image>`)
+    } else {
+      svg.push(`${prefix}<circle cx="${node.x}" cy="${node.y}" r="${node.size || 2}"></circle>`)
+    }
+  })
+  svg.push(prefix + '</g>') // nodes
+
+  
+  svg.push('</svg>');
+  return svg.join('\n');
 }
