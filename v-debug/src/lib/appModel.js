@@ -145,18 +145,13 @@ function peprocessGraphNodeSize(graph) {
     if (nodeScore < min) min = nodeScore;
   });
 
-  let distr = []
   graph.forEachNode(node => {
     let nodeScore = score[node.id];
     let bucket = getBucket(nodeScore, min, max, 20) + 6;
-    distr.push(bucket);
 
     if (!node.data) node.data = {};
-    node.data.size = bucket; //  10 * Math.round(bucket/10);
-   // node.data.size = bucket;
+    node.data.size = bucket;
   })
-
-  window.distr = distr;
 }
 
 function getBucket(value, min, max, bucketsCount) {
