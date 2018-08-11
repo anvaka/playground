@@ -158,6 +158,10 @@ export default function createGridLayoutViewModel(appModel) {
       }
     });
 
+    var svg = saveSvg(nodes, lines, graph);
+    console.log(svg);
+    debugger;
+
     bus.fire('draw-lines', lines, {
       key: 'grid-roads' + selectedCluster.id,
       sendToBack: true,
