@@ -1,12 +1,13 @@
 import createGraph from 'ngraph.graph';
 import createLayout from 'ngraph.forcelayout';
 import bus from '../../lib/bus';
-import gridRoads from './fieldRoads';
+import fieldRoads from './fieldRoads';
 import forEachRectangleNode from './forEachRectangle';
 import getGridLines from './getGridLines';
 import getBBoxAndRects from './getBBoxAndRects';
 import getTesselationLines from './getTesselationLines';
 import findCircleIntersection from './findCircleIntersection';
+import uniteLines from './uniteLines';
 
 export default function createGridLayoutViewModel(appModel) {
   var api = {
@@ -141,10 +142,12 @@ export default function createGridLayoutViewModel(appModel) {
       augmentedLayout.setNodePosition(node.id, p.x, p.y);
     })
 
-    let roadLayout = gridRoads(augmentedGraph, augmentedLayout, useGrid);
+    let roadLayout = fieldRoads(augmentedGraph, augmentedLayout, useGrid);
 
-    var lines = roadLayout.lines;
-    translateLines(roadLayout.lines, offset);
+    var lines = roadLayout.lines.filter(smallLength);
+    uniteLines(lines);
+
+    translateLines(lines, offset);
     var nodes = roadLayout.nodes;
     nodes.forEach(node => {
       var pos = node; // comes from fieldRoads.
@@ -174,6 +177,11 @@ export default function createGridLayoutViewModel(appModel) {
       l.to.x += offset.x;
       l.to.y += offset.y;
     })
+  }
+
+  function smallLength(line) {
+    let lineLength = length(line.from, line.to);
+    return (lineLength >= line.width * 1.4);
   }
 
    function moveToPosition() {
@@ -275,13 +283,23 @@ function getOverlapFactor (a, b) {
 }
 
 function saveSvg(nodes, lines, graph) {
-  var svg = ['<svg xmlns="http://www.w3.org/2000/svg"> '];
+var svg = [`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"> 
+<style>
+    /* <![CDATA[ */
+    path {
+      stroke: #67B1F1;
+    }
+    /* ]]> */
+  </style>
+  <g id="scene">`];
+
+
   var prefix = '  ';
 
   svg.push(prefix + '<g id="lines">')
   prefix = '    ';
   lines.forEach(line => {
-    svg.push(`${prefix}<path d="M${line.from.x} ${line.from.y} L${line.to.x} ${line.to.y}" stroke-width="${line.width}" stroke="black" fill="transparent"></path>`);
+    svg.push(`${prefix}<path d="M${line.from.x} ${line.from.y} L${line.to.x} ${line.to.y}" stroke-width="${line.width}" fill="transparent"></path>`);
   })
   svg.push(prefix + '</g>') // lines
 
@@ -291,17 +309,29 @@ function saveSvg(nodes, lines, graph) {
   nodes.forEach(node => {
     let attr = graph.getNode(node.id).data;
     if (attr && attr.product) {
-      var img = attr.product.image;
-      var maxW = 10;
+      var img = attr.product.icon; // image
+      var maxW = (30 * node.size/20 + 6) * 0.6;
       var scale = maxW/img.Width
-      svg.push(`${prefix}<image x="${node.x - maxW/2}" y="${node.y - maxW/2}" width="10" height="${img.Height * scale}" xlink:href="${img.URL}"></image>`)
+      var height = img.Height * scale;
+      var x = node.x - maxW/2;
+      var y = node.y - height/2;
+      svg.push(`
+<a target="_blank" id="${node.id}" xlink:href="${attr.product.url.replace(/&/g, '&#38;')}" transform="translate(${x}, ${y})">
+  <image width="${maxW}" height="${height}" xlink:href="${img.URL}"></image>
+</a>`);
     } else {
       svg.push(`${prefix}<circle cx="${node.x}" cy="${node.y}" r="${node.size || 2}"></circle>`)
     }
   })
   svg.push(prefix + '</g>') // nodes
-
   
+  svg.push("</g>");
   svg.push('</svg>');
   return svg.join('\n');
+}
+
+function length(a, b) {
+  var dx = a.x - b.x;
+  var dy = a.y - b.y;
+  return Math.sqrt(dx * dx + dy * dy);
 }
