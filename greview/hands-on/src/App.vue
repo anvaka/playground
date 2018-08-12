@@ -6,6 +6,7 @@
     <list-results :vm='listResults'></list-results>
     <product-details :vm='details'></product-details>
     <tooltip :vm='graphStore.tooltip'></tooltip>
+    <map-details></map-details>
   </div>
 </template>
 
@@ -14,13 +15,15 @@ import appState from './appState.js';
 import ListResults from './components/ListResults'
 import ProductDetails from './components/Details'
 import Tooltip from './components/Tooltip'
+import MapDetails from './components/MapDetails';
 
 export default {
   name: 'app',
   components: {
     ListResults,
     ProductDetails,
-    Tooltip
+    Tooltip,
+    MapDetails
   },
 
   data() {
