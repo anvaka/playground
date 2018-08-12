@@ -5,10 +5,10 @@ import inDegree from './sort/inDegree.js'
 import date from './sort/published.js'
 import pagerank from './sort/pageRank.js'
 import pageCount from './sort/pageCount.js'
+import graphStore from '../graph';
 
 let allSortMethods = [inDegree,  salesRank, date, pageCount, pagerank]
 const store = createListResults()
-import graphStore from '../../data/graph';
 
 export default store;
 

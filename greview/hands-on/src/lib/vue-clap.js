@@ -16,13 +16,13 @@ Vue.directive('clap', {
     var startPos
     var shouldPrevent = binding.modifiers.prevent
 
-    let currentDispose = disposers.get(el);
+    var currentDispose = disposers.get(el);
     if (currentDispose) {
       currentDispose()
       disposers.delete(el);
     }
 
-    const fn = binding.value;
+    var fn = binding.value;
     if (typeof fn === 'function') {
       el.addEventListener('click', invokeHandler)
 

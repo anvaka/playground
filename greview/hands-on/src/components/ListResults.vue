@@ -22,7 +22,7 @@
           :title='item.title'
           :key='item.asin'
           @mouseenter='highlightLinks(item)'
-          v-clap.prevent='showDetails(item)'
+          v-clap.prevent='() => showDetails(item)'
           :data-asin='item.asin'>
         <div class='product-image'>
           <img class='cover' :src='item.icon.URL'>
@@ -36,7 +36,7 @@
   </div>
   <a v-if='showListResults' class='list-results shadow btn no-print' href='#' v-clap.prevent='showList' title='show the list of found products'>
     <i class='material-icons'>list</i>
-    <span class='label'>List results</span>
+    <span class='label'>List products</span>
   </a>
 </div>
 </template>

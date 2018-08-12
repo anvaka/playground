@@ -320,7 +320,7 @@ var svg = [`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.o
       var x = node.x - maxW/2;
       var y = node.y - height/2;
       svg.push(`
-<a target="_blank" id="${node.id}" xlink:href="${attr.product.url.replace(/&/g, '&#38;')}" transform="translate(${x}, ${y})">
+<a target="_blank" id="${attr.product.asin}" xlink:href="${attr.product.url.replace(/&/g, '&#38;')}" transform="translate(${x}, ${y})">
   <image width="${maxW}" height="${height}" xlink:href="${img.URL}"></image>
 </a>`);
     } else {
