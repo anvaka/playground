@@ -36,7 +36,7 @@
   </div>
   <a v-if='showListResults' class='list-results shadow btn no-print' href='#' v-clap.prevent='showList' title='show the list of found products'>
     <i class='material-icons'>list</i>
-    <span class='label'>List products</span>
+    <span class='label'>List view</span>
   </a>
 </div>
 </template>
@@ -112,14 +112,17 @@
 .list-results
   position: fixed;
   right: 0;
-  top: 8px;
+  top: 0;
   background: white;
   color: $primary-text;
   font-size: 42px;
-  width: 35px;
   text-align: center;
+  padding: 0 8px;
+
   .label
-    display: none
+    font-size: 12px;
+    vertical-align: middle;
+
 @media (max-width: $screen-sm-min)
   .graph-overview
     width: 100%

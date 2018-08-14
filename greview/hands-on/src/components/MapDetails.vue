@@ -1,18 +1,22 @@
 <template>
   <div class='map-details'>
-    <h3>Hands-On Machine Learning...</h3>
-    <h4 class='secondary'>and its related books</h4>
-    <a class='accent toggle-button' href="#" v-clap.prevent='toggleDetails'>{{showDetails ? "Hide details" : "Show details"}}</a>
-    <div v-if='showDetails'>
-      <img src="https://images-na.ssl-images-amazon.com/images/I/51BKMchWqnL._SL160_.jpg" class="cover" width='160px'>
+    <a class='header' v-clap.prevent='toggleDetails' href="#">
+      <h3>Hands-On Machine Learning...</h3>
+      <h4 class='secondary'>and its related books</h4>
+      <span class='accent toggle-button'>{{showDetails ? "Hide details" : "Show details"}}</span>
+    </a>
+    <div v-if='showDetails' class='content'>
+      <a href="https://www.amazon.com/Hands-Machine-Learning-Scikit-Learn-TensorFlow/dp/1491962291?SubscriptionId=AKIAIJKR6IY4BV5FKK7A&tag=wwwyasivcom-20&linkCode=xm2&camp=2025&creative=165953&creativeASIN=1491962291">
+        <img src="https://images-na.ssl-images-amazon.com/images/I/51BKMchWqnL._SL160_.jpg" class="cover" width='160px'>
+      </a>
+
       <p>
-        This visualization shows books related to the <a class='accent' href="https://www.amazon.com/Hands-Machine-Learning-Scikit-Learn-TensorFlow/dp/1491962291?SubscriptionId=AKIAIJKR6IY4BV5FKK7A&tag=wwwyasivcom-20&linkCode=xm2&camp=2025&creative=165953&creativeASIN=1491962291">Hands-On Machine Learning with Scikit-Learn and TensorFlow</a>
-        book, written by Aurélien Géron.
+        This visualization shows books related to the <a class='accent' href="https://www.amazon.com/Hands-Machine-Learning-Scikit-Learn-TensorFlow/dp/1491962291?SubscriptionId=AKIAIJKR6IY4BV5FKK7A&tag=wwwyasivcom-20&linkCode=xm2&camp=2025&creative=165953&creativeASIN=1491962291">Hands-On Machine Learning with Scikit-Learn and TensorFlow</a>, written by Aurélien Géron.
       </p>
       <h5>How was this chart made?</h5>
       <p>
-        Starting from the <a class='accent' href="https://www.amazon.com/Hands-Machine-Learning-Scikit-Learn-TensorFlow/dp/1491962291?SubscriptionId=AKIAIJKR6IY4BV5FKK7A&tag=wwwyasivcom-20&linkCode=xm2&camp=2025&creative=165953&creativeASIN=1491962291"> "Hands-On ML"</a> book, I collected from Amazon 10 books that are most often bought together.
-        Then, for each found book, I collected 5 more books that are most often bought together withe them. Finally,
+        Starting from the <a class='accent' href="https://www.amazon.com/Hands-Machine-Learning-Scikit-Learn-TensorFlow/dp/1491962291?SubscriptionId=AKIAIJKR6IY4BV5FKK7A&tag=wwwyasivcom-20&linkCode=xm2&camp=2025&creative=165953&creativeASIN=1491962291"> "Hands-On ML"</a>, I collected from Amazon 10 books that are most often bought together.
+        Then, for each found book, I collected 5 more books that are most often bought together with them. Finally,
         I did this one more time for each found book.
       </p>
       <p>
@@ -26,6 +30,54 @@
         clustered together in the North West. "For Dummies" series clustered on the East.
         North regions are taken by financial machine learning, and South is occupied by Python/Data Science books.
       </p>
+      <p>The roads on the map have symbolic meaning. The thicker the road, the more books are connected through it.</p>
+      <h5>So What?</h5>
+      <p>
+        First of all, I loved the <a class='accent' href="https://www.amazon.com/Hands-Machine-Learning-Scikit-Learn-TensorFlow/dp/1491962291?SubscriptionId=AKIAIJKR6IY4BV5FKK7A&tag=wwwyasivcom-20&linkCode=xm2&camp=2025&creative=165953&creativeASIN=1491962291">Hands-On ML</a> book. For me, it was the most comprehensive introduction
+        into Machine Learning. 
+      </p>
+      <p>
+        Secondly, I find it fascinating to see the neighborhood as a reflection of my own feelings for
+        the book:
+        <ul>
+          <li>
+            The book starts with introduction into Data Science. 
+         </li>
+         <li>
+           It feels very welcoming to beginners from the first pages.
+         </li>
+         <li>
+           Yet it does not shy away from explaining complex theory and principles of Machine Learning
+          </li>
+         <li>
+           The main programming language of the book is Python. Seeing R in this graph is not very surprising,
+           as a lot of data science happens in this language. I assume more generic data science/deep learning 
+           books have pulled R into the neighborhood.
+         </li>
+         <li>
+           The book goes pretty deep into deep learning with TensorFlow. 
+        </li><li>
+            There is no straight road from the book to the cluster of financial machine learning. 
+            The book doesn't touch any specific algorithm of financial ML, yet it doesn't take too much
+            effort to imagine how the ideas of deep learning, statistics, reinforcement learning  could
+            lead to the world of Finance.
+          </li>
+        </ul>
+      </p>
+      <h5>Conclusion</h5>
+      <p>I just cannot recommend the 
+<a class='accent' href="https://www.amazon.com/Hands-Machine-Learning-Scikit-Learn-TensorFlow/dp/1491962291?SubscriptionId=AKIAIJKR6IY4BV5FKK7A&tag=wwwyasivcom-20&linkCode=xm2&camp=2025&creative=165953&creativeASIN=1491962291"> "Hands-On ML"</a>
+highly enough. Read it if you'd like to enter into the world of Machine Learning smoothly.
+      </p>
+      <p>
+The data in this chart is static. If you'd like to see the latest related books, please 
+use my hobby project: <a class='accent' href='https://www.yasiv.com/#/Search?q=hands%20on%20machine%20learning%20with%20scikit%20learn%20and%20tensorflow&category=Books&lang=US'>Yasiv</a>.
+      </p>
+<p>
+  The data for this article was collected via Amazon Services LLC Associates Program, an affiliate advertising program designed
+  to provide a means for sites to earn advertising fees by advertising and linking to amazon.com with no additional cost to customers.
+  If you buy anything after visiting amazon from the current article - you will support my effort. Thank you!
+</p>
     </div>
   </div>
 </template>
@@ -49,13 +101,27 @@ export default {
 @import './variables.styl'
 
 .map-details
-  padding: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 -1px 0px rgba(0,0,0,0.02);
   background: #fff;
   position: fixed;
-  top: 8px;
-  left: 6px;
+  top: 0px;
+  left: 0px;
   width: 400px;
+  max-height: 100%;
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
+
+  .header {
+    cursor: pointer;
+    padding: 8px 16px;
+  }
+
+  .content {
+    flex: 1;
+    overflow: auto;
+    padding: 8px 16px;
+  }
 
   .toggle-button 
     position: absolute 
@@ -73,13 +139,13 @@ export default {
     width: 122px;
     height: 160px;
     float: left;
-
   }
 
   h3, h4 
     margin: 0
     font-size: 18px;
     font-weight: normal;
+
   
   h5
     font-weight: normal;
@@ -88,6 +154,9 @@ export default {
   
   h4
     font-size: 14px;
+
+  a h3
+     color: $primary-text 
   
   p
     font-size: 14px;
@@ -97,6 +166,9 @@ export default {
     top: 0
     left: 0
     width: 100%;
+
+    .toggle-button
+      top: 36px;
 
 </style>
 

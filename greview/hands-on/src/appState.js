@@ -1,6 +1,5 @@
 import listResults from './lib/sidebar/listResults';
 import details from './lib/sidebar/detail.js'
-import styles from './styleVariables';
 import bus from './lib/bus';
 import graphStore from './lib/graph';
 import tooltip from './lib/tooltip';
@@ -22,10 +21,6 @@ const appState = {
   details,
   graphStore
 };
-
-if (window.innerWidth > styles.screenSmall) {
-  showList();
-}
 
 export default appState;
 
