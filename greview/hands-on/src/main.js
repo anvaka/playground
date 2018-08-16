@@ -1,17 +1,9 @@
-import Vue from 'vue'
-import App from './App.vue'
-import panzoom from 'panzoom';
-import './lib/vue-clap'
-Vue.config.productionTip = false
+import greview from 'greview-shell';
 
-new Vue({
-  render: h => h(App)
-}).$mount('#app')
+const appConfig = {
+  title: 'Hands-On Machine Learning...',
+  svgPath: 'hands-on.svg',
+  detailsPath: 'details.html'
+};
 
-let scene = document.getElementById('scene');
-panzoom(scene, {
-  autocenter: true
-});
-requestAnimationFrame(() => {
-  document.querySelector('svg').style.visibility = 'inherit';
-})
+greview(appConfig);
