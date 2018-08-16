@@ -1,3 +1,4 @@
 module.exports = {
-  baseUrl: ''
+  baseUrl: '',
+  productionSourceMap: false,
 }
