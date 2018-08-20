@@ -1,12 +1,10 @@
-module.exports = getDelaunayTesselation;
-
-const getDelaunayGraph = require('../../../lib/geom/getDelaunayGraph');
+import getDelaunayGraph from '../../../lib/geom/getDelaunayGraph';
 
 /**
- * Extends rectangls with control points and returns delaunay
+ * Extends rectangres with control points and returns delaunay
  * graph.
  */
-function getDelaunayTesselation(rectangles, cellSize) {
+export default function getDelaunayTesselation(rectangles, cellSize) {
   let vertices = getPositions(rectangles, cellSize);
 
   return getDelaunayGraph(vertices, p => p.x, p => p.y);
