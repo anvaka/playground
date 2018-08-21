@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "concaveman": "^1.1.1",
+    "delaunator": "^2.0.0",
+    "ngraph.random": "^0.1.0",
+    "point-in-polygon": "^1.0.1"
+  }
+}

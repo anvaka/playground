@@ -225,10 +225,37 @@ export default class GraphLayer {
     let layout = this.layout;
     let childrenLookup = this.childrenLookup;
 
-    this.graph.forEachNode(node => {
-      // todo: need to have notion of sizes.
-      let pos = layout.getNodePosition(node.id);
-      let child = childrenLookup.get(node.id);
+    let clusters = detectClusters(this.graph);
+    clusters.clusterGraph.forEachNode(cluster => {
+      rectangels = new Map();
+
+      cluster.data.forEach(rememberRectangle);
+
+      removeOverlaps(rectangels, overlapsOptions);
+
+      rectangels.forEach(rect => {
+        layout.setNodePosition(rect.id, rect.cx - rect.dx, rect.cy - rect.dy);
+      });
+    });
+
+    debugger;
+    rectangels = new Map();
+
+    // this.graph.forEachNode(node => {
+    //   // todo: need to have notion of sizes.
+    //   rememberRectangle(node.id);
+    // })
+
+    // removeOverlaps(rectangels, overlapsOptions);
+
+    // rectangels.forEach(rect => {
+    //   layout.setNodePosition(rect.id, rect.cx - rect.dx, rect.cy - rect.dy);
+    // });
+    normalizePositions(this.graph, this.layout);
+
+    function rememberRectangle(nodeId) {
+      let pos = layout.getNodePosition(nodeId);
+      let child = childrenLookup.get(nodeId);
       let childWidth = 20;
       let childHeight = 20;
       let dx = 0;
@@ -247,16 +274,10 @@ export default class GraphLayer {
         width: childWidth,
         height: childHeight,
         dx, dy,
-        id: node.id
+        id: nodeId
       });
-      rectangels.set(node.id, rect);
-    })
-    removeOverlaps(rectangels, overlapsOptions);
-
-    rectangels.forEach(rect => {
-      layout.setNodePosition(rect.id, rect.cx - rect.dx, rect.cy - rect.dy);
-    });
-    normalizePositions(this.graph, this.layout);
+      rectangels.set(nodeId, rect);
+    }
   }
 
   getBoundingBox() {
@@ -358,6 +379,7 @@ function detectClusters(srcGraph) {
   return {
     modularityImproved: clusters.canCoarse(),
     modularityDiff: Math.abs(clusters.newModularity - clusters.originalModularity),
-    clusterGraph
+    clusterGraph,
+    clusters
   }
 }

@@ -1,7 +1,7 @@
 import getDelaunayGraph from '../../../lib/geom/getDelaunayGraph';
 
 /**
- * Extends rectangres with control points and returns delaunay
+ * Extends rectangles with control points and returns delaunay
  * graph.
  */
 export default function getDelaunayTesselation(rectangles, cellSize) {
