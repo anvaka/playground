@@ -238,7 +238,6 @@ export default class GraphLayer {
       });
     });
 
-    debugger;
     rectangels = new Map();
 
     // this.graph.forEachNode(node => {

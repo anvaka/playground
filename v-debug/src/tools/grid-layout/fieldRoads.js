@@ -1,11 +1,12 @@
 import createGraph from 'ngraph.graph';
 import { aStar } from 'ngraph.path';
+import getXY from './getXY';
 
 import simplifyPointsPath from './simplify';
 import createBlockPlacement from './blockPlacement';
 import getBBoxAndRects from './getBBoxAndRects';
 
-var CELL_WIDTH = 1;
+var CELL_WIDTH = 10;
 
 export default function fieldRoads(graph, layout) {
   let {bbox} = getBBoxAndRects(graph, layout);
@@ -42,7 +43,7 @@ export default function fieldRoads(graph, layout) {
     var linksCount = graph.getLinksCount();
     var processed = 0;
     graph.forEachLink(link => {
-      console.log('Processing ' + processed + ' out of ' + linksCount);
+      console.log('Processing link #' + processed + ' out of ' + linksCount);
       processed += 1;
       var fromPos = layout.getNodePosition(link.fromId);
       var toPos = layout.getNodePosition(link.toId);
@@ -80,17 +81,20 @@ export default function fieldRoads(graph, layout) {
       var lineWidth = pathMemory.getEdgeWidth(v);
       edges.push({ 
         from: {
-          x: from[0] + bbox.left,
-          y: from[1] + bbox.top
+          x: from[0] * CELL_WIDTH + bbox.left,
+          y: from[1] * CELL_WIDTH + bbox.top
         }, 
         to: {
-          x: to[0] + bbox.left,
-          y: to[1] + bbox.top
+          x: to[0] * CELL_WIDTH + bbox.left,
+          y: to[1] * CELL_WIDTH + bbox.top
         },
         width: lineWidth
       });
     });
+
+    // This will move nodes of original graph out from the road network
     pathMemory.moveRootsOut();
+
     pathMemory.forEachRoot(root => {
       var pos = root.pos;
       nodes.push({
@@ -192,7 +196,6 @@ function getGridNodeKey(col, row) {
   return `${col},${row}`;
 }
 
-import getXY from './getXY';
 
 function createPathMemory() {
   var roots = new Map(); // where the paths start and end.
@@ -216,11 +219,14 @@ function createPathMemory() {
 
   function moveRootsOut() {
     var edges = [];
+    // max length of an edge segment that can be considered as a snap-candidate
     var snapLength = 32;
 
     pathGraph.forEachLink(link => {
       var xy1 = getXY(link.fromId);
       var xy2 = getXY(link.toId);
+      xy1[0] *= CELL_WIDTH; xy1[1] *= CELL_WIDTH;
+      xy2[0] *= CELL_WIDTH; xy2[1] *= CELL_WIDTH;
       var dx = (xy2[0] - xy1[0]);
       var dy = (xy2[1] - xy1[1]);
       var l = Math.sqrt(dx * dx + dy * dy);
@@ -261,11 +267,13 @@ function createPathMemory() {
 
     var placement = createBlockPlacement(edges);
     var rootSortedBySize = [];
-    // TODO: Sort by size.
+
     forEachRoot(root => { rootSortedBySize.push(root); });
+
     rootSortedBySize.sort((a, b) => b.size - a.size);
     rootSortedBySize.forEach(root => {
       var pos = getXY(root.internalId);
+      pos[0] *= CELL_WIDTH; pos[1] *= CELL_WIDTH;
       placement.place(root, pos);
     });
   }
