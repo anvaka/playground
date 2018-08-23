@@ -318,9 +318,11 @@ var svg = [`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.o
       var height = img.Height * scale;
       var x = node.x - maxW/2;
       var y = node.y - height/2;
+      // var angle = (node.angle * 180 / Math.PI)
+      // var transform = `rotate(${angle}, ${maxW/2}, ${height/2})`
       svg.push(`
 <a target="_blank" id="${attr.product.asin}" xlink:href="${attr.product.url.replace(/&/g, '&#38;')}" transform="translate(${x}, ${y})">
-  <image width="${maxW}" height="${height}" xlink:href="${img.URL}"></image>
+  <image width="${maxW}" height="${height}" clip-path='circle()' xlink:href="${img.URL}"></image>
 </a>`);
     } else {
       svg.push(`${prefix}<circle cx="${node.x}" cy="${node.y}" r="${node.size || 2}"></circle>`)

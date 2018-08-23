@@ -100,7 +100,8 @@ export default function fieldRoads(graph, layout) {
       nodes.push({
         id: root.id,
         x: pos.center.x + bbox.left,
-        y: pos.center.y + bbox.top
+        y: pos.center.y + bbox.top,
+        angle: pos.angle
       });
       //ctx.fillText(root.id, pos.center.x, pos.center.y)
     });
@@ -265,7 +266,7 @@ function createPathMemory() {
       }
     });
 
-    var placement = createBlockPlacement(edges);
+    var placement = inplacePlacement(edges); // createBlockPlacement(edges);
     var rootSortedBySize = [];
 
     forEachRoot(root => { rootSortedBySize.push(root); });
@@ -276,6 +277,14 @@ function createPathMemory() {
       pos[0] *= CELL_WIDTH; pos[1] *= CELL_WIDTH;
       placement.place(root, pos);
     });
+  }
+
+  function inplacePlacement() {
+    return {
+      place(node, pos) {
+        node.pos = {center: {x: pos[0], y: pos[1]}, angle: 0}
+      }
+    }
   }
 
   function forEachRoot(callback) {
