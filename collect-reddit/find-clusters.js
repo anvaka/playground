@@ -39,7 +39,6 @@ function saveClusters() {
   let lastGraph = coarsen(graph, clusters);
   let layer = 0;
   while(clusters.canCoarse()) {
-    debugger;
     saveLayer(layer++);
     prevGraph = lastGraph;
     lastGraph = coarsen(prevGraph, clusters);
