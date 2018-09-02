@@ -42,7 +42,6 @@ function handleMouseClick(e) {
 function createTextReader(domEl) {
   var visible = false;
   var header = domEl.querySelector('h3');
-  debugger;
   var content = domEl.querySelector('.details');
   
   return {
