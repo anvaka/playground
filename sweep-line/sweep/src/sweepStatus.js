@@ -1,9 +1,11 @@
 import SplayTree from 'splaytree';
 import {samePoint, isInterior, getIntersectionXPoint} from './geom'
 
+
 export default function createSweepStatus() {
   var lastPoint;
   var status = new SplayTree(compareKeys, /* noDupes: */ true);
+ // var status = new AVLTree(compareKeys, /* noDupes: */ true);
 
   return {
     findSegmentsThatContain,
@@ -28,7 +30,7 @@ export default function createSweepStatus() {
 
   function getLeftMostSegment(segments) {
     if (segments.length === 1) {
-      return status.findStatic(segments[0].key);
+      return status.find(segments[0].key);
     }
     var min = Number.POSITIVE_INFINITY;
     var requestKey = null;
@@ -41,12 +43,12 @@ export default function createSweepStatus() {
         requestKey = s.key;
       }
     }
-    return status.findStatic(requestKey)
+    return status.find(requestKey)
   }
 
   function getRightMostSegment(segments) {
     if (segments.length === 1) {
-      return status.findStatic(segments[0].key);
+      return status.find(segments[0].key);
     }
     var max = Number.NEGATIVE_INFINITY;
     var maxKey = null;
@@ -59,18 +61,18 @@ export default function createSweepStatus() {
         maxKey = s.key;
       }
     }
-    return status.findStatic(maxKey)
+    return status.find(maxKey)
   }
 
-  function getLeftRightPoint(x) {
+  function getLeftRightPoint(p) {
     var all = status.keys()
     var right, left, leftKey;
     for (var i = 0; i < all.length; ++i) {
       var currentKey = all[i];
-      if (currentKey.x > x && !right) {
+      if (currentKey.x > p.x && !right) {
         var node = status.find(currentKey);
         right = node.data
-      } else if (currentKey.x < x) {
+      } else if (currentKey.x < p.x) {
         leftKey = currentKey;
       }
     }
@@ -93,10 +95,10 @@ export default function createSweepStatus() {
   }
 
   function insertSegments(segments, sweepLinePos) {
-    // var all = status.values();
-    // status.clear();
+    var all = status.values();
+    status.clear();
 
-    // all.forEach(insertOneSegment);
+    all.forEach(insertOneSegment);
     segments.forEach(insertOneSegment);
 
     // console.log('status line: ')
@@ -107,10 +109,10 @@ export default function createSweepStatus() {
     function insertOneSegment(segment) {
       var x = getIntersectionXPoint(segment, sweepLinePos.y)
       var key = {x: x, order: 0, segment: segment};
-      var node = status.findStatic(key);
+      var node = status.find(key);
       while (node) {
         key.order += 1;
-        node = status.findStatic(key);
+        node = status.find(key);
       }
 
       lastPoint = sweepLinePos.y;
@@ -125,7 +127,7 @@ export default function createSweepStatus() {
   }
 
   function deleteOneSegment(segment) {
-    status.remove(segment.key);
+    if (segment.key) status.remove(segment.key);
   }
 
   function findSegmentsThatContain(point) {

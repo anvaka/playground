@@ -26,16 +26,22 @@ export function samePoint(a, b) {
 
 export function getIntersectionXPoint(segment, yPos) {
   var dy1 = yPos - segment.start.y;
-  if (dy1 === 0) return segment.start.x;
+  if (Math.abs(dy1) < EPS) {
+    return segment.start.x;
+    // return segment.end.x;
+  }
 
 
   var dx = segment.end.x - segment.start.x;
   var dy = segment.end.y - segment.start.y;
   
-  if (dy === 0) throw new Error('horizontal segment that does not intersect');
+  if (dy === 0) {
+    throw new Error('horizontal segment that does not intersect');
+    // return segment.end.x; // This?
+  }
 
   var xOffset = dx * dy1 / dy;
-  return Math.round((segment.start.x + xOffset) * 100000)/100000;
+  return Math.round((segment.start.x + xOffset) * 10000000)/10000000;
 }
 
 export function intersectBelowP(a, b, p) {
@@ -58,7 +64,7 @@ export function intersectBelowP(a, b, p) {
     var xValue = p0_x + (t * s1_x);
     var yValue = p0_y + (t * s1_y);
 
-    if (yValue < p.y || ((Math.abs(yValue - p.y) < EPS) && p.x < xValue)) {
+    if (yValue < p.y || ((Math.abs(yValue - p.y) < EPS) && p.x <= xValue)) {
       // Collision detected
       return {
         x: xValue,
