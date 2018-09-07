@@ -32,36 +32,39 @@ export default function createSweepStatus() {
     if (segments.length === 1) {
       return status.find(segments[0].key);
     }
-    var min = Number.POSITIVE_INFINITY;
-    var requestKey = null;
-
-    for (var i = 0; i < segments.length; ++i) {
-      var s = segments[i];
-      var order = s.key.order;
-      if (order < min) {
-        min = order;
-        requestKey = s.key;
+    segments.sort((a, b) => {
+      var ak = getIntersectionXPoint(a, lastPoint);
+      var bk = getIntersectionXPoint(b, lastPoint);
+      var res = ak - bk;
+      // var res = a.x - b.x;
+      if (Math.abs(res) < 0.0001) {
+        return a.order - b.order;
       }
-    }
-    return status.find(requestKey)
+      return res;
+    });
+      
+    return status.find(segments[0].key);
   }
 
   function getRightMostSegment(segments) {
     if (segments.length === 1) {
       return status.find(segments[0].key);
     }
-    var max = Number.NEGATIVE_INFINITY;
-    var maxKey = null;
-
-    for (var i = 0; i < segments.length; ++i) {
-      var s = segments[i];
-      var order = s.key.order;
-      if (order > max) {
-        max = order;
-        maxKey = s.key;
-      }
+    if (segments.length === 1) {
+      return status.find(segments[0].key);
     }
-    return status.find(maxKey)
+    segments.sort((a, b) => {
+      var ak = getIntersectionXPoint(a, lastPoint);
+      var bk = getIntersectionXPoint(b, lastPoint);
+      var res = ak - bk;
+      // var res = a.x - b.x;
+      if (Math.abs(res) < 0.0001) {
+        return a.order - b.order;
+      }
+      return res;
+    });
+      
+    return status.find(segments[segments.length - 1].key);
   }
 
   function getLeftRightPoint(p) {
@@ -115,7 +118,7 @@ export default function createSweepStatus() {
         node = status.find(key);
       }
 
-      lastPoint = sweepLinePos.y;
+      lastPoint = sweepLinePos.y - 0.01;
 
       status.insert(key, segment);
       segment.key = key;

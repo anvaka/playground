@@ -4,7 +4,7 @@ import createScene from './scene';
 
 var createRandom = require('ngraph.random');
 var seed = +new Date();
-// seed = 1536184756878;
+seed = 1536184756878;
 var random = createRandom(seed);
 console.log('seed', seed)
 
@@ -22,23 +22,25 @@ new Vue({
 
 
 function generateLines() {
-  var lines = getCircularLines(5); //
-  // lines = getRandomLines(500, 1000); // 
+  var lines = getCircularLines(10); //
+  //lines = getRandomLines(450, 100); // 
   window.lines = lines;
 
   return lines;
 }
 
 function getCircularLines(count = 10, range = 100) {
-  var lines = [
-    {start: {x: 0, y: 0}, end: {x: 10, y: 0}},
-    {start: {x: 10, y: 0}, end: {x: 10, y: 10}},
-    {start: {x: 10, y: 10}, end: {x: 0, y: 10}},
-    {start: {x: 0, y: 10}, end: {x: 0, y: 0}},
-    {start: {x: 10, y: 10}, end: {x: 0, y: 0}},
-    {start: {x: 0, y: 10}, end: {x: 10, y: 0}}
-  ]
-  return lines;
+  // var lines = [
+  //   // {start: {x: 0, y: 1}, end: {x: 10, y: 0}},
+  //   {start: {x: 10, y: 0}, end: {x: 10, y: 10}},
+  //   // {start: {x: 0, y: 9}, end: {x: 10, y: 9}},
+  //   // {start: {x: 10, y: 10}, end: {x: 0, y: 10}},
+  //   // {start: {x: 0, y: 10}, end: {x: 0, y: 0}},
+  //   {start: {x: 10, y: 10}, end: {x: 0, y: 0}},
+  //   {start: {x: 0, y: 10}, end: {x: 10, y: 0}}
+  // ]
+  // return lines;
+
   var angleStep = Math.PI * 0.5 / count;
   var lines = [];
   var seen = new Set();
