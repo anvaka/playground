@@ -1,4 +1,5 @@
 import SplayTree from 'splaytree';
+import AVLTree from 'avl';
 import {samePoint, isInterior, getIntersectionXPoint} from './geom'
 
 
@@ -50,15 +51,12 @@ export default function createSweepStatus() {
     if (segments.length === 1) {
       return status.find(segments[0].key);
     }
-    if (segments.length === 1) {
-      return status.find(segments[0].key);
-    }
     segments.sort((a, b) => {
       var ak = getIntersectionXPoint(a, lastPoint);
       var bk = getIntersectionXPoint(b, lastPoint);
       var res = ak - bk;
       // var res = a.x - b.x;
-      if (Math.abs(res) < 0.0001) {
+      if (Math.abs(res) < 0.000001) {
         return a.order - b.order;
       }
       return res;
@@ -68,14 +66,24 @@ export default function createSweepStatus() {
   }
 
   function getLeftRightPoint(p) {
+    // var current = status._root;
+    // if (!current) return {left: null, right: null};
+    // var keyVal = getIntersectionXPoint(current.key.segment, lastPoint);
+    // // Find the left and right neighbours of p
+    // if (p.x < keyVal) {
+    //   current = current.left;
+    // }
+
     var all = status.keys()
     var right, left, leftKey;
     for (var i = 0; i < all.length; ++i) {
       var currentKey = all[i];
-      if (currentKey.x > p.x && !right) {
-        var node = status.find(currentKey);
+      var x = getIntersectionXPoint(currentKey.segment, lastPoint);
+      currentKey.x = x;
+      if (x > p.x && !right) {
+        var node = status.findStatic(currentKey);
         right = node.data
-      } else if (currentKey.x < p.x) {
+      } else if (x < p.x) {
         leftKey = currentKey;
       }
     }
@@ -104,21 +112,20 @@ export default function createSweepStatus() {
     all.forEach(insertOneSegment);
     segments.forEach(insertOneSegment);
 
-    // console.log('status line: ')
-    // status.forEach(node => {
-    //   console.log(JSON.stringify(node.key) + ' ' + node.data.name);
-    // })
+    console.log('status line: ')
+    status.forEach(node => {
+      console.log(node.key.x + '#' + node.key.order + ' ' + node.data.name);
+    })
 
     function insertOneSegment(segment) {
-      var x = getIntersectionXPoint(segment, sweepLinePos.y)
+      lastPoint = sweepLinePos.y - 0.01;
+      var x = getIntersectionXPoint(segment, lastPoint)
       var key = {x: x, order: 0, segment: segment};
       var node = status.find(key);
       while (node) {
         key.order += 1;
         node = status.find(key);
       }
-
-      lastPoint = sweepLinePos.y - 0.01;
 
       status.insert(key, segment);
       segment.key = key;

@@ -232,7 +232,8 @@ function findIntersections(lines) {
 
     sweepStatus.deleteSegments(lcSegments);
     if (interior && interior.length > 0 && ucSegments && ucSegments.length > 1) {
-      ucSegments.reverse();
+      // No need to reverse, since insertSegments drop them all anyway
+      // ucSegments.reverse();
     }
     sweepStatus.insertSegments(ucSegments, p.point);
 

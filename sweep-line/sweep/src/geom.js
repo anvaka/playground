@@ -27,7 +27,8 @@ export function samePoint(a, b) {
 export function getIntersectionXPoint(segment, yPos) {
   var dy1 = yPos - segment.start.y;
   if (Math.abs(dy1) < EPS) {
-    return segment.start.x;
+    return Number.MAX_SAFE_INTEGER;
+    //return segment.start.x;
     // return segment.end.x;
   }
 
@@ -35,8 +36,10 @@ export function getIntersectionXPoint(segment, yPos) {
   var dx = segment.end.x - segment.start.x;
   var dy = segment.end.y - segment.start.y;
   
-  if (dy === 0) {
-    throw new Error('horizontal segment that does not intersect');
+  if (Math.abs(dy) < EPS) {
+    return segment.start.x; // This?
+    return Number.MAX_SAFE_INTEGER;
+    //throw new Error('horizontal segment that does not intersect');
     // return segment.end.x; // This?
   }
 
