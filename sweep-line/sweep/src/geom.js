@@ -24,21 +24,32 @@ export function samePoint(a, b) {
   return Math.abs(a.x - b.x) < EPS && Math.abs(a.y - b.y) < EPS;
 }
 
-export function getIntersectionXPoint(segment, yPos) {
+export function getIntersectionXPoint(segment, xPos, yPos) {
   var dy1 = yPos - segment.start.y;
   if (Math.abs(dy1) < EPS) {
-    return Number.MAX_SAFE_INTEGER;
+    if (xPos < segment.start.x) return segment.start.x;
+    if (xPos > segment.end.x) return segment.end.x;
+    return xPos;
+    // if (xPos > segment.start.x) return segment.end.x;
+    return segment.start.x;
+    // return xPos + 0.0001;
+    // return Number.MAX_SAFE_INTEGER;
     //return segment.start.x;
     // return segment.end.x;
   }
-
 
   var dx = segment.end.x - segment.start.x;
   var dy = segment.end.y - segment.start.y;
   
   if (Math.abs(dy) < EPS) {
-    return segment.start.x; // This?
-    return Number.MAX_SAFE_INTEGER;
+    if (xPos < segment.start.x) return segment.start.x;
+    if (xPos > segment.end.x) return segment.end.x;
+    return xPos;
+    // if (xPos > segment.start.x) return segment.end.x;
+    // return segment.start.x;
+    return segment.start.x;
+    // return segment.start.x; // This?
+    // return Number.MAX_SAFE_INTEGER;
     //throw new Error('horizontal segment that does not intersect');
     // return segment.end.x; // This?
   }

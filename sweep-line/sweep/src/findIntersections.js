@@ -20,6 +20,7 @@ class SweepEvent {
     } else if (kind === INTERSECT_ENDPOINT) {
       this.interior = [segment, oneMore];
       this.knownInterior = new Set();
+      this.interior.forEach(l => this.knownInterior.add(l));
     }
   }
 
@@ -71,8 +72,8 @@ function createFoundQueue() {
   }
 
   function keyPoint(p) {
-    return Math.round(p.x * 10000)/10000 + ';' +
-          Math.round(p.y * 10000)/10000;
+    return Math.round(p.x * 1000000)/1000000 + ';' +
+          Math.round(p.y * 1000000)/1000000;
   }
 
   function toArray() {
@@ -130,6 +131,7 @@ function createSplayFoundQueue() {
 
 function createEventQueue() {
   const q = new SplayTree(byY);
+  //const q = new AVLTree(byY);
 
   return {
     isEmpty: isEmpty,
@@ -152,7 +154,6 @@ function createEventQueue() {
 
   function pop() {
     var node = q.pop();
-    // console.log(q.size);
     return node && node.data;
   }
 }
@@ -162,7 +163,8 @@ function byY(a, b) {
   var res = b.y - a.y;
   if (Math.abs(res) < EPS) {
     // increasing x.
-    return a.x - b.x;
+    res = a.x - b.x;
+    if (Math.abs(res) < EPS) res = 0;
   }
 
   return res;
@@ -170,7 +172,6 @@ function byY(a, b) {
 
 
 function findIntersections(lines) {
-  var foundIntersections = [];
   var eventQueue = createEventQueue();
   var sweepStatus = createSweepStatus();
   var results = false ? createSplayFoundQueue() : createFoundQueue();
@@ -183,7 +184,6 @@ function findIntersections(lines) {
   }
 
   return results.toArray();
-  // return foundIntersections;
 
   function union(a, b) {
     if (!a) return b;
@@ -269,34 +269,26 @@ function findIntersections(lines) {
     if (!left || !right) return;
 
     var intersection = intersectBelowP(left, right, p.point);
-    if (intersection && !results.has(intersection)) {
-        if (
-          false
-            // samePoint(p.point, left.start) ||
-            // samePoint(p.point, left.end) ||
-            // samePoint(p.point, right.start) ||
-            // samePoint(p.point, right.end)
-          ) {
-            reportIntersection(p, [left, right]);
-        } else {
-          eventQueue.push(
-            new SweepEvent(INTERSECT_ENDPOINT, intersection, left, right)
-        );
-      }
+    if (intersection && intersection.y <= p.point.y && !results.has(intersection)) {
+      eventQueue.push(
+        new SweepEvent(INTERSECT_ENDPOINT, intersection, left, right)
+      );
     }
   }
 
   function reportIntersection(p, segments) {
     results.push(p.point, segments);
-    // foundIntersections.push({point: {
-    //   x: p.point.x,
-    //   y: p.point.y
-    // }, segments});
   }
 
   function insertEndpointsIntoEventQueue(segment) {
     var start = segment.start;
     var end = segment.end;
+
+    if (Math.abs(start.x - end.x) < EPS) {
+      console.warn('Cannot insert horizontal segment :(');
+      start.x += 0.1;
+      end.x -= 0.1;
+    }
 
     if ((start.y < end.y) || (
         (start.y === end.y) && (start.x > end.x))

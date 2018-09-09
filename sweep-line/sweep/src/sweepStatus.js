@@ -4,7 +4,8 @@ import {samePoint, isInterior, getIntersectionXPoint} from './geom'
 
 
 export default function createSweepStatus() {
-  var lastPoint;
+  var lastPointY;
+  var lastPointX;
   var status = new SplayTree(compareKeys, /* noDupes: */ true);
  // var status = new AVLTree(compareKeys, /* noDupes: */ true);
 
@@ -19,12 +20,15 @@ export default function createSweepStatus() {
   }
 
   function compareKeys(a, b) {
-    var ak = getIntersectionXPoint(a.segment, lastPoint);
-    var bk = getIntersectionXPoint(b.segment, lastPoint);
+    return compareSegments(a.segment, b.segment)
+  }
+
+  function compareSegments(a, b) {
+    var ak = getIntersectionXPoint(a, lastPointX, lastPointY);
+    var bk = getIntersectionXPoint(b, lastPointX, lastPointY);
     var res = ak - bk;
-    // var res = a.x - b.x;
     if (Math.abs(res) < 0.0001) {
-      return a.order - b.order;
+      return (a.key.order) - (b.key.order);
     }
     return res;
   }
@@ -33,17 +37,8 @@ export default function createSweepStatus() {
     if (segments.length === 1) {
       return status.find(segments[0].key);
     }
-    segments.sort((a, b) => {
-      var ak = getIntersectionXPoint(a, lastPoint);
-      var bk = getIntersectionXPoint(b, lastPoint);
-      var res = ak - bk;
-      // var res = a.x - b.x;
-      if (Math.abs(res) < 0.0001) {
-        return a.order - b.order;
-      }
-      return res;
-    });
-      
+
+    segments.sort(compareSegments);
     return status.find(segments[0].key);
   }
 
@@ -51,17 +46,8 @@ export default function createSweepStatus() {
     if (segments.length === 1) {
       return status.find(segments[0].key);
     }
-    segments.sort((a, b) => {
-      var ak = getIntersectionXPoint(a, lastPoint);
-      var bk = getIntersectionXPoint(b, lastPoint);
-      var res = ak - bk;
-      // var res = a.x - b.x;
-      if (Math.abs(res) < 0.000001) {
-        return a.order - b.order;
-      }
-      return res;
-    });
-      
+
+    segments.sort(compareSegments);
     return status.find(segments[segments.length - 1].key);
   }
 
@@ -78,7 +64,7 @@ export default function createSweepStatus() {
     var right, left, leftKey;
     for (var i = 0; i < all.length; ++i) {
       var currentKey = all[i];
-      var x = getIntersectionXPoint(currentKey.segment, lastPoint);
+      var x = getIntersectionXPoint(currentKey.segment, lastPointX, lastPointY);
       currentKey.x = x;
       if (x > p.x && !right) {
         var node = status.findStatic(currentKey);
@@ -112,15 +98,17 @@ export default function createSweepStatus() {
     all.forEach(insertOneSegment);
     segments.forEach(insertOneSegment);
 
-    console.log('status line: ')
-    status.forEach(node => {
-      console.log(node.key.x + '#' + node.key.order + ' ' + node.data.name);
-    })
+    // console.log('status line: ')
+    // status.forEach(node => {
+    //   console.log(node.key.x + '#' + node.key.order + ' ' + node.data.name);
+    // })
 
     function insertOneSegment(segment) {
-      lastPoint = sweepLinePos.y - 0.01;
-      var x = getIntersectionXPoint(segment, lastPoint)
+      lastPointY = sweepLinePos.y - 0.01;
+      lastPointX = sweepLinePos.x;
+      var x = getIntersectionXPoint(segment, lastPointX, lastPointY);
       var key = {x: x, order: 0, segment: segment};
+      segment.key = key;
       var node = status.find(key);
       while (node) {
         key.order += 1;

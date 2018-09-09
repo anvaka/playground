@@ -38,7 +38,7 @@ function createScene(lines, canvas) {
   var intersections = findIntersections(lines);
   console.timeEnd('run')
   // eslint-disable-next-line
-  console.log(intersections);
+  console.log('found ' + intersections.length + ' intersections');
   let nodes = new wgl.PointCollection(intersections.length);
   intersections.forEach((intersect, id) => {
     var ui = nodes.add(intersect.point, id);
