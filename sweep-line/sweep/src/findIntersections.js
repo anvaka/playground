@@ -135,8 +135,13 @@ function createEventQueue() {
 
   return {
     isEmpty: isEmpty,
+    size: size,
     pop: pop,
     push: push,
+  }
+
+  function size() {
+    return q.size;
   }
 
   function isEmpty() {
@@ -171,12 +176,17 @@ function byY(a, b) {
 }
 
 
-function findIntersections(lines) {
+function findIntersections(lines, options) {
   var eventQueue = createEventQueue();
   var sweepStatus = createSweepStatus();
   var results = false ? createSplayFoundQueue() : createFoundQueue();
 
   lines.forEach(insertEndpointsIntoEventQueue);
+  if (options && options.control) {
+    return {
+      next
+    };
+  }
 
   while (!eventQueue.isEmpty()) {
     var eventPoint = eventQueue.pop();
@@ -184,6 +194,16 @@ function findIntersections(lines) {
   }
 
   return results.toArray();
+
+  function next() {
+    if (eventQueue.isEmpty()) {
+      options.control.done(results.toArray());
+    } else {
+      var eventPoint = eventQueue.pop();
+      handleEventPoint(eventPoint);
+      options.control.step(sweepStatus, eventQueue, results)
+    }
+  }
 
   function union(a, b) {
     if (!a) return b;
@@ -211,16 +231,11 @@ function findIntersections(lines) {
   }
 
   function handleEventPoint(p) {
-    // var foundSegments = sweepStatus.findSegmentsThatContain(p.point);
-    // var interior = foundSegments.interior;
-    // var lower = foundSegments.lower
-    // var upper = p.kind === START_ENDPOINT ? p.segments : [];
-
-    // debugger;
     var interior = p.interior || []; // [];
     var lower = p.end || []; // [];
     var upper = p.start || []; //[];
   
+    // console.log('handle event point', p.point, p.kind);
     // TODO: Don't include lower into upper or interior.
     var ucSegments = exclude(union(upper, interior), lower);
     var lcSegments = union(lower, interior);
@@ -231,10 +246,10 @@ function findIntersections(lines) {
     }
 
     sweepStatus.deleteSegments(lcSegments);
-    if (interior && interior.length > 0 && ucSegments && ucSegments.length > 1) {
-      // No need to reverse, since insertSegments drop them all anyway
-      // ucSegments.reverse();
-    }
+    // if (interior && interior.length > 0 && ucSegments && ucSegments.length > 1) {
+    //   // No need to reverse, since insertSegments drop them all anyway
+    //   // ucSegments.reverse();
+    // }
     sweepStatus.insertSegments(ucSegments, p.point);
 
     var sLeft, sRight;

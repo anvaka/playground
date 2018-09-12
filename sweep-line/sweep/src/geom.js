@@ -1,4 +1,4 @@
-export const EPS = 0.0001;
+export const EPS = Number.EPSILON;
 
 export function isInterior(segment, point) {
   var pdx = point.x - segment.start.x;
@@ -27,7 +27,7 @@ export function samePoint(a, b) {
 export function getIntersectionXPoint(segment, xPos, yPos) {
   var dy1 = yPos - segment.start.y;
   if (Math.abs(dy1) < EPS) {
-    if (xPos < segment.start.x) return segment.start.x;
+    if (xPos <= segment.start.x) return segment.start.x;
     if (xPos > segment.end.x) return segment.end.x;
     return xPos;
     // if (xPos > segment.start.x) return segment.end.x;

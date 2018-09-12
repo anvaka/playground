@@ -11,6 +11,7 @@
   "dependencies": {
     "avl": "^1.4.3",
     "ngraph.random": "^0.1.0",
+    "node-avl-tree": "^0.1.1",
     "splaytree": "^2.0.2",
     "vue": "^2.5.17",
     "w-gl": "^0.2.0"
