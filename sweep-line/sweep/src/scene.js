@@ -33,7 +33,7 @@ function createScene(lines, canvas) {
   });
 
   scene.appendChild(linesEl);
-  var isAsync = true;
+  var isAsync = false;
   var next;
   var options = isAsync ? {
     control: {
@@ -42,7 +42,7 @@ function createScene(lines, canvas) {
       },
       step(sweepStatus, eventQueue, results) {
         drawSweepStatus(sweepStatus);
-        console.log('Event queue size: ', eventQueue.size)
+        console.log('Event queue size: ', eventQueue.size())
       }
     }
   } : {};
@@ -72,11 +72,22 @@ function createScene(lines, canvas) {
     if (status.point) {
       scene.removeChild(status.point);
     }
+
     status.point = new wgl.PointCollection(1);
     var ui = status.point.add(pt);
     ui.setColor({r: 1, g: 0, b: 0});
     scene.appendChild(status.point);
 
+    // status line
+    if (status.line) {
+      scene.removeChild(status.line);
+    }
+    status.line = new wgl.WireCollection(1);
+    status.line.color = {r: 0.1, g: 1.0, b: 1.0, a: 0.9};
+    status.line.add({ from: {
+      x: -100, y: pt.y
+    }, to: {x: 100, y: pt.y} });
+    scene.appendChild(status.line);
 
     // lines
     if (status.segments) {
