@@ -150,6 +150,8 @@ function findIntersections(lines, options) {
     };
   }
 
+  var printDebug = options && options.debug;
+
   while (!eventQueue.isEmpty()) {
     var eventPoint = eventQueue.pop();
     handleEventPoint(eventPoint);
@@ -197,7 +199,9 @@ function findIntersections(lines, options) {
     var lower = p.end || []; // [];
     var upper = p.start || []; //[];
   
-    // console.log('handle event point', p.point, p.kind);
+    // if (printDebug) {
+    //   console.log('handle event point', p.point, p.kind);
+    // }
     // TODO: Don't include lower into upper or interior.
     var ucSegments = exclude(union(upper, interior), lower);
     var lcSegments = union(lower, interior);
@@ -213,6 +217,10 @@ function findIntersections(lines, options) {
     //   // ucSegments.reverse();
     // }
     sweepStatus.insertSegments(ucSegments, p.point);
+
+    if (printDebug) {
+      sweepStatus.checkDuplicate();
+    }
 
     var sLeft, sRight;
 
@@ -235,6 +243,11 @@ function findIntersections(lines, options) {
       findNewEvent(sLeft, leftMostSegment.data, p);
 
       var rightMostSegment = sweepStatus.getRightMostSegment(ucSegments, p.point);
+      if (!rightMostSegment) {
+        console.error('Segment is missing. Results are not 100% accurate');
+        // TODO: This
+        return;
+      }
 
       leftRight = sweepStatus.getLeftRight(rightMostSegment); 
       sRight = leftRight.right;

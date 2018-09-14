@@ -6,11 +6,10 @@ import {samePoint, isInterior, getIntersectionXPoint} from './geom'
 export default function createSweepStatus() {
   var lastPointY;
   var lastPointX;
-  var status = new SplayTree(compareKeys, /* noDupes: */ false);
+  var status = new SplayTree(compareKeys);
   //var status = new AVLTree(compareKeys); //, /* noDupes: */ true);
 
   return {
-    findSegmentsThatContain,
     deleteSegments,
     insertSegments,
     getLeftRight,
@@ -18,13 +17,15 @@ export default function createSweepStatus() {
     getLeftMostSegment,
     getRightMostSegment,
     status,
+    checkDuplicate,
+    printStatus,
     getLastPoint() {
       return {x: lastPointX, y: lastPointY};
     }
   }
 
   function compareKeys(a, b) {
-    return compareSegments(a.segment, b.segment)
+    return compareSegments(a, b)
   }
 
   function compareSegments(a, b) {
@@ -57,42 +58,38 @@ export default function createSweepStatus() {
 
   function getLeftMostSegment(segments) {
     if (segments.length === 1) {
-      return status.find(segments[0].key);
+      return status.find(segments[0]);
     }
 
     segments.sort((a, b) => compareSegments(a, b, true));
-    return status.find(segments[0].key);
+    return status.find(segments[0]);
   }
 
   function getRightMostSegment(segments) {
     if (segments.length === 1) {
-      return status.find(segments[0].key);
+      return status.find(segments[0]);
     }
 
     segments.sort((a, b) => compareSegments(a, b, true));
-    return status.find(segments[segments.length - 1].key);
+    return status.find(segments[segments.length - 1]);
   }
 
   function getLeftRightPoint(p) {
     var all = status.keys()
-    var right, left, leftKey;
+    var right, left;
     for (var i = 0; i < all.length; ++i) {
       var currentKey = all[i];
-      var x = getIntersectionXPoint(currentKey.segment, p.x, p.y);
-      // currentKey.x = x;
+      var x = getIntersectionXPoint(currentKey, p.x, p.y);
       if (x > p.x && !right) {
-        // var node = status.findStatic(currentKey);
-        // right = node.data
-        right = currentKey.segment;
+        right = currentKey;
       } else if (x < p.x) {
-        leftKey = currentKey;
+        left = currentKey;
       }
     }
 
-    left = leftKey && status.find(leftKey);
     return {
-      left: left && left.data,
-      right
+      left: left,
+      right: right
     };
   }
 
@@ -101,9 +98,34 @@ export default function createSweepStatus() {
     var right = status.next(node);
     
     return {
-      left: left && left.data,
-      right: right && right.data
+      left: left && left.key,
+      right: right && right.key
     }
+  }
+
+  function checkDuplicate() {
+    var prev;
+    status.forEach(node => {
+      var current = node.key;
+
+      if (prev) {
+        if (samePoint(prev.start, current.start) && samePoint(prev.end, current.end)) {
+          console.error('Duplicate key in the status! This may be caused by Floating Point rounding error');
+          debugger;
+        }
+      }
+      // var x = getIntersectionXPoint(node.key, lastPointX, lastPointY);
+      prev = current;
+    })
+
+  }
+
+  function printStatus() {
+    console.log('status line: ', lastPointX, lastPointY);
+    status.forEach(node => {
+      var x = getIntersectionXPoint(node.key, lastPointX, lastPointY);
+      console.log(x + ' ' + node.key.name);
+    })
   }
 
   function insertSegments(segments, sweepLinePos) {
@@ -115,16 +137,8 @@ export default function createSweepStatus() {
     // all.forEach(insertOneSegment);
     segments.forEach(insertOneSegment);
 
-    console.log('status line: ', sweepLinePos.x, sweepLinePos.y)
-    status.forEach(node => {
-      var x = getIntersectionXPoint(node.data, lastPointX, lastPointY);
-      console.log(x + ' ' + node.data.name);
-    })
-
     function insertOneSegment(segment) {
-      var key = {segment};
-      status.insert(key, segment);
-      segment.key = key;
+      status.add(segment, segment);
     }
   }
 
@@ -133,26 +147,7 @@ export default function createSweepStatus() {
   }
 
   function deleteOneSegment(segment) {
-    var node = status.remove(segment.key);
+    var node = status.remove(segment);
       //if (!node) throw new Error('wtf?')
-  }
-
-  function findSegmentsThatContain(point) {
-    var lower = [];
-    var interior = [];
-
-    // TODO: Don't need to do full scan
-    status.forEach(node => {
-      var current = node.data;
-      // TODO: Don't do this
-      current.key = node.key;
-      if (samePoint(current.end, point)) {
-        lower.push(current)
-      } else if (isInterior(current, point)) {
-        interior.push(current)
-      }
-    })
-
-    return {lower, interior};
   }
 }

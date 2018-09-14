@@ -20,10 +20,6 @@ export function isInterior(segment, point) {
   return true;
 }
 
-export function samePoint(a, b) {
-  return Math.abs(a.x - b.x) < EPS && Math.abs(a.y - b.y) < EPS;
-}
-
 export function getIntersectionXPoint(segment, xPos, yPos) {
   
   var dy1 = segment.start.y - yPos;
@@ -48,7 +44,7 @@ export function getIntersectionXPoint(segment, xPos, yPos) {
   var xOffset; 
   if (dy1 >= dy2) {
     xOffset = dy1 * (dx / dy); 
-    return round(segment.start.x - xOffset); //Math.round((segment.start.x + xOffset) * 10000000)/10000000;
+    return (segment.start.x - xOffset); //Math.round((segment.start.x + xOffset) * 10000000)/10000000;
   } 
   xOffset = dy2 * (dx / dy);
   return (segment.end.x + xOffset); //Math.round((segment.start.x + xOffset) * 10000000)/10000000;
@@ -101,29 +97,22 @@ export function intersectBelowP(a, b, p) {
   t = ( s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y);
 
   if (s >= 0 && s <= 1 && t >= 0 && t <= 1) {
-    var xValue = p0_x + (t * s1_x);
-    var yValue = p0_y + (t * s1_y);
-
-    // if (yValue < p.y || ((Math.abs(yValue - p.y) < EPS) && p.x < xValue)) {
-      // Collision detected
-      // if (
-      //   same(xValue, p0_x, yValue, p0_y) ||
-      //   same(xValue, p1_x, yValue, p1_y) ||
-      //   same(xValue, p2_x, yValue, p2_y) ||
-      //   same(xValue, p3_x, yValue, p3_y)) return;
-
-      return {
-        x: round(xValue),
-        y: round(yValue)
-      }
-    // }
+    return {
+      x: p0_x + (t * s1_x),
+      y: p0_y + (t * s1_y)
+    }
   }
 }
 
 export function round(x) {
-  return Math.round(x * 1000) / 1000;
+  return x;
+  // return Math.round(x * 1000) / 1000;
 }
 
 export function same(x0, x1, y0, y1) {
   return Math.abs(x0 - x1) < EPS && Math.abs(y0 - y1) < EPS;
+}
+
+export function samePoint(a, b) {
+  return Math.abs(a.x - b.x) < EPS && Math.abs(a.y - b.y) < EPS;
 }

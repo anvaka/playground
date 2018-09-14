@@ -40,134 +40,48 @@ new Vue({
 
 
 function generateLines() {
- var lines = getCircularLines(10, 50);
-//  lines = [
-//   {
-//     name: 'a',
-//     "start": {
-//       "x": -1.3279102370142937,
-//       "y": 0.6754067912697792
-//     },
-//     "end": {
-//       "x": -2.257566899061203,
-//       "y": -2.65141598880291
-//     }
-//   },
-//   {
-//     name: 'c',
-//     "start": {
-//       "x": 1.2514698877930641,
-//       "y": 3.774871490895748
-//     },
-//     "end": {
-//       "x": -3.551577106118202,
-//       "y": -3.361998274922371
-//     }
-//   },
-//   {
-//     name: 'd',
-//     "start": {
-//       "x": -0.9909890964627266,
-//       "y": 1.927625648677349
-//     },
-//     "end": {
-//       "x": -1.3501517847180367,
-//       "y": 0.2368326112627983
-//     }
-//   },
-//   {
-//     name: 'f',
-//     "start": {
-//       "x": 0.8007890731096268,
-//       "y": 3.2876522094011307
-//     },
-//     "end": {
-//       "x": -4.0684183314442635,
-//       "y": -2.3970097675919533
-//     }
-//   }
-// ]
-//  lines = [
-//   {
-//     name: 'a',
-//     "start": {
-//       "x": -1.3279102370142937,
-//       "y": 0.6754067912697792
-//     },
-//     "end": {
-//       "x": -2.257566899061203,
-//       "y": -2.65141598880291
-//     }
-//   },
-//   {
-//     name: 'b',
-//     "start": {
-//       "x": 0.33048462122678757,
-//       "y": -1.1374526843428612
-//     },
-//     "end": {
-//       "x": -3.272508643567562,
-//       "y": -3.544159308075905
-//     }
-//   },
-//   {
-//     name: 'c',
-//     "start": {
-//       "x": 1.2514698877930641,
-//       "y": 3.774871490895748
-//     },
-//     "end": {
-//       "x": -3.551577106118202,
-//       "y": -3.361998274922371
-//     }
-//   },
-//   {
-//     name: 'd',
-//     "start": {
-//       "x": -0.9909890964627266,
-//       "y": 1.927625648677349
-//     },
-//     "end": {
-//       "x": -1.3501517847180367,
-//       "y": 0.2368326112627983
-//     }
-//   },
-//   {
-//     name: 'e',
-//     "start": {
-//       "x": 1.485574096441269,
-//       "y": -1.0715825855731964
-//     },
-//     "end": {
-//       "x": -4.127512313425541,
-//       "y": -2.9448340833187103
-//     }
-//   },
-//   {
-//     name: 'f',
-//     "start": {
-//       "x": 0.8007890731096268,
-//       "y": 3.2876522094011307
-//     },
-//     "end": {
-//       "x": -4.0684183314442635,
-//       "y": -2.3970097675919533
-//     }
-//   }
-// ]
-// var lines = getRandomLines(500, 100); // 
-  // var lines = require('./hugeCollection.json')
-  window.lines = lines;
+ var lines = getCircularLines(8, 30);
+// var lines = getStarLines(80, 30);
+// var lines = getRandomLines(50, 100); // 
+ //var lines = require('./hugeCollection.json')
+ window.lines = lines;
 
+  return lines;
+}
+
+function getStarLines(count, length) {
+  // var lines = [];
+
+  // var lines = [
+  //   {start: {x: 1, y: 1}, end: {x: -1, y: -1}, name: 'a1'},
+  //   {start: {x: 1, y: 1}, end: {x: -3, y: -3}, name: 'a1'},
+  //   {start: {x: -3, y: 0}, end: {x: 3, y: 0.4}, name: 'a1'},
+  // ]
+  // return lines;
+
+  // var da = (Math.PI/6)/count;
+  // var startFrom = -Math.PI/2 - da * count/2;
+
+  // for (var i = 1; i < count; ++i) {
+  //   var start = {x: 0, y: 0};
+  //   var a = startFrom + i * da;
+  //   var end = {
+  //     x: length * Math.cos(a),
+  //     y: length * Math.sin(a)
+  //   };
+  //   lines.push({start, end});
+  // }
+  // lines.push({start: {x: -1000, y: -length/2}, end: {x: 1000, y: -length/2}})
+  // lines = lines.concat(getRandomLines(40, 100));
   return lines;
 }
 
 function getCircularLines(count = 10, range = 100) {
   // var lines = [
-  //   {start: {x: 0, y: 50}, end: {x: 0, y: -50}, name: 'a'},
-  //   {start: {x: 0, y: 0}, end: {x: 50, y: 0}, name: 'c'},
-  //   {start: {x: 0, y: 50}, end: {x: 50, y: 0}, name: 'b'},
-  //   {start: {x: 0, y: -50}, end: {x: 50, y: 0}, name: 'd'},
+  //   {start: {x: 10.607, y: 10.607}, end: {x: -15, y: 0}, name: 'a1'},
+  //   {start: {x: 0, y: 15}, end: {x: 10.607, y: -10.607}, name: 'a0'},
+  //   {start: {x: -5, y: 6}, end: {x: -5, y: 7.5}, name: 'b'},
+  //   {start: {x: 10, y: -15}, end: {x: 10, y: 14}, name: 'c'},
   // ]
   // return lines;
 
@@ -184,18 +98,16 @@ function getCircularLines(count = 10, range = 100) {
         var ex = Math.cos(angleStep * j) * range / 2;
         var ey = Math.sin(angleStep * j) * range / 2;
         var name = `${i},${j}`;
-        if (name === '2,5') debugger;
-        if (Math.abs(ey - y) < 0.001) {
-          ey += 0.1;
-          y -= 0.1;
-        }
         var l = {
           name: name,
           start: {x: x, y: y},
           end: {x: ex, y: ey}
         };
+        if (name === '2,7' || name === '1,4') {
+          console.log(l);
+        }
         var sKey = getKey(i, j);
-        if (!seen.has(sKey)) {
+        if (!seen.has(sKey)) {//  && (name == '2,5' || name=='4,5')) {
           lines.push(l);
           seen.add(sKey)
         }

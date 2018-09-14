@@ -35,17 +35,22 @@ function createScene(lines, canvas) {
   scene.appendChild(linesEl);
   var isAsync = 0;
   var next;
+  var doneCalled = false;
   var options = isAsync ? {
     control: {
       done(intersections) {
+        doneCalled = true;
         drawIntersections(intersections);
       },
       step(sweepStatus, eventQueue, results) {
         drawSweepStatus(sweepStatus);
         console.log('Event queue size: ', eventQueue.size())
       }
-    }
-  } : {};
+    },
+    debug: true
+  } : {
+    debug: true
+  };
 
   var status = {};
   console.time('run')
@@ -56,8 +61,8 @@ function createScene(lines, canvas) {
     var idx = 0;
 
     next = () => {
+      if (doneCalled) return;
       console.log('next ', idx);
-      if (idx === 121) debugger;
       intersections.next();
       idx += 1;
     }
@@ -85,8 +90,8 @@ function createScene(lines, canvas) {
     status.line = new wgl.WireCollection(1);
     status.line.color = {r: 0.1, g: 1.0, b: 1.0, a: 0.9};
     status.line.add({ from: {
-      x: -100, y: pt.y
-    }, to: {x: 100, y: pt.y} });
+      x: -1000, y: pt.y
+    }, to: {x: 1000, y: pt.y} });
     scene.appendChild(status.line);
 
     // lines
@@ -97,7 +102,7 @@ function createScene(lines, canvas) {
     status.segments = new wgl.WireCollection(segments.length);
     status.segments.color = {r: 0.1, g: 1.0, b: 0.0, a: 0.9};
     segments.forEach(s => {
-      status.segments.add({ from: s.segment.start, to: s.segment.end });
+      status.segments.add({ from: s.start, to: s.end });
     })
 
     scene.appendChild(status.segments);
