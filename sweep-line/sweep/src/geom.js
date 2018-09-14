@@ -1,4 +1,4 @@
-export const EPS = Number.EPSILON;
+export const EPS = 1e-10;
 
 export function isInterior(segment, point) {
   var pdx = point.x - segment.start.x;
@@ -14,7 +14,7 @@ export function isInterior(segment, point) {
   var dotProduct = pdx * dx + dy * pdy;
   if (dotProduct < 0) return false;
 
-  var squaredlengthba = dx * dx + dy * dy;
+  var squaredlengthba = dx * dx + dy * dy
   if (dotProduct > squaredlengthba) return false;
 
   return true;
@@ -25,38 +25,64 @@ export function samePoint(a, b) {
 }
 
 export function getIntersectionXPoint(segment, xPos, yPos) {
-  var dy1 = yPos - segment.start.y;
-  if (Math.abs(dy1) < EPS) {
-    if (xPos <= segment.start.x) return segment.start.x;
-    if (xPos > segment.end.x) return segment.end.x;
-    return xPos;
-    // if (xPos > segment.start.x) return segment.end.x;
-    return segment.start.x;
-    // return xPos + 0.0001;
-    // return Number.MAX_SAFE_INTEGER;
-    //return segment.start.x;
-    // return segment.end.x;
-  }
-
-  var dx = segment.end.x - segment.start.x;
-  var dy = segment.end.y - segment.start.y;
   
-  if (Math.abs(dy) < EPS) {
-    if (xPos < segment.start.x) return segment.start.x;
-    if (xPos > segment.end.x) return segment.end.x;
-    return xPos;
-    // if (xPos > segment.start.x) return segment.end.x;
-    // return segment.start.x;
+  var dy1 = segment.start.y - yPos;
+  var dy2 = yPos - segment.end.y;
+  var dy = segment.end.y - segment.start.y;
+  if (Math.abs(dy1) < EPS) {
+    // The segment starts on the sweepline
+    if (Math.abs(dy) < EPS) {
+      // the segment is horizontal. Intersection is at the point
+      if (xPos <= segment.start.x) return segment.start.x;
+      if (xPos > segment.end.x) return segment.end.x;
+      return xPos;
+    }
     return segment.start.x;
-    // return segment.start.x; // This?
-    // return Number.MAX_SAFE_INTEGER;
-    //throw new Error('horizontal segment that does not intersect');
-    // return segment.end.x; // This?
   }
 
-  var xOffset = dx * dy1 / dy;
-  return Math.round((segment.start.x + xOffset) * 10000000)/10000000;
+  
+  // if (Math.abs(dy) < EPS) {
+  //   throw new Error('vertical segment does not intersect?')
+  // } 
+  var dx = (segment.end.x - segment.start.x); 
+  var xOffset; 
+  if (dy1 >= dy2) {
+    xOffset = dy1 * (dx / dy); 
+    return round(segment.start.x - xOffset); //Math.round((segment.start.x + xOffset) * 10000000)/10000000;
+  } 
+  xOffset = dy2 * (dx / dy);
+  return (segment.end.x + xOffset); //Math.round((segment.start.x + xOffset) * 10000000)/10000000;
 }
+
+// export function getIntersectionXPoint(segment, xPos, yPos) {
+//   var dy1 = yPos - segment.start.y;
+//   var dy2 = segment.end.y - yPos;
+
+//   var dy = segment.end.y - segment.start.y;
+//   if (Math.abs(dy1) < EPS) {
+//     // The segment starts on the sweepline
+//     if (Math.abs(dy) < EPS) {
+//       // the segment is horizontal. Intersection is at the point
+//       if (xPos <= segment.start.x) return segment.start.x;
+//       if (xPos > segment.end.x) return segment.end.x;
+//       return xPos;
+//     }
+//     return segment.start.x;
+//   }
+
+  
+//   // if (Math.abs(dy) < EPS) {
+//   //   throw new Error('vertical segment does not intersect?')
+//   // }
+//   var dx = segment.end.x - segment.start.x;
+//   var xOffset;
+//   if (dy1 >= dy2) {
+//     xOffset = dy1 * dx / dy;
+//     return round(segment.start.x + xOffset); //Math.round((segment.start.x + xOffset) * 10000000)/10000000;
+//   }
+//   xOffset = dy2 * dx / dy;
+//   return round(segment.end.x - xOffset); //Math.round((segment.start.x + xOffset) * 10000000)/10000000;
+// }
 
 export function intersectBelowP(a, b, p) {
   //  https://stackoverflow.com/a/1968345/125351
@@ -87,11 +113,15 @@ export function intersectBelowP(a, b, p) {
       //   same(xValue, p3_x, yValue, p3_y)) return;
 
       return {
-        x: xValue,
-        y: yValue
+        x: round(xValue),
+        y: round(yValue)
       }
     // }
   }
+}
+
+export function round(x) {
+  return Math.round(x * 1000) / 1000;
 }
 
 export function same(x0, x1, y0, y1) {

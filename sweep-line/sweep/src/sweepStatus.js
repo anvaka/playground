@@ -4,11 +4,10 @@ import {samePoint, isInterior, getIntersectionXPoint} from './geom'
 
 
 export default function createSweepStatus() {
-  var lastPointY, oldPointY;
-  var lastPointX, oldPointX;
-  var useSegmentPoint = false;
+  var lastPointY;
+  var lastPointX;
   var status = new SplayTree(compareKeys, /* noDupes: */ false);
- // var status = new AVLTree(compareKeys, /* noDupes: */ true);
+  //var status = new AVLTree(compareKeys); //, /* noDupes: */ true);
 
   return {
     findSegmentsThatContain,
@@ -33,15 +32,22 @@ export default function createSweepStatus() {
 
     var lpx = lastPointX;
     var lpy = lastPointY
-    if (useSegmentPoint) {
-      lpx = oldPointX;
-      lpy = oldPointY;
-    }
+
     var ak = getIntersectionXPoint(a, lpx, lpy);
     var bk = getIntersectionXPoint(b, lpx, lpy);
 
     var res = ak - bk;
-    if (Math.abs(res) < Number.EPSILON) {
+    if (Math.abs(res) < 0.0000001) {
+
+      var day = a.start.y - a.end.y;
+      // move horizontal to end
+      if (Math.abs(day) < 0.0000001) {
+        return 1;
+      }
+      var dby = b.start.y - b.end.y;
+      if (Math.abs(dby) < 0.0000001) {
+        return -1;
+      }
       var aAngle = Math.atan2(a.start.y - a.end.y, a.start.x - a.end.x);
       var bAngle = Math.atan2(b.start.y - b.end.y, b.start.x - b.end.x);
       return aAngle - bAngle;
@@ -54,7 +60,7 @@ export default function createSweepStatus() {
       return status.find(segments[0].key);
     }
 
-    segments.sort(compareSegments);
+    segments.sort((a, b) => compareSegments(a, b, true));
     return status.find(segments[0].key);
   }
 
@@ -63,19 +69,11 @@ export default function createSweepStatus() {
       return status.find(segments[0].key);
     }
 
-    segments.sort(compareSegments);
+    segments.sort((a, b) => compareSegments(a, b, true));
     return status.find(segments[segments.length - 1].key);
   }
 
   function getLeftRightPoint(p) {
-    // var current = status._root;
-    // if (!current) return {left: null, right: null};
-    // var keyVal = getIntersectionXPoint(current.key.segment, lastPoint);
-    // // Find the left and right neighbours of p
-    // if (p.x < keyVal) {
-    //   current = current.left;
-    // }
-
     var all = status.keys()
     var right, left, leftKey;
     for (var i = 0; i < all.length; ++i) {
@@ -109,56 +107,33 @@ export default function createSweepStatus() {
   }
 
   function insertSegments(segments, sweepLinePos) {
+    lastPointY = sweepLinePos.y;
+    lastPointX = sweepLinePos.x;
+
     // var all = status.values();
     // status.clear();
-
     // all.forEach(insertOneSegment);
     segments.forEach(insertOneSegment);
 
-    // console.log('status line: ')
-    // status.forEach(node => {
-    //   var x = getIntersectionXPoint(node.data, lastPointX, lastPointY);
-    //   console.log(node.key.x + '#' + x + ' ' + node.data.name);
-    // })
+    console.log('status line: ', sweepLinePos.x, sweepLinePos.y)
+    status.forEach(node => {
+      var x = getIntersectionXPoint(node.data, lastPointX, lastPointY);
+      console.log(x + ' ' + node.data.name);
+    })
 
     function insertOneSegment(segment) {
-      if (segment.name == '2,5') {
-        console.log(segment, '+');
-      }
-      oldPointX = lastPointX;
-      oldPointY = lastPointY;
-      lastPointY = sweepLinePos.y;
-      //if (interior) {
-        // lastPointY -= 0.0001;// Number.EPSILON
-      //}
-      lastPointX = sweepLinePos.x;
-      var x = getIntersectionXPoint(segment, lastPointX, lastPointY);
-      var key = {x, segment};
-      // segment.key = key;
-      // var node = status.find(key);
-      // while (node) {
-      //   order += 1;
-      //   key = {x, order, segment};
-      //   node = status.find(key);
-      // }
-
+      var key = {segment};
       status.insert(key, segment);
       segment.key = key;
     }
   }
 
   function deleteSegments(segments) {
-    // useSegmentPoint = true;
     segments.forEach(deleteOneSegment);
-    // useSegmentPoint = false;
   }
 
   function deleteOneSegment(segment) {
-    var isTest = segment.name == '2,5';
-    if (isTest) {
-      console.log(segment, '-');
-    }
-    var node = status.remove(segment.key, isTest);
+    var node = status.remove(segment.key);
       //if (!node) throw new Error('wtf?')
   }
 

@@ -2,7 +2,7 @@ export default findIntersections;
 import SplayTree from 'splaytree';
 import AVLTree from 'avl';
 
-import {intersectBelowP, EPS, samePoint} from './geom';
+import {intersectBelowP, EPS, round} from './geom';
 import createSweepStatus from './sweepStatus';
 
 var START_ENDPOINT = 1;
@@ -72,8 +72,7 @@ function createFoundQueue() {
   }
 
   function keyPoint(p) {
-    return Math.round(p.x * 1000000)/1000000 + ';' +
-          Math.round(p.y * 1000000)/1000000;
+    return round(p.x)+ ';' + round(p.y);
   }
 
   function toArray() {
@@ -86,43 +85,6 @@ function createFoundQueue() {
           y: Number.parseFloat(parts[1])
         },
         segments: value
-      });
-    })
-    return foundIntersections;
-  }
-}
-
-function createSplayFoundQueue() {
-  const q = new SplayTree(byY)
-
-  return {
-    push,
-    has,
-    toArray
-  }
-
-  function push(point, segments) {
-    var current = q.find(point);
-    if (current) {
-      current.data.concat(segments);
-    } else {
-      q.add(point, segments);
-    }
-  }
-
-  function has(point) {
-    return q.find(point);
-  }
-
-  function toArray() {
-    var foundIntersections = []
-    q.forEach(node => {
-      foundIntersections.push({
-        point: {
-          x: node.key.x,
-          y: node.key.y
-        },
-        segments: node.data
       });
     })
     return foundIntersections;
@@ -179,7 +141,7 @@ function byY(a, b) {
 function findIntersections(lines, options) {
   var eventQueue = createEventQueue();
   var sweepStatus = createSweepStatus();
-  var results = false ? createSplayFoundQueue() : createFoundQueue();
+  var results = createFoundQueue();
 
   lines.forEach(insertEndpointsIntoEventQueue);
   if (options && options.control) {
@@ -298,12 +260,10 @@ function findIntersections(lines, options) {
   function insertEndpointsIntoEventQueue(segment) {
     var start = segment.start;
     var end = segment.end;
-
-    if (Math.abs(start.x - end.x) < EPS) {
-      console.warn('Cannot insert horizontal segment :(');
-      start.x += 0.1;
-      end.x -= 0.1;
-    }
+    start.x = round(start.x);
+    start.y = round(start.y);
+    end.x = round(end.x);
+    end.y = round(end.y);
 
     if ((start.y < end.y) || (
         (start.y === end.y) && (start.x > end.x))

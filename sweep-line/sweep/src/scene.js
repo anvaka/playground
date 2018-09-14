@@ -33,7 +33,7 @@ function createScene(lines, canvas) {
   });
 
   scene.appendChild(linesEl);
-  var isAsync = false;
+  var isAsync = 0;
   var next;
   var options = isAsync ? {
     control: {
