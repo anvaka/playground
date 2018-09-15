@@ -12,6 +12,9 @@ var INTERSECT_ENDPOINT = 3;
 class SweepEvent {
   constructor(kind, point, segment, oneMore) {
     this.kind = kind;
+    if (Math.abs(point.x) < EPS) point.x = 0;
+    if (Math.abs(point.y) < EPS) point.y = 0;
+
     this.point = point;
     if (kind === START_ENDPOINT) {
       this.start = [segment];
@@ -128,6 +131,7 @@ function createEventQueue() {
 function byY(a, b) {
   // decreasing Y 
   var res = b.y - a.y;
+  // TODO: This might mess up the status tree.
   if (Math.abs(res) < EPS) {
     // increasing x.
     res = a.x - b.x;
@@ -150,7 +154,7 @@ function findIntersections(lines, options) {
     };
   }
 
-  var printDebug = options && options.debug;
+  var printDebug = false; // options && options.debug;
 
   while (!eventQueue.isEmpty()) {
     var eventPoint = eventQueue.pop();
@@ -212,10 +216,6 @@ function findIntersections(lines, options) {
     }
 
     sweepStatus.deleteSegments(lcSegments);
-    // if (interior && interior.length > 0 && ucSegments && ucSegments.length > 1) {
-    //   // No need to reverse, since insertSegments drop them all anyway
-    //   // ucSegments.reverse();
-    // }
     sweepStatus.insertSegments(ucSegments, p.point);
 
     if (printDebug) {
@@ -238,9 +238,11 @@ function findIntersections(lines, options) {
     } else {
       var leftMostSegment = sweepStatus.getLeftMostSegment(ucSegments, p.point);
 
-      leftRight = sweepStatus.getLeftRight(leftMostSegment); 
-      sLeft = leftRight.left;
-      findNewEvent(sLeft, leftMostSegment.data, p);
+      findNewEvent(
+        sweepStatus.getLeft(leftMostSegment),
+        leftMostSegment.data,
+        p
+      );
 
       var rightMostSegment = sweepStatus.getRightMostSegment(ucSegments, p.point);
       if (!rightMostSegment) {
@@ -249,9 +251,7 @@ function findIntersections(lines, options) {
         return;
       }
 
-      leftRight = sweepStatus.getLeftRight(rightMostSegment); 
-      sRight = leftRight.right;
-      findNewEvent(rightMostSegment.data, sRight, p);
+      findNewEvent(rightMostSegment.data, sweepStatus.getRight(rightMostSegment), p);
     }
   }
 
@@ -259,7 +259,12 @@ function findIntersections(lines, options) {
     if (!left || !right) return;
 
     var intersection = intersectBelowP(left, right, p.point);
-    if (intersection && intersection.y <= p.point.y && !results.has(intersection)) {
+    if (!intersection) {
+      return;
+    }
+    var dy = p.point.y - intersection.y
+    if (dy < 0) return;
+    if (!results.has(intersection)) {
       eventQueue.push(
         new SweepEvent(INTERSECT_ENDPOINT, intersection, left, right)
       );

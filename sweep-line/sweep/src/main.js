@@ -40,9 +40,9 @@ new Vue({
 
 
 function generateLines() {
- var lines = getCircularLines(8, 30);
+ var lines = getCircularLines(10, 30);
 // var lines = getStarLines(80, 30);
-// var lines = getRandomLines(50, 100); // 
+// var lines = getRandomLines(100, 100); // 
  //var lines = require('./hugeCollection.json')
  window.lines = lines;
 

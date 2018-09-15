@@ -33,7 +33,7 @@ function createScene(lines, canvas) {
   });
 
   scene.appendChild(linesEl);
-  var isAsync = 0;
+  var isAsync = 1;
   var next;
   var doneCalled = false;
   var options = isAsync ? {
@@ -44,7 +44,7 @@ function createScene(lines, canvas) {
       },
       step(sweepStatus, eventQueue, results) {
         drawSweepStatus(sweepStatus);
-        console.log('Event queue size: ', eventQueue.size())
+        // console.log('Event queue size: ', eventQueue.size())
       }
     },
     debug: true
@@ -62,7 +62,7 @@ function createScene(lines, canvas) {
 
     next = () => {
       if (doneCalled) return;
-      console.log('next ', idx);
+      // console.log('next ', idx);
       intersections.next();
       idx += 1;
     }

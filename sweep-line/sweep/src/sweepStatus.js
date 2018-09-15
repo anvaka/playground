@@ -1,18 +1,20 @@
 import SplayTree from 'splaytree';
 import AVLTree from 'avl';
-import {samePoint, isInterior, getIntersectionXPoint} from './geom'
+import {samePoint, EPS, getIntersectionXPoint} from './geom'
 
 
 export default function createSweepStatus() {
   var lastPointY;
   var lastPointX;
-  var status = new SplayTree(compareKeys);
-  //var status = new AVLTree(compareKeys); //, /* noDupes: */ true);
+  var status = new SplayTree(compareSegments);
+  //var status = new AVLTree(compareSegments); //, /* noDupes: */ true);
+  window.elapsed = 0;
 
   return {
     deleteSegments,
     insertSegments,
-    getLeftRight,
+    getLeft,
+    getRight,
     getLeftRightPoint,
     getLeftMostSegment,
     getRightMostSegment,
@@ -22,10 +24,6 @@ export default function createSweepStatus() {
     getLastPoint() {
       return {x: lastPointX, y: lastPointY};
     }
-  }
-
-  function compareKeys(a, b) {
-    return compareSegments(a, b)
   }
 
   function compareSegments(a, b) {
@@ -61,7 +59,7 @@ export default function createSweepStatus() {
       return status.find(segments[0]);
     }
 
-    segments.sort((a, b) => compareSegments(a, b, true));
+    segments.sort((a, b) => compareSegments(a, b));
     return status.find(segments[0]);
   }
 
@@ -69,9 +67,14 @@ export default function createSweepStatus() {
     if (segments.length === 1) {
       return status.find(segments[0]);
     }
+    // Assuming getLeftMostSegment is called!
+    // Otherwise need to sort:
+    // segments.sort((a, b) => compareSegments(a, b));
 
-    segments.sort((a, b) => compareSegments(a, b, true));
-    return status.find(segments[segments.length - 1]);
+    // var now = performance.now();
+    var lastOne = segments[segments.length - 1];
+    var result = status.find(lastOne);
+    return result;
   }
 
   function getLeftRightPoint(p) {
@@ -93,14 +96,14 @@ export default function createSweepStatus() {
     };
   }
 
-  function getLeftRight(node) {
+  function getLeft(node) {
     var left = status.prev(node);
+    return left && left.key;
+  }
+
+  function getRight(node) {
     var right = status.next(node);
-    
-    return {
-      left: left && left.key,
-      right: right && right.key
-    }
+    return right && right.key;
   }
 
   function checkDuplicate() {
