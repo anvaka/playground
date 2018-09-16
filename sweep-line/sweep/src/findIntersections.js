@@ -263,7 +263,11 @@ function findIntersections(lines, options) {
       return;
     }
     var dy = p.point.y - intersection.y
-    if (dy < 0) return;
+    // TODO: should I add dy to intersection.y?
+    if (dy < -EPS) return;
+    if (Math.abs(intersection.x) < EPS) intersection.x = 0;
+    if (Math.abs(intersection.y) < EPS) intersection.y = 0;
+
     if (!results.has(intersection)) {
       eventQueue.push(
         new SweepEvent(INTERSECT_ENDPOINT, intersection, left, right)
