@@ -1,5 +1,21 @@
+var createRandom = require('ngraph.random');
+// var seed = +new Date();
+var seed = 1536687392180
+var random = createRandom(seed);
+
+export function getRandomLines(count = 4, range = 100) {
+  var lines = [];
+  for (var i = 0; i < count; ++i) {
+    lines.push({
+      start: {x: (random.nextDouble() - 0.5) * range, y: (random.nextDouble() - 0.5) * range},
+      end: {x: (random.nextDouble() - 0.5) * range, y: (random.nextDouble() - 0.5) * range}
+    });
+  }
+  return lines;
+}
+
 export function getCircularLines(count = 10, range = 100) {
-  var angleStep = 2*Math.PI / count;
+  var angleStep = 2 * Math.PI / count;
   var lines = [];
   var seen = new Set();
 

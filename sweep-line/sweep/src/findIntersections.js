@@ -1,7 +1,7 @@
 export default findIntersections;
 import SplayTree from 'splaytree';
 
-import {intersectBelowP, EPS, samePoint} from './geom';
+import {intersectSegments, EPS, samePoint} from './geom';
 import createSweepStatus from './sweepStatus';
 
 var START_ENDPOINT = 1;
@@ -220,8 +220,7 @@ function findIntersections(lines, options) {
       reportIntersection(p, union((lower, upper), interior));
     }
 
-    sweepStatus.deleteSegments(lower, p.point);
-    sweepStatus.deleteSegments(interior, p.point);
+    sweepStatus.deleteSegments(lower, interior, p.point);
     sweepStatus.insertSegments(interior, upper, p.point);
 
     if (printDebug) {
@@ -252,7 +251,7 @@ function findIntersections(lines, options) {
   function findNewEvent(left, right, p) {
     if (!left || !right) return;
 
-    var intersection = intersectBelowP(left, right, p.point);
+    var intersection = intersectSegments(left, right);
     if (!intersection) {
       return;
     }

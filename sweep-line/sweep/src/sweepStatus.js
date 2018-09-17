@@ -1,6 +1,5 @@
 import SplayTree from 'splaytree';
-import AVLTree from 'avl';
-import {samePoint, EPS, getIntersectionXPoint} from './geom'
+import {samePoint, getIntersectionXPoint} from './geom'
 
 
 export default function createSweepStatus() {
@@ -8,13 +7,20 @@ export default function createSweepStatus() {
   var lastPointX;
   var useBelow = false;
   var status = new SplayTree(compareSegments);
-  //var status = new AVLTree(compareSegments); //, /* noDupes: */ true);
+
+  // To save on GC we return mutable object.
+  var currentBoundary = {
+    beforeLeft: null,
+    left: null,
+    right: null,
+    afterRight: null,
+  }
+
+  var currentLeftRight = {left: null, right: null};
 
   return {
     deleteSegments,
     insertSegments,
-    getLeft,
-    getRight,
     getLeftRightPoint,
     getBoundarySegments,
     status,
@@ -25,30 +31,39 @@ export default function createSweepStatus() {
     }
   }
 
+  function pseudoAngle(dx, dy) {
+    // https://stackoverflow.com/questions/16542042/fastest-way-to-sort-vectors-by-angle-without-actually-computing-that-angle
+    var p = dx/(Math.abs(dx) + Math.abs(dy)) // -1 .. 1 increasing with x
+
+    if (dy < 0) return p - 1;  // -2 .. 0 increasing with x
+    return 1 - p               //  0 .. 2 decreasing with x
+  }
+
   function compareSegments(a, b) {
     if (a === b) return 0;
 
-    var lpx = lastPointX;
-    var lpy = lastPointY
-
-    var ak = getIntersectionXPoint(a, lpx, lpy);
-    var bk = getIntersectionXPoint(b, lpx, lpy);
+    var ak = getIntersectionXPoint(a, lastPointX, lastPointY);
+    var bk = getIntersectionXPoint(b, lastPointX, lastPointY);
 
     var res = ak - bk;
     if (Math.abs(res) < 0.0000001) {
-
       var day = a.start.y - a.end.y;
       // move horizontal to end
       if (Math.abs(day) < 0.0000001) {
         return useBelow ? -1 : 1;
       }
+
       var dby = b.start.y - b.end.y;
       if (Math.abs(dby) < 0.0000001) {
         return useBelow ? 1 : -1;
       }
-      var aAngle = Math.atan2(a.start.y - a.end.y, a.start.x - a.end.x);
-      var bAngle = Math.atan2(b.start.y - b.end.y, b.start.x - b.end.x);
-      return useBelow ? bAngle - aAngle : aAngle - bAngle;
+      var pa = pseudoAngle(day, a.start.x - a.end.x);
+      var pb = pseudoAngle(dby, b.start.x - b.end.x);
+      return useBelow ? pa - pb : pb - pa;
+      // Could also use:
+      // var aAngle = Math.atan2(a.start.y - a.end.y, a.start.x - a.end.x);
+      // var bAngle = Math.atan2(b.start.y - b.end.y, b.start.x - b.end.x);
+      // return useBelow ? bAngle - aAngle : aAngle - bAngle;
     }
     return res;
   }
@@ -81,54 +96,84 @@ export default function createSweepStatus() {
       cmp = compareSegments(rightMost, s);
       if (cmp < 0) rightMost = s;
     }
+
+    // at this point we have our left/right segments in the status.
+    // Let's find their prev/next elements and report them back:
     var left = status.find(leftMost);
     if (!left) {
       throw new Error('Left is missing. Precision error?');
     }
-    var beforeLeft = status.prev(left);
 
     var right = status.find(rightMost);
     if (!right) {
       throw new Error('Right is missing. Precision error?');
     }
 
-    var afterRight = right && status.next(right);
+    var beforeLeft = status.prev(left);
+    var afterRight = status.next(right);
 
-    return {
-      beforeLeft: beforeLeft && beforeLeft.key,
-      left: left.key,
-      right: right.key,
-      afterRight: afterRight && afterRight.key
-    }
+    currentBoundary.beforeLeft = beforeLeft && beforeLeft.key;
+    currentBoundary.left = left.key;
+    currentBoundary.right = right.key;
+    currentBoundary.afterRight = afterRight && afterRight.key;
+
+    return currentBoundary;
   }
 
   function getLeftRightPoint(p) {
+    var right, left,  x;
+    // var lastLeft;
+    // var current = status._root;
+    // var minX = Number.POSITIVE_INFINITY;
+    // var useNext = false;
+    // while (current) {
+    //   x = getIntersectionXPoint(current.key, p.x, p.y);
+    //   var dx = p.x - x;
+    //   if (dx >= 0) {
+    //     if (dx < minX) {
+    //       minX = dx;
+    //       lastLeft = current;
+    //       current = current.left;
+    //       useNext = false;
+    //     } else {
+    //       break;
+    //     }
+    //   } else {
+    //     if (-dx < minX) {
+    //       useNext = true;
+    //       minX = -dx;
+    //       lastLeft = current;
+    //       current = current.right;
+    //     } else {
+    //       break;
+    //     }
+    //   }
+    // }
+    // if (useNext) {
+    //   lastLeft = status.next(lastLeft);
+    // }
+
+    // currentLeftRight.left = lastLeft && lastLeft.key
+    // var next = lastLeft && status.next(lastLeft);
+    // currentLeftRight.right = next && next.key
+    // return currentLeftRight;
+
     var all = status.keys()
-    var right, left;
     for (var i = 0; i < all.length; ++i) {
-      var currentKey = all[i];
-      var x = getIntersectionXPoint(currentKey, p.x, p.y);
+      var segment = all[i];
+      x = getIntersectionXPoint(segment, p.x, p.y);
       if (x > p.x && !right) {
-        right = currentKey;
+        right = segment;
+        break;
       } else if (x < p.x) {
-        left = currentKey;
+        left = segment;
       }
     }
 
-    return {
-      left: left,
-      right: right
-    };
-  }
+    currentLeftRight.left = left;
+    currentLeftRight.right = right;
 
-  function getLeft(node) {
-    var left = status.prev(node);
-    return left && left.key;
-  }
-
-  function getRight(node) {
-    var right = status.next(node);
-    return right && right.key;
+    return currentLeftRight;
   }
 
   function checkDuplicate() {
@@ -139,10 +184,8 @@ export default function createSweepStatus() {
       if (prev) {
         if (samePoint(prev.start, current.start) && samePoint(prev.end, current.end)) {
           console.error('Duplicate key in the status! This may be caused by Floating Point rounding error');
-          debugger;
         }
       }
-      // var x = getIntersectionXPoint(node.key, lastPointX, lastPointY);
       prev = current;
     })
 
@@ -168,16 +211,18 @@ export default function createSweepStatus() {
     }
   }
 
-  function deleteSegments(segments, sweepLinePos) {
+  function deleteSegments(lower, interior, sweepLinePos) {
+    var i;
+
     lastPointY = sweepLinePos.y;
     lastPointX = sweepLinePos.x;
     useBelow = true;
-    segments.forEach(deleteOneSegment);
+    for(i = 0; i < lower.length; ++i) {
+      status.remove(lower[i]);
+    }
+    for(i = 0; i < interior.length; ++i) {
+      status.remove(interior[i]);
+    }
     useBelow = false;
-  }
-
-  function deleteOneSegment(segment) {
-    var node = status.remove(segment);
-      //if (!node) throw new Error('wtf?')
   }
 }
