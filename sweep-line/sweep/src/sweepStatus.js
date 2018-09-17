@@ -16,8 +16,7 @@ export default function createSweepStatus() {
     getLeft,
     getRight,
     getLeftRightPoint,
-    getLeftMostSegment,
-    getRightMostSegment,
+    getBoundarySegments,
     status,
     checkDuplicate,
     printStatus,
@@ -54,27 +53,53 @@ export default function createSweepStatus() {
     return res;
   }
 
-  function getLeftMostSegment(segments) {
-    if (segments.length === 1) {
-      return status.find(segments[0]);
+  function getBoundarySegments(upper, interior) {
+    var leftMost, rightMost, i;
+    var uLength = upper.length;
+
+    if (uLength > 0) {
+      leftMost = rightMost = upper[0];
+    } else {
+      leftMost = rightMost = interior[0];
     }
 
-    segments.sort((a, b) => compareSegments(a, b));
-    return status.find(segments[0]);
-  }
+    for (i = 1; i < uLength; ++i) {
+      var s = upper[i];
+      var cmp = compareSegments(leftMost, s);
+      if (cmp > 0) leftMost = s;
 
-  function getRightMostSegment(segments) {
-    if (segments.length === 1) {
-      return status.find(segments[0]);
+      cmp = compareSegments(rightMost, s);
+      if (cmp < 0) rightMost = s;
     }
-    // Assuming getLeftMostSegment is called!
-    // Otherwise need to sort:
-    // segments.sort((a, b) => compareSegments(a, b));
 
-    // var now = performance.now();
-    var lastOne = segments[segments.length - 1];
-    var result = status.find(lastOne);
-    return result;
+    var startFrom = uLength > 0 ? 0 : 1;
+    for (i = startFrom; i < interior.length; ++i) {
+      s = interior[i];
+      cmp = compareSegments(leftMost, s);
+      if (cmp > 0) leftMost = s;
+
+      cmp = compareSegments(rightMost, s);
+      if (cmp < 0) rightMost = s;
+    }
+    var left = status.find(leftMost);
+    if (!left) {
+      throw new Error('Left is missing. Precision error?');
+    }
+    var beforeLeft = status.prev(left);
+
+    var right = status.find(rightMost);
+    if (!right) {
+      throw new Error('Right is missing. Precision error?');
+    }
+
+    var afterRight = right && status.next(right);
+
+    return {
+      beforeLeft: beforeLeft && beforeLeft.key,
+      left: left.key,
+      right: right.key,
+      afterRight: afterRight && afterRight.key
+    }
   }
 
   function getLeftRightPoint(p) {
@@ -131,17 +156,15 @@ export default function createSweepStatus() {
     })
   }
 
-  function insertSegments(segments, sweepLinePos) {
+  function insertSegments(interior, upper, sweepLinePos) {
     lastPointY = sweepLinePos.y;
     lastPointX = sweepLinePos.x;
 
-    // var all = status.values();
-    // status.clear();
-    // all.forEach(insertOneSegment);
-    segments.forEach(insertOneSegment);
-
-    function insertOneSegment(segment) {
-      status.add(segment, segment);
+    for (var i = 0; i < interior.length; ++i) {
+      status.add(interior[i]);
+    }
+    for (i = 0; i < upper.length; ++i) {
+      status.add(upper[i]);
     }
   }
 

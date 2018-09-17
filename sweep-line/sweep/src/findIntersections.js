@@ -1,8 +1,7 @@
 export default findIntersections;
 import SplayTree from 'splaytree';
-import AVLTree from 'avl';
 
-import {intersectBelowP, EPS, round, samePoint} from './geom';
+import {intersectBelowP, EPS, samePoint} from './geom';
 import createSweepStatus from './sweepStatus';
 
 var START_ENDPOINT = 1;
@@ -100,7 +99,7 @@ function createFoundQueue() {
   }
 
   function keyPoint(p) {
-    return round(p.x)+ ';' + round(p.y);
+    return p.x+ ';' + p.y;
   }
 
   function toArray() {
@@ -121,7 +120,6 @@ function createFoundQueue() {
 
 function createEventQueue() {
   const q = new SplayTree(byY);
-  //const q = new AVLTree(byY);
 
   return {
     isEmpty: isEmpty,
@@ -166,6 +164,7 @@ function byY(a, b) {
   return res;
 }
 
+var EMPTY = [];
 
 function findIntersections(lines, options) {
   var eventQueue = createEventQueue();
@@ -202,46 +201,28 @@ function findIntersections(lines, options) {
     if (!a) return b;
     if (!b) return a;
 
-    // TODO: memory/performance. Likely you can reuse either A or B.
-    var result = new Set(a);
-    for (var i = 0; i < b.length; ++i) {
-      result.add(b[i]);
-    }
-
-    return Array.from(result);
-  }
-
-  function exclude(src, test) {
-    if (!src || !test) return src;
-    test.forEach(i => {
-      var idx = src.indexOf(i);
-      if (idx > -1) {
-        src.splice(idx, 1);
-      }
-    })
-
-    return src;
+    return a.concat(b);
   }
 
   function handleEventPoint(p) {
-    var interior = p.interior || []; // [];
-    var lower = p.end || []; // [];
-    var upper = p.start || []; //[];
+    var interior = p.interior || EMPTY;
+    var lower = p.end || EMPTY; 
+    var upper = p.start || EMPTY;
   
     // if (printDebug) {
     //   console.log('handle event point', p.point, p.kind);
     // }
-    // TODO: Don't include lower into upper or interior.
-    var ucSegments = exclude(union(upper, interior), lower);
-    var lcSegments = union(lower, interior);
-    var lucSegments = union(ucSegments, lcSegments);
+    var uLength = upper.length;
+    var iLength = interior.length;
+    var lLength = lower.length;
 
-    if (lucSegments && lucSegments.length > 1) {
-      reportIntersection(p, lucSegments);
+    if (uLength + iLength + lLength > 1) {
+      reportIntersection(p, union((lower, upper), interior));
     }
 
-    sweepStatus.deleteSegments(lcSegments, p.point);
-    sweepStatus.insertSegments(ucSegments, p.point);
+    sweepStatus.deleteSegments(lower, p.point);
+    sweepStatus.deleteSegments(interior, p.point);
+    sweepStatus.insertSegments(interior, upper, p.point);
 
     if (printDebug) {
       sweepStatus.checkDuplicate();
@@ -249,7 +230,7 @@ function findIntersections(lines, options) {
 
     var sLeft, sRight;
 
-    var hasNoCrossing = (!ucSegments || ucSegments.length === 0);
+    var hasNoCrossing = (uLength + iLength === 0);
 
     if (hasNoCrossing) {
       var leftRight = sweepStatus.getLeftRightPoint(p.point);
@@ -261,22 +242,10 @@ function findIntersections(lines, options) {
 
       findNewEvent(sLeft, sRight, p);
     } else {
-      var leftMostSegment = sweepStatus.getLeftMostSegment(ucSegments, p.point);
+      var boundarySegments = sweepStatus.getBoundarySegments(upper, interior);
 
-      findNewEvent(
-        sweepStatus.getLeft(leftMostSegment),
-        leftMostSegment.data,
-        p
-      );
-
-      var rightMostSegment = sweepStatus.getRightMostSegment(ucSegments, p.point);
-      if (!rightMostSegment) {
-        console.error('Segment is missing. Results are not 100% accurate');
-        // TODO: This
-        return;
-      }
-
-      findNewEvent(rightMostSegment.data, sweepStatus.getRight(rightMostSegment), p);
+      findNewEvent(boundarySegments.beforeLeft, boundarySegments.left, p);
+      findNewEvent(boundarySegments.right, boundarySegments.afterRight, p);
     }
   }
 
@@ -307,10 +276,6 @@ function findIntersections(lines, options) {
   function insertEndpointsIntoEventQueue(segment) {
     var start = segment.start;
     var end = segment.end;
-    start.x = round(start.x);
-    start.y = round(start.y);
-    end.x = round(end.x);
-    end.y = round(end.y);
 
     if ((start.y < end.y) || (
         (start.y === end.y) && (start.x > end.x))

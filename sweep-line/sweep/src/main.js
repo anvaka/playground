@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import App from './App.vue'
 import createScene from './scene';
+import {getCircularLines} from './generators';
 import findIntersections from './findIntersections';
 
 var createRandom = require('ngraph.random');
@@ -40,84 +41,14 @@ new Vue({
 
 
 function generateLines() {
- var lines = getCircularLines(35, 40);
-// var lines = getStarLines(80, 30);
- //var lines = getRandomLines(100, 100); // 
+ var lines = getCircularLines(15, 40);
+ //var lines = getRandomLines(10, 100); // 
  //var lines = require('./hugeCollection.json')
  window.lines = lines;
 
   return lines;
 }
 
-function getStarLines(count, length) {
-  // var lines = [];
-
-  // var lines = [
-  //   {start: {x: 1, y: 1}, end: {x: -1, y: -1}, name: 'a1'},
-  //   {start: {x: 1, y: 1}, end: {x: -3, y: -3}, name: 'a1'},
-  //   {start: {x: -3, y: 0}, end: {x: 3, y: 0.4}, name: 'a1'},
-  // ]
-  // return lines;
-
-  // var da = (Math.PI/6)/count;
-  // var startFrom = -Math.PI/2 - da * count/2;
-
-  // for (var i = 1; i < count; ++i) {
-  //   var start = {x: 0, y: 0};
-  //   var a = startFrom + i * da;
-  //   var end = {
-  //     x: length * Math.cos(a),
-  //     y: length * Math.sin(a)
-  //   };
-  //   lines.push({start, end});
-  // }
-  // lines.push({start: {x: -1000, y: -length/2}, end: {x: 1000, y: -length/2}})
-  // lines = lines.concat(getRandomLines(40, 100));
-  return lines;
-}
-
-function getCircularLines(count = 10, range = 100) {
-  // var lines = [
-  //   {start: {x: 10.607, y: 10.607}, end: {x: -15, y: 0}, name: 'a1'},
-  //   {start: {x: 0, y: 15}, end: {x: 10.607, y: -10.607}, name: 'a0'},
-  //   {start: {x: -5, y: 6}, end: {x: -5, y: 7.5}, name: 'b'},
-  //   {start: {x: 10, y: -15}, end: {x: 10, y: 14}, name: 'c'},
-  // ]
-  // return lines;
-
-  var angleStep = 2*Math.PI / count;
-  var lines = [];
-  var seen = new Set();
-
-  for (var i = 0; i < count; ++i) {
-    var angle = angleStep * i;
-    var x = Math.cos(angle) * range / 2;
-    var y = Math.sin(angle) * range / 2;
-    for (var j = 0; j < count; ++j) {
-      if (j !== i) {
-        var ex = Math.cos(angleStep * j) * range / 2;
-        var ey = Math.sin(angleStep * j) * range / 2;
-        var name = `${i},${j}`;
-        var l = {
-          name: name,
-          start: {x: x, y: y},
-          end: {x: ex, y: ey}
-        };
-        var sKey = getKey(i, j);
-        if (!seen.has(sKey)) {//  && (name == '2,5' || name=='4,5')) {
-          lines.push(l);
-          seen.add(sKey)
-        }
-      }
-    }
-  }
-
-  return lines;
-
-  function getKey(i, j) {
-    return i < j ? i + ';' + j : j + ';' + i;
-  }
-}
 
 function getRandomLines(count = 4, range = 100) {
   var lines = [];
