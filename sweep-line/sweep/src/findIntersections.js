@@ -16,9 +16,9 @@ class SweepEvent {
 
     this.point = point;
     if (kind === START_ENDPOINT) {
-      this.start = [segment];
+      this.from = [segment];
     } else if (kind === FINISH_ENDPOINT) {
-      this.end = [segment]
+      this.to = [segment]
     } else if (kind === INTERSECT_ENDPOINT) {
       this.interior = [segment, oneMore];
       this.knownInterior = new Set();
@@ -28,32 +28,32 @@ class SweepEvent {
 
   merge(other) {
     if (other.kind === START_ENDPOINT) {
-      if (!this.start) this.start = [];
-      other.start.forEach(s => this.start.push(s));
+      if (!this.from) this.from = [];
+      other.from.forEach(s => this.from.push(s));
     } else if (other.kind === FINISH_ENDPOINT) {
-      if (!this.end) this.end = [];
-      other.end.forEach(s => this.end.push(s));
+      if (!this.to) this.to = [];
+      other.to.forEach(s => this.to.push(s));
     } else if (other.kind === INTERSECT_ENDPOINT) {
       var skipIt = false;
-      this.start && this.start.forEach(x => {
-        let ourStart = x.start;
-        let ourEnd = x.end;
+      this.from && this.from.forEach(x => {
+        let ourStart = x.from;
+        let ourEnd = x.to;
 
         other.interior.forEach(s => {
-          if (samePoint(s.start, ourStart) || samePoint(s.end, ourStart)) skipIt = true;
-          if (samePoint(s.start, ourEnd) || samePoint(s.end, ourEnd)) skipIt = true;
+          if (samePoint(s.from, ourStart) || samePoint(s.to, ourStart)) skipIt = true;
+          if (samePoint(s.from, ourEnd) || samePoint(s.to, ourEnd)) skipIt = true;
         });
       });
 
       if (skipIt) return;
 
-      this.end && this.end.forEach(x => {
-        let ourStart = x.start;
-        let ourEnd = x.end;
+      this.to && this.to.forEach(x => {
+        let ourStart = x.from;
+        let ourEnd = x.to;
 
         other.interior.forEach(s => {
-          if (samePoint(s.start, ourStart) || samePoint(s.end, ourStart)) skipIt = true;
-          if (samePoint(s.start, ourEnd) || samePoint(s.end, ourEnd)) skipIt = true;
+          if (samePoint(s.from, ourStart) || samePoint(s.to, ourStart)) skipIt = true;
+          if (samePoint(s.from, ourEnd) || samePoint(s.to, ourEnd)) skipIt = true;
         });
       });
 
@@ -206,8 +206,8 @@ function findIntersections(lines, options) {
 
   function handleEventPoint(p) {
     var interior = p.interior || EMPTY;
-    var lower = p.end || EMPTY; 
-    var upper = p.start || EMPTY;
+    var lower = p.to || EMPTY; 
+    var upper = p.from || EMPTY;
   
     // if (printDebug) {
     //   console.log('handle event point', p.point, p.kind);
@@ -273,19 +273,19 @@ function findIntersections(lines, options) {
   }
 
   function insertEndpointsIntoEventQueue(segment) {
-    var start = segment.start;
-    var end = segment.end;
+    var from = segment.from;
+    var to = segment.to;
 
-    if ((start.y < end.y) || (
-        (start.y === end.y) && (start.x > end.x))
+    if ((from.y < to.y) || (
+        (from.y === to.y) && (from.x > to.x))
       ) {
-      var temp = start;
-      start = segment.start = end; 
-      end = segment.end = temp;
+      var temp = from;
+      from = segment.from = to; 
+      to = segment.to = temp;
     }
 
-    var startEvent = new SweepEvent(START_ENDPOINT, start, segment)
-    var endEvent = new SweepEvent(FINISH_ENDPOINT, end, segment)
+    var startEvent = new SweepEvent(START_ENDPOINT, from, segment)
+    var endEvent = new SweepEvent(FINISH_ENDPOINT, to, segment)
     eventQueue.push(startEvent);
     eventQueue.push(endEvent)
   }

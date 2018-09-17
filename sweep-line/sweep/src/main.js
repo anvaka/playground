@@ -6,8 +6,8 @@ import findIntersections from './findIntersections';
 
 // console.log('seed', seed)
 
-//var lines = getCircularLines(90, 400);
-var lines = require('./smallerCollection.json')
+var lines = getCircularLines(8, 40);
+//var lines = require('./smallerCollection.json')
 //var lines = getRandomLines(100, 40); // 
 var state = {}
 

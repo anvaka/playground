@@ -7,8 +7,8 @@ export function getRandomLines(count = 4, range = 100) {
   var lines = [];
   for (var i = 0; i < count; ++i) {
     lines.push({
-      start: {x: (random.nextDouble() - 0.5) * range, y: (random.nextDouble() - 0.5) * range},
-      end: {x: (random.nextDouble() - 0.5) * range, y: (random.nextDouble() - 0.5) * range}
+      from: {x: (random.nextDouble() - 0.5) * range, y: (random.nextDouble() - 0.5) * range},
+      to: {x: (random.nextDouble() - 0.5) * range, y: (random.nextDouble() - 0.5) * range}
     });
   }
   return lines;
@@ -30,8 +30,8 @@ export function getCircularLines(count = 10, range = 100) {
         var name = `${i},${j}`;
         var l = {
           name: name,
-          start: {x: x, y: y},
-          end: {x: ex, y: ey}
+          from: {x: x, y: y},
+          to: {x: ex, y: ey}
         };
         var sKey = getKey(i, j);
         if (!seen.has(sKey)) {

@@ -1,33 +1,33 @@
 export const EPS = 1e-10;
 
 export function getIntersectionXPoint(segment, xPos, yPos) {
-  var dy1 = segment.start.y - yPos;
-  var dy2 = yPos - segment.end.y;
-  var dy = segment.end.y - segment.start.y;
+  var dy1 = segment.from.y - yPos;
+  var dy2 = yPos - segment.to.y;
+  var dy = segment.to.y - segment.from.y;
   if (Math.abs(dy1) < EPS) {
     // The segment starts on the sweepline
     if (Math.abs(dy) < EPS) {
       // the segment is horizontal. Intersection is at the point
-      if (xPos <= segment.start.x) return segment.start.x;
-      if (xPos > segment.end.x) return segment.end.x;
+      if (xPos <= segment.from.x) return segment.from.x;
+      if (xPos > segment.to.x) return segment.to.x;
       return xPos;
     }
-    return segment.start.x;
+    return segment.from.x;
   }
   
-  var dx = (segment.end.x - segment.start.x); 
+  var dx = (segment.to.x - segment.from.x); 
   var xOffset; 
   if (dy1 >= dy2) {
     xOffset = dy1 * (dx / dy); 
-    return (segment.start.x - xOffset);
+    return (segment.from.x - xOffset);
   } 
   xOffset = dy2 * (dx / dy);
-  return (segment.end.x + xOffset);
+  return (segment.to.x + xOffset);
 }
 
 export function intersectSegments(a, b) {
   //  https://stackoverflow.com/a/1968345/125351
-  var aStart = a.start, aEnd = a.end, bStart = b.start, bEnd = b.end;
+  var aStart = a.from, aEnd = a.to, bStart = b.from, bEnd = b.to;
   var p0_x = aStart.x, p0_y = aStart.y,
       p1_x = aEnd.x, p1_y = aEnd.y,
       p2_x = bStart.x, p2_y = bStart.y,

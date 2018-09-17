@@ -17,10 +17,10 @@ function createScene(lines, canvas) {
   guidelines.color = {r: 0.1, g: 0.4, b: 0.8, a: 0.9};
 
   ([
-    {start: {x: -100, y: 0}, end: {x: 100, y: 0}},
-    {start: {x: 0, y: -100}, end: {x: 0, y: 100}},
+    {from: {x: -100, y: 0}, to: {x: 100, y: 0}},
+    {from: {x: 0, y: -100}, to: {x: 0, y: 100}},
   ]).forEach(function (line) {
-    guidelines.add({ from: line.start, to: line.end });
+    guidelines.add({ from: line.from, to: line.to });
   });
 
   scene.appendChild(guidelines);
@@ -29,7 +29,7 @@ function createScene(lines, canvas) {
   // linesEl.color = {r: 0.8, g: 0.8, b: 0.8, a: 0.7}
   // linesEl.color = {r: 0.1, g: 0.1, b: 0.1, a: 0.9}
   lines.forEach(function (line) {
-    linesEl.add({ from: line.start, to: line.end });
+    linesEl.add({ from: line.from, to: line.to });
   });
 
   scene.appendChild(linesEl);
@@ -102,7 +102,7 @@ function createScene(lines, canvas) {
     status.segments = new wgl.WireCollection(segments.length);
     status.segments.color = {r: 0.1, g: 1.0, b: 0.0, a: 0.9};
     segments.forEach(s => {
-      status.segments.add({ from: s.start, to: s.end });
+      status.segments.add({ from: s.from, to: s.to });
     })
 
     scene.appendChild(status.segments);

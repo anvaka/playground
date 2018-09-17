@@ -47,22 +47,22 @@ export default function createSweepStatus() {
 
     var res = ak - bk;
     if (Math.abs(res) < 0.0000001) {
-      var day = a.start.y - a.end.y;
+      var day = a.from.y - a.to.y;
       // move horizontal to end
       if (Math.abs(day) < 0.0000001) {
         return useBelow ? -1 : 1;
       }
 
-      var dby = b.start.y - b.end.y;
+      var dby = b.from.y - b.to.y;
       if (Math.abs(dby) < 0.0000001) {
         return useBelow ? 1 : -1;
       }
-      var pa = pseudoAngle(day, a.start.x - a.end.x);
-      var pb = pseudoAngle(dby, b.start.x - b.end.x);
+      var pa = pseudoAngle(day, a.from.x - a.to.x);
+      var pb = pseudoAngle(dby, b.from.x - b.to.x);
       return useBelow ? pa - pb : pb - pa;
       // Could also use:
-      // var aAngle = Math.atan2(a.start.y - a.end.y, a.start.x - a.end.x);
-      // var bAngle = Math.atan2(b.start.y - b.end.y, b.start.x - b.end.x);
+      // var aAngle = Math.atan2(a.from.y - a.to.y, a.from.x - a.to.x);
+      // var bAngle = Math.atan2(b.from.y - b.to.y, b.from.x - b.to.x);
       // return useBelow ? bAngle - aAngle : aAngle - bAngle;
     }
     return res;
@@ -182,7 +182,7 @@ export default function createSweepStatus() {
       var current = node.key;
 
       if (prev) {
-        if (samePoint(prev.start, current.start) && samePoint(prev.end, current.end)) {
+        if (samePoint(prev.from, current.from) && samePoint(prev.to, current.to)) {
           console.error('Duplicate key in the status! This may be caused by Floating Point rounding error');
         }
       }
