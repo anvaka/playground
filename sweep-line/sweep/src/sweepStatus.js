@@ -41,11 +41,11 @@ export default function createSweepStatus() {
       var day = a.start.y - a.end.y;
       // move horizontal to end
       if (Math.abs(day) < 0.0000001) {
-        return 1;
+        return useBelow ? -1 : 1;
       }
       var dby = b.start.y - b.end.y;
       if (Math.abs(dby) < 0.0000001) {
-        return -1;
+        return useBelow ? 1 : -1;
       }
       var aAngle = Math.atan2(a.start.y - a.end.y, a.start.x - a.end.x);
       var bAngle = Math.atan2(b.start.y - b.end.y, b.start.x - b.end.x);

@@ -40,7 +40,7 @@ new Vue({
 
 
 function generateLines() {
- var lines = getCircularLines(6, 30);
+ var lines = getCircularLines(35, 40);
 // var lines = getStarLines(80, 30);
  //var lines = getRandomLines(100, 100); // 
  //var lines = require('./hugeCollection.json')
@@ -103,9 +103,6 @@ function getCircularLines(count = 10, range = 100) {
           start: {x: x, y: y},
           end: {x: ex, y: ey}
         };
-        if (name === '2,7' || name === '1,4') {
-          console.log(l);
-        }
         var sKey = getKey(i, j);
         if (!seen.has(sKey)) {//  && (name == '2,5' || name=='4,5')) {
           lines.push(l);
