@@ -2,7 +2,7 @@ export default findIntersections;
 import SplayTree from 'splaytree';
 import AVLTree from 'avl';
 
-import {intersectBelowP, EPS, round} from './geom';
+import {intersectBelowP, EPS, round, samePoint} from './geom';
 import createSweepStatus from './sweepStatus';
 
 var START_ENDPOINT = 1;
@@ -35,6 +35,31 @@ class SweepEvent {
       if (!this.end) this.end = [];
       other.end.forEach(s => this.end.push(s));
     } else if (other.kind === INTERSECT_ENDPOINT) {
+      var skipIt = false;
+      this.start && this.start.forEach(x => {
+        let ourStart = x.start;
+        let ourEnd = x.end;
+
+        other.interior.forEach(s => {
+          if (samePoint(s.start, ourStart) || samePoint(s.end, ourStart)) skipIt = true;
+          if (samePoint(s.start, ourEnd) || samePoint(s.end, ourEnd)) skipIt = true;
+        });
+      });
+
+      if (skipIt) return;
+
+      this.end && this.end.forEach(x => {
+        let ourStart = x.start;
+        let ourEnd = x.end;
+
+        other.interior.forEach(s => {
+          if (samePoint(s.start, ourStart) || samePoint(s.end, ourStart)) skipIt = true;
+          if (samePoint(s.start, ourEnd) || samePoint(s.end, ourEnd)) skipIt = true;
+        });
+      });
+
+      if (skipIt) return;
+
       if (!this.interior) {
         this.interior = [];
         this.knownInterior = new Set();
@@ -215,7 +240,7 @@ function findIntersections(lines, options) {
       reportIntersection(p, lucSegments);
     }
 
-    sweepStatus.deleteSegments(lcSegments);
+    sweepStatus.deleteSegments(lcSegments, p.point);
     sweepStatus.insertSegments(ucSegments, p.point);
 
     if (printDebug) {

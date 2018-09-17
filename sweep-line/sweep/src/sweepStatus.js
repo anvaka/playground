@@ -6,9 +6,9 @@ import {samePoint, EPS, getIntersectionXPoint} from './geom'
 export default function createSweepStatus() {
   var lastPointY;
   var lastPointX;
+  var useBelow = false;
   var status = new SplayTree(compareSegments);
   //var status = new AVLTree(compareSegments); //, /* noDupes: */ true);
-  window.elapsed = 0;
 
   return {
     deleteSegments,
@@ -49,7 +49,7 @@ export default function createSweepStatus() {
       }
       var aAngle = Math.atan2(a.start.y - a.end.y, a.start.x - a.end.x);
       var bAngle = Math.atan2(b.start.y - b.end.y, b.start.x - b.end.x);
-      return aAngle - bAngle;
+      return useBelow ? bAngle - aAngle : aAngle - bAngle;
     }
     return res;
   }
@@ -145,8 +145,12 @@ export default function createSweepStatus() {
     }
   }
 
-  function deleteSegments(segments) {
+  function deleteSegments(segments, sweepLinePos) {
+    lastPointY = sweepLinePos.y;
+    lastPointX = sweepLinePos.x;
+    useBelow = true;
     segments.forEach(deleteOneSegment);
+    useBelow = false;
   }
 
   function deleteOneSegment(segment) {

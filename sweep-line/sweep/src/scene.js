@@ -33,7 +33,7 @@ function createScene(lines, canvas) {
   });
 
   scene.appendChild(linesEl);
-  var isAsync = 1;
+  var isAsync = 0;
   var next;
   var doneCalled = false;
   var options = isAsync ? {
@@ -42,7 +42,7 @@ function createScene(lines, canvas) {
         doneCalled = true;
         drawIntersections(intersections);
       },
-      step(sweepStatus, eventQueue, results) {
+      step(sweepStatus /*, eventQueue, results */) {
         drawSweepStatus(sweepStatus);
         // console.log('Event queue size: ', eventQueue.size())
       }
