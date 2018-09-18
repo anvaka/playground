@@ -47,7 +47,9 @@ class SweepEvent {
       });
 
       // TODO: can you simplify this?
-      if (skipIt) return true;
+      if (skipIt) {
+        return true;
+      }
 
       this.to && this.to.forEach(x => {
         let ourStart = x.from;
@@ -59,7 +61,9 @@ class SweepEvent {
         });
       });
 
-      if (skipIt) return true;
+      if (skipIt) {
+        return true;
+      }
 
       if (!this.interior) {
         this.interior = [];
@@ -77,50 +81,6 @@ class SweepEvent {
   }
 }
 
-function createFoundQueue() {
-  var r = new Map();
-
-  return {
-    push,
-    has,
-    toArray
-  }
-
-  function push(point, segments) {
-    var key = keyPoint(point);
-    let current = r.get(key);
-    if (current) {
-      current.concat(segments);
-    } else {
-      r.set(key, segments);
-    }
-  }
-
-  function has(point) {
-    var key = keyPoint(point);
-    return r.get(key);
-  }
-
-  function keyPoint(p) {
-    return p.x+ ';' + p.y;
-  }
-
-  function toArray() {
-    var foundIntersections = []
-    r.forEach((value, key) => {
-      var parts = key.split(';');
-      foundIntersections.push({
-        point: {
-          x: Number.parseFloat(parts[0]),
-          y: Number.parseFloat(parts[1])
-        },
-        segments: value
-      });
-    })
-    return foundIntersections;
-  }
-}
-
 function createEventQueue() {
   const q = new SplayTree(byY);
 
@@ -129,6 +89,13 @@ function createEventQueue() {
     size: size,
     pop: pop,
     push: push,
+    find: find,
+    merge: merge,
+    insert: insert
+  }
+
+  function find(p) {
+    return q.find(p);
   }
 
   function size() {
@@ -146,6 +113,14 @@ function createEventQueue() {
     } else {
       q.insert(event.point, event);
     }
+  }
+
+  function insert(event) {
+    q.insert(event.point, event);
+  }
+
+  function merge(current, event) {
+    return current.data.merge(event);
   }
 
   function pop() {
@@ -172,7 +147,7 @@ var EMPTY = [];
 function findIntersections(lines, options) {
   var eventQueue = createEventQueue();
   var sweepStatus = createSweepStatus();
-  var results = createFoundQueue();
+  var results = (options && options.results) || [];
 
   lines.forEach(insertEndpointsIntoEventQueue);
   if (options && options.control) {
@@ -188,11 +163,11 @@ function findIntersections(lines, options) {
     handleEventPoint(eventPoint);
   }
 
-  return results.toArray();
+  return results;
 
   function next() {
     if (eventQueue.isEmpty()) {
-      options.control.done(results.toArray());
+      options.control.done(results);
     } else {
       var eventPoint = eventQueue.pop();
       handleEventPoint(eventPoint);
@@ -220,6 +195,7 @@ function findIntersections(lines, options) {
     var lLength = lower.length;
 
     if (uLength + iLength + lLength > 1) {
+      p.isReported = true;
       reportIntersection(p.point, union(union(lower, upper), interior));
     }
 
@@ -263,21 +239,27 @@ function findIntersections(lines, options) {
     if (Math.abs(intersection.x) < EPS) intersection.x = 0;
     if (Math.abs(intersection.y) < EPS) intersection.y = 0;
 
-    // TODO: can we use just one collection for this?
-    if (!results.has(intersection)) {
-      var reportNow = eventQueue.push(
-        new SweepEvent(INTERSECT_ENDPOINT, intersection, left, right)
-      );
+    var current = eventQueue.find(intersection);
+    if (current && current.isReported) {
+      return;
+    }
+
+    var event = new SweepEvent(INTERSECT_ENDPOINT, intersection, left, right)
+    if (current) {
+      var reportNow = eventQueue.merge(current, event);
       // This can happen if our intersection point coincides with endpoint
       // of existing segment
       if (reportNow) {
-        reportIntersection(intersection, [left, right]);
+        // TODO: this may cause duplicates in reported points:
+        // reportIntersection(intersection, [left, right]);
       }
+    } else {
+      eventQueue.insert(event);
     }
   }
 
   function reportIntersection(p, segments) {
-    results.push(p, segments);
+    results.push({point: p, segments});
   }
 
   function insertEndpointsIntoEventQueue(segment) {

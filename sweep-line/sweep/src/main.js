@@ -7,7 +7,7 @@ import findIntersections from './findIntersections';
 // console.log('seed', seed)
 
 //var lines = require('./smallerCollection.json')
-var lines = getRandomLines(100, 40); // 
+var lines = getCircularLines(12, 40); // 
 var state = {}
 
 // var i = 0;

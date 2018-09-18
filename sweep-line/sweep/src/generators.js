@@ -1,9 +1,11 @@
 var createRandom = require('ngraph.random');
-// var seed = +new Date();
-var seed = 1536687392180
+var seed = +new Date();
 var random = createRandom(seed);
 
-export function getRandomLines(count = 4, range = 100) {
+export function getRandomLines(count = 4, range = 100, seed) {
+  if (seed !== undefined) {
+    random = createRandom(seed);
+  }
   var lines = [];
   for (var i = 0; i < count; ++i) {
     lines.push({
