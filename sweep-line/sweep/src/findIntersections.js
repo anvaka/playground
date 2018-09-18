@@ -1,4 +1,5 @@
 export default findIntersections;
+
 import SplayTree from 'splaytree';
 
 import {intersectSegments, EPS, samePoint} from './geom';
@@ -45,7 +46,8 @@ class SweepEvent {
         });
       });
 
-      if (skipIt) return;
+      // TODO: can you simplify this?
+      if (skipIt) return true;
 
       this.to && this.to.forEach(x => {
         let ourStart = x.from;
@@ -57,12 +59,13 @@ class SweepEvent {
         });
       });
 
-      if (skipIt) return;
+      if (skipIt) return true;
 
       if (!this.interior) {
         this.interior = [];
         this.knownInterior = new Set();
       }
+
       other.interior.forEach(s => {
         // TODO: Need to not push if we already have such segments.
         if (!this.knownInterior.has(s)) {
@@ -139,7 +142,7 @@ function createEventQueue() {
   function push(event) {
     var current = q.find(event.point);
     if (current) {
-      current.data.merge(event);
+      return current.data.merge(event);
     } else {
       q.insert(event.point, event);
     }
@@ -217,7 +220,7 @@ function findIntersections(lines, options) {
     var lLength = lower.length;
 
     if (uLength + iLength + lLength > 1) {
-      reportIntersection(p, union((lower, upper), interior));
+      reportIntersection(p.point, union(union(lower, upper), interior));
     }
 
     sweepStatus.deleteSegments(lower, interior, p.point);
@@ -252,24 +255,29 @@ function findIntersections(lines, options) {
     if (!left || !right) return;
 
     var intersection = intersectSegments(left, right);
-    if (!intersection) {
-      return;
-    }
+    if (!intersection) return;
+
     var dy = p.point.y - intersection.y
     // TODO: should I add dy to intersection.y?
     if (dy < -EPS) return;
     if (Math.abs(intersection.x) < EPS) intersection.x = 0;
     if (Math.abs(intersection.y) < EPS) intersection.y = 0;
 
+    // TODO: can we use just one collection for this?
     if (!results.has(intersection)) {
-      eventQueue.push(
+      var reportNow = eventQueue.push(
         new SweepEvent(INTERSECT_ENDPOINT, intersection, left, right)
       );
+      // This can happen if our intersection point coincides with endpoint
+      // of existing segment
+      if (reportNow) {
+        reportIntersection(intersection, [left, right]);
+      }
     }
   }
 
   function reportIntersection(p, segments) {
-    results.push(p.point, segments);
+    results.push(p, segments);
   }
 
   function insertEndpointsIntoEventQueue(segment) {

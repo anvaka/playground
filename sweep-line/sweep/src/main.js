@@ -1,14 +1,13 @@
 import Vue from 'vue'
 import App from './App.vue'
 import createScene from './scene';
-import {getCircularLines, getRandomLines} from './generators';
+import {getCircularLines, getRandomLines, getGridLines} from './generators';
 import findIntersections from './findIntersections';
 
 // console.log('seed', seed)
 
-var lines = getCircularLines(8, 40);
 //var lines = require('./smallerCollection.json')
-//var lines = getRandomLines(100, 40); // 
+var lines = getRandomLines(100, 40); // 
 var state = {}
 
 // var i = 0;

@@ -14,6 +14,24 @@ export function getRandomLines(count = 4, range = 100) {
   return lines;
 }
 
+export function getGridLines(vertical = 10, horizontal = 10, step = 1) {
+  var lines = [];
+  var dx = 0; var dy = -0.3;
+  for (var i = 0; i < vertical; i += 1) {
+    lines.push({
+      from: {x: dx, y: i * step + dy},
+      to: {x: dx + (vertical - 1)* step, y: i * step + dy}
+    });
+  }
+  for (i = 0; i < horizontal; i += 1) {
+    lines.push({
+      from: {x: dx + i * step, y: dy},
+      to: {x: dx + i * step, y: (horizontal - 1) * step + dy}
+    });
+  }
+  return lines;
+}
+
 export function getCircularLines(count = 10, range = 100) {
   var angleStep = 2 * Math.PI / count;
   var lines = [];
