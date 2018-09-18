@@ -25,6 +25,14 @@ export function getIntersectionXPoint(segment, xPos, yPos) {
   return (segment.to.x + xOffset);
 }
 
+export function pseudoAngle(dx, dy) {
+  // https://stackoverflow.com/questions/16542042/fastest-way-to-sort-vectors-by-angle-without-actually-computing-that-angle
+  var p = dx/(Math.abs(dx) + Math.abs(dy)) // -1 .. 1 increasing with x
+
+  if (dy < 0) return p - 1;  // -2 .. 0 increasing with x
+  return 1 - p               //  0 .. 2 decreasing with x
+}
+
 export function intersectSegments(a, b) {
   //  https://stackoverflow.com/a/1968345/125351
   var aStart = a.from, aEnd = a.to, bStart = b.from, bEnd = b.to;

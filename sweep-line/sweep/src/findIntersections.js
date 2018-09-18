@@ -2,7 +2,7 @@ export default findIntersections;
 
 import SplayTree from 'splaytree';
 
-import {intersectSegments, EPS, samePoint} from './geom';
+import {intersectSegments, EPS, samePoint, pseudoAngle} from './geom';
 import createSweepStatus from './sweepStatus';
 
 var START_ENDPOINT = 1;
@@ -148,6 +148,9 @@ function findIntersections(lines, options) {
   var eventQueue = createEventQueue();
   var sweepStatus = createSweepStatus();
   var results = (options && options.results) || [];
+  var reportIntersection = (options && options.ignoreEndpoints) ? 
+    reportIgnoreEndpoints : 
+    reportIncludeIntersection;
 
   lines.forEach(insertEndpointsIntoEventQueue);
   if (options && options.control) {
@@ -171,7 +174,7 @@ function findIntersections(lines, options) {
     } else {
       var eventPoint = eventQueue.pop();
       handleEventPoint(eventPoint);
-      options.control.step(sweepStatus, eventQueue, results)
+      options.control.step(sweepStatus, results, eventQueue)
     }
   }
 
@@ -195,8 +198,8 @@ function findIntersections(lines, options) {
     var lLength = lower.length;
 
     if (uLength + iLength + lLength > 1) {
-      p.isReported = true;
-      reportIntersection(p.point, union(union(lower, upper), interior));
+      // p.isReported = true;
+      reportIntersection(p.point, interior, lower, upper);
     }
 
     sweepStatus.deleteSegments(lower, interior, p.point);
@@ -235,14 +238,23 @@ function findIntersections(lines, options) {
 
     var dy = p.point.y - intersection.y
     // TODO: should I add dy to intersection.y?
-    if (dy < -EPS) return;
+    if (dy < -EPS) {
+      // this means intersection happened after the sweep line. 
+      // We already processed it.
+      return;
+    }
+
+    // Need to adjust floating point for this special case,
+    // since otherwise it gives rounding errors:
     if (Math.abs(intersection.x) < EPS) intersection.x = 0;
     if (Math.abs(intersection.y) < EPS) intersection.y = 0;
 
     var current = eventQueue.find(intersection);
-    if (current && current.isReported) {
-      return;
-    }
+    // if (current && current.isReported) {
+    //   // We already reported this event. No need to add it one more time
+    //   // TODO: Is this case even possible?
+    //   return;
+    // }
 
     var event = new SweepEvent(INTERSECT_ENDPOINT, intersection, left, right)
     if (current) {
@@ -258,8 +270,20 @@ function findIntersections(lines, options) {
     }
   }
 
-  function reportIntersection(p, segments) {
-    results.push({point: p, segments});
+  function reportIncludeIntersection(p, interior, lower, upper) {
+    results.push({
+      point: p, 
+      segments: union(union(interior, lower), upper)
+    });
+  }
+
+  function reportIgnoreEndpoints(p, interior) {
+    if (interior.length > 0) {
+      results.push({
+        point: p, 
+        segments: interior
+      });
+    }
   }
 
   function insertEndpointsIntoEventQueue(segment) {
@@ -273,6 +297,10 @@ function findIntersections(lines, options) {
       from = segment.from = to; 
       to = segment.to = temp;
     }
+
+    segment.dx = from.x - to.x;
+    segment.dy = from.y - to.y;
+    segment.angle = pseudoAngle(segment.dy, segment.dx);
 
     var startEvent = new SweepEvent(START_ENDPOINT, from, segment)
     var endEvent = new SweepEvent(FINISH_ENDPOINT, to, segment)

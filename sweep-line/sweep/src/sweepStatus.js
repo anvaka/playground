@@ -1,7 +1,6 @@
 import SplayTree from 'splaytree';
 import {samePoint, getIntersectionXPoint} from './geom'
 
-
 export default function createSweepStatus() {
   var lastPointY;
   var lastPointX;
@@ -31,14 +30,6 @@ export default function createSweepStatus() {
     }
   }
 
-  function pseudoAngle(dx, dy) {
-    // https://stackoverflow.com/questions/16542042/fastest-way-to-sort-vectors-by-angle-without-actually-computing-that-angle
-    var p = dx/(Math.abs(dx) + Math.abs(dy)) // -1 .. 1 increasing with x
-
-    if (dy < 0) return p - 1;  // -2 .. 0 increasing with x
-    return 1 - p               //  0 .. 2 decreasing with x
-  }
-
   function compareSegments(a, b) {
     if (a === b) return 0;
 
@@ -47,18 +38,18 @@ export default function createSweepStatus() {
 
     var res = ak - bk;
     if (Math.abs(res) < 0.0000001) {
-      var day = a.from.y - a.to.y;
+      var day = a.dy;
       // move horizontal to end
       if (Math.abs(day) < 0.0000001) {
         return useBelow ? -1 : 1;
       }
 
-      var dby = b.from.y - b.to.y;
+      var dby = b.dy;
       if (Math.abs(dby) < 0.0000001) {
         return useBelow ? 1 : -1;
       }
-      var pa = pseudoAngle(day, a.from.x - a.to.x);
-      var pb = pseudoAngle(dby, b.from.x - b.to.x);
+      var pa = a.angle;
+      var pb = b.angle;
       return useBelow ? pa - pb : pb - pa;
       // Could also use:
       // var aAngle = Math.atan2(a.from.y - a.to.y, a.from.x - a.to.x);
@@ -122,6 +113,7 @@ export default function createSweepStatus() {
 
   function getLeftRightPoint(p) {
     var right, left,  x;
+    // Note: I've tried this code as well, didn't see much improvement:
     // var lastLeft;
     // var current = status._root;
     // var minX = Number.POSITIVE_INFINITY;
@@ -183,6 +175,7 @@ export default function createSweepStatus() {
 
       if (prev) {
         if (samePoint(prev.from, current.from) && samePoint(prev.to, current.to)) {
+          // eslint-disable-next-line
           console.error('Duplicate key in the status! This may be caused by Floating Point rounding error');
         }
       }
@@ -192,9 +185,11 @@ export default function createSweepStatus() {
   }
 
   function printStatus() {
+    // eslint-disable-next-line
     console.log('status line: ', lastPointX, lastPointY);
     status.forEach(node => {
       var x = getIntersectionXPoint(node.key, lastPointX, lastPointY);
+      // eslint-disable-next-line
       console.log(x + ' ' + node.key.name);
     })
   }

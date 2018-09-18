@@ -3,9 +3,12 @@ import findIntersections from './findIntersections';
 export default createScene;
 let wgl = require('w-gl');
 
-function createScene(lines, canvas) {
+function createScene(options, canvas) {
+  var lines = options.lines;
+  var isAsync = options.isAsync;
   var scene = wgl.scene(canvas);
   var initialSceneSize = 10;
+
   scene.setViewBox({
     left:  -initialSceneSize,
     top:   -initialSceneSize,
@@ -26,25 +29,23 @@ function createScene(lines, canvas) {
   scene.appendChild(guidelines);
 
   var linesEl = new wgl.WireCollection(lines.length);
-  // linesEl.color = {r: 0.8, g: 0.8, b: 0.8, a: 0.7}
-  // linesEl.color = {r: 0.1, g: 0.1, b: 0.1, a: 0.9}
   lines.forEach(function (line) {
     linesEl.add({ from: line.from, to: line.to });
   });
 
   scene.appendChild(linesEl);
-  var isAsync = 0;
+  var nodeCollection;
   var next;
   var doneCalled = false;
-  var options = isAsync ? {
+  var findOptions = isAsync ? {
     control: {
       done(intersections) {
         doneCalled = true;
         drawIntersections(intersections);
       },
-      step(sweepStatus /*, eventQueue, results */) {
+      step(sweepStatus, results) {
         drawSweepStatus(sweepStatus);
-        // console.log('Event queue size: ', eventQueue.size())
+        drawIntersections(results)
       }
     },
     debug: true
@@ -52,24 +53,47 @@ function createScene(lines, canvas) {
     debug: true
   };
 
-  var status = {};
-  console.time('run')
-  var intersections = findIntersections(lines, options);
-  console.timeEnd('run')
-  // eslint-disable-next-line
-  if (isAsync) {
-    var idx = 0;
+  findOptions.ignoreEndpoints = false;
 
+  var status = {};
+
+  // eslint-disable-next-line
+  console.time('run')
+  var intersections = findIntersections(lines, findOptions);
+  // eslint-disable-next-line
+  console.timeEnd('run')
+  var nextFrame;
+  if (isAsync) {
     next = () => {
       if (doneCalled) return;
       // console.log('next ', idx);
       intersections.next();
-      idx += 1;
     }
     window.next = next;
+    nextFrame = requestAnimationFrame(frame);
   } else {
+    // eslint-disable-next-line
     console.log('found ' + intersections.length + ' intersections');
     drawIntersections(intersections);
+  }
+
+  return {
+    dispose
+  }
+
+  function dispose() {
+    if (nextFrame) {
+      cancelAnimationFrame(nextFrame);
+      nextFrame = 0;
+    }
+    scene.dispose();
+  }
+
+  function frame() {
+    for (var i = 0; i < 20; ++i) {
+      next();
+    }
+    nextFrame = requestAnimationFrame(frame);
   }
 
   function drawSweepStatus(sweepStatus) {
@@ -109,11 +133,17 @@ function createScene(lines, canvas) {
   }
 
   function drawIntersections(intersections) {
-    let nodes = new wgl.PointCollection(intersections.length);
-    intersections.forEach((intersect, id) => {
-      var ui = nodes.add(intersect.point, id);
-      ui.setColor({r: 1, g: 25/255, b: 24/255})
-    })
-    scene.appendChild(nodes);
+    if (nodeCollection) {
+      scene.removeChild(nodeCollection)
+      nodeCollection = null;
+    }
+    if (intersections.length > 0) {
+      nodeCollection = new wgl.PointCollection(intersections.length);
+      intersections.forEach((intersect, id) => {
+        var ui = nodeCollection.add(intersect.point, id);
+        ui.setColor({r: 1, g: 25/255, b: 24/255})
+      })
+      scene.appendChild(nodeCollection);
+    }
   }
 }

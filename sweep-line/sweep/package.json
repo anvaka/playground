@@ -12,11 +12,13 @@
     "avl": "^1.4.3",
     "ngraph.random": "^0.1.0",
     "node-avl-tree": "^0.1.1",
+    "query-state": "^4.1.0",
     "splaytree": "^2.0.2",
     "vue": "^2.5.17",
     "w-gl": "^0.2.0"
   },
   "devDependencies": {
+    "@anvaka/streamlines": "^1.1.0",
     "@vue/cli-plugin-babel": "^3.0.0",
     "@vue/cli-plugin-eslint": "^3.0.0",
     "@vue/cli-service": "^3.0.0",
