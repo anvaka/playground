@@ -3,8 +3,8 @@ require = require("esm")(module/*, options*/)
 
 var g = require('../src/generators');
 var findIntersections = require('../src/findIntersections').default;
-var lines = g.getCircularLines(12, 40);
-var randomLines = g.getRandomLines(100, 42, 1536687392180);
+var lines = g.complete(12, 40);
+var randomLines = g.random(100, 42, 1536687392180);
 
 var Benchmark = require('benchmark');
 var suite = new Benchmark.Suite;

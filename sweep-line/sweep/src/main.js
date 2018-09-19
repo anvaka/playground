@@ -33,14 +33,15 @@ function updateScene(appState) {
 function getSceneOptions(state) {
   var generator = state.generator;
   if (!(generator in gen)) {
-    generator = 'getRandomLines'
+    generator = 'random'
   }
   var p0 = getNumber(state.p0, 100); 
   var p1 = getNumber(state.p1, 40);
 
   var lines = gen[generator](p0, p1);
   var isAsync = state.isAsync;
-  return {lines, isAsync}
+  var stepsPerFrame = getNumber(state.stepsPerFrame, 20);
+  return {lines, isAsync, stepsPerFrame}
 }
 
 function getNumber(x, defaultValue) {

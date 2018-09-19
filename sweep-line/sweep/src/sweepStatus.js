@@ -37,15 +37,15 @@ export default function createSweepStatus() {
     var bk = getIntersectionXPoint(b, lastPointX, lastPointY);
 
     var res = ak - bk;
-    if (Math.abs(res) < 0.0000001) {
+    if (Math.abs(res) < 0.00000001) {
       var day = a.dy;
       // move horizontal to end
-      if (Math.abs(day) < 0.0000001) {
+      if (Math.abs(day) < 0.00000001) {
         return useBelow ? -1 : 1;
       }
 
       var dby = b.dy;
-      if (Math.abs(dby) < 0.0000001) {
+      if (Math.abs(dby) < 0.00000001) {
         return useBelow ? 1 : -1;
       }
       var pa = a.angle;
@@ -212,11 +212,16 @@ export default function createSweepStatus() {
     lastPointY = sweepLinePos.y;
     lastPointX = sweepLinePos.x;
     useBelow = true;
+    var prevCount = status._size;
     for(i = 0; i < lower.length; ++i) {
       status.remove(lower[i]);
     }
     for(i = 0; i < interior.length; ++i) {
       status.remove(interior[i]);
+    }
+    // This can be a precision error:
+    if (status._size !== prevCount - interior.length - lower.length) {
+//      debugger;
     }
     useBelow = false;
   }

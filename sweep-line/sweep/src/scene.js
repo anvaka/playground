@@ -66,7 +66,6 @@ function createScene(options, canvas) {
   if (isAsync) {
     next = () => {
       if (doneCalled) return;
-      // console.log('next ', idx);
       intersections.next();
     }
     window.next = next;
@@ -90,7 +89,7 @@ function createScene(options, canvas) {
   }
 
   function frame() {
-    for (var i = 0; i < 20; ++i) {
+    for (var i = 0; i < options.stepsPerFrame; ++i) {
       next();
     }
     nextFrame = requestAnimationFrame(frame);

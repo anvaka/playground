@@ -12,6 +12,7 @@ var INTERSECT_ENDPOINT = 3;
 class SweepEvent {
   constructor(kind, point, segment, oneMore) {
     this.kind = kind;
+    this.checkDuplicates = false;
     if (Math.abs(point.x) < EPS) point.x = 0;
     if (Math.abs(point.y) < EPS) point.y = 0;
 
@@ -28,6 +29,8 @@ class SweepEvent {
   }
 
   merge(other) {
+    if (this.kind !== other.kind) this.checkDuplicates = true;
+
     if (other.kind === START_ENDPOINT) {
       if (!this.from) this.from = [];
       other.from.forEach(s => this.from.push(s));
@@ -35,36 +38,6 @@ class SweepEvent {
       if (!this.to) this.to = [];
       other.to.forEach(s => this.to.push(s));
     } else if (other.kind === INTERSECT_ENDPOINT) {
-      var skipIt = false;
-      this.from && this.from.forEach(x => {
-        let ourStart = x.from;
-        let ourEnd = x.to;
-
-        other.interior.forEach(s => {
-          if (samePoint(s.from, ourStart) || samePoint(s.to, ourStart)) skipIt = true;
-          if (samePoint(s.from, ourEnd) || samePoint(s.to, ourEnd)) skipIt = true;
-        });
-      });
-
-      // TODO: can you simplify this?
-      if (skipIt) {
-        return true;
-      }
-
-      this.to && this.to.forEach(x => {
-        let ourStart = x.from;
-        let ourEnd = x.to;
-
-        other.interior.forEach(s => {
-          if (samePoint(s.from, ourStart) || samePoint(s.to, ourStart)) skipIt = true;
-          if (samePoint(s.from, ourEnd) || samePoint(s.to, ourEnd)) skipIt = true;
-        });
-      });
-
-      if (skipIt) {
-        return true;
-      }
-
       if (!this.interior) {
         this.interior = [];
         this.knownInterior = new Set();
@@ -120,7 +93,7 @@ function createEventQueue() {
   }
 
   function merge(current, event) {
-    return current.data.merge(event);
+    current.data.merge(event);
   }
 
   function pop() {
@@ -198,10 +171,22 @@ function findIntersections(lines, options) {
     var lLength = lower.length;
 
     if (uLength + iLength + lLength > 1) {
-      // p.isReported = true;
+      p.isReported = true;
+      if (p.checkDuplicates) {
+        // the event was merged from another kind. We need to make sure
+        // that no interior point are actually lower/upper point
+        interior = removeDuplicate(interior, lower, upper);
+        iLength = interior.length;
+      }
       reportIntersection(p.point, interior, lower, upper);
     }
 
+    if (p.checkDuplicates) {
+      // the event was merged from another kind. We need to make sure
+      // that no interior point are actually lower/upper point
+      interior = removeDuplicate(interior, lower, upper);
+      iLength = interior.length;
+    }
     sweepStatus.deleteSegments(lower, interior, p.point);
     sweepStatus.insertSegments(interior, upper, p.point);
 
@@ -250,21 +235,16 @@ function findIntersections(lines, options) {
     if (Math.abs(intersection.y) < EPS) intersection.y = 0;
 
     var current = eventQueue.find(intersection);
-    // if (current && current.isReported) {
-    //   // We already reported this event. No need to add it one more time
-    //   // TODO: Is this case even possible?
-    //   return;
-    // }
+    if (current && current.isReported) {
+      debugger;
+      // We already reported this event. No need to add it one more time
+      // TODO: Is this case even possible?
+      return;
+    }
 
     var event = new SweepEvent(INTERSECT_ENDPOINT, intersection, left, right)
     if (current) {
-      var reportNow = eventQueue.merge(current, event);
-      // This can happen if our intersection point coincides with endpoint
-      // of existing segment
-      if (reportNow) {
-        // TODO: this may cause duplicates in reported points:
-        // reportIntersection(intersection, [left, right]);
-      }
+      eventQueue.merge(current, event);
     } else {
       eventQueue.insert(event);
     }
@@ -298,13 +278,22 @@ function findIntersections(lines, options) {
       to = segment.to = temp;
     }
 
-    segment.dx = from.x - to.x;
-    segment.dy = from.y - to.y;
-    segment.angle = pseudoAngle(segment.dy, segment.dx);
 
     var startEvent = new SweepEvent(START_ENDPOINT, from, segment)
     var endEvent = new SweepEvent(FINISH_ENDPOINT, to, segment)
+    segment.dx = startEvent.point.x - endEvent.point.x;
+    segment.dy = startEvent.point.y - endEvent.point.y;
+    segment.angle = pseudoAngle(segment.dy, segment.dx);
     eventQueue.push(startEvent);
     eventQueue.push(endEvent)
   }
+}
+
+function removeDuplicate(interior, lower, upper) {
+  var result = [];
+  for (var i = 0; i < interior.length; ++i) {
+    var s = interior[i];
+    if (lower.indexOf(s) < 0 && upper.indexOf(s) < 0) result.push(s);
+  }
+  return result;
 }
