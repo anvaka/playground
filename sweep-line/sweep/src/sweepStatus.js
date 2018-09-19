@@ -1,5 +1,5 @@
 import SplayTree from 'splaytree';
-import {samePoint, getIntersectionXPoint} from './geom'
+import {samePoint, getIntersectionXPoint, EPS} from './geom'
 
 export default function createSweepStatus() {
   var lastPointY;
@@ -37,15 +37,15 @@ export default function createSweepStatus() {
     var bk = getIntersectionXPoint(b, lastPointX, lastPointY);
 
     var res = ak - bk;
-    if (Math.abs(res) < 0.00000001) {
+    if (Math.abs(res) < EPS) {
       var day = a.dy;
       // move horizontal to end
-      if (Math.abs(day) < 0.00000001) {
+      if (Math.abs(day) < EPS) { // 0.00000001) {
         return useBelow ? -1 : 1;
       }
 
       var dby = b.dy;
-      if (Math.abs(dby) < 0.00000001) {
+      if (Math.abs(dby) < EPS) {
         return useBelow ? 1 : -1;
       }
       var pa = a.angle;
@@ -208,21 +208,21 @@ export default function createSweepStatus() {
 
   function deleteSegments(lower, interior, sweepLinePos) {
     var i;
-
+    var prevCount = status._size;
     lastPointY = sweepLinePos.y;
     lastPointX = sweepLinePos.x;
+
     useBelow = true;
-    var prevCount = status._size;
     for(i = 0; i < lower.length; ++i) {
       status.remove(lower[i]);
     }
     for(i = 0; i < interior.length; ++i) {
       status.remove(interior[i]);
     }
-    // This can be a precision error:
-    if (status._size !== prevCount - interior.length - lower.length) {
-      throw new Error('Precision error?');
-    }
+
     useBelow = false;
+    if (status._size !== prevCount - interior.length - lower.length) {
+      throw new Error('precision error?')
+    }
   }
 }

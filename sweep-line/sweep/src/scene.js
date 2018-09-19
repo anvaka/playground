@@ -1,4 +1,5 @@
 import findIntersections from './findIntersections';
+import BBox from './BBox';
 
 export default createScene;
 let wgl = require('w-gl');
@@ -7,13 +8,18 @@ function createScene(options, canvas) {
   var lines = options.lines;
   var isAsync = options.isAsync;
   var scene = wgl.scene(canvas);
-  var initialSceneSize = 40;
+  var bounds = new BBox();
+  lines.forEach(line => {
+    bounds.addPoint(line.from);
+    bounds.addPoint(line.to);
+  });
+
 
   scene.setViewBox({
-    left:  -initialSceneSize,
-    top:   -initialSceneSize,
-    right:  initialSceneSize,
-    bottom: initialSceneSize,
+    left:  bounds.left,
+    top:   bounds.top,
+    right:  bounds.right,
+    bottom: bounds.bottom,
   })
 
   var guidelines = new wgl.WireCollection(lines.length);

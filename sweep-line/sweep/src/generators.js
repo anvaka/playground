@@ -3,6 +3,40 @@ var seed = +new Date();
 var prng = createRandom(seed);
 
 export function random(count = 4, range = 100, seed) {
+  // return [
+  //   {
+  //     "from": {
+  //       "x": -0.020551152527332306,
+  //       "y": -0.174203060567379
+  //     },
+  //     "to": {
+  //       "x": -0.11163091659545898,
+  //       "y": -0.4594690687954426
+  //     },
+  //   },
+  //   {
+  //     "from": {
+  //       "x": 0.35762762650847435,
+  //       "y": -0.13034053519368172
+  //     },
+  //     "to": {
+  //       "x": -0.4633716866374016,
+  //       "y": -0.22582315653562546
+  //     },
+  //   },
+  //   {
+  //     "from": {
+  //       "x": 0.3875303864479065,
+  //       "y": 0.11689961701631546
+  //     },
+  //     "to": {
+  //       "x": -0.25046102330088615,
+  //       "y": -0.33835824206471443
+  //     },
+  //   },
+    
+  // ]
+  // seed = 3625052
   if (seed !== undefined) {
     prng = createRandom(seed);
   }
@@ -27,7 +61,7 @@ export function cube(count = 4, dPi = 30) {
     angle += dAngle;
     var x = Math.cos(angle) * r;
     var y = Math.sin(angle) * r;
-    r *= 1.08;
+    r *= 1.04;
 
     lines.push({
       from: {x: x, y: y},

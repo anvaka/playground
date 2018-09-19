@@ -47,6 +47,6 @@ function getSceneOptions(state) {
 }
 
 function getNumber(x, defaultValue) {
-  var num = Number.parseInt(x, 10);
+  var num = Number.parseFloat(x);
   return Number.isFinite(num) ? num : defaultValue;
 }

@@ -114,13 +114,71 @@ test('It rounds very close horizontal lines', t => {
   var intersection = findIntersections(lines);
   t.equals(intersection.length, 1, 'intersection found');
   t.end();
+});
+
+test('it finds intersection when one segment ends on another', t => {
+  var lines = [
+    {
+      "from": {
+        "x": 0.8020039759576321,
+        "y": 1.0324788875877857
+      },
+      "to": {
+        "x": 0.449962355196476,
+        "y": -0.28189642354846
+      },
+    },
+    {
+      "from": {
+        "x": -1.300572719424963,
+        "y": 1.1440130062401295
+      },
+      "to": {
+        "x": -0.40869949758052826,
+        "y": -0.6947379671037197
+      },
+    },
+    {
+      "from": {
+        "x": 1.425792083144188,
+        "y": 1.1113514006137848
+      },
+      "to": {
+        "x": -1.1965897008776665,
+        "y": -0.5762606598436832
+      },
+    },
+    {
+      "from": {
+        "x": 0.6898417733609676,
+        "y": 1.4930395111441612
+      },
+      "to": {
+        "x": -0.5260335020720959,
+        "y": -0.49431975558400154
+      },
+    },
+    {
+      "from": {
+        "x": 1.1742585226893425,
+        "y": 0.6070638746023178
+      },
+      "to": {
+        "x": 0.3658513203263283,
+        "y": -0.38512956351041794
+      },
+    }
+  ]
+  var intersection = findIntersections(lines);
+  t.equals(intersection.length, 5, 'intersection found');
+  t.end();
 })
 
 // test('find throw', t => {
-//   var seed = 0;
+//   var seed = 0; // 2599483
 //   while (true) {
 //     try {
-//       var lines = rnd(5, 1, seed)
+//       var lines = rnd(15, 1, seed)
 //       findIntersections(lines)
 //       seed += 1;
 //       if (seed % 50000 === 0) console.log(seed);

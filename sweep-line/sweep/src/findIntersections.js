@@ -275,7 +275,7 @@ function findIntersections(lines, options) {
     roundNearZero(to);
 
     var dy = from.y - to.y;
-    if (Math.abs(dy) < 1e-8) {
+    if (Math.abs(dy) < 1e-5) {
       from.y = to.y;
       segment.dy = 0;
     }
