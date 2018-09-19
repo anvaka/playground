@@ -221,7 +221,7 @@ export default function createSweepStatus() {
     }
     // This can be a precision error:
     if (status._size !== prevCount - interior.length - lower.length) {
-//      debugger;
+      throw new Error('Precision error?');
     }
     useBelow = false;
   }

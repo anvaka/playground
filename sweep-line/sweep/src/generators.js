@@ -27,20 +27,25 @@ export function cube(count = 4, dPi = 30) {
     angle += dAngle;
     var x = Math.cos(angle) * r;
     var y = Math.sin(angle) * r;
+    r *= 1.08;
 
     lines.push({
       from: {x: x, y: y},
       to: {x: -y, y: x},
-    }, {
+    }, 
+    {
       from: {x: -y, y: x},
       to: {x: -x, y: -y}
-    }, {
+    },
+    {
       from: {x: -x, y: -y},
       to: {x: y, y: -x}
-    }, {
+    },
+    {
       from: {x: y, y: -x},
       to: {x: x, y: y}
-    });
+    }
+    );
   }
   return lines;
 }

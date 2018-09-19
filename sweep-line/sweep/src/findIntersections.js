@@ -177,6 +177,7 @@ function findIntersections(lines, options) {
         // that no interior point are actually lower/upper point
         interior = removeDuplicate(interior, lower, upper);
         iLength = interior.length;
+        p.checkDuplicate = false;
       }
       reportIntersection(p.point, interior, lower, upper);
     }
@@ -270,6 +271,14 @@ function findIntersections(lines, options) {
     var from = segment.from;
     var to = segment.to;
 
+    roundNearZero(from);
+    roundNearZero(to);
+
+    var dy = from.y - to.y;
+    if (Math.abs(dy) < 1e-8) {
+      from.y = to.y;
+      segment.dy = 0;
+    }
     if ((from.y < to.y) || (
         (from.y === to.y) && (from.x > to.x))
       ) {
@@ -277,13 +286,12 @@ function findIntersections(lines, options) {
       from = segment.from = to; 
       to = segment.to = temp;
     }
-
+    segment.dy = from.y - to.y;
+    segment.dx = from.x - to.x;
+    segment.angle = pseudoAngle(segment.dy, segment.dx);
 
     var startEvent = new SweepEvent(START_ENDPOINT, from, segment)
     var endEvent = new SweepEvent(FINISH_ENDPOINT, to, segment)
-    segment.dx = startEvent.point.x - endEvent.point.x;
-    segment.dy = startEvent.point.y - endEvent.point.y;
-    segment.angle = pseudoAngle(segment.dy, segment.dx);
     eventQueue.push(startEvent);
     eventQueue.push(endEvent)
   }
@@ -296,4 +304,9 @@ function removeDuplicate(interior, lower, upper) {
     if (lower.indexOf(s) < 0 && upper.indexOf(s) < 0) result.push(s);
   }
   return result;
+}
+
+function roundNearZero(point) {
+  if (Math.abs(point.x) < EPS) point.x = 0;
+  if (Math.abs(point.y) < EPS) point.y = 0;
 }

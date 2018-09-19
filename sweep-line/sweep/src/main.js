@@ -5,6 +5,7 @@ import createScene from './scene';
 import * as gen from './generators';
 import queryState from 'query-state';
 
+
 var qs = queryState({
   isAsync: false,
   p0: 100,
@@ -39,6 +40,7 @@ function getSceneOptions(state) {
   var p1 = getNumber(state.p1, 40);
 
   var lines = gen[generator](p0, p1);
+  window.lines = lines;
   var isAsync = state.isAsync;
   var stepsPerFrame = getNumber(state.stepsPerFrame, 20);
   return {lines, isAsync, stepsPerFrame}

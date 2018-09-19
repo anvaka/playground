@@ -7,7 +7,7 @@ function createScene(options, canvas) {
   var lines = options.lines;
   var isAsync = options.isAsync;
   var scene = wgl.scene(canvas);
-  var initialSceneSize = 10;
+  var initialSceneSize = 40;
 
   scene.setViewBox({
     left:  -initialSceneSize,
