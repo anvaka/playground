@@ -6,27 +6,27 @@ const version = process.env.VERSION || require('./package.json').version
 
 const banner =
   '/*!\n' +
-  ' * sweepline v' + version + '\n' +
+  ' * isect v' + version + '\n' +
   ' * (c) 2018 Andrei Kashcha.\n' +
   ' * Released under the MIT License.\n' +
   ' */'
 export default {
-  input: 'test/findIntersections.js',
+  input: 'src/index.js',
   plugins: [
 		node(),
 		cjs(),
 		buble()
 	],
-  sourcemap: true,
   output: [{
+      sourcemap: true,
       format: 'umd',
-      name: 'i9r',
-      file: 'build/i9r.js'
+      name: 'isect',
+      file: 'build/isect.js',
+      banner
     },
     {
       format: 'es',
-      file: 'build/i9r.module.js'
+      file: 'build/isect.module.js'
     }
 	],
-	banner
 }

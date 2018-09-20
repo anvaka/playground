@@ -1,8 +1,5 @@
-require = require("esm")(module/*, options*/)
-
-
-var g = require('../src/generators');
-var findIntersections = require('../src/findIntersections').default;
+var g = require('../demo/interactive/src/generators');
+var findIntersections = require('../');
 var lines = g.complete(12, 40);
 var randomLines = g.random(100, 42, 1536687392180);
 

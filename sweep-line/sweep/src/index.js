@@ -2,7 +2,7 @@ export default findIntersections;
 
 import SplayTree from 'splaytree';
 
-import {intersectSegments, EPS, samePoint, pseudoAngle} from './geom';
+import {intersectSegments, EPS, pseudoAngle} from './geom';
 import createSweepStatus from './sweepStatus';
 
 var START_ENDPOINT = 1;

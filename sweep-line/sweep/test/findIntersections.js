@@ -1,8 +1,7 @@
-require = require("esm")(module/*, options*/)
-
-var findIntersections = require('../src/findIntersections').default;
 var test = require('tap').test;
-var rnd = require('../src/generators').random;
+
+var findIntersections = require('../');
+// var rnd = require('../demo/interactive/src/generators.js').random;
 
 test('it can find vertical/horizontal intersections', (t) => {
   var intersections = findIntersections([{
