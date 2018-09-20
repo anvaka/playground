@@ -40,7 +40,7 @@ export default function createSweepStatus() {
     if (Math.abs(res) < EPS) {
       var day = a.dy;
       // move horizontal to end
-      if (Math.abs(day) < EPS) { // 0.00000001) {
+      if (Math.abs(day) < EPS) { 
         return useBelow ? -1 : 1;
       }
 
