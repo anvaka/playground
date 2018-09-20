@@ -5,6 +5,9 @@ import {START_ENDPOINT, FINISH_ENDPOINT, INTERSECT_ENDPOINT} from './eventTypes'
  * Represents a single event in the sweep-line algorithm
  */
 export default class SweepEvent {
+  /**
+   * Creates new sweep event of a given kind.
+   */
   constructor(kind, point, segment, oneMore) {
     this.kind = kind;
     this.checkDuplicates = false;
@@ -23,6 +26,10 @@ export default class SweepEvent {
     }
   }
 
+  /**
+   * TODO: Do I need to create event before merging? I think I can
+   * save some RAM/CPU if I use pojo here.
+   */
   merge(other) {
     if (this.kind !== other.kind) this.checkDuplicates = true;
 
