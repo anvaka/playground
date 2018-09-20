@@ -112,60 +112,61 @@ export default function createSweepStatus() {
   }
 
   function getLeftRightPoint(p) {
-    var right, left,  x;
-    // Note: I've tried this code as well, didn't see much improvement:
-    // var lastLeft;
-    // var current = status._root;
-    // var minX = Number.POSITIVE_INFINITY;
-    // var useNext = false;
-    // while (current) {
-    //   x = getIntersectionXPoint(current.key, p.x, p.y);
-    //   var dx = p.x - x;
-    //   if (dx >= 0) {
-    //     if (dx < minX) {
-    //       minX = dx;
-    //       lastLeft = current;
-    //       current = current.left;
-    //       useNext = false;
-    //     } else {
-    //       break;
-    //     }
-    //   } else {
-    //     if (-dx < minX) {
-    //       useNext = true;
-    //       minX = -dx;
-    //       lastLeft = current;
-    //       current = current.right;
-    //     } else {
-    //       break;
-    //     }
-    //   }
-    // }
-    // if (useNext) {
-    //   lastLeft = status.next(lastLeft);
-    // }
-
-    // currentLeftRight.left = lastLeft && lastLeft.key
-    // var next = lastLeft && status.next(lastLeft);
-    // currentLeftRight.right = next && next.key
-    // return currentLeftRight;
-
-    var all = status.keys()
-    for (var i = 0; i < all.length; ++i) {
-      var segment = all[i];
-      x = getIntersectionXPoint(segment, p.x, p.y);
-      if (x > p.x && !right) {
-        right = segment;
-        break;
-      } else if (x < p.x) {
-        left = segment;
+    var lastLeft;
+    var current = status._root;
+    var minX = Number.POSITIVE_INFINITY;
+    var useNext = false;
+    while (current) {
+      var x = getIntersectionXPoint(current.key, p.x, p.y);
+      var dx = p.x - x;
+      if (dx >= 0) {
+        if (dx < minX) {
+          minX = dx;
+          lastLeft = current;
+          current = current.left;
+          useNext = false;
+        } else {
+          break;
+        }
+      } else {
+        if (-dx < minX) {
+          useNext = true;
+          minX = -dx;
+          lastLeft = current;
+          current = current.right;
+        } else {
+          break;
+        }
       }
     }
+    if (useNext) {
+      lastLeft = status.next(lastLeft);
+    }
 
-    currentLeftRight.left = left;
-    currentLeftRight.right = right;
-
+    currentLeftRight.left = lastLeft && lastLeft.key
+    var next = lastLeft && status.next(lastLeft);
+    currentLeftRight.right = next && next.key
     return currentLeftRight;
+
+    // Haven't decided which method is faster yet.
+
+    // var right, left,  x;
+    // var all = status.keys()
+    // for (var i = 0; i < all.length; ++i) {
+    //   var segment = all[i];
+    //   x = getIntersectionXPoint(segment, p.x, p.y);
+    //   if (x > p.x && !right) {
+    //     right = segment;
+    //     break;
+    //   } else if (x < p.x) {
+    //     left = segment;
+    //   }
+    // }
+
+    // currentLeftRight.left = left;
+    // currentLeftRight.right = right;
+
+    // return currentLeftRight;
   }
 
   function checkDuplicate() {

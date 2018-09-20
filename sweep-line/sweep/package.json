@@ -13,6 +13,7 @@
     "splaytree": "^2.0.2"
   },
   "devDependencies": {
+    "babel-eslint": "^9.0.0",
     "benchmark": "^2.1.4",
     "ngraph.random": "^0.1.0",
     "rollup": "^0.66.1",
