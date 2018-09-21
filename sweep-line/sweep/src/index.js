@@ -18,11 +18,8 @@ var EMPTY = [];
  * Line is swept top-down
  */
 export default function findIntersections(segments, options) {
-
-  var results = (options && options.results) || [];
-  var reportIntersection = (options && options.ignoreEndpoints) ? 
-    reportIgnoreEndpoints : 
-    reportIncludeIntersection;
+  var results = [];
+  var reportIntersection = (options && options.onFound) || defaultIntersectionReporter;
 
   var onError = (options && options.onError) || defaultErrorReporter;
 
@@ -69,7 +66,10 @@ export default function findIntersections(segments, options) {
   function run() {
     while (!eventQueue.isEmpty()) {
       var eventPoint = eventQueue.pop();
-      handleEventPoint(eventPoint);
+      if (handleEventPoint(eventPoint)) {
+        // they decided to stop.
+        return;
+      };
     }
 
     return results;
@@ -78,8 +78,7 @@ export default function findIntersections(segments, options) {
   function step() {
     if (!eventQueue.isEmpty()) {
       var eventPoint = eventQueue.pop();
-      handleEventPoint(eventPoint);
-      return true;
+      return handleEventPoint(eventPoint);
     }
     return false;
   }
@@ -104,7 +103,9 @@ export default function findIntersections(segments, options) {
 
     if (hasIntersection) {
       p.isReported = true;
-      reportIntersection(p.point, interior, lower, upper);
+      if (reportIntersection(p.point, interior, lower, upper)) {
+        return true;
+      }
     }
 
     sweepStatus.deleteSegments(lower, interior, p.point);
@@ -129,6 +130,8 @@ export default function findIntersections(segments, options) {
       findNewEvent(boundarySegments.beforeLeft, boundarySegments.left, p);
       findNewEvent(boundarySegments.right, boundarySegments.afterRight, p);
     }
+
+    return false;
   }
 
   function findNewEvent(left, right, p) {
@@ -167,20 +170,11 @@ export default function findIntersections(segments, options) {
     }
   }
 
-  function reportIncludeIntersection(p, interior, lower, upper) {
+  function defaultIntersectionReporter(p, interior, lower, upper) {
     results.push({
       point: p, 
       segments: union(union(interior, lower), upper)
     });
-  }
-
-  function reportIgnoreEndpoints(p, interior) {
-    if (interior.length > 0) {
-      results.push({
-        point: p, 
-        segments: interior
-      });
-    }
   }
 
   function addSegment(segment) {

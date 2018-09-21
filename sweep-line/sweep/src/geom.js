@@ -1,3 +1,6 @@
+/**
+ * Just a collection of geometry related utilities
+ */
 export const EPS = 1e-10;
 
 export function getIntersectionXPoint(segment, xPos, yPos) {
@@ -5,7 +8,7 @@ export function getIntersectionXPoint(segment, xPos, yPos) {
   var dy2 = yPos - segment.to.y;
   var dy = segment.to.y - segment.from.y;
   if (Math.abs(dy1) < EPS) {
-    // The segment starts on the sweepline
+    // The segment starts on the sweep line
     if (Math.abs(dy) < EPS) {
       // the segment is horizontal. Intersection is at the point
       if (xPos <= segment.from.x) return segment.from.x;

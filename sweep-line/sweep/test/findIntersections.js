@@ -1,5 +1,4 @@
 var test = require('tap').test;
-
 var isect = require('../');
 // var rnd = require('../demo/interactive/src/generators.js').random;
 
@@ -17,6 +16,25 @@ test('it can find vertical/horizontal intersections', (t) => {
   t.equals(intersections[0].point.y, 0)
   t.end();
 })
+
+test('it reports intersections', t => {
+  var reportedPoint = null;
+  isect([{
+    from: {x: -1, y: 0},
+    to: {x: 1, y: 0},
+  }, {
+    from: {x: 0, y: -1},
+    to: {x: 0, y: 1},
+  }], {
+    onFound(point /*, interior, lower, upper */) {
+      reportedPoint = point
+    }
+  }).run();
+
+  t.equals(reportedPoint.x, 0, 'x is ok');
+  t.equals(reportedPoint.y, 0, 'y is ok');
+  t.end();
+});
 
 test('it can find adjacent points', (t) => {
   var intersections = isect([{
@@ -50,6 +68,29 @@ test('it can find all segments', t => {
   t.equals(intersections[0].point.y, 0.5)
   t.equals(intersections[0].segments.length, 3, 'all three segments found')
   t.end();
+});
+
+test('it can early stop', t => {
+  var results = [];
+  isect([{
+    from: {x: -1, y: 0},
+    to: {x: 1, y: 0},
+  }, {
+    from: {x: 0.5, y: 1},
+    to: {x: 0.5, y: -1},
+  }, {
+    from: {x: 0.75, y: 1},
+    to: {x: 0.75, y: -1},
+  }], {
+    onFound(point) {
+      results.push(point);
+      // Stop now!
+      return true;
+    }
+  }).run();
+
+  t.equals(results.length, 1, 'only one intersection reported');
+  t.end();
 })
 
 test('it can find intersections in cube', t => {
@@ -77,14 +118,12 @@ test('it does not ignore endpoint if it is internal', t => {
   }, {
     from: {x: 1, y: 1},
     to: {x: 1, y: -1},
-  }], {
-    ignoreEndpoints: true
-  }).run();
-  t.equals(intersections.length, 1, 'four intersections found');
+  }]).run();
+  t.equals(intersections.length, 1, 'intersections found');
   t.end();
 });
 
-test('It rounds very close horizontal lines', t => {
+test('it rounds very close horizontal lines', t => {
   // y coordinate here is almost the same. This is a tricky case for
   // floating point operations, so we round `y` coordinate to avoid
   // precision errors:
