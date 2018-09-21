@@ -1,7 +1,10 @@
 import SplayTree from 'splaytree';
 import {samePoint, getIntersectionXPoint, EPS} from './geom'
 
-export default function createSweepStatus() {
+/**
+ * Creates a new sweep status data structure.
+ */
+export default function createSweepStatus(onError) {
   var lastPointY;
   var lastPointX;
   var useBelow = false;
@@ -18,13 +21,46 @@ export default function createSweepStatus() {
   var currentLeftRight = {left: null, right: null};
 
   return {
-    deleteSegments,
+    /**
+     * Add new segments into the status tree.
+     */
     insertSegments,
+
+    /**
+     * Remove segments from the status tree.
+     */
+    deleteSegments,
+
+    /**
+     * Returns segments that are to the left and right from a given point.
+     */
     getLeftRightPoint,
+
+    /**
+     * For a given collections of segments finds the most left and the most right
+     * segments. Also returns segments immediately before left, and after right segments.
+     */
     getBoundarySegments,
+
+    /**
+     * Current binary search tree with segments
+     */
     status,
+
+    /**
+     * Introspection method that verifies if there are duplicates in the segment tree.
+     * If there are - `onError()` is called.
+     */
     checkDuplicate,
+
+    /**
+     * Prints current segments in order of their intersection with sweep line. Introspection method.
+     */
     printStatus,
+
+    /**
+     * Returns current position of the sweep line.
+     */
     getLastPoint() {
       return {x: lastPointX, y: lastPointY};
     }
@@ -56,6 +92,7 @@ export default function createSweepStatus() {
       // var bAngle = Math.atan2(b.from.y - b.to.y, b.from.x - b.to.x);
       // return useBelow ? bAngle - aAngle : aAngle - bAngle;
     }
+
     return res;
   }
 
@@ -176,13 +213,12 @@ export default function createSweepStatus() {
 
       if (prev) {
         if (samePoint(prev.from, current.from) && samePoint(prev.to, current.to)) {
-          // eslint-disable-next-line
-          console.error('Duplicate key in the status! This may be caused by Floating Point rounding error');
+          // Likely you have received error before during segment removal.
+          onError('Duplicate key in the status! This may be caused by Floating Point rounding error')
         }
       }
       prev = current;
-    })
-
+    });
   }
 
   function printStatus() {
@@ -220,10 +256,11 @@ export default function createSweepStatus() {
     for(i = 0; i < interior.length; ++i) {
       status.remove(interior[i]);
     }
-
     useBelow = false;
+
     if (status._size !== prevCount - interior.length - lower.length) {
-      throw new Error('precision error?')
+      // This can happen when rounding error occurs. You can try scaling your input
+      onError('Segments were not removed from a tree properly. Precision error?');
     }
   }
 }

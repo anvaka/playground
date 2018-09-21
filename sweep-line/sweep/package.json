@@ -15,6 +15,7 @@
   "devDependencies": {
     "babel-eslint": "^9.0.0",
     "benchmark": "^2.1.4",
+    "eslint": "^5.6.0",
     "ngraph.random": "^0.1.0",
     "rollup": "^0.66.1",
     "rollup-plugin-buble": "^0.19.2",

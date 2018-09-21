@@ -7,11 +7,11 @@ var Benchmark = require('benchmark');
 var suite = new Benchmark.Suite;
 
 suite.add('Circular lines 12x40', function() {
-  var res = findIntersections(lines);
+  var res = findIntersections(lines).run();
   if (res.length !== 313) throw new Error('Invalid number of intersections');
 })
 .add('100 Random lines lines in 42px box', function() {
-  var res = findIntersections(randomLines);
+  var res = findIntersections(randomLines).run();
   if (res.length !== 1123) throw new Error('Invalid number of intersections');
 })
 .on('cycle', function(event) {

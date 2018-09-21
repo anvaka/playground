@@ -5,47 +5,83 @@ import SweepEvent from './SweepEvent';
 import {intersectSegments, EPS, pseudoAngle} from './geom';
 import {START_ENDPOINT, FINISH_ENDPOINT, INTERSECT_ENDPOINT} from './eventTypes';
 
+// We use EMPTY array to avoid pressure on garbage collector. Need to be
+// very cautious to not mutate this array.
 var EMPTY = [];
 
-export default function findIntersections(lines, options) {
-  var eventQueue = createEventQueue();
-  var sweepStatus = createSweepStatus();
+/**
+ * Finds all intersections among given segments.
+ * 
+ * The algorithm follows "Computation Geometry, Algorithms and Applications" book
+ * by Mark de Berg, Otfried Cheong, Marc van Kreveld, and Mark Overmars.
+ * 
+ * Line is swept top-down
+ */
+export default function findIntersections(segments, options) {
+
   var results = (options && options.results) || [];
   var reportIntersection = (options && options.ignoreEndpoints) ? 
     reportIgnoreEndpoints : 
     reportIncludeIntersection;
 
-  lines.forEach(insertEndpointsIntoEventQueue);
-  if (options && options.control) {
-    return {
-      next
-    };
+  var onError = (options && options.onError) || defaultErrorReporter;
+
+  var eventQueue = createEventQueue();
+  var sweepStatus = createSweepStatus(onError);
+  segments.forEach(addSegment);
+
+  return {
+    /**
+     * Find all intersections synchronously.
+     * 
+     * @returns array of found intersections.
+     */
+    run,
+
+    /**
+     * Performs a single step in the sweep line algorithm
+     * 
+     * @returns true if there was something to process; False if no more work to do
+     */
+    step,
+
+    // Methods below are low level API for fine-grained control.
+    // Don't use it unless you understand this code thoroughly
+
+    /**
+     * Add segment into the 
+     */
+    addSegment,
+
+    /**
+     * Direct access to event queue. Queue contains segment endpoints and
+     * pending detected intersections.
+     */
+    eventQueue, 
+
+    /**
+     * Direct access to sweep line status. "Status" holds information about
+     * all intersected segments.
+     */
+    sweepStatus
   }
 
-  var printDebug = false; // options && options.debug;
-
-  while (!eventQueue.isEmpty()) {
-    var eventPoint = eventQueue.pop();
-    handleEventPoint(eventPoint);
-  }
-
-  return results;
-
-  function next() {
-    if (eventQueue.isEmpty()) {
-      options.control.done(results);
-    } else {
+  function run() {
+    while (!eventQueue.isEmpty()) {
       var eventPoint = eventQueue.pop();
       handleEventPoint(eventPoint);
-      options.control.step(sweepStatus, results, eventQueue)
     }
+
+    return results;
   }
 
-  function union(a, b) {
-    if (!a) return b;
-    if (!b) return a;
-
-    return a.concat(b);
+  function step() {
+    if (!eventQueue.isEmpty()) {
+      var eventPoint = eventQueue.pop();
+      handleEventPoint(eventPoint);
+      return true;
+    }
+    return false;
   }
 
   function handleEventPoint(p) {
@@ -53,37 +89,26 @@ export default function findIntersections(lines, options) {
     var lower = p.to || EMPTY; 
     var upper = p.from || EMPTY;
   
-    // if (printDebug) {
-    //   console.log('handle event point', p.point, p.kind);
-    // }
     var uLength = upper.length;
     var iLength = interior.length;
     var lLength = lower.length;
-
-    if (uLength + iLength + lLength > 1) {
-      p.isReported = true;
-      if (p.checkDuplicates) {
-        // the event was merged from another kind. We need to make sure
-        // that no interior point are actually lower/upper point
-        interior = removeDuplicate(interior, lower, upper);
-        iLength = interior.length;
-        p.checkDuplicate = false;
-      }
-      reportIntersection(p.point, interior, lower, upper);
-    }
+    var hasIntersection = uLength + iLength + lLength > 1;
 
     if (p.checkDuplicates) {
       // the event was merged from another kind. We need to make sure
       // that no interior point are actually lower/upper point
       interior = removeDuplicate(interior, lower, upper);
       iLength = interior.length;
+      p.checkDuplicate = false;
     }
+
+    if (hasIntersection) {
+      p.isReported = true;
+      reportIntersection(p.point, interior, lower, upper);
+    }
+
     sweepStatus.deleteSegments(lower, interior, p.point);
     sweepStatus.insertSegments(interior, upper, p.point);
-
-    if (printDebug) {
-      sweepStatus.checkDuplicate();
-    }
 
     var sLeft, sRight;
 
@@ -126,10 +151,11 @@ export default function findIntersections(lines, options) {
     if (Math.abs(intersection.y) < EPS) intersection.y = 0;
 
     var current = eventQueue.find(intersection);
+
     if (current && current.isReported) {
-      debugger;
       // We already reported this event. No need to add it one more time
       // TODO: Is this case even possible?
+      onError('We already reported this event.');
       return;
     }
 
@@ -157,14 +183,18 @@ export default function findIntersections(lines, options) {
     }
   }
 
-  function insertEndpointsIntoEventQueue(segment) {
+  function addSegment(segment) {
     var from = segment.from;
     var to = segment.to;
 
+    // Small numbers give more precision errors. Rounding them to 0.
     roundNearZero(from);
     roundNearZero(to);
 
     var dy = from.y - to.y;
+
+    // Note: dy is much smaller then EPS on purpose. I found that higher
+    // precision here does less good - getting way more rounding errors.
     if (Math.abs(dy) < 1e-5) {
       from.y = to.y;
       segment.dy = 0;
@@ -176,6 +206,10 @@ export default function findIntersections(lines, options) {
       from = segment.from = to; 
       to = segment.to = temp;
     }
+
+    // We pre-compute some immutable properties of the segment
+    // They are used quite often in the tree traversal, and pre-computation
+    // gives significant boost:
     segment.dy = from.y - to.y;
     segment.dx = from.x - to.x;
     segment.angle = pseudoAngle(segment.dy, segment.dx);
@@ -199,4 +233,15 @@ function removeDuplicate(interior, lower, upper) {
 function roundNearZero(point) {
   if (Math.abs(point.x) < EPS) point.x = 0;
   if (Math.abs(point.y) < EPS) point.y = 0;
+}
+
+function defaultErrorReporter(errorMessage) {
+  throw new Error(errorMessage);
+}
+
+function union(a, b) {
+  if (!a) return b;
+  if (!b) return a;
+
+  return a.concat(b);
 }
