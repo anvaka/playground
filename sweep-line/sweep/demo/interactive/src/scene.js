@@ -1,4 +1,4 @@
-import findIntersections from '../../../';
+import isect from '../../../';
 import BBox from './BBox';
 
 export default createScene;
@@ -40,52 +40,37 @@ function createScene(options, canvas) {
   });
 
   scene.appendChild(linesEl);
-  var nodeCollection;
-  var next;
-  var doneCalled = false;
-  var findOptions = isAsync ? {
-    control: {
-      done(intersections) {
-        doneCalled = true;
-        drawIntersections(intersections);
-      },
-      step(sweepStatus, results) {
-        drawSweepStatus(sweepStatus);
-        drawIntersections(results)
-      }
-    },
-    debug: true
-  } : {
-    debug: true
-  };
 
-  findOptions.ignoreEndpoints = false;
-
+  var iSector, nodeCollection;
   var status = {};
-
-  // eslint-disable-next-line
-  console.time('run')
-  var intersections = findIntersections(lines, findOptions);
-  // eslint-disable-next-line
-  console.timeEnd('run')
   var nextFrame;
+
   if (isAsync) {
-    next = () => {
-      if (doneCalled) return;
-      intersections.next();
-    }
-    window.next = next;
-    nextFrame = requestAnimationFrame(frame);
+    runAsync();
   } else {
-    // eslint-disable-next-line
-    console.log('found ' + intersections.length + ' intersections');
-    drawIntersections(intersections);
+    runSync();
   }
 
   return {
     dispose
   }
 
+  function runSync() {
+    // eslint-disable-next-line
+    console.time('run')
+    iSector = isect(lines);
+    var intersections = iSector.run();
+    // eslint-disable-next-line
+    console.timeEnd('run')
+    // eslint-disable-next-line
+    console.log('found ' + intersections.length + ' intersections');
+    drawIntersections(intersections);
+  }
+
+  function runAsync() {
+    iSector = isect(lines);
+    nextFrame = requestAnimationFrame(frame);
+  }
   function dispose() {
     if (nextFrame) {
       cancelAnimationFrame(nextFrame);
@@ -95,10 +80,19 @@ function createScene(options, canvas) {
   }
 
   function frame() {
+    var hasMore;
     for (var i = 0; i < options.stepsPerFrame; ++i) {
-      next();
+      hasMore = iSector.step();
     }
-    nextFrame = requestAnimationFrame(frame);
+
+    drawSweepStatus(iSector.sweepStatus);
+    drawIntersections(iSector.results)
+
+    if (hasMore) {
+      nextFrame = requestAnimationFrame(frame);
+    } else {
+      nextFrame = null;
+    }
   }
 
   function drawSweepStatus(sweepStatus) {

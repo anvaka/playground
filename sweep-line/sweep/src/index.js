@@ -60,7 +60,12 @@ export default function findIntersections(segments, options) {
      * Direct access to sweep line status. "Status" holds information about
      * all intersected segments.
      */
-    sweepStatus
+    sweepStatus,
+
+    /**
+     * Access to results array. Works only when you use default onFound() handler
+     */
+    results
   }
 
   function run() {
@@ -78,7 +83,11 @@ export default function findIntersections(segments, options) {
   function step() {
     if (!eventQueue.isEmpty()) {
       var eventPoint = eventQueue.pop();
-      return handleEventPoint(eventPoint);
+      handleEventPoint(eventPoint);
+      // Note: we don't check results of `handleEventPoint()`
+      // assumption is that client controls `step()` and thus they 
+      // know better if they want to stop.
+      return true;
     }
     return false;
   }
