@@ -17,38 +17,60 @@ export function random(count = 4, range = 100, seed) {
   return lines;
 }
 
+export function triangle(count = 4, dPi = 10) {
+  var lines = [];
+  var width = 10;
+  for (var i = 0; i < count; ++i) {
+    for (var j = 0; j < count; ++j) 
+      drawTriangle(i * dPi, j * dPi)
+  }
+  return lines;
+
+  function drawTriangle(x, y) {
+    lines.push(
+      {from: {x: x, y: y}, to: {x: x + width, y}},
+      {from: {x: x + width, y}, to: {x: x + width/2, y: y - width}},
+      {from: {x: x + width/2, y: y - width}, to: {x, y}}
+    )
+  }
+}
+
 export function cube(count = 4, dPi = 30) {
-  var angle = 0;
+  var forwardAngle = 0;
   var r = 4;
   if (dPi === 0) dPi = 1;
   var dAngle = Math.PI/dPi;
 
   var lines = [];
   for (var i = 0; i < count; ++i) {
-    angle += dAngle;
-    var x = Math.cos(angle) * r;
-    var y = Math.sin(angle) * r;
+    forwardAngle += dAngle;
+    addRect(forwardAngle, r);
     r *= 1.04;
-
-    lines.push({
-      from: {x: x, y: y},
-      to: {x: -y, y: x},
-    },
-    {
-      from: {x: -y, y: x},
-      to: {x: -x, y: -y}
-    },
-    {
-      from: {x: -x, y: -y},
-      to: {x: y, y: -x}
-    },
-    {
-      from: {x: y, y: -x},
-      to: {x: x, y: y}
-    }
-    );
   }
   return lines;
+
+  function addRect(angle, r) {
+    var x = Math.cos(angle) * r;
+    var y = Math.sin(angle) * r;
+
+    lines.push({
+        from: {x: x, y: y},
+        to: {x: -y, y: x},
+      },
+      {
+        from: {x: -y, y: x},
+        to: {x: -x, y: -y}
+      },
+      {
+        from: {x: -x, y: -y},
+        to: {x: y, y: -x}
+      },
+      {
+        from: {x: y, y: -x},
+        to: {x: x, y: y}
+      }
+    );
+  }
 }
 
 export function grid(vertical = 10, horizontal = 10) {

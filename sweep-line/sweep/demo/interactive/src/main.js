@@ -5,14 +5,21 @@ import createScene from './scene';
 import * as gen from './generators';
 import queryState from 'query-state';
 
+import bus from './bus';
 
 var qs = queryState({
   isAsync: false,
   p0: 100,
-  p1: 40
+  p1: 40,
+}, {
+  useSearch: true
 });
 
 qs.onChange(updateScene);
+bus.on('change-qs', (newState) => {
+  qs.set(newState);
+  updateScene(newState);
+})
 
 var sceneOptions = getSceneOptions(qs.get());
 var currentScene = createScene(sceneOptions, document.getElementById('scene'));

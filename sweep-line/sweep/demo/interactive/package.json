@@ -8,6 +8,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "ngraph.events": "0.0.4",
     "ngraph.random": "^0.1.0",
     "query-state": "^4.1.0",
     "vue": "^2.5.17",

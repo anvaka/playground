@@ -129,12 +129,12 @@ export default function createSweepStatus(onError) {
     // Let's find their prev/next elements and report them back:
     var left = status.find(leftMost);
     if (!left) {
-      throw new Error('Left is missing. Precision error?');
+      onError('Left is missing. Precision error?');
     }
 
     var right = status.find(rightMost);
     if (!right) {
-      throw new Error('Right is missing. Precision error?');
+      onError('Right is missing. Precision error?');
     }
 
     var beforeLeft = status.prev(left);
