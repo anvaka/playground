@@ -12,7 +12,8 @@ module.exports = {
   random: random,
   cube: cube,
   grid: grid,
-  complete: complete
+  complete: complete,
+  drunkGrid: drunkGrid
 }
 
 function random(count = 4, range = 100, seed) {
@@ -115,4 +116,26 @@ function complete(count = 10, range = 100) {
   function getKey(i, j) {
     return i < j ? i + ';' + j : j + ';' + i;
   }
+}
+
+function drunkGrid(size = 10, variance = 10, seed) {
+  if (seed !== undefined) {
+    prng = createRandom(seed);
+  }
+  var lines = [];
+  var dx = 0; var dy = -0.3;
+  for (var i = 0; i < size; i += 1) {
+    lines.push({
+      name: 'h' + i,
+      from: {x: dx + prng.gaussian() * variance, y: i + dy + prng.gaussian() * variance},
+      to: {x: dx + (size - 1) + prng.gaussian() * variance, y: i + dy + prng.gaussian() * variance}
+    });
+    lines.push({
+      name: 'v' + i,
+      from: {x: dx + i + prng.gaussian() * variance, y: dy + prng.gaussian() * variance},
+      to: {x: dx + i + prng.gaussian() * variance, y: (size - 1) + dy + prng.gaussian() * variance}
+    });
+  }
+
+  return lines;
 }
