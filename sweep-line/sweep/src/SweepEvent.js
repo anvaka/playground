@@ -1,4 +1,3 @@
-import {EPS} from './geom';
 import {START_ENDPOINT, FINISH_ENDPOINT, INTERSECT_ENDPOINT} from './eventTypes';
 
 /**
@@ -11,8 +10,6 @@ export default class SweepEvent {
   constructor(kind, point, segment, oneMore) {
     this.kind = kind;
     this.checkDuplicates = false;
-    if (Math.abs(point.x) < EPS) point.x = 0;
-    if (Math.abs(point.y) < EPS) point.y = 0;
 
     this.point = point;
     if (kind === START_ENDPOINT) {

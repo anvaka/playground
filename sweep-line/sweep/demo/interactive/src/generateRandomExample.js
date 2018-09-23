@@ -16,8 +16,22 @@ var params = [
   {
     name: 'cube',
     args: [
-      {min: 10, max: 50},  // number of rects
-      {min: 3, max: 200},  // segments
+      {min: 100, max: 150},  // number of rects
+      {min: 3, max: 10},  // variance
+    ]
+  },
+  {
+    name: 'drunkgrid',
+    args: [
+      {min: 10, max: 150},  // Row x Col
+      {min: 0.1, max: 10},  // variance
+    ]
+  },
+  {
+    name: 'triangle',
+    args: [
+      {min: 100, max: 500},  // Count  
+      {min: 10, max: 20},  // variance
     ]
   }
 ]

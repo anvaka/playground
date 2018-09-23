@@ -5,8 +5,8 @@ import {samePoint, getIntersectionXPoint, EPS} from './geom'
  * Creates a new sweep status data structure.
  */
 export default function createSweepStatus(onError) {
-  var lastPointY;
-  var lastPointX;
+  var lastPointY, prevY;
+  var lastPointX, prevX;
   var useBelow = false;
   var status = new SplayTree(compareSegments);
 
@@ -82,7 +82,11 @@ export default function createSweepStatus(onError) {
 
       var dby = b.dy;
       if (Math.abs(dby) < EPS) {
-        return useBelow ? 1 : -1;
+        if (useBelow) {
+          return (b.from.x >= lastPointX) ? -1 : 1
+        }
+        return -1;
+        // return useBelow ? 1 : -1;
       }
       var pa = a.angle;
       var pb = b.angle;
@@ -244,17 +248,45 @@ export default function createSweepStatus(onError) {
   }
 
   function deleteSegments(lower, interior, sweepLinePos) {
-    var i;
+    var i, key;
     var prevCount = status._size;
+    prevX = lastPointX;
+    prevY = lastPointY;
     lastPointY = sweepLinePos.y;
     lastPointX = sweepLinePos.x;
 
     useBelow = true;
     for(i = 0; i < lower.length; ++i) {
-      status.remove(lower[i]);
+      key = lower[i];
+      if (status.find(key)) {
+        status.remove(key);
+      } else {
+        lastPointX = prevX;
+        lastPointY = prevY;
+        if (status.find(key)) {
+          status.remove(key);
+        } else {
+          // They will get an error :(
+        }
+        lastPointY = sweepLinePos.y;
+        lastPointX = sweepLinePos.x;
+      }
     }
     for(i = 0; i < interior.length; ++i) {
-      status.remove(interior[i]);
+      key = interior[i];
+      if (status.find(key)) {
+        status.remove(key);
+      } else {
+        lastPointX = prevX;
+        lastPointY = prevY;
+        if (status.find(key)) {
+          status.remove(key);
+        } else {
+          // They will get an error :(
+        }
+        lastPointY = sweepLinePos.y;
+        lastPointX = sweepLinePos.x;
+      }
     }
     useBelow = false;
 

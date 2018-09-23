@@ -1,7 +1,7 @@
 /**
  * Just a collection of geometry related utilities
  */
-export const EPS = 1e-10;
+export const EPS = 1e-9;//10;
 
 export function getIntersectionXPoint(segment, xPos, yPos) {
   var dy1 = segment.from.y - yPos;
@@ -28,7 +28,7 @@ export function getIntersectionXPoint(segment, xPos, yPos) {
   return (segment.to.x + xOffset);
 }
 
-export function pseudoAngle(dx, dy) {
+export function angle(dx, dy) {
   // https://stackoverflow.com/questions/16542042/fastest-way-to-sort-vectors-by-angle-without-actually-computing-that-angle
   var p = dx/(Math.abs(dx) + Math.abs(dy)) // -1 .. 1 increasing with x
 

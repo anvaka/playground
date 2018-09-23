@@ -17,35 +17,35 @@ export function random(count = 4, range = 100, seed) {
   return lines;
 }
 
-export function triangle(count = 4, dPi = 10) {
+export function triangle(count = 4, variance = 10) {
   var lines = [];
   var width = 10;
   for (var i = 0; i < count; ++i) {
-    for (var j = 0; j < count; ++j) 
-      drawTriangle(i * dPi, j * dPi)
+    var x = prng.gaussian() * variance
+    var y = prng.gaussian() * variance
+    drawTriangle(x, y);
   }
   return lines;
 
   function drawTriangle(x, y) {
     lines.push(
-      {from: {x: x, y: y}, to: {x: x + width, y}},
-      {from: {x: x + width, y}, to: {x: x + width/2, y: y - width}},
-      {from: {x: x + width/2, y: y - width}, to: {x, y}}
+      {from: {x: x, y: y}, to: {x: x + width, y}, name: `B${x},${y}`},
+      {from: {x: x + width, y}, to: {x: x + width/2, y: y - width}, name: `U${x},${y}`},
+      {from: {x: x + width/2, y: y - width}, to: {x, y}, name: `D${x},${y}`}
     )
   }
 }
 
-export function cube(count = 4, dPi = 30) {
+export function cube(count = 4, variance = 10) {
   var forwardAngle = 0;
   var r = 4;
-  if (dPi === 0) dPi = 1;
-  var dAngle = Math.PI/dPi;
+  var dAngle = Math.PI/count;
 
   var lines = [];
   for (var i = 0; i < count; ++i) {
-    forwardAngle += dAngle;
+    forwardAngle += dAngle + prng.gaussian() * variance;
     addRect(forwardAngle, r);
-    r *= 1.04;
+    r += prng.gaussian() * variance;
   }
   return lines;
 
@@ -78,6 +78,7 @@ export function grid(vertical = 10, horizontal = 10) {
   var dx = 0; var dy = -0.3;
   for (var i = 0; i < vertical; i += 1) {
     lines.push({
+      name: 'h' + i,
       from: {x: dx, y: i + dy},
       to: {x: dx + (horizontal - 1), y: i + dy}
     });
@@ -85,10 +86,75 @@ export function grid(vertical = 10, horizontal = 10) {
 
   for (i = 0; i < horizontal; i += 1) {
     lines.push({
+      name: 'v' + i,
       from: {x: dx + i, y: dy},
       to: {x: dx + i, y: (vertical - 1) + dy}
     });
   }
+  return lines;
+}
+
+export function drunkgrid(size = 10, variance = 10) {
+  // This setup is very bad..
+  // return [
+  //   {
+  //     "name": "v2",
+  //     "from": {
+  //       "x": -0.9065090071796865,
+  //       "y": 15.263401779954687
+  //     },
+  //     "to": {
+  //       "x": 14.340720330320922,
+  //       "y": -2.8453003847556446
+  //     },
+  //     "dy": 18.108702164710333,
+  //     "dx": -15.247229337500608,
+  //     "angle": -0.4571069866986017
+  //   },
+  //   {
+  //     "name": "v0",
+  //     "from": {
+  //       "x": 7.0121826553229045,
+  //       "y": 6.51578380772819
+  //     },
+  //     "to": {
+  //       "x": -14.33942114543839,
+  //       "y": 6.5156799042713605
+  //     },
+  //     "dy": 0.00010390345682953495,
+  //     "dx": 21.351603800761296,
+  //     "angle": 0.9999951337167842
+  //   },
+  //   {
+  //     "name": "v1",
+  //     "from": {
+  //       "x": -7.166517787738302,
+  //       "y": 10.160876487964895
+  //     },
+  //     "to": {
+  //       "x": 9.088398499652495,
+  //       "y": -15.20648970096957
+  //     },
+  //     "dy": 25.367366188934465,
+  //     "dx": -16.2549162873908,
+  //     "angle": -0.3905339957422227
+  //   },
+  // ]
+  var lines = [];
+  var dx = 0; var dy = -0.3;
+  for (var i = 0; i < size; i += 1) {
+    lines.push({
+      name: 'h' + i,
+      from: {x: dx + prng.gaussian() * variance, y: i + dy + prng.gaussian() * variance},
+      to: {x: dx + (size - 1) + prng.gaussian() * variance, y: i + dy + prng.gaussian() * variance}
+    });
+    lines.push({
+      name: 'v' + i,
+      from: {x: dx + i + prng.gaussian() * variance, y: dy + prng.gaussian() * variance},
+      to: {x: dx + i + prng.gaussian() * variance, y: (size - 1) + dy + prng.gaussian() * variance}
+    });
+  }
+
   return lines;
 }
 

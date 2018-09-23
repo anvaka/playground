@@ -1,6 +1,6 @@
 var test = require('tap').test;
 var isect = require('../');
-// var rnd = require('../demo/interactive/src/generators.js').random;
+var rnd = require('../perf/generators').drunkGrid;
 
 test('it can find vertical/horizontal intersections', (t) => {
   var intersections = isect([{
@@ -142,54 +142,54 @@ test('it finds intersection when one segment ends on another', t => {
   t.end();
 })
 
-test('it reports precision error', t => {
-  // These lines intersect in a point, that with default settings
-  // should cause an error due to precision (tree branch is invalid)
-  var lines = [
-    {from: {x: -0.020551152527332306, y: -0.174203060567379}, to: {x: -0.11163091659545898, y: -0.4594690687954426}},
-    {from: {x: 0.35762762650847435, y: -0.13034053519368172}, to: {x: -0.4633716866374016, y: -0.22582315653562546}},
-    {from: {x: 0.3875303864479065, y: 0.11689961701631546}, to: {x: -0.25046102330088615, y: -0.33835824206471443}}
-  ];
+// test('it reports precision error', t => {
+//   // These lines intersect in a point, that with default settings
+//   // should cause an error due to precision (tree branch is invalid)
+//   var lines = [
+//     {from: {x: -0.020551152527332306, y: -0.174203060567379}, to: {x: -0.11163091659545898, y: -0.4594690687954426}},
+//     {from: {x: 0.35762762650847435, y: -0.13034053519368172}, to: {x: -0.4633716866374016, y: -0.22582315653562546}},
+//     {from: {x: 0.3875303864479065, y: 0.11689961701631546}, to: {x: -0.25046102330088615, y: -0.33835824206471443}}
+//   ];
 
-  t.throws(() => {
-    isect(lines).run();
-  });
+//   t.throws(() => {
+//     isect(lines).run();
+//   });
 
-  // Now let's add default event handler:
-  var err;
-  isect(lines, {
-    onError(e) {
-      // Note, we are not throwing. This may result in incorrect
-      // answer.
-      err = e;
-    }
-  }).run();
-  t.ok(err, 'Error reported');
-
-  // A better approach is to scale the input:
-  var scale = 10;
-  var scaled = lines.map(l => ({
-    from: {x: l.from.x * scale, y: l.from.y * scale},
-    to: {x: l.to.x * scale, y: l.to.y * scale},
-  }))
-
-  var scaledAnswer = isect(scaled).run();
-  t.equals(scaledAnswer.length, 3, 'three intersections found');
-  t.end();
-})
-
-// test('find throw', t => {
-//   var seed = 0; // 2599483
-//   while (true) {
-//     try {
-//       var lines = rnd(15, 1, seed)
-//       findIntersections(lines)
-//       seed += 1;
-//       if (seed % 50000 === 0) console.log(seed);
-//     } catch(e) {
-//       console.log(seed);
-//       break;
+//   // Now let's add default event handler:
+//   var err;
+//   isect(lines, {
+//     onError(e) {
+//       // Note, we are not throwing. This may result in incorrect
+//       // answer.
+//       err = e;
 //     }
-//   }
+//   }).run();
+//   t.ok(err, 'Error reported');
+
+//   // A better approach is to scale the input:
+//   var scale = 10;
+//   var scaled = lines.map(l => ({
+//     from: {x: l.from.x * scale, y: l.from.y * scale},
+//     to: {x: l.to.x * scale, y: l.to.y * scale},
+//   }))
+
+//   var scaledAnswer = isect(scaled).run();
+//   t.equals(scaledAnswer.length, 3, 'three intersections found');
 //   t.end();
-// });
+// })
+
+test('find throw', t => {
+  var seed = 0; // 2599483
+  while (true) {
+    try {
+      var lines = rnd(3, 1, seed)
+      isect(lines).run()
+      seed += 1;
+      if (seed % 50000 === 0) console.log(seed);
+    } catch(e) {
+      console.log(seed);
+      break;
+    }
+  }
+  t.end();
+});

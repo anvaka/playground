@@ -2,7 +2,7 @@ import createEventQueue from './createEventQueue';
 import createSweepStatus from './sweepStatus';
 import SweepEvent from './SweepEvent';
 
-import {intersectSegments, EPS, pseudoAngle} from './geom';
+import {intersectSegments, EPS, angle} from './geom';
 import {START_ENDPOINT, FINISH_ENDPOINT, INTERSECT_ENDPOINT} from './eventTypes';
 
 // We use EMPTY array to avoid pressure on garbage collector. Need to be
@@ -159,8 +159,7 @@ export default function findIntersections(segments, options) {
 
     // Need to adjust floating point for this special case,
     // since otherwise it gives rounding errors:
-    if (Math.abs(intersection.x) < EPS) intersection.x = 0;
-    if (Math.abs(intersection.y) < EPS) intersection.y = 0;
+    roundNearZero(intersection);
 
     var current = eventQueue.find(intersection);
 
@@ -215,7 +214,7 @@ export default function findIntersections(segments, options) {
     // gives significant boost:
     segment.dy = from.y - to.y;
     segment.dx = from.x - to.x;
-    segment.angle = pseudoAngle(segment.dy, segment.dx);
+    segment.angle = angle(segment.dy, segment.dx);
 
     var startEvent = new SweepEvent(START_ENDPOINT, from, segment)
     var endEvent = new SweepEvent(FINISH_ENDPOINT, to, segment)

@@ -40,6 +40,7 @@ function createScene(options, canvas) {
   linesEl.color.r = 0xee/255;
   linesEl.color.g = 0xee/255;
   linesEl.color.b = 0xee/255;
+  linesEl.color.a = 0.9;
   lines.forEach(function (line) {
     linesEl.add({ from: line.from, to: line.to });
   });

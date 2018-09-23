@@ -25,6 +25,7 @@ var sceneOptions = getSceneOptions(qs.get());
 var currentScene = createScene(sceneOptions, document.getElementById('scene'));
 
 Vue.config.productionTip = false
+
 new Vue({
   render: h => h(App)
 }).$mount('#app')
