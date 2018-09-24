@@ -17,11 +17,13 @@ function createScene(options, canvas) {
     bounds.addPoint(line.to);
   });
 
+  var pixelRatio = scene.getPixelRatio();
+  var left = bounds.left / pixelRatio;
+  var top = bounds.top / pixelRatio;
   scene.setViewBox({
-    left:  bounds.left,
-    top:   bounds.top,
-    right:  bounds.right,
-    bottom: bounds.bottom,
+    left, top,
+    right:  left + bounds.width / pixelRatio,
+    bottom: top + bounds.height / pixelRatio
   })
 
   var guidelines = new wgl.WireCollection(lines.length);

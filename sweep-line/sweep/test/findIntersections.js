@@ -178,18 +178,18 @@ test('it finds intersection when one segment ends on another', t => {
 //   t.end();
 // })
 
-test('find throw', t => {
-  var seed = 0; // 2599483
-  while (true) {
-    try {
-      var lines = rnd(3, 1, seed)
-      isect(lines).run()
-      seed += 1;
-      if (seed % 50000 === 0) console.log(seed);
-    } catch(e) {
-      console.log(seed);
-      break;
-    }
-  }
-  t.end();
-});
+// test('find throw', t => {
+//   var seed = 0; // 2599483
+//   while (true) {
+//     try {
+//       var lines = rnd(3, 1, seed)
+//       isect(lines).run()
+//       seed += 1;
+//       if (seed % 50000 === 0) console.log(seed);
+//     } catch(e) {
+//       console.log(seed);
+//       break;
+//     }
+//   }
+//   t.end();
+// });

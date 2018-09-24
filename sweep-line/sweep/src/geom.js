@@ -38,24 +38,18 @@ export function angle(dx, dy) {
 
 export function intersectSegments(a, b) {
   //  https://stackoverflow.com/a/1968345/125351
-  var aStart = a.from, aEnd = a.to, bStart = b.from, bEnd = b.to;
+  var aStart = a.from, bStart = b.from;
   var p0_x = aStart.x, p0_y = aStart.y,
-      p1_x = aEnd.x, p1_y = aEnd.y,
-      p2_x = bStart.x, p2_y = bStart.y,
-      p3_x = bEnd.x, p3_y = bEnd.y;
+      p2_x = bStart.x, p2_y = bStart.y;
 
-  var s1_x, s1_y, s2_x, s2_y;
-  s1_x = p1_x - p0_x; s1_y = p1_y - p0_y;
-  s2_x = p3_x - p2_x; s2_y = p3_y - p2_y;
-
-  var s, t;
-  s = (-s1_y * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) / (-s2_x * s1_y + s1_x * s2_y);
-  t = ( s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y);
+  var s1_x = a.dx, s1_y = a.dy, s2_x = b.dx, s2_y = b.dy;
+  var s = ( s1_y * (p0_x - p2_x) - s1_x * (p0_y - p2_y)) / (-s2_x * s1_y + s1_x * s2_y);
+  var t = ( s2_x * (p2_y - p0_y) + s2_y * (p0_x - p2_x)) / (-s2_x * s1_y + s1_x * s2_y);
 
   if (s >= 0 && s <= 1 && t >= 0 && t <= 1) {
     return {
-      x: p0_x + (t * s1_x),
-      y: p0_y + (t * s1_y)
+      x: p0_x - (t * s1_x),
+      y: p0_y - (t * s1_y)
     }
   }
 }

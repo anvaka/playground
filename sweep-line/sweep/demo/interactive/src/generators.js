@@ -141,7 +141,7 @@ export function drunkgrid(size = 10, variance = 10) {
   //   },
   // ]
   var lines = [];
-  var dx = 0; var dy = -0.3;
+  var dx = -2 * variance; var dy = -2 * variance;
   for (var i = 0; i < size; i += 1) {
     lines.push({
       name: 'h' + i,

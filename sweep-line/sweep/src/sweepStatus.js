@@ -248,7 +248,13 @@ export default function createSweepStatus(onError) {
   }
 
   function deleteSegments(lower, interior, sweepLinePos) {
-    var i, key;
+    // I spent most of the time debugging this method. Depending on the
+    // algorithm state we can run into situation when dynamic keys of the
+    // `status` tree predict wrong branch, and thus we are not able to find
+    // the segment that needs to be deleted. If that happens I'm trying to
+    // use previous point and repeat the process. This may result in 
+    // incorrect state. In that case I report an error. 
+    var i;
     var prevCount = status._size;
     prevX = lastPointX;
     prevY = lastPointY;
@@ -257,42 +263,32 @@ export default function createSweepStatus(onError) {
 
     useBelow = true;
     for(i = 0; i < lower.length; ++i) {
-      key = lower[i];
-      if (status.find(key)) {
-        status.remove(key);
-      } else {
-        lastPointX = prevX;
-        lastPointY = prevY;
-        if (status.find(key)) {
-          status.remove(key);
-        } else {
-          // They will get an error :(
-        }
-        lastPointY = sweepLinePos.y;
-        lastPointX = sweepLinePos.x;
-      }
+      removeSegment(lower[i], sweepLinePos)
     }
     for(i = 0; i < interior.length; ++i) {
-      key = interior[i];
-      if (status.find(key)) {
-        status.remove(key);
-      } else {
-        lastPointX = prevX;
-        lastPointY = prevY;
-        if (status.find(key)) {
-          status.remove(key);
-        } else {
-          // They will get an error :(
-        }
-        lastPointY = sweepLinePos.y;
-        lastPointX = sweepLinePos.x;
-      }
+      removeSegment(interior[i])
     }
     useBelow = false;
 
     if (status._size !== prevCount - interior.length - lower.length) {
       // This can happen when rounding error occurs. You can try scaling your input
       onError('Segments were not removed from a tree properly. Precision error?');
+    }
+  }
+
+  function removeSegment(key, sweepLinePos) {
+    if (status.find(key)) {
+      status.remove(key);
+    } else {
+      lastPointX = prevX;
+      lastPointY = prevY;
+      if (status.find(key)) {
+        status.remove(key);
+      } else {
+        // They will get an error :(
+      }
+      lastPointY = sweepLinePos.y;
+      lastPointX = sweepLinePos.x;
     }
   }
 }
