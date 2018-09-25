@@ -140,6 +140,19 @@ test('it finds intersection when one segment ends on another', t => {
   var intersection = isect(lines).run();
   t.equals(intersection.length, 5, 'intersection found');
   t.end();
+});
+
+test('it finds collinear lines', (t) => {
+  var intersections = isect([{
+    from: {x: 0, y: 0},
+    to: {x: 1, y: 1},
+  }, {
+    from: {x: 0.5, y: 0.5},
+    to: {x: 2, y: 2},
+  }]).run();
+
+  t.equals(intersections.length, 2, 'two intersections found');
+  t.end();
 })
 
 // test('it reports precision error', t => {
