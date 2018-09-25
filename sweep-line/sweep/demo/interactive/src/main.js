@@ -9,8 +9,8 @@ import bus from './bus';
 
 var qs = queryState({
   isAsync: false,
-  p0: 100,
-  p1: 40,
+  p0: 50,
+  p1: 4,
 }, {
   useSearch: true
 });
@@ -42,10 +42,10 @@ function updateScene(appState) {
 function getSceneOptions(state) {
   var generator = state.generator;
   if (!(generator in gen)) {
-    generator = 'random'
+    generator = 'drunkgrid'
   }
-  var p0 = getNumber(state.p0, 100); 
-  var p1 = getNumber(state.p1, 40);
+  var p0 = getNumber(state.p0, 50); 
+  var p1 = getNumber(state.p1, 4);
 
   var lines = gen[generator](p0, p1);
   window.lines = lines;

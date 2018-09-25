@@ -2,8 +2,36 @@ import createEventQueue from './createEventQueue';
 import createSweepStatus from './sweepStatus';
 import SweepEvent from './SweepEvent';
 
-import {intersectSegments, EPS, angle} from './geom';
+import {intersectSegments, EPS, angle, samePoint} from './geom';
 import {START_ENDPOINT, FINISH_ENDPOINT, INTERSECT_ENDPOINT} from './eventTypes';
+
+/**
+ * A point on a line
+ * 
+ * @typedef {Object} Point
+ * @property {number} x coordinate
+ * @property {number} y coordinate
+ */
+
+
+/**
+ * @typedef {Object} Segment 
+ * @property {Point} from start of the segment
+ * @property {Point} to end of the segment
+ */
+
+/**
+ * @typedef {function(point : Point, interior : Segment[], lower : Segment[], upper : Segment[])} ReportIntersectionCallback
+ */
+
+/**
+ * @typedef {Object} ISectOptions 
+ * @property {ReportIntersectionCallback} onFound 
+ */
+
+ /**
+  * @typedef {Object} ISectResult
+  */
 
 // We use EMPTY array to avoid pressure on garbage collector. Need to be
 // very cautious to not mutate this array.
@@ -16,8 +44,12 @@ var EMPTY = [];
  * by Mark de Berg, Otfried Cheong, Marc van Kreveld, and Mark Overmars.
  * 
  * Line is swept top-down
+ * 
+ * @param {Segment[]} segments
+ * @param {ISectOptions=} options
+ * @returns {ISectResult}
  */
-export default function findIntersections(segments, options) {
+export default function isect(segments, options) {
   var results = [];
   var reportIntersection = (options && options.onFound) || defaultIntersectionReporter;
 
@@ -215,6 +247,21 @@ export default function findIntersections(segments, options) {
     segment.dy = from.y - to.y;
     segment.dx = from.x - to.x;
     segment.angle = angle(segment.dy, segment.dx);
+
+    // var prev = eventQueue.find(from)
+    // if (prev) {
+    //   var prevFrom = prev.data.from;
+    //   if (prevFrom) {
+    //     for (var i = 0; i < prevFrom.length; ++i) {
+    //       var s = prevFrom[i];
+    //       if (samePoint(s.to, to)) {
+    //         reportIntersection(s.from, [], s.from, s.to);
+    //         reportIntersection(s.to, [], s.from, s.to);
+    //         return;
+    //       }
+    //     }
+    //   }
+    // }
 
     var startEvent = new SweepEvent(START_ENDPOINT, from, segment)
     var endEvent = new SweepEvent(FINISH_ENDPOINT, to, segment)
