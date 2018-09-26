@@ -158,12 +158,12 @@ export default function createSweepStatus(onError) {
       onError('Right is missing. Precision error?');
     }
 
-    var beforeLeft = status.prev(left);
-    var afterRight = status.next(right);
+    var beforeLeft = left && status.prev(left);
+    var afterRight = right && status.next(right);
 
     currentBoundary.beforeLeft = beforeLeft && beforeLeft.key;
-    currentBoundary.left = left.key;
-    currentBoundary.right = right.key;
+    currentBoundary.left = left && left.key;
+    currentBoundary.right = right && right.key;
     currentBoundary.afterRight = afterRight && afterRight.key;
 
     return currentBoundary;
@@ -283,7 +283,7 @@ export default function createSweepStatus(onError) {
       removeSegment(lower[i], sweepLinePos)
     }
     for(i = 0; i < interior.length; ++i) {
-      removeSegment(interior[i])
+      removeSegment(interior[i], sweepLinePos)
     }
     useBelow = false;
 
