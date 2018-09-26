@@ -73,31 +73,48 @@ export default function createSweepStatus(onError) {
     var bk = getIntersectionXPoint(b, lastPointX, lastPointY);
 
     var res = ak - bk;
-    if (Math.abs(res) < EPS) {
-      var day = a.dy;
-      // move horizontal to end
-      if (Math.abs(day) < EPS) { 
-        return useBelow ? -1 : 1;
-      }
-
-      var dby = b.dy;
-      if (Math.abs(dby) < EPS) {
-        if (useBelow) {
-          return (b.from.x >= lastPointX) ? -1 : 1
-        }
-        return -1;
-        // return useBelow ? 1 : -1;
-      }
-      var pa = a.angle;
-      var pb = b.angle;
-      return useBelow ? pa - pb : pb - pa;
-      // Could also use:
-      // var aAngle = Math.atan2(a.from.y - a.to.y, a.from.x - a.to.x);
-      // var bAngle = Math.atan2(b.from.y - b.to.y, b.from.x - b.to.x);
-      // return useBelow ? bAngle - aAngle : aAngle - bAngle;
+    if (Math.abs(res) >= EPS) {
+      // We are okay fine. Intersection distance between two segments
+      // is good to give conclusive answer
+      return res;
     }
 
-    return res;
+    var aIsHorizontal = Math.abs(a.dy) < EPS;
+    var bIsHorizontal = Math.abs(b.dy) < EPS;
+    // TODO: What if both a and b is horizontal?
+    // move horizontal to end
+    if (aIsHorizontal) { 
+      return useBelow ? -1 : 1;
+    }
+
+    if (bIsHorizontal) {
+      if (useBelow) {
+        return (b.from.x >= lastPointX) ? -1 : 1
+      }
+      return -1;
+      // return useBelow ? 1 : -1;
+    }
+    var pa = a.angle;
+    var pb = b.angle;
+    if (Math.abs(pa - pb) >= EPS) {
+      return useBelow ? pa - pb : pb - pa;
+    }
+
+    var segDist = a.from.y - b.from.y;
+    if (Math.abs(segDist) >= EPS) {
+      return -segDist;
+    }
+    segDist = a.to.y - b.to.y;
+    if (Math.abs(segDist) >= EPS) {
+      return -segDist;
+    }
+    return 0;
+    debugger;
+
+    // Could also use:
+    // var aAngle = Math.atan2(a.from.y - a.to.y, a.from.x - a.to.x);
+    // var bAngle = Math.atan2(b.from.y - b.to.y, b.from.x - b.to.x);
+    // return useBelow ? bAngle - aAngle : aAngle - bAngle;
   }
 
   function getBoundarySegments(upper, interior) {
