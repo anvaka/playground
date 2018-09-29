@@ -4,10 +4,12 @@ node_modules
 /build
 
 /demo/outline/
+/demo/interactive/public/lines.json
 
 # local env files
 .env.local
 .env.*.local
+
 
 # Log files
 npm-debug.log*
