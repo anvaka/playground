@@ -1,6 +1,11 @@
 /**
  * Just a collection of geometry related utilities
  */
+
+// This is used for precision checking (e.g. two numbers are equal
+// if their difference is smaller than this number). The value is 
+// chosen empirically. We still may run into precision related issues.
+// TODO: we should allow consumers to configure this.
 export const EPS = 1e-9;//10;
 
 export function getIntersectionXPoint(segment, xPos, yPos) {

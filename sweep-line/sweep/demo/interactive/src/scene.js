@@ -54,13 +54,13 @@ function createScene(options, canvas) {
   var nextFrame;
 
   appStatus.error = null;
+  var totalElapsed = 0;
   if (isAsync) {
-    appStatus.showMetrics = false;
     runAsync();
   } else {
     runSync();
-    appStatus.showMetrics = true;
   }
+  appStatus.showMetrics = true;
 
   return {
     dispose
@@ -83,9 +83,7 @@ function createScene(options, canvas) {
     if (intersections) {
       // eslint-disable-next-line
       console.log('found ' + intersections.length + ' intersections');
-      appStatus.found = nice(intersections.length);
-      appStatus.elapsed = (Math.round(elapsed * 100)/100) + 'ms';
-      appStatus.linesCount = nice(lines.length);
+      updateSearchMetrics(elapsed);
       drawIntersections(intersections);
     }
   }
@@ -98,7 +96,12 @@ function createScene(options, canvas) {
   }
 
   function runAsync() {
+    var start = performance.now();
     iSector = isect(lines);
+    var end = performance.now();
+    totalElapsed += (end - start);
+    updateSearchMetrics(totalElapsed);
+
     nextFrame = requestAnimationFrame(frame);
 
     // for console driven debugging
@@ -111,6 +114,12 @@ function createScene(options, canvas) {
     }
   }
 
+  function updateSearchMetrics(elapsed) {
+    appStatus.found = formatWithDecimalSeparator(iSector.results.length);
+    appStatus.elapsed = (Math.round(elapsed * 100)/100) + 'ms';
+    appStatus.linesCount = formatWithDecimalSeparator(lines.length);
+  }
+
   function dispose() {
     if (nextFrame) {
       cancelAnimationFrame(nextFrame);
@@ -121,9 +130,13 @@ function createScene(options, canvas) {
 
   function frame() {
     var hasMore;
+    var start = performance.now();
     for (var i = 0; i < options.stepsPerFrame; ++i) {
       hasMore = iSector.step();
     }
+    var end = performance.now();
+    totalElapsed += end - start;
+    updateSearchMetrics(totalElapsed);
 
     drawSweepStatus(iSector.sweepStatus);
     drawIntersections(iSector.results)
@@ -187,6 +200,6 @@ function createScene(options, canvas) {
   }
 }
 
-function nice(x) {
+function formatWithDecimalSeparator(x) {
   return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }

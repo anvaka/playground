@@ -11,6 +11,7 @@ var qs = queryState({
   isAsync: false,
   p0: 50,
   p1: 4,
+  generator: 'drunkgrid'
 }, {
   useSearch: true
 });
