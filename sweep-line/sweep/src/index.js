@@ -152,7 +152,6 @@ export default function isect(segments, options) {
     if (!hasIntersection && !iLength && lLength + uLength) {
       var segmentsWithPoint = sweepStatus.findSegmentsWithPoint(p.point);
       var collinear = makeArrayOfCollinearSegments(segmentsWithPoint, p);
-      if (collinear) debugger;
       if (collinear && reportIntersection(p.point, collinear)) {
         return true;
       }

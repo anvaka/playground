@@ -97,7 +97,7 @@ function createScene(options, canvas) {
 
   function runAsync() {
     var start = performance.now();
-    iSector = isect(lines);
+    iSector = isect(lines, { onError });
     var end = performance.now();
     totalElapsed += (end - start);
     updateSearchMetrics(totalElapsed);

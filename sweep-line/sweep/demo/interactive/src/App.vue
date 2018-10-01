@@ -36,12 +36,8 @@ export default {
 
 <style>
 #app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   width: 400px;
   position: absolute;
-  color: white;
   padding: 8px;
   background: #101830;
 }
