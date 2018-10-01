@@ -42,6 +42,8 @@ export default function createSweepStatus(onError) {
      */
     getBoundarySegments,
 
+    findSegmentsWithPoint,
+
     /**
      * Current binary search tree with segments
      */
@@ -106,11 +108,10 @@ export default function createSweepStatus(onError) {
     }
     segDist = a.to.y - b.to.y;
     if (Math.abs(segDist) >= EPS) {
+      // TODO: Is this accurate?
       return -segDist;
     }
     return 0;
-    debugger;
-
     // Could also use:
     // var aAngle = Math.atan2(a.from.y - a.to.y, a.from.x - a.to.x);
     // var bAngle = Math.atan2(b.from.y - b.to.y, b.from.x - b.to.x);
@@ -170,9 +171,13 @@ export default function createSweepStatus(onError) {
   }
 
   function getLeftRightPoint(p) {
+    // We are trying to find left and right segments that are nearest to the
+    // point p. For this we traverse the binary search tree, and remember
+    // node with the shortest distance to p.
     var lastLeft;
     var current = status._root;
     var minX = Number.POSITIVE_INFINITY;
+
     var useNext = false;
     while (current) {
       var x = getIntersectionXPoint(current.key, p.x, p.y);
@@ -198,7 +203,8 @@ export default function createSweepStatus(onError) {
       }
     }
     if (useNext) {
-      lastLeft = status.next(lastLeft);
+      // I'm not sure why I did this. I don't this this is right now.
+      // lastLeft = status.next(lastLeft);
     }
 
     currentLeftRight.left = lastLeft && lastLeft.key
@@ -206,7 +212,10 @@ export default function createSweepStatus(onError) {
     currentLeftRight.right = next && next.key
     return currentLeftRight;
 
-    // Haven't decided which method is faster yet.
+    // Conceptually, the code above should be equivalent to the code below;
+    // The code below is easier to understand, but intuitively, the code above
+    // should have better performance (as we do not traverse the entire status
+    // tree)
 
     // var right, left,  x;
     // var all = status.keys()
@@ -225,6 +234,49 @@ export default function createSweepStatus(onError) {
     // currentLeftRight.right = right;
 
     // return currentLeftRight;
+  }
+
+  function findSegmentsWithPoint(p) {
+    var lastLeft;
+    var current = status._root;
+    var minX = Number.POSITIVE_INFINITY;
+
+    while (current) {
+      var x = getIntersectionXPoint(current.key, p.x, p.y);
+      var dx = p.x - x;
+      if (dx >= 0) {
+        if (dx < minX) {
+          minX = dx;
+          lastLeft = current;
+          current = current.left;
+        } else {
+          break;
+        }
+      } else {
+        if (-dx < minX) {
+          minX = -dx;
+          lastLeft = current;
+          current = current.right;
+        } else {
+          break;
+        }
+      }
+    }
+
+    if (minX >= EPS) {
+      // This means that no segment in the status tree has distance 0
+      // to the point in question, thus there cannot be segments at this point.
+      return;
+    }
+
+    var current = status.next(lastLeft);
+    var results = [lastLeft.key];
+    while (current && Math.abs(getIntersectionXPoint(current.key, p.x, p.y) - p.x) < EPS) {
+      results.push(current.key);
+      current = status.next(current);
+    }
+
+    return results;
   }
 
   function checkDuplicate() {

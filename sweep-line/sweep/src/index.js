@@ -149,6 +149,15 @@ export default function isect(segments, options) {
       }
     }
 
+    if (!hasIntersection && !iLength && lLength + uLength) {
+      var segmentsWithPoint = sweepStatus.findSegmentsWithPoint(p.point);
+      var collinear = makeArrayOfCollinearSegments(segmentsWithPoint, p);
+      if (collinear) debugger;
+      if (collinear && reportIntersection(p.point, collinear)) {
+        return true;
+      }
+    }
+
     sweepStatus.deleteSegments(lower, interior, p.point);
     sweepStatus.insertSegments(interior, upper, p.point);
 
@@ -179,7 +188,9 @@ export default function isect(segments, options) {
     if (!left || !right) return;
 
     var intersection = intersectSegments(left, right);
-    if (!intersection) return;
+    if (!intersection) {
+        return;
+    }
 
     var dy = p.point.y - intersection.y
     // TODO: should I add dy to intersection.y?
@@ -248,20 +259,23 @@ export default function isect(segments, options) {
     segment.dx = from.x - to.x;
     segment.angle = angle(segment.dy, segment.dx);
 
-    // var prev = eventQueue.find(from)
-    // if (prev) {
-    //   var prevFrom = prev.data.from;
-    //   if (prevFrom) {
-    //     for (var i = 0; i < prevFrom.length; ++i) {
-    //       var s = prevFrom[i];
-    //       if (samePoint(s.to, to)) {
-    //         reportIntersection(s.from, [], s.from, s.to);
-    //         reportIntersection(s.to, [], s.from, s.to);
-    //         return;
-    //       }
-    //     }
-    //   }
-    // }
+    var prev = eventQueue.find(from)
+    if (prev) {
+      // this detects identical segments early. Without this check
+      // the algorithm would break since sweep line has no means to
+      // detect identical segments.
+      var prevFrom = prev.data.from;
+      if (prevFrom) {
+        for (var i = 0; i < prevFrom.length; ++i) {
+          var s = prevFrom[i];
+          if (samePoint(s.to, to)) {
+            reportIntersection(s.from, [], s.from, s.to);
+            reportIntersection(s.to, [], s.from, s.to);
+            return;
+          }
+        }
+      }
+    }
 
     var startEvent = new SweepEvent(START_ENDPOINT, from, segment)
     var endEvent = new SweepEvent(FINISH_ENDPOINT, to, segment)
@@ -293,4 +307,36 @@ function union(a, b) {
   if (!b) return a;
 
   return a.concat(b);
+}
+
+function makeArrayOfCollinearSegments(segmentsWithPoint, event) {
+  if (!segmentsWithPoint || segmentsWithPoint.length === 0) return; // nothing to report
+
+  var interior = event.interior;
+  var lower = event.to; 
+  var upper = event.from;
+  if (segmentsWithPoint.length > 1) {
+    return union(union(segmentsWithPoint, lower), union(upper, interior));
+  }
+
+  var p = event.point;
+  if (isInternalPoint(segmentsWithPoint, p)) {
+    // Just to make sure that we do not report endings of a single segment as
+    // collinear to itself. There must be at least one segment that does not contain
+    // our point as a boundary point.
+    return union(union(segmentsWithPoint, lower), union(upper, interior));
+  }
+}
+
+function isInternalPoint(segments, p) {
+  if (!segments) return false;
+
+  for (var i = 0; i < segments.length; ++i) {
+    var s = segments[i];
+    if (!samePoint(s.from, p) && !samePoint(s.to, p)) {
+      return true;
+    }
+  }
+
+  return false;
 }

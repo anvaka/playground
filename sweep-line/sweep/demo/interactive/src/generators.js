@@ -95,6 +95,14 @@ export function grid(vertical = 10, horizontal = 10) {
 }
 
 export function drunkgrid(size = 10, variance = 10) {
+  // return require('../public/lines.json');
+  // return [{
+  //   from: {x: 0, y: 0},
+  //   to: {x: 10, y: 10},
+  // }, {
+  //   from: {x: 5, y: 5},
+  //   to: {x: 20, y: 20},
+  // }]
   // This setup is very bad..
   // return [
   //   {
