@@ -3,7 +3,6 @@ import createSweepStatus from './sweepStatus';
 import SweepEvent from './SweepEvent';
 
 import {intersectSegments, EPS, angle, samePoint} from './geom';
-import {START_ENDPOINT, FINISH_ENDPOINT, INTERSECT_ENDPOINT} from './eventTypes';
 
 /**
  * A point on a line
@@ -57,6 +56,7 @@ export default function isect(segments, options) {
 
   var eventQueue = createEventQueue();
   var sweepStatus = createSweepStatus(onError);
+  debugger;
   segments.forEach(addSegment);
 
   return {
@@ -125,57 +125,36 @@ export default function isect(segments, options) {
   }
 
   function handleEventPoint(p) {
-    // var interior = p.interior || EMPTY;
-    // var lower = p.to || EMPTY; 
     var upper = p.from || EMPTY;
-  
     var uLength = upper.length;
-    var segmentsWithPoint = sweepStatus.findSegmentsWithPoint(p.point);
-    var lower = [], interior = [];
-    if (segmentsWithPoint) {
-    segmentsWithPoint.forEach(s => {
-      if (samePoint(s.to, p.point)) {
-        if (!lower) lower = [s];
-        else lower.push(s);
-      } else if (!samePoint(s.from, p.point)) {
-        if (!interior) interior = [s];
-        else interior.push(s);
-      }
-    })
-  } else {
-    lower = EMPTY;
-    interior = EMPTY;
-  }
 
-    var iLength = interior ? interior.length : 0;
-    var lLength = lower ? lower.length : 0;
+    // TODO: move lower/interior into sweep status method?
+    var segmentsWithPoint = sweepStatus.findSegmentsWithPoint(p.point);
+    var lower, interior;
+    if (segmentsWithPoint) {
+      segmentsWithPoint.forEach(s => {
+        if (samePoint(s.to, p.point)) {
+          if (!lower) lower = [s];
+          else lower.push(s);
+        } else if (!samePoint(s.from, p.point)) {
+          if (!interior) interior = [s];
+          else interior.push(s);
+        }
+      })
+    } 
+    if (!lower) lower = EMPTY;
+    if (!interior) interior = EMPTY;
+
+    var iLength = interior.length;
+    var lLength = lower.length;
     var hasIntersection = uLength + iLength + lLength > 1;
 
-
-    // if (p.checkDuplicates) {
-    //   // the event was merged from another kind. We need to make sure
-    //   // that no interior point are actually lower/upper point
-    //   interior = removeDuplicate(interior, lower, upper);
-    //   iLength = interior.length;
-    //   p.checkDuplicate = false;
-    // }
-
     if (hasIntersection) {
-      // if (!p.isReported) {
-        p.isReported = true;
-        if (reportIntersection(p.point, interior, lower, upper)) {
-          return true;
-        }
-      // }
+      p.isReported = true;
+      if (reportIntersection(p.point, interior, lower, upper)) {
+        return true;
+      }
     }
-    // else if (!iLength && lLength + uLength) {
-    //   // also check for intersections that are formed by collinear points.
-    //   var segmentsWithPoint = sweepStatus.findSegmentsWithPoint(p.point);
-    //   var collinear = makeArrayOfCollinearSegments(segmentsWithPoint, p);
-    //   var quitEarly = collinear && reportIntersection(p.point, collinear);
-    //   if (collinear) p.isReported = true;
-    //   if (quitEarly) return true;
-    // }
 
     sweepStatus.deleteSegments(lower, interior, p.point);
     sweepStatus.insertSegments(interior, upper, p.point);
@@ -235,10 +214,8 @@ export default function isect(segments, options) {
       return;
     }
 
-    var event = new SweepEvent(INTERSECT_ENDPOINT, intersection, left, right)
-    if (current) {
-      eventQueue.merge(current, event);
-    } else {
+    if (!current) {
+      var event = new SweepEvent(intersection)
       eventQueue.insert(event);
     }
   }
@@ -299,20 +276,16 @@ export default function isect(segments, options) {
       }
     }
 
-    var startEvent = new SweepEvent(START_ENDPOINT, from, segment)
-    var endEvent = new SweepEvent(FINISH_ENDPOINT, to, segment)
-    eventQueue.push(startEvent);
-    eventQueue.push(endEvent)
+    if (prev) {
+      if (prev.data.from) prev.data.from.push(segment);
+      else prev.data.from = [segment];
+    } else {
+      var e = new SweepEvent(from, segment)
+      eventQueue.insert(e);
+    }
+    var event = new SweepEvent(to)
+    eventQueue.insert(event)
   }
-}
-
-function removeDuplicate(interior, lower, upper) {
-  var result = [];
-  for (var i = 0; i < interior.length; ++i) {
-    var s = interior[i];
-    if (lower.indexOf(s) < 0 && upper.indexOf(s) < 0) result.push(s);
-  }
-  return result;
 }
 
 function roundNearZero(point) {
@@ -329,36 +302,4 @@ function union(a, b) {
   if (!b) return a;
 
   return a.concat(b);
-}
-
-function makeArrayOfCollinearSegments(segmentsWithPoint, event) {
-  if (!segmentsWithPoint || segmentsWithPoint.length === 0) return; // nothing to report
-
-  var interior = event.interior;
-  var lower = event.to; 
-  var upper = event.from;
-  if (segmentsWithPoint.length > 1) {
-    return union(union(segmentsWithPoint, lower), union(upper, interior));
-  }
-
-  var p = event.point;
-  if (isInternalPoint(segmentsWithPoint, p)) {
-    // Just to make sure that we do not report endings of a single segment as
-    // collinear to itself. There must be at least one segment that does not contain
-    // our point as a boundary point.
-    return union(union(segmentsWithPoint, lower), union(upper, interior));
-  }
-}
-
-function isInternalPoint(segments, p) {
-  if (!segments) return false;
-
-  for (var i = 0; i < segments.length; ++i) {
-    var s = segments[i];
-    if (!samePoint(s.from, p) && !samePoint(s.to, p)) {
-      return true;
-    }
-  }
-
-  return false;
 }

@@ -8,9 +8,7 @@ export default function createEventQueue() {
     isEmpty: isEmpty,
     size: size,
     pop: pop,
-    push: push,
     find: find,
-    merge: merge,
     insert: insert
   }
 
@@ -26,21 +24,9 @@ export default function createEventQueue() {
     return q.isEmpty();
   }
 
-  function push(event) {
-    var current = q.find(event.point);
-    if (current) {
-      return current.data.merge(event);
-    } else {
-      q.insert(event.point, event);
-    }
-  }
-
   function insert(event) {
-    q.insert(event.point, event);
-  }
-
-  function merge(current, event) {
-    current.data.merge(event);
+    // debugger;
+    q.add(event.point, event);
   }
 
   function pop() {
