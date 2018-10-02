@@ -83,6 +83,9 @@ export default function createSweepStatus(onError) {
 
     var aIsHorizontal = Math.abs(a.dy) < EPS;
     var bIsHorizontal = Math.abs(b.dy) < EPS;
+    if (aIsHorizontal && bIsHorizontal) {
+      return b.to.x - a.to.x;
+    }
     // TODO: What if both a and b is horizontal?
     // move horizontal to end
     if (aIsHorizontal) { 
@@ -111,6 +114,7 @@ export default function createSweepStatus(onError) {
       // TODO: Is this accurate?
       return -segDist;
     }
+
     return 0;
     // Could also use:
     // var aAngle = Math.atan2(a.from.y - a.to.y, a.from.x - a.to.x);
@@ -162,12 +166,25 @@ export default function createSweepStatus(onError) {
     var beforeLeft = left && status.prev(left);
     var afterRight = right && status.next(right);
 
+    while (afterRight && right.key.dy === 0 && afterRight.key.dy === 0) {
+      // horizontal segments are special :(
+      afterRight = status.next(afterRight);
+    }
+
     currentBoundary.beforeLeft = beforeLeft && beforeLeft.key;
     currentBoundary.left = left && left.key;
     currentBoundary.right = right && right.key;
     currentBoundary.afterRight = afterRight && afterRight.key;
 
     return currentBoundary;
+  }
+
+  function next(d) {
+    if (d.right) {
+      var successor = d.right;
+      while (successor.left) successor = successor.left;
+      return successor;
+    }
   }
 
   function getLeftRightPoint(p) {
@@ -237,6 +254,15 @@ export default function createSweepStatus(onError) {
   }
 
   function findSegmentsWithPoint(p) {
+    var results = [];
+    status.forEach(current => {
+      var x = getIntersectionXPoint(current.key, p.x, p.y);
+      var dx = p.x - x;
+      if (Math.abs(dx) < EPS) {
+        results.push(current.key)
+      }
+    });
+    return results;
     var lastLeft;
     var current = status._root;
     var minX = Number.POSITIVE_INFINITY;
@@ -269,11 +295,11 @@ export default function createSweepStatus(onError) {
       return;
     }
 
-    var current = status.next(lastLeft);
+    var current = next(lastLeft);
     var results = [lastLeft.key];
     while (current && Math.abs(getIntersectionXPoint(current.key, p.x, p.y) - p.x) < EPS) {
       results.push(current.key);
-      current = status.next(current);
+      current = next(current);
     }
 
     return results;
@@ -294,9 +320,9 @@ export default function createSweepStatus(onError) {
     });
   }
 
-  function printStatus() {
+  function printStatus(prefix = '') {
     // eslint-disable-next-line
-    console.log('status line: ', lastPointX, lastPointY);
+    console.log(prefix, 'status line: ', lastPointX, lastPointY);
     status.forEach(node => {
       var x = getIntersectionXPoint(node.key, lastPointX, lastPointY);
       // eslint-disable-next-line

@@ -26,17 +26,17 @@ function createScene(options, canvas) {
     bottom: top + bounds.height / pixelRatio
   })
 
-  var guidelines = new wgl.WireCollection(lines.length);
-  guidelines.color = {r: 0.1, g: 0.4, b: 0.8, a: 0.9};
+  // var guidelines = new wgl.WireCollection(lines.length);
+  // guidelines.color = {r: 0.1, g: 0.4, b: 0.8, a: 0.9};
 
-  ([
-    {from: {x: -100, y: 0}, to: {x: 100, y: 0}},
-    {from: {x: 0, y: -100}, to: {x: 0, y: 100}},
-  ]).forEach(function (line) {
-    guidelines.add({ from: line.from, to: line.to });
-  });
+  // ([
+  //   {from: {x: -100, y: 0}, to: {x: 100, y: 0}},
+  //   {from: {x: 0, y: -100}, to: {x: 0, y: 100}},
+  // ]).forEach(function (line) {
+  //   guidelines.add({ from: line.from, to: line.to });
+  // });
 
-  scene.appendChild(guidelines);
+  // scene.appendChild(guidelines);
 
   var linesEl = new wgl.WireCollection(lines.length);
   linesEl.color.r = 0xee/255;

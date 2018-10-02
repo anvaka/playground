@@ -153,7 +153,34 @@ test('it finds collinear lines', (t) => {
 
   t.equals(intersections.length, 2, 'two intersections found');
   t.end();
-})
+});
+
+test('it finds overlapping horizontal segments', (t) => {
+  var intersections = isect([{
+    from: {x: 0, y: 0},
+    to: {x: 10, y: 0},
+  }, {
+    from: {x: 1, y: 0},
+    to: {x: 11, y: 0},
+  }, {
+    from: {x: 2, y: 0},
+    to: {x: 12, y: 0},
+  }]).run();
+
+  t.equals(intersections.length, 4, 'four intersections found');
+  t.end();
+});
+
+test('finds overlapping triangles', (t) => {
+  var intersections = isect([
+    {from: {x: 0, y: 0}, to: {x: 10, y:   0 }, name: 'B0,0'},
+    {from: {x: 1, y: 0}, to: {x: 11, y:   0 }, name: 'B1,0'},
+    {from: {x: 2, y: 0}, to: {x:  7, y: -10 }, name: 'D2,0'}
+  ]).run();
+
+  t.equals(intersections.length, 3, 'three intersections found');
+  t.end();
+});
 
 // test('it reports precision error', t => {
 //   // These lines intersect in a point, that with default settings

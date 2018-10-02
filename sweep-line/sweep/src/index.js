@@ -125,37 +125,57 @@ export default function isect(segments, options) {
   }
 
   function handleEventPoint(p) {
-    var interior = p.interior || EMPTY;
-    var lower = p.to || EMPTY; 
+    // var interior = p.interior || EMPTY;
+    // var lower = p.to || EMPTY; 
     var upper = p.from || EMPTY;
   
     var uLength = upper.length;
-    var iLength = interior.length;
-    var lLength = lower.length;
+    var segmentsWithPoint = sweepStatus.findSegmentsWithPoint(p.point);
+    var lower = [], interior = [];
+    if (segmentsWithPoint) {
+    segmentsWithPoint.forEach(s => {
+      if (samePoint(s.to, p.point)) {
+        if (!lower) lower = [s];
+        else lower.push(s);
+      } else if (!samePoint(s.from, p.point)) {
+        if (!interior) interior = [s];
+        else interior.push(s);
+      }
+    })
+  } else {
+    lower = EMPTY;
+    interior = EMPTY;
+  }
+
+    var iLength = interior ? interior.length : 0;
+    var lLength = lower ? lower.length : 0;
     var hasIntersection = uLength + iLength + lLength > 1;
 
-    if (p.checkDuplicates) {
-      // the event was merged from another kind. We need to make sure
-      // that no interior point are actually lower/upper point
-      interior = removeDuplicate(interior, lower, upper);
-      iLength = interior.length;
-      p.checkDuplicate = false;
-    }
+
+    // if (p.checkDuplicates) {
+    //   // the event was merged from another kind. We need to make sure
+    //   // that no interior point are actually lower/upper point
+    //   interior = removeDuplicate(interior, lower, upper);
+    //   iLength = interior.length;
+    //   p.checkDuplicate = false;
+    // }
 
     if (hasIntersection) {
-      p.isReported = true;
-      if (reportIntersection(p.point, interior, lower, upper)) {
-        return true;
-      }
+      // if (!p.isReported) {
+        p.isReported = true;
+        if (reportIntersection(p.point, interior, lower, upper)) {
+          return true;
+        }
+      // }
     }
-
-    if (!hasIntersection && !iLength && lLength + uLength) {
-      var segmentsWithPoint = sweepStatus.findSegmentsWithPoint(p.point);
-      var collinear = makeArrayOfCollinearSegments(segmentsWithPoint, p);
-      if (collinear && reportIntersection(p.point, collinear)) {
-        return true;
-      }
-    }
+    // else if (!iLength && lLength + uLength) {
+    //   // also check for intersections that are formed by collinear points.
+    //   var segmentsWithPoint = sweepStatus.findSegmentsWithPoint(p.point);
+    //   var collinear = makeArrayOfCollinearSegments(segmentsWithPoint, p);
+    //   var quitEarly = collinear && reportIntersection(p.point, collinear);
+    //   if (collinear) p.isReported = true;
+    //   if (quitEarly) return true;
+    // }
 
     sweepStatus.deleteSegments(lower, interior, p.point);
     sweepStatus.insertSegments(interior, upper, p.point);
@@ -196,6 +216,9 @@ export default function isect(segments, options) {
     if (dy < -EPS) {
       // this means intersection happened after the sweep line. 
       // We already processed it.
+      return;
+    }
+    if (Math.abs(dy) < EPS && intersection.x < p.point.x) {
       return;
     }
 

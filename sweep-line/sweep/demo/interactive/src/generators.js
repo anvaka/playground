@@ -18,13 +18,26 @@ export function random(count = 4, range = 100, seed) {
 }
 
 export function triangle(count = 4, variance = 10) {
+  // return [
+  //   {from: {x: 0, y: 0}, to: {x: 10, y:   10 }, name: '0-10'},
+  //   {from: {x: 5, y: 5}, to: {x: 15, y:   15 }, name: '5-15'},
+  // ]
+  // return [
+  //   {from: {x: 0, y: 0}, to: {x: 10, y:   0 }, name: 'B0,0'},
+  //   {from: {x: 1, y: 0}, to: {x: 11, y:   0 }, name: 'B1,0'},
+  //   {from: {x: 2, y: 0}, to: {x:  7, y: -10 }, name: 'D2,0'}
+  // ]
   var lines = [];
   var width = 10;
   for (var i = 0; i < count; ++i) {
-    var x = prng.gaussian() * variance
-    var y = prng.gaussian() * variance
-    drawTriangle(x, y);
+    for (var j = 0; j < count; ++j) {
+      var x = i * prng.gaussian() * variance
+      var y = j * prng.gaussian() * variance
+
+      drawTriangle(x, y);
+    }
   }
+
   return lines;
 
   function drawTriangle(x, y) {
@@ -95,7 +108,7 @@ export function grid(vertical = 10, horizontal = 10) {
 }
 
 export function drunkgrid(size = 10, variance = 10) {
-  // return require('../public/lines.json');
+//  return require('../public/lines.json');
   // return [{
   //   from: {x: 0, y: 0},
   //   to: {x: 10, y: 10},
