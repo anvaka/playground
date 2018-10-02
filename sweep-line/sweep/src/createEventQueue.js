@@ -1,7 +1,6 @@
-import {EPS} from './geom';
 import SplayTree from 'splaytree';
 
-export default function createEventQueue() {
+export default function createEventQueue(byY) {
   const q = new SplayTree(byY);
 
   return {
@@ -33,17 +32,4 @@ export default function createEventQueue() {
     var node = q.pop();
     return node && node.data;
   }
-}
-
-function byY(a, b) {
-  // decreasing Y 
-  var res = b.y - a.y;
-  // TODO: This might mess up the status tree.
-  if (Math.abs(res) < EPS) {
-    // increasing x.
-    res = a.x - b.x;
-    if (Math.abs(res) < EPS) res = 0;
-  }
-
-  return res;
 }

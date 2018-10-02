@@ -1,10 +1,10 @@
 import SplayTree from 'splaytree';
-import {samePoint, getIntersectionXPoint, EPS} from './geom'
+import {samePoint, getIntersectionXPoint} from './geom'
 
 /**
  * Creates a new sweep status data structure.
  */
-export default function createSweepStatus(onError) {
+export default function createSweepStatus(onError, EPS) {
   var lastPointY, prevY;
   var lastPointX, prevX;
   var useBelow = false;

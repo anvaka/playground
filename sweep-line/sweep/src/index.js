@@ -54,9 +54,8 @@ export default function isect(segments, options) {
 
   var onError = (options && options.onError) || defaultErrorReporter;
 
-  var eventQueue = createEventQueue();
-  var sweepStatus = createSweepStatus(onError);
-  debugger;
+  var eventQueue = createEventQueue(byY);
+  var sweepStatus = createSweepStatus(onError, EPS);
   segments.forEach(addSegment);
 
   return {
@@ -302,4 +301,17 @@ function union(a, b) {
   if (!b) return a;
 
   return a.concat(b);
+}
+
+function byY(a, b) {
+  // decreasing Y 
+  var res = b.y - a.y;
+  // TODO: This might mess up the status tree.
+  if (Math.abs(res) < EPS) {
+    // increasing x.
+    res = a.x - b.x;
+    if (Math.abs(res) < EPS) res = 0;
+  }
+
+  return res;
 }
