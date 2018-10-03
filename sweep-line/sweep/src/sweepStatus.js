@@ -179,14 +179,6 @@ export default function createSweepStatus(onError, EPS) {
     return currentBoundary;
   }
 
-  function next(d) {
-    if (d.right) {
-      var successor = d.right;
-      while (successor.left) successor = successor.left;
-      return successor;
-    }
-  }
-
   function getLeftRightPoint(p) {
     // We are trying to find left and right segments that are nearest to the
     // point p. For this we traverse the binary search tree, and remember
@@ -254,55 +246,95 @@ export default function createSweepStatus(onError, EPS) {
   }
 
   function findSegmentsWithPoint(p) {
-    var results = [];
-    status.forEach(current => {
-      var x = getIntersectionXPoint(current.key, p.x, p.y);
-      var dx = p.x - x;
-      if (Math.abs(dx) < EPS) {
-        results.push(current.key)
-      }
-    });
-    return results;
-    var lastLeft;
+    // Option 1.
+    // var arrResults = [];
+    // status.forEach(current => {
+    //   var x = getIntersectionXPoint(current.key, p.x, p.y);
+    //   var dx = p.x - x;
+    //   if (Math.abs(dx) < EPS) {
+    //     arrResults.push(current.key)
+    //   }
+    // });
+    // return arrResults;
+
+    // Option 2.
+
+    // let current = status._root;
+    // const Q = [];  /* Initialize stack s */
+    // let done = false;
+    // var res = [];
+    // var breakEarly = false;
+
+    // while (!done) {
+    //   if (current !==  null) {
+    //     Q.push(current);
+    //     current = current.left;
+    //   } else {
+    //     if (Q.length !== 0) {
+    //       current = Q.pop();
+
+    //       var x = getIntersectionXPoint(current.key, p.x, p.y);
+    //       var dx = p.x - x;
+    //       if (Math.abs(dx) < EPS) {
+    //         res.push(current.key)
+    //         breakEarly = true;
+    //       } else if (breakEarly) {
+    //         done = true;
+    //       }
+
+    //       current = current.right;
+    //     } else done = true;
+    //   }
+    // }
+
+    // return res;
+
+    // option 3.
     var current = status._root;
-    var minX = Number.POSITIVE_INFINITY;
+    var res = [];
 
     while (current) {
       var x = getIntersectionXPoint(current.key, p.x, p.y);
       var dx = p.x - x;
-      if (dx >= 0) {
-        if (dx < minX) {
-          minX = dx;
-          lastLeft = current;
-          current = current.left;
-        } else {
-          break;
-        }
+      if (Math.abs(dx) < EPS) {
+        collectAdjacentNodes(current, p, res);
+        break;
+      } else if (dx < 0) {
+        current = current.left;
       } else {
-        if (-dx < minX) {
-          minX = -dx;
-          lastLeft = current;
-          current = current.right;
-        } else {
-          break;
-        }
+        current = current.right;
       }
     }
 
-    if (minX >= EPS) {
-      // This means that no segment in the status tree has distance 0
-      // to the point in question, thus there cannot be segments at this point.
-      return;
-    }
+    return res;
+  }
 
-    var current = next(lastLeft);
-    var results = [lastLeft.key];
-    while (current && Math.abs(getIntersectionXPoint(current.key, p.x, p.y) - p.x) < EPS) {
-      results.push(current.key);
-      current = next(current);
-    }
+  function collectAdjacentNodes(root, p, res) {
+    res.push(root.key);
+    goOverPredecessors(root.left, p, res);
+    goOverSuccessors(root.right, p, res);
+  }
 
-    return results;
+  function goOverPredecessors(root, p, res) {
+    if (!root) return;
+    var x = getIntersectionXPoint(root.key, p.x, p.y);
+    var dx = p.x - x;
+    if (Math.abs(dx) < EPS) {
+      collectAdjacentNodes(root, p, res);
+    } else {
+      goOverPredecessors(root.right, p, res);
+    }
+  }
+
+  function goOverSuccessors(root, p, res) {
+    if (!root) return;
+    var x = getIntersectionXPoint(root.key, p.x, p.y);
+    var dx = p.x - x;
+    if (Math.abs(dx) < EPS) {
+      collectAdjacentNodes(root, p, res);
+    } else {
+      goOverSuccessors(root.left, p, res);
+    }
   }
 
   function checkDuplicate() {
