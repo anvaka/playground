@@ -245,14 +245,15 @@ export default function createSweepStatus(onError, EPS) {
     // return currentLeftRight;
   }
 
-  function findSegmentsWithPoint(p) {
+  function findSegmentsWithPoint(p, onFound) {
     // Option 1.
     // var arrResults = [];
     // status.forEach(current => {
     //   var x = getIntersectionXPoint(current.key, p.x, p.y);
     //   var dx = p.x - x;
     //   if (Math.abs(dx) < EPS) {
-    //     arrResults.push(current.key)
+    //     onFound(current.key);
+    //    // arrResults.push(current.key)
     //   }
     // });
     // return arrResults;
@@ -291,13 +292,12 @@ export default function createSweepStatus(onError, EPS) {
 
     // option 3.
     var current = status._root;
-    var res = [];
 
     while (current) {
       var x = getIntersectionXPoint(current.key, p.x, p.y);
       var dx = p.x - x;
       if (Math.abs(dx) < EPS) {
-        collectAdjacentNodes(current, p, res);
+        collectAdjacentNodes(current, p, onFound);
         break;
       } else if (dx < 0) {
         current = current.left;
@@ -305,14 +305,12 @@ export default function createSweepStatus(onError, EPS) {
         current = current.right;
       }
     }
-
-    return res;
   }
 
-  function collectAdjacentNodes(root, p, res) {
-    res.push(root.key);
-    goOverPredecessors(root.left, p, res);
-    goOverSuccessors(root.right, p, res);
+  function collectAdjacentNodes(root, p, onFound) {
+    onFound(root.key);
+    goOverPredecessors(root.left, p, onFound);
+    goOverSuccessors(root.right, p, onFound);
   }
 
   function goOverPredecessors(root, p, res) {

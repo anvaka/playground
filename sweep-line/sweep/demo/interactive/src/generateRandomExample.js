@@ -32,7 +32,11 @@ var params = [
     name: 'drunkgrid',
     args: [
       {min: 10, max: 150},  // Row x Col
-      {min: 0.1, max: 10},  // variance
+      function p2(qs) {
+        var v = Math.round(Math.random() * 10) + 1;
+        if (qs.p0 > 20 && v < 1) v = 3;
+        return v;
+      }
     ]
   },
   {

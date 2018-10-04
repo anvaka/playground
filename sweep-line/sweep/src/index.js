@@ -56,6 +56,8 @@ export default function isect(segments, options) {
 
   var eventQueue = createEventQueue(byY);
   var sweepStatus = createSweepStatus(onError, EPS);
+  var lower, interior, lastPoint;
+
   segments.forEach(addSegment);
 
   return {
@@ -124,22 +126,16 @@ export default function isect(segments, options) {
   }
 
   function handleEventPoint(p) {
+    lastPoint = p.point;
     var upper = p.from || EMPTY;
 
+    lower = interior = undefined;
     // TODO: move lower/interior into sweep status method?
-    var segmentsWithPoint = sweepStatus.findSegmentsWithPoint(p.point);
-    var lower, interior;
-    if (segmentsWithPoint) {
-      segmentsWithPoint.forEach(s => {
-        if (samePoint(s.to, p.point)) {
-          if (!lower) lower = [s];
-          else lower.push(s);
-        } else if (!samePoint(s.from, p.point)) {
-          if (!interior) interior = [s];
-          else interior.push(s);
-        }
-      })
-    } 
+
+    sweepStatus.findSegmentsWithPoint(lastPoint, addLowerOrInterior);
+    // if (segmentsWithPoint) {
+    //   segmentsWithPoint.forEach()
+    // } 
 
     if (!lower) lower = EMPTY;
     if (!interior) interior = EMPTY;
@@ -152,20 +148,20 @@ export default function isect(segments, options) {
 
     if (hasIntersection || hasPointIntersection) {
       p.isReported = true;
-      if (reportIntersection(p.point, interior, lower, upper)) {
+      if (reportIntersection(lastPoint, interior, lower, upper)) {
         return true;
       }
     }
 
-    sweepStatus.deleteSegments(lower, interior, p.point);
-    sweepStatus.insertSegments(interior, upper, p.point);
+    sweepStatus.deleteSegments(lower, interior, lastPoint);
+    sweepStatus.insertSegments(interior, upper, lastPoint);
 
     var sLeft, sRight;
 
     var hasNoCrossing = (uLength + iLength === 0);
 
     if (hasNoCrossing) {
-      var leftRight = sweepStatus.getLeftRightPoint(p.point);
+      var leftRight = sweepStatus.getLeftRightPoint(lastPoint);
       sLeft = leftRight.left;
       if (!sLeft) return;
 
@@ -181,6 +177,16 @@ export default function isect(segments, options) {
     }
 
     return false;
+  }
+
+  function addLowerOrInterior(s) {
+    if (samePoint(s.to, lastPoint)) {
+      if (!lower) lower = [s];
+      else lower.push(s);
+    } else if (!samePoint(s.from, lastPoint)) {
+      if (!interior) interior = [s];
+      else interior.push(s);
+    }
   }
 
   function findNewEvent(left, right, p) {
