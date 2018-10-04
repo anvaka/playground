@@ -53,17 +53,21 @@ function createScene(options, canvas) {
   var status = {};
   var nextFrame;
 
-  appStatus.error = null;
   var totalElapsed = 0;
-  if (isAsync) {
-    runAsync();
-  } else {
-    runSync();
-  }
-  appStatus.showMetrics = true;
+  var startTheDemoHandle = setTimeout(startTheDemo, 30);
 
   return {
     dispose
+  }
+
+  function startTheDemo() {
+    appStatus.error = null;
+    if (isAsync) {
+      runAsync();
+    } else {
+      runSync();
+    }
+    appStatus.showMetrics = true;
   }
 
   function runSync() {
@@ -84,7 +88,7 @@ function createScene(options, canvas) {
       // eslint-disable-next-line
       console.log('found ' + intersections.length + ' intersections');
       updateSearchMetrics(elapsed);
-      drawIntersections(intersections);
+      drawIntersections(intersections)
     }
   }
 
@@ -126,6 +130,8 @@ function createScene(options, canvas) {
       nextFrame = 0;
     }
     scene.dispose();
+    cancelAnimationFrame(startTheDemoHandle);
+    startTheDemoHandle = 0;
   }
 
   function frame() {

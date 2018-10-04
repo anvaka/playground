@@ -23,7 +23,9 @@ var params = [
     name: 'cube',
     args: [
       {min: 100, max: 150},  // number of rects
-      {min: 3, max: 10},  // variance
+      function p2(qs) {
+        return Math.round((10 + prng.gaussian()));
+      }
     ]
   },
   {

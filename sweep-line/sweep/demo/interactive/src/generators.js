@@ -19,6 +19,16 @@ export function random(count = 4, range = 100, seed) {
 
 export function triangle(count = 4, variance = 10) {
   // return [
+  //   { from: { x: 0, y: 2 }, to: { x: 0, y: 2 }, name: "B0,2"},
+  //   { from: { x: -4, y: 0}, to: { x: 2, y: 0 }, name: "B2,0"},
+  //   { from: { x: -1, y: 6}, to: { x: 2, y: 0 }, name: "D2,0"},
+  //   { from: { x: 2, y: 2 }, to: { x: 4, y: -3}, name: "D2,2"}
+  // ]
+  // return [
+  //   {from: {x: 0, y: 0}, to: {x: 10, y: 10 }, name: 'segment'},
+  //   {from: {x: 5, y: 5}, to: {x: 5, y: 5 }, name: 'point'},
+  // ]
+  // return [
   //   {from: {x: 0, y: 0}, to: {x: 10, y:   10 }, name: '0-10'},
   //   {from: {x: 5, y: 5}, to: {x: 15, y:   15 }, name: '5-15'},
   // ]
@@ -28,25 +38,39 @@ export function triangle(count = 4, variance = 10) {
   //   {from: {x: 2, y: 0}, to: {x:  7, y: -10 }, name: 'D2,0'}
   // ]
   var lines = [];
-  var width = 10;
+  var step = 5;
   for (var i = 0; i < count; ++i) {
     for (var j = 0; j < count; ++j) {
-      var x = i * prng.gaussian() * variance
-      var y = j * prng.gaussian() * variance
+      var x = step * i;
+      var y = step * j;
 
-      drawTriangle(x, y);
+      drawTriangle(x, y, prng.gaussian() * variance, Math.PI * (i/count - 0.5));
     }
   }
 
   return lines;
 
-  function drawTriangle(x, y) {
+  function drawTriangle(x, y, width, alpha) {
+    var cp = {x: x + width/2, y: y - width/2};
+    var left = rotate({x: x, y: y}, cp, alpha);
+    var right = rotate({x: x + width, y: y}, cp, alpha);
+    var middle = rotate({x: x + width/2, y: y - width}, cp, alpha);
+
     lines.push(
-      {from: {x: x, y: y}, to: {x: x + width, y}, name: `B${x},${y}`},
-      {from: {x: x + width, y}, to: {x: x + width/2, y: y - width}, name: `U${x},${y}`},
-      {from: {x: x + width/2, y: y - width}, to: {x, y}, name: `D${x},${y}`}
+      {from: {x: left.x, y: left.y}, to: {x: right.x, y: right.y}, name: `B${x},${y}`},
+      {from: {x: right.x, y: right.y}, to: {x: middle.x, y: middle.y}, name: `U${x},${y}`},
+      {from: {x: middle.x, y: middle.y}, to: {x: left.x, y: left.y}, name: `D${x},${y}`}
     )
   }
+}
+
+function rotate(point, center, alpha) {
+  point.x -= center.x;
+  point.y -= center.y;
+
+  var x = Math.cos(alpha) * point.x - point.y * Math.sin(alpha) + center.x;
+  var y = Math.sin(alpha) * point.x + point.y * Math.cos(alpha) + center.y;
+  return {x, y};
 }
 
 export function cube(count = 4, variance = 10) {

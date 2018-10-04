@@ -12,7 +12,7 @@
     "ngraph.random": "^0.1.0",
     "query-state": "^4.1.0",
     "vue": "^2.5.17",
-    "w-gl": "^0.2.0"
+    "w-gl": "^0.3.0"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.0.0",

@@ -125,7 +125,6 @@ export default function isect(segments, options) {
 
   function handleEventPoint(p) {
     var upper = p.from || EMPTY;
-    var uLength = upper.length;
 
     // TODO: move lower/interior into sweep status method?
     var segmentsWithPoint = sweepStatus.findSegmentsWithPoint(p.point);
@@ -141,14 +140,17 @@ export default function isect(segments, options) {
         }
       })
     } 
+
     if (!lower) lower = EMPTY;
     if (!interior) interior = EMPTY;
 
+    var uLength = upper.length;
     var iLength = interior.length;
     var lLength = lower.length;
     var hasIntersection = uLength + iLength + lLength > 1;
+    var hasPointIntersection = !hasIntersection && (uLength === 0 && lLength === 0 && iLength > 0);
 
-    if (hasIntersection) {
+    if (hasIntersection || hasPointIntersection) {
       p.isReported = true;
       if (reportIntersection(p.point, interior, lower, upper)) {
         return true;
@@ -196,7 +198,7 @@ export default function isect(segments, options) {
       // We already processed it.
       return;
     }
-    if (Math.abs(dy) < EPS && intersection.x < p.point.x) {
+    if (Math.abs(dy) < EPS && intersection.x <= p.point.x) {
       return;
     }
 
@@ -257,8 +259,9 @@ export default function isect(segments, options) {
     segment.dx = from.x - to.x;
     segment.angle = angle(segment.dy, segment.dx);
 
+    var isPoint = segment.dy === segment.dx && segment.dy === 0;
     var prev = eventQueue.find(from)
-    if (prev) {
+    if (prev && !isPoint) {
       // this detects identical segments early. Without this check
       // the algorithm would break since sweep line has no means to
       // detect identical segments.
@@ -275,16 +278,21 @@ export default function isect(segments, options) {
       }
     }
 
-    if (prev) {
-      if (prev.data.from) prev.data.from.push(segment);
-      else prev.data.from = [segment];
+    if (!isPoint) {
+      if (prev) {
+        if (prev.data.from) prev.data.from.push(segment);
+        else prev.data.from = [segment];
+      } else {
+        var e = new SweepEvent(from, segment)
+        eventQueue.insert(e);
+      }
+      var event = new SweepEvent(to)
+      eventQueue.insert(event)
     } else {
-      var e = new SweepEvent(from, segment)
-      eventQueue.insert(e);
+      var event = new SweepEvent(to)
+      eventQueue.insert(event)
     }
-    var event = new SweepEvent(to)
-    eventQueue.insert(event)
-  }
+  } 
 }
 
 function roundNearZero(point) {

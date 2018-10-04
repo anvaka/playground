@@ -182,6 +182,27 @@ test('finds overlapping triangles', (t) => {
   t.end();
 });
 
+test('finds a point', (t) => {
+  var intersections = isect([
+    {from: {x: 0, y: 0}, to: {x: 10, y: 10 }, name: 'segment'},
+    {from: {x: 5, y: 5}, to: {x: 5, y: 5 }, name: 'point'}
+  ]).run();
+  t.equals(intersections.length, 1, 'it finds the point');
+  t.end();
+});
+
+test('it finds intersections when degenerative point segments are present', t => {
+  var intersections = isect([
+    { from: { x: 0, y: 2 }, to: { x: 0, y: 2 }, name: 'point'},
+    { from: { x: -4, y: 0}, to: { x: 2, y: 0 }, name: 'above-point'},
+    { from: { x: -1, y: 6}, to: { x: 2, y: 0 }, name: 'to-the-right'},
+    { from: { x: 2, y: 2 }, to: { x: 4, y: -3}, name: 'just a neighbor'}
+  ]).run();
+
+  t.equals(intersections.length, 1, 'it finds the intersection');
+  t.end();
+});
+
 // test('it reports precision error', t => {
 //   // These lines intersect in a point, that with default settings
 //   // should cause an error due to precision (tree branch is invalid)

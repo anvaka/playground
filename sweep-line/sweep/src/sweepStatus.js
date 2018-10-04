@@ -365,12 +365,15 @@ export default function createSweepStatus(onError, EPS) {
   function insertSegments(interior, upper, sweepLinePos) {
     lastPointY = sweepLinePos.y;
     lastPointX = sweepLinePos.x;
+    var key;
 
     for (var i = 0; i < interior.length; ++i) {
-      status.add(interior[i]);
+      key = interior[i];
+      status.add(key);
     }
     for (i = 0; i < upper.length; ++i) {
-      status.add(upper[i]);
+      key = upper[i]
+      status.add(key);
     }
   }
 
