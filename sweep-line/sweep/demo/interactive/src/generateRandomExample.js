@@ -23,7 +23,7 @@ var params = [
     name: 'cube',
     args: [
       {min: 100, max: 150},  // number of rects
-      function p2(qs) {
+      function p2() {
         return Math.round((10 + prng.gaussian()));
       }
     ]

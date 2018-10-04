@@ -54,6 +54,8 @@ function createScene(options, canvas) {
   var nextFrame;
 
   var totalElapsed = 0;
+  appStatus.showMetrics = false;
+  appStatus.showLoading = true;
   var startTheDemoHandle = setTimeout(startTheDemo, 30);
 
   return {
@@ -67,6 +69,7 @@ function createScene(options, canvas) {
     } else {
       runSync();
     }
+    appStatus.showLoading = false;
     appStatus.showMetrics = true;
   }
 
@@ -130,7 +133,7 @@ function createScene(options, canvas) {
       nextFrame = 0;
     }
     scene.dispose();
-    cancelAnimationFrame(startTheDemoHandle);
+    clearTimeout(startTheDemoHandle);
     startTheDemoHandle = 0;
   }
 

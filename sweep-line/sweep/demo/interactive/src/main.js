@@ -17,13 +17,14 @@ var qs = queryState({
 });
 
 qs.onChange(updateScene);
+bus.on('app-loaded', renderFirstTime);
 bus.on('change-qs', (newState) => {
   qs.set(newState);
   updateScene(newState);
 })
 
 var sceneOptions = getSceneOptions(qs.get());
-var currentScene = createScene(sceneOptions, document.getElementById('scene'));
+var currentScene;
 
 Vue.config.productionTip = false
 
@@ -31,7 +32,14 @@ new Vue({
   render: h => h(App)
 }).$mount('#app')
 
+
+function renderFirstTime() {
+  currentScene = createScene(sceneOptions, document.getElementById('scene'));
+}
+
 function updateScene(appState) {
+  appState.showLoading = true;
+  appState.showMetrics = false;
   sceneOptions = getSceneOptions(appState);
   if (currentScene) {
     currentScene.dispose();
