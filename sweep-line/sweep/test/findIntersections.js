@@ -1,9 +1,9 @@
 var test = require('tap').test;
-var isect = require('../');
+var sweep = require('../').sweep;
 var rnd = require('../perf/generators').drunkGrid;
 
 test('it can find vertical/horizontal intersections', (t) => {
-  var intersections = isect([{
+  var intersections = sweep([{
     from: {x: -1, y: 0},
     to: {x: 1, y: 0},
   }, {
@@ -19,7 +19,7 @@ test('it can find vertical/horizontal intersections', (t) => {
 
 test('it reports intersections', t => {
   var reportedPoint = null;
-  isect([{
+  sweep([{
     from: {x: -1, y: 0},
     to: {x: 1, y: 0},
   }, {
@@ -37,7 +37,7 @@ test('it reports intersections', t => {
 });
 
 test('it can find adjacent points', (t) => {
-  var intersections = isect([{
+  var intersections = sweep([{
     from: {x: -1, y: 0},
     to: {x: 1, y: 0},
   }, {
@@ -52,7 +52,7 @@ test('it can find adjacent points', (t) => {
 });
 
 test('it can find all segments', t => {
-  var intersections = isect([{
+  var intersections = sweep([{
     from: {x: 0, y: 0},
     to: {x: 1, y: 1},
   }, {
@@ -72,7 +72,7 @@ test('it can find all segments', t => {
 
 test('it can early stop', t => {
   var results = [];
-  isect([{
+  sweep([{
     from: {x: -1, y: 0},
     to: {x: 1, y: 0},
   }, {
@@ -94,7 +94,7 @@ test('it can early stop', t => {
 })
 
 test('it can find intersections in cube', t => {
-  var intersections = isect([
+  var intersections = sweep([
     {from: {x: -1, y: -1}, to: {x: -1, y: 1}}, 
     {from: {x: -1, y: 1}, to: {x: 1, y: 1}},
     {from: {x: 1, y: 1}, to: {x: 1, y: -1}},
@@ -105,7 +105,7 @@ test('it can find intersections in cube', t => {
 });
 
 test('it does not ignore endpoint if it is internal', t => {
-  var intersections = isect([{
+  var intersections = sweep([{
     from: {x: -1, y: 0},
     to: {x: 1, y: 0},
   }, {
@@ -124,7 +124,7 @@ test('it rounds very close horizontal lines', t => {
       {from: {x: 0.43428174033761024, y: -0.3734140731394291}, to: {x: -0.36442824453115463, y: -0.3734140805900097 }},
       {from: {x: -0.1504860669374466, y: -0.07342482730746269}, to: {x: 0.28500136360526085, y: -0.3957986496388912 }}
     ];
-  var intersection = isect(lines).run();
+  var intersection = sweep(lines).run();
   t.equals(intersection.length, 1, 'intersection found');
   t.end();
 });
@@ -137,13 +137,13 @@ test('it finds intersection when one segment ends on another', t => {
     {from: {x: 0.6898417733609676, y: 1.4930395111441612}, to: {x: -0.5260335020720959, y: -0.49431975558400154}},
     {from: {x: 1.1742585226893425, y: 0.6070638746023178}, to: {x: 0.3658513203263283, y: -0.38512956351041794}}
   ]
-  var intersection = isect(lines).run();
+  var intersection = sweep(lines).run();
   t.equals(intersection.length, 5, 'intersection found');
   t.end();
 });
 
 test('it finds collinear lines', (t) => {
-  var intersections = isect([{
+  var intersections = sweep([{
     from: {x: 0, y: 0},
     to: {x: 1, y: 1},
   }, {
@@ -156,7 +156,7 @@ test('it finds collinear lines', (t) => {
 });
 
 test('it finds overlapping horizontal segments', (t) => {
-  var intersections = isect([{
+  var intersections = sweep([{
     from: {x: 0, y: 0},
     to: {x: 10, y: 0},
   }, {
@@ -172,7 +172,7 @@ test('it finds overlapping horizontal segments', (t) => {
 });
 
 test('finds overlapping triangles', (t) => {
-  var intersections = isect([
+  var intersections = sweep([
     {from: {x: 0, y: 0}, to: {x: 10, y:   0 }, name: 'B0,0'},
     {from: {x: 1, y: 0}, to: {x: 11, y:   0 }, name: 'B1,0'},
     {from: {x: 2, y: 0}, to: {x:  7, y: -10 }, name: 'D2,0'}
@@ -183,7 +183,7 @@ test('finds overlapping triangles', (t) => {
 });
 
 test('finds a point', (t) => {
-  var intersections = isect([
+  var intersections = sweep([
     {from: {x: 0, y: 0}, to: {x: 10, y: 10 }, name: 'segment'},
     {from: {x: 5, y: 5}, to: {x: 5, y: 5 }, name: 'point'}
   ]).run();
@@ -192,7 +192,7 @@ test('finds a point', (t) => {
 });
 
 test('it finds intersections when degenerative point segments are present', t => {
-  var intersections = isect([
+  var intersections = sweep([
     { from: { x: 0, y: 2 }, to: { x: 0, y: 2 }, name: 'point'},
     { from: { x: -4, y: 0}, to: { x: 2, y: 0 }, name: 'above-point'},
     { from: { x: -1, y: 6}, to: { x: 2, y: 0 }, name: 'to-the-right'},
@@ -213,12 +213,12 @@ test('it finds intersections when degenerative point segments are present', t =>
 //   ];
 
 //   t.throws(() => {
-//     isect(lines).run();
+//     sweep(lines).run();
 //   });
 
 //   // Now let's add default event handler:
 //   var err;
-//   isect(lines, {
+//   sweep(lines, {
 //     onError(e) {
 //       // Note, we are not throwing. This may result in incorrect
 //       // answer.
@@ -234,7 +234,7 @@ test('it finds intersections when degenerative point segments are present', t =>
 //     to: {x: l.to.x * scale, y: l.to.y * scale},
 //   }))
 
-//   var scaledAnswer = isect(scaled).run();
+//   var scaledAnswer = sweep(scaled).run();
 //   t.equals(scaledAnswer.length, 3, 'three intersections found');
 //   t.end();
 // })
@@ -244,7 +244,7 @@ test('it finds intersections when degenerative point segments are present', t =>
 //   while (true) {
 //     try {
 //       var lines = rnd(3, 1, seed)
-//       isect(lines).run()
+//       sweep(lines).run()
 //       seed += 1;
 //       if (seed % 50000 === 0) console.log(seed);
 //     } catch(e) {

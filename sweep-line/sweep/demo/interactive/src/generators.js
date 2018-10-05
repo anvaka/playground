@@ -17,6 +17,23 @@ export function random(count = 4, range = 100, seed) {
   return lines;
 }
 
+export function nonintersect(rows = 4, columns = 4) {
+  if (seed !== undefined) {
+    prng = createRandom(seed);
+  }
+  var lines = [];
+  for (var j = 0; j < rows; ++j) {
+    for (var i = 0; i < columns; ++i) {
+      var x = i * 10, y = j * 10;
+      lines.push({
+        from: {x, y},
+        to: {x: x + 8, y: y + 8}
+      });
+    }
+  }
+  return lines;
+}
+
 export function triangle(count = 4, variance = 10) {
   // return [
   //   { from: { x: 0, y: 2 }, to: { x: 0, y: 2 }, name: "B0,2"},
@@ -39,12 +56,15 @@ export function triangle(count = 4, variance = 10) {
   // ]
   var lines = [];
   var step = 5;
+  var idxVar = prng.nextDouble() < 0.5 ? 1 : 0;
   for (var i = 0; i < count; ++i) {
     for (var j = 0; j < count; ++j) {
       var x = step * i;
       var y = step * j;
 
-      drawTriangle(x, y, prng.gaussian() * variance, Math.PI * (i/count - 0.5));
+      var idxToUse = (i % 2 === idxVar) ? i : j;
+      var angle =  Math.PI * (idxToUse/count - prng.gaussian());
+      drawTriangle(x, y, variance, angle);
     }
   }
 
@@ -132,7 +152,6 @@ export function grid(vertical = 10, horizontal = 10) {
 }
 
 export function drunkgrid(size = 10, variance = 10) {
-//  return require('../public/lines.json');
   // return [{
   //   from: {x: 0, y: 0},
   //   to: {x: 10, y: 10},

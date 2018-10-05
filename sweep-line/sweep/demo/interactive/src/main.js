@@ -60,7 +60,12 @@ function getSceneOptions(state) {
   window.lines = lines;
   var isAsync = state.isAsync;
   var stepsPerFrame = getNumber(state.stepsPerFrame, 20);
-  return {lines, isAsync, stepsPerFrame}
+  return {
+    lines, 
+    isAsync, 
+    stepsPerFrame,
+    algorithm: state.algorithm === 'brute' ? 'brute' : 'sweep'
+  }
 }
 
 function getNumber(x, defaultValue) {

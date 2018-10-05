@@ -1,14 +1,15 @@
-import isect from '../../../';
 import BBox from './BBox';
 import appStatus from './appStatus';
 
 export default createScene;
 
+let isect = require('../../../');
 let wgl = require('w-gl');
 
 function createScene(options, canvas) {
   var lines = options.lines;
   var isAsync = options.isAsync;
+  var algorithmName = options.algorithm;
   var scene = wgl.scene(canvas);
   scene.setClearColor( 0x0C/255, 0x18/255, 0x34/255, 1);
   var bounds = new BBox();
@@ -76,7 +77,7 @@ function createScene(options, canvas) {
   function runSync() {
     // eslint-disable-next-line
     var startTime = window.performance.now();
-    iSector = isect(lines, { onError });
+    iSector = isect[algorithmName](lines, { onError });
     try {
       var intersections = iSector.run();
     } catch (e) {
@@ -104,7 +105,8 @@ function createScene(options, canvas) {
 
   function runAsync() {
     var start = performance.now();
-    iSector = isect(lines, { onError });
+    // only sweep line supports async running at the moment
+    iSector = isect.sweep(lines, { onError });
     var end = performance.now();
     totalElapsed += (end - start);
     updateSearchMetrics(totalElapsed);
