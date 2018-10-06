@@ -57,7 +57,8 @@ function createScene(options, canvas) {
   var totalElapsed = 0;
   appStatus.showMetrics = false;
   appStatus.showLoading = true;
-  var startTheDemoHandle = setTimeout(startTheDemo, 30);
+  // Need to start a bit later, so that vue catches up with UI updates
+  var startTheDemoHandle = setTimeout(startTheDemo, 80);
 
   return {
     dispose

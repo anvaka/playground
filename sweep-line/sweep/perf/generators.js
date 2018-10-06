@@ -13,7 +13,28 @@ module.exports = {
   cube: cube,
   grid: grid,
   complete: complete,
-  drunkGrid: drunkGrid
+  drunkGrid: drunkGrid,
+  sparse: sparse
+}
+
+function sparse(size, seed) {
+  if (seed !== undefined) {
+    prng = createRandom(seed);
+  }
+  var lines = [];
+  var rows = size, columns = size;
+  for (var j = 0; j < rows; ++j) {
+    for (var i = 0; i < columns; ++i) {
+      var x = i * 10, y = j * 10;
+      var a = prng.gaussian();
+
+      lines.push({
+        from: {x, y},
+        to: {x: x + 10 * Math.cos(a), y: y + 10 * Math.sin(a)}
+      });
+    }
+  }
+  return lines;
 }
 
 function random(count = 4, range = 100, seed) {
