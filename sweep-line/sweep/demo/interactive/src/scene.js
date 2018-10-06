@@ -84,6 +84,8 @@ function createScene(options, canvas) {
       // Error is reported in the onError.
       // eslint-disable-next-line
       console.error(e);
+      // fall back to brute force.
+      intersections = isect.brute(lines).run();
     }
     var elapsed = window.performance.now() - startTime;
     // eslint-disable-next-line

@@ -3,6 +3,8 @@ var createRandom = require('ngraph.random');
 var seed = +new Date();
 var prng = createRandom(seed);
 
+export * from './brownian';
+
 export function random(count = 4, range = 100, seed) {
   if (seed !== undefined) {
     prng = createRandom(seed);
@@ -17,17 +19,17 @@ export function random(count = 4, range = 100, seed) {
   return lines;
 }
 
-export function nonintersect(rows = 4, columns = 4) {
-  if (seed !== undefined) {
-    prng = createRandom(seed);
-  }
+export function sparse(size = 50) {
   var lines = [];
+  var rows = size, columns = size;
   for (var j = 0; j < rows; ++j) {
     for (var i = 0; i < columns; ++i) {
       var x = i * 10, y = j * 10;
+      var a = prng.gaussian();
+
       lines.push({
         from: {x, y},
-        to: {x: x + 8, y: y + 8}
+        to: {x: x + 10 * Math.cos(a), y: y + 10 * Math.sin(a)}
       });
     }
   }

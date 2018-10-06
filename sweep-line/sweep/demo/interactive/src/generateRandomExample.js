@@ -45,12 +45,39 @@ var params = [
     ]
   },
   {
+    name: 'sparse',
+    algorithm: 'sweep', 
+    args: [
+      {min: 50, max: 300},  // Count  
+    ]
+  },
+  {
     name: 'triangle',
-    algorithm: 'sweep',
+    algorithm(qs) {
+      // sparse is better with sweep
+      return (qs.p1 > 7) ? 'brute' : 'sweep'
+    },
     args: [
       {min: 10, max: 30},  // Count  
       {min: 1, max: 20},  // Count  
     ]
+  },
+  {
+    name: 'splash',
+    algorithm: 'sweep', 
+    args: [
+      {min: 10, max: 50},  // Number of lines  
+      {min: 40, max: 70},  // squared variance  
+    ]
+  },
+  {
+    name: 'island',
+    algorithm: 'sweep', 
+    args: [
+      {min: 3, max: 10},  // Number of control points on circle
+      {min: 6, max: 11},  // Number of subdivisions
+    ]
+
   }
 ]
 

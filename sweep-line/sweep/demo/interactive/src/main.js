@@ -9,9 +9,10 @@ import bus from './bus';
 
 var qs = queryState({
   isAsync: false,
-  p0: 50,
+  p0: 150,
   p1: 4,
-  generator: 'drunkgrid'
+  generator: 'drunkgrid',
+  algorithm: 'brute',
 }, {
   useSearch: true
 });
