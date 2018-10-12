@@ -89,6 +89,9 @@ export default {
     }
   }
 }
+window.restart = function() {
+  bus.fire('restart-layout');
+}
 </script>
 
 <style>
