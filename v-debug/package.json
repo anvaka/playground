@@ -20,6 +20,7 @@
     "ngraph.forcelayout": "^0.2.1",
     "ngraph.fromdot": "^0.2.0",
     "ngraph.fromjson": "^0.1.8",
+    "ngraph.generators": "0.0.19",
     "ngraph.graph": "0.0.14",
     "ngraph.kruskal": "^1.0.0",
     "ngraph.louvain": "^1.0.1",

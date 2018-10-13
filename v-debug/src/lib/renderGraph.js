@@ -18,7 +18,7 @@ export default function renderGraph(model, canvas) {
 
   renderRecusriveLevel(lastLevel, scene);
 
-  let initialSceneSize = 1050;
+  let initialSceneSize = 305;
   scene.setViewBox({
     left:  -initialSceneSize,
     top:   -initialSceneSize,
@@ -148,7 +148,7 @@ export default function renderGraph(model, canvas) {
     let globalPositions = model.root.buildNodePositions();
     let rootGraph = model.rootGraph;
     let lines = new WireCollection(rootGraph.getLinksCount());
-    lines.color.a = 0.04;
+    lines.color.a = 0.4;
     rootGraph.forEachLink(function (link) {
       let from = globalPositions.get(link.fromId);
       let to = globalPositions.get(link.toId);
@@ -334,12 +334,12 @@ export default function renderGraph(model, canvas) {
       lines.color.r = color.r;
       lines.color.g = color.g;
       lines.color.b = color.b;
-      lines.color.a = 0.02;
+      lines.color.a = 0.2;
     } else {
       lines.color.r = 6/255;
-      lines.color.g = 28/255;
+      lines.color.g = 255/255;
       lines.color.b = 70/255;
-      lines.color.a = 0.02;
+      lines.color.a = 0.2;
     }
 
     graph.forEachLink(link => {
@@ -351,7 +351,7 @@ export default function renderGraph(model, canvas) {
       linkIdToUI.set(link.id, ui);
     });
 
-    // parentUI.appendChild(lines);
+    parentUI.appendChild(lines);
     parentUI.appendChild(nodes);
 
     function updatePosition() {

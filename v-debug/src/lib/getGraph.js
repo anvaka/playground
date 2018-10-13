@@ -1,16 +1,30 @@
 import fromJson from 'ngraph.fromjson';
 import fromDot from 'ngraph.fromdot';
 //var data = require('../data/anvaka_twitter.json')
-import data from '../data/anvaka_2.json';
+//import data from '../data/anvaka_2.json';
+import data from '../data/anvaka.dot.js';
 import createGraph from 'ngraph.graph';
+import ngen from 'ngraph.generators';
 
 // module.exports = getGraph; //getDot(require('./data/substack'));
-//module.exports = getDot(require('../data/jdalton.dot.js'));
+// module.exports = 
+// getDot(require('../data/jdalton.dot.js'));
 
 let useSmall = false;
 
 export default function getGraph() {
-  let graph = useSmall ? smallGraph() : fromJson(data);
+//  return getDot(require('../data/jdalton.dot.js'))();
+  //let graph = useSmall ? smallGraph() : fromJson(data);
+  // var graph = createGraph();
+  // graph.addLink('a', 't');
+  // graph.addLink('a', 's');
+  // graph.addLink('a', 'b');
+  // graph.addLink('a', 'e');
+  // graph.addLink('a', 'd');
+  // return graph;
+ // return ngen.grid(8, 8)
+  //useSmall = true;
+  var graph = useSmall ? smallGraph() : fromDot(data);
   return graph;
 }
 

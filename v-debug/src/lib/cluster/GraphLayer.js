@@ -22,14 +22,19 @@ export default class GraphLayer {
     this.stepsCount = 0;
 
     this.settings = {
-      steps: 200,
-      selectedLayout: 'ngraph',
+      steps: 2000,
+      selectedLayout: 'nb',
       springLength: 30,// + level * 200,
       springCoeff: 0.0008,
       gravity: -1.2, // - level * 6,
       theta: 0.8,
       dragCoeff: 0.02,
       timeStep: 10,
+
+      k1: 0.5,
+      k2: 0.6,
+      k3: 0.06,
+      edgeLength: 100,
     }
 
     this.settings.nodeMass = buildNodeMassFunction(this)

@@ -1,11 +1,14 @@
 import ngraphLayout from 'ngraph.forcelayout';
 import getFloatOrDefault from '../getFloatOrDefault';
 import d3Layout from './d3layout';
+import nblayout from './nblayout';
 // const setInitialLayout = require('./setInitialLayout');
 
 export default function makeLayout(graph, settings) {
   if (settings.selectedLayout === 'ngraph') {
     return ngraphLayout(graph, extractSettings(settings));
+  } else if (settings.selectedLayout === 'nb') {
+    return nblayout(graph, settings);
   }
 
   return d3Layout(graph, settings);

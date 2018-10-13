@@ -23,7 +23,8 @@
       <div class='label'>Layout</div>
       <div class='value'>
         <select @change='changeLayout'>
-          <option value='ngraph' selected>NGraph</option>
+          <option value='ngraph' >NGraph</option>
+          <option value='nb' selected>NB</option>
           <option value='d3force'>D3 Force</option>
         </select>
       </div>
@@ -31,15 +32,17 @@
 
     <div class='row'>
       <div class='label'>Steps count</div>
-      <div class='value'><input v-model='cluster.settings.steps'></input></div>
+      <div class='value'><input v-model='cluster.settings.steps'></div>
     </div>
     <NLayoutSettings :settings='cluster.settings' v-if='isNGraph'></NLayoutSettings>
-    <D3LayoutSettings :settings='cluster.settings' v-if='!isNGraph'></D3LayoutSettings>
+    <D3LayoutSettings :settings='cluster.settings' v-if='isD3'></D3LayoutSettings>
+    <NBLayoutSettings :settings='cluster.settings' v-if='isNB'></NBLayoutSettings>
   </div>
 </template>
 <script>
 
 import NLayoutSettings from './NLayoutSettings';
+import NBLayoutSettings from './NBLayoutSettings'
 import D3LayoutSettings from './D3LayoutSettings';
 import bus from '../lib/bus';
 import toDot from 'ngraph.todot';
@@ -48,6 +51,7 @@ export default {
   props: ['cluster', 'model'],
   components: {
     NLayoutSettings,
+    NBLayoutSettings,
     D3LayoutSettings
   },
   data() {
@@ -58,7 +62,13 @@ export default {
 
   computed: {
     isNGraph() {
-      return this.cluster.settings.selectedLayout === "ngraph";
+      return this.cluster.settings.selectedLayout === 'ngraph';
+    },
+    isD3() {
+      return this.cluster.settings.selectedLayout === 'd3force';
+    },
+    isNB() {
+      return this.cluster.settings.selectedLayout === 'nb';
     }
   },
 
