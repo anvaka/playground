@@ -1,6 +1,7 @@
 import eventify from 'ngraph.events';
 import { scene as _scene, LineCollection, PointCollection, WireCollection, Element } from 'w-gl';
 import ActivePoints from './wgl/input/ActivePoints';
+import BBox from './geom/BBox';
 
 
 const niceColors = getNiceColors(); 
@@ -18,13 +19,32 @@ export default function renderGraph(model, canvas) {
 
   renderRecusriveLevel(lastLevel, scene);
 
-  let initialSceneSize = 305;
+  let globalPositions = model.root.buildNodePositions();
+  let rootGraph = model.rootGraph;
+  var bbox = new BBox();
+  rootGraph.forEachLink(function (link) {
+    let from = globalPositions.get(link.fromId);
+    let to = globalPositions.get(link.toId);
+    bbox.addPoint(from.x, from.y);
+    bbox.addPoint(to.x, to.y);
+
+  });
+  bbox.growBy(200)
+  var dpi = window.devicePixelRatio;
+
   scene.setViewBox({
-    left:  -initialSceneSize,
-    top:   -initialSceneSize,
-    right:  initialSceneSize,
-    bottom: initialSceneSize,
+    left:  bbox.left/dpi,
+    top:   bbox.top/dpi,
+    right:  bbox.right/dpi,
+    bottom: bbox.bottom/dpi,
   })
+  // let initialSceneSize = 3005;
+  // scene.setViewBox({
+  //   left:  -initialSceneSize,
+  //   top:   -initialSceneSize,
+  //   right:  initialSceneSize,
+  //   bottom: initialSceneSize,
+  // })
 
   let api = eventify({
     dispose,
