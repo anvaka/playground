@@ -111,22 +111,29 @@ export default function nbLayout(graph, settings) {
     minimizeEdgeLengthDifference();
     maximizeAngularResolution();
 
-    if (stepNumber % 10 === 0) rbfMove();
-    // ensurePositions();
+    // if (stepNumber % 1 === 0) {
+    //   forceMove();
+    // } 
+    ensurePositions();
     stepNumber += 1;
   }
 
-  function rescale() {
-    var bbox = new BBox();
+  function getGraphBBox() {
+    var graphBoundingBox = new BBox();
+
     graph.forEachLink(function(link) {
       var currentPos = nodes.get(link.fromId);
       currentPos.scaled = false;
-      bbox.addPoint(currentPos.x, currentPos.y);
+      graphBoundingBox.addPoint(currentPos.x, currentPos.y);
       var otherPos = nodes.get(link.toId);
       otherPos.scaled = false;
-      bbox.addPoint(otherPos.x, otherPos.y);
+      graphBoundingBox.addPoint(otherPos.x, otherPos.y);
     });
+    return graphBoundingBox;
+  }
 
+  function rescale() {
+    var bbox = getGraphBBox();
     var width = bbox.width;
     var height = bbox.height;
 
@@ -304,11 +311,12 @@ export default function nbLayout(graph, settings) {
     }
   }
 
-  function rbfMove() {
+  function forceMove() {
+    var before = getGraphBBox();
     const points = new KDBush(nodeArr, p => p.x, p => p.y);
     nodeArr.forEach((pos, idx) => {
       var sx = 0, sy = 0, count = 0;
-      var neighbors = points.within(pos.x, pos.y, edgeLength);
+      var neighbors = points.within(pos.x, pos.y, edgeLength/2);
       neighbors.forEach(otherIndex => {
         if (otherIndex === idx) return;
 
@@ -317,6 +325,11 @@ export default function nbLayout(graph, settings) {
         var dy = pos.y - other.y;
         var l = Math.sqrt(dx * dx + dy * dy);
         if (l < 1e-10) l = 1;
+
+        var tR = 1;
+        pos.incX += pos.x + k4 * (edgeLength - l) * dx/l * tR;
+        pos.incY += pos.y + k4 * (edgeLength - l) * dy/l * tR;
+        pos.incLength += 1;
         var nx = dx/l
         var ny = dy/l
 
@@ -326,12 +339,24 @@ export default function nbLayout(graph, settings) {
       });
       if (neighbors.length === 0) return;
 
-      pos.incX = k4 * sx/count;
-      pos.incY = k4 * sy/count;
-      pos.incLength = 0; //neighbors.length - 1;
+      // pos.incX = k4 * sx/count;
+      // pos.incY = k4 * sy/count;
+      // pos.incLength = 0; //neighbors.length - 1;
     });
 
     processIncomingMessages();
+
+    var after = getGraphBBox();
+
+    // fit into the box:
+    var sx = 1/after.width;
+    var sy = 1/after.height;
+    nodes.forEach(function(pos) {
+      pos.x = before.minX + (pos.x - after.minX) * sx * before.width;
+      pos.y = before.minY + (pos.y - after.minY) * sy * before.width;
+    });
+    var superAfter = getGraphBBox();
+    console.log(before, after, superAfter);
   }
 
 }
