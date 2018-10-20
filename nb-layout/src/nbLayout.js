@@ -116,6 +116,9 @@ export default function nbLayout(graph, settings) {
     // } 
     ensurePositions();
     stepNumber += 1;
+    if (stepNumber % 10 === 0) {
+      console.log(stepNumber)
+    }
   }
 
   function getGraphBBox() {
@@ -167,7 +170,7 @@ export default function nbLayout(graph, settings) {
   }
 
   function processIncomingMessages() {
-    nodes.forEach(function(pos, key) {
+    nodes.forEach(function(pos) {
       pos.x = (pos.incX + pos.x)/(pos.incLength + 1);
       pos.y = (pos.incY + pos.y)/(pos.incLength + 1);
       pos.incLength = 0;
@@ -250,11 +253,10 @@ export default function nbLayout(graph, settings) {
         var dx = otherPos.x - currentPos.x;
         var dy = otherPos.y - currentPos.y;
         var angle = Math.atan2(dy, dx) + Math.PI;
-        // var deg = getDeg(other.id);
         neighbors.push({
           pos: otherPos,
           angle,
-          strength: 1 // otherPos.aggDeg/maxAggDeg
+          strength: 1 
         });
       });
       if (neighbors.length < 2) return;
@@ -338,10 +340,6 @@ export default function nbLayout(graph, settings) {
         count += 1;
       });
       if (neighbors.length === 0) return;
-
-      // pos.incX = k4 * sx/count;
-      // pos.incY = k4 * sy/count;
-      // pos.incLength = 0; //neighbors.length - 1;
     });
 
     processIncomingMessages();
@@ -359,10 +357,4 @@ export default function nbLayout(graph, settings) {
     console.log(before, after, superAfter);
   }
 
-}
-
-function rbf(r, eps = 0.008) {
-  //return 1./(1 + Math.abs(r));
-  //return 1./(1 + r * r);
-  return Math.exp(-r * r * eps);
 }

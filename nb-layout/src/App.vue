@@ -14,10 +14,10 @@
         <div class='label'>K3</div>
         <div class='value'><input v-model='settings.k3'></div>
       </div>
-      <div class='row'>
+      <!-- <div class='row'>
         <div class='label'>K4</div>
         <div class='value'><input v-model='settings.k4'></div>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>
