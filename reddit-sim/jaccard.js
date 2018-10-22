@@ -1,10 +1,13 @@
 // maps pair to aggregated average
-var cummulativeSim = new Map();
+var keyToCount = {};
 var votersCount = new Map();
 var indexedSimilarity = new Map();
 
 let forEachLine = require('for-each-line');
 var searchSubName = 'proceduralgeneration';
+var lineCount = 0;
+var redditToNumber = {};
+var rcount = 0;
 
 class Counter {
   constructor(subA, subB) {
@@ -26,11 +29,22 @@ var lastUserSubs;
 forEachLine(fileName, (line) => {
   if (!line) return;
 
+  lineCount += 1;
+  if (lineCount >= 3674204) {
+    if (lineCount % 50000 === 0) console.log('Indexed lines: ', lineCount, line);
+  }
   var parts = line.split(',')
   var user = parts[0];
   var sub = parts[1];
+  var subNumber = redditToNumber[sub];
+  if (subNumber === undefined) {
+    subNumber = rcount;
+    rcount += 1;
+    redditToNumber[sub] = subNumber;
+  }
+  sub = subNumber;
   var count = Number.parseInt(parts[2], 10);
-  if (!user || !sub) {
+  if (!user) {
     throw new Error('Something is wrong with this line: ' + line);
   }
   if (!Number.isFinite(count)) {
@@ -48,7 +62,8 @@ forEachLine(fileName, (line) => {
   lastUserSubs.push({sub, count});
 }).then(() => {
   console.log('all indexed');
-  cummulativeSim.forEach(indexSimilarity);
+  Object.keys(keyToCount).forEach(indexSimilarity);
+
   var similar = indexedSimilarity.get(searchSubName);
   similar.sort((a, b) => b.score - a.score)
   similar = similar.slice(0, 100);
@@ -77,7 +92,8 @@ forEachLine(fileName, (line) => {
   }
 })
 
-function indexSimilarity(counter) {
+function indexSimilarity(key) {
+  var counter = keyToCount[key];
   var similarity = counter.count/(votersCount.get(counter.subA) + votersCount.get(counter.subB) - counter.count);
 
   var aSims = indexedSimilarity.get(counter.subA);
@@ -104,7 +120,7 @@ function recordLastUser(subs) {
   if (!subs) return;
   if (subs.length < 2) return;
   var total = 0;
-  for (var i = 0; i < subs.length - 1; ++i) {
+  for (var i = 0; i < subs.length; ++i) {
     total += subs[i].count;
   }
 
@@ -113,16 +129,16 @@ function recordLastUser(subs) {
     for (var j = i + 1; j < subs.length; ++j) {
       var subB = subs[j];
 
-      var shouldIndex = true; // (subA.sub === searchSubName || subB.sub ===searchSubName);
+      var shouldIndex = true; //subA.sub[0] === 'a' || subB.sub[0] === 'a'; // true; // (subA.sub === searchSubName || subB.sub ===searchSubName);
       if (!shouldIndex) {
         continue;
       }
 
       var key = makeKey(subA.sub, subB.sub);
-      let scores = cummulativeSim.get(key);
+      let scores = keyToCount[key];
       if (!scores) {
         scores = new Counter(subA.sub, subB.sub);
-        cummulativeSim.set(key, scores);
+        keyToCount[key] = scores;
       }
 
       var na = subA.count/total;
@@ -134,6 +150,6 @@ function recordLastUser(subs) {
 }
 
 function makeKey(subA, subB) {
-  return subA < subB ? subA + subB : subB + subA;
+  return subA < subB ? subA + '|' + subB : subB + '|' + subA;
 }
 
