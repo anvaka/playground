@@ -2,12 +2,17 @@
 var keyToCount = {};
 var votersCount = new Map();
 var indexedSimilarity = new Map();
+var startFrom = process.argv[2] || 'a';
+var path = require('path');
+var fs = require('fs');
+var JSONStream = require('JSONStream');
+
+var outStream = createOutStream(path.join('data', 'related-' + startFrom.toLowerCase() + '.json'));
 
 let forEachLine = require('for-each-line');
-var searchSubName = 'proceduralgeneration';
+// var searchSubName = 'proceduralgeneration';
+// searchSubName = 'transhumanism'
 var lineCount = 0;
-var redditToNumber = {};
-var rcount = 0;
 
 class Counter {
   constructor(subA, subB) {
@@ -25,6 +30,11 @@ class Counter {
 var fileName = 'reddit_aug_2018'
 var lastUser = null;
 var lastUserSubs;
+var writeOutputFor = new Set();
+
+function shouldBeIndexed(sub) {
+  return sub[0] === startFrom;
+}
 
 forEachLine(fileName, (line) => {
   if (!line) return;
@@ -36,13 +46,6 @@ forEachLine(fileName, (line) => {
   var parts = line.split(',')
   var user = parts[0];
   var sub = parts[1];
-  var subNumber = redditToNumber[sub];
-  if (subNumber === undefined) {
-    subNumber = rcount;
-    rcount += 1;
-    redditToNumber[sub] = subNumber;
-  }
-  sub = subNumber;
   var count = Number.parseInt(parts[2], 10);
   if (!user) {
     throw new Error('Something is wrong with this line: ' + line);
@@ -63,8 +66,15 @@ forEachLine(fileName, (line) => {
 }).then(() => {
   console.log('all indexed');
   Object.keys(keyToCount).forEach(indexSimilarity);
+}).then(() => {
+  writeOutputFor.forEach(subreddit => {
+    var sims = getSimilarTo(subreddit);
+    if (sims.similar.length > 0) outStream.write(sims);
+  });
+})
 
-  var similar = indexedSimilarity.get(searchSubName);
+function getSimilarTo(subName) {
+  var similar = indexedSimilarity.get(subName);
   similar.sort((a, b) => b.score - a.score)
   similar = similar.slice(0, 100);
 
@@ -80,17 +90,26 @@ forEachLine(fileName, (line) => {
   var medianIndex = Math.floor(similar.length/2);
   var median = similar[medianIndex].score;
 
-  console.log(mean, median, stdDev)
+  // console.log(mean, median, stdDev)
 
+  var foundMatches = []
   for (var i = 0; i < similar.length; ++i) {
     var sim = similar[i];
     if (sim.score - median > stdDev) {
-      console.log(sim.sub + '\t' + sim.score);
+      foundMatches.push({
+        sub: sim.sub,
+        score: sim.score
+      })
+      // console.log(sim.sub + '\t' + sim.score);
     } else {
       break;
     }
   }
-})
+  return {
+    name: subName,
+    similar: foundMatches
+  }
+}
 
 function indexSimilarity(key) {
   var counter = keyToCount[key];
@@ -129,8 +148,16 @@ function recordLastUser(subs) {
     for (var j = i + 1; j < subs.length; ++j) {
       var subB = subs[j];
 
-      var shouldIndex = true; //subA.sub[0] === 'a' || subB.sub[0] === 'a'; // true; // (subA.sub === searchSubName || subB.sub ===searchSubName);
-      if (!shouldIndex) {
+      var processThisPair = false;
+      if (shouldBeIndexed(subA.sub)) {
+        writeOutputFor.add(subA.sub);
+        processThisPair = true;
+      }
+      if (shouldBeIndexed(subB.sub)) {
+        writeOutputFor.add(subB.sub);
+        processThisPair = true;
+      }
+      if (!processThisPair) {
         continue;
       }
 
@@ -153,3 +180,12 @@ function makeKey(subA, subB) {
   return subA < subB ? subA + '|' + subB : subB + '|' + subA;
 }
 
+function createOutStream(outFileName) {
+  var outgoing = JSONStream.stringify(false);
+  var fileStream = fs.createWriteStream(outFileName, {
+    encoding: 'utf8',
+    flags: 'a'
+  });
+  outgoing.pipe(fileStream);
+  return outgoing;
+}
