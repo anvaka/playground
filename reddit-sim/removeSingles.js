@@ -31,7 +31,10 @@ forEachLine(fileName, (line) => {
     lastUser = user;
     lastUserSubs = [];
   }
-  lastUserSubs.push({sub, count});
+  if (sub[0] !== 'u' && sub[1] !== '_') {
+    // We don't want to include personal pages
+    lastUserSubs.push({sub, count});
+  }
 }).then(() => {
   console.warn('Filtered: ', filtered);
 });
