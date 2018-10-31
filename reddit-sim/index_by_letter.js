@@ -9,7 +9,7 @@ function processNext() {
 
   var letter = letters[index][0];
   console.log(new Date(), 'processing letter ' + letter);
-  exec('node --max-old-space-size=8192 jaccard ' + letter, (err) => {
+  exec('node --max-old-space-size=16384 jaccard ' + letter, (err) => {
     if (err) {
       console.error(`exec error: ${err}`);
       return;

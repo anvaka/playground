@@ -40,9 +40,7 @@ forEachLine(fileName, (line) => {
   if (!line) return;
 
   lineCount += 1;
-  if (lineCount >= 3674204) {
-    if (lineCount % 50000 === 0) console.log('Indexed lines: ', lineCount, line);
-  }
+  if (lineCount % 500000 === 0) console.log('Indexed lines: ', lineCount, line);
   var parts = line.split(',')
   var user = parts[0];
   var sub = parts[1];
