@@ -26,7 +26,10 @@ var commentersCount = new Map();
 
 // Once all file is processed we store here list 
 var indexedSimilarity = new Map();
+
+// this is passed by ./index_by_letter.js
 var startFrom = process.argv[2] || 'a';
+
 var path = require('path');
 var fs = require('fs');
 var JSONStream = require('JSONStream');
@@ -36,6 +39,7 @@ var outStream = createOutStream(path.join('data', 'related-' + startFrom.toLower
 let forEachLine = require('for-each-line');
 var lineCount = 0;
 
+// This class counts total number of mutual commenters to pair of subreddits
 class Counter {
   constructor(subA, subB) {
     this.subA = subA;
@@ -49,6 +53,7 @@ class Counter {
     this.count += 1;
   }
 }
+
 var lastUser = null;
 var lastUserSubs;
 var writeOutputFor = new Set();
