@@ -34,25 +34,12 @@ var path = require('path');
 var fs = require('fs');
 var JSONStream = require('JSONStream');
 
-var outStream = createOutStream(path.join('data', 'related-' + startFrom.toLowerCase() + '.json'));
+var Counter = require('./lib/Counter');
+
+var outStream = createOutStream(path.join('data', 'Frelated-' + startFrom.toLowerCase() + '.json'));
 
 let forEachLine = require('for-each-line');
 var lineCount = 0;
-
-// This class counts total number of mutual commenters to pair of subreddits
-class Counter {
-  constructor(subA, subB) {
-    this.subA = subA;
-    this.subB = subB;
-    this.sim = 0;
-    this.count = 0;
-  }
-
-  increase(instanceSimilarity) {
-    this.sim += instanceSimilarity;
-    this.count += 1;
-  }
-}
 
 var lastUser = null;
 var lastUserSubs;
@@ -140,30 +127,36 @@ function getSimilarTo(subName) {
 }
 
 function indexSimilarity(subredditPairKey) {
+  var pair = subredditPairKey.split('|');
+  var subA = pair[0];
+  var subB = pair[1];
+
+  if (!subA || !subB) throw new Error('Subreddits key is malformed ' + subredditPairKey);
+
   var counter = keyToCount[subredditPairKey];
 
   // Regular Jaccard similarity:
-  var similarity = counter.count/(commentersCount.get(counter.subA) + commentersCount.get(counter.subB) - counter.count);
+  var similarity = counter.count/(commentersCount.get(subA) + commentersCount.get(subB) - counter.count);
 
   // Similarity is bi-directional. We store both ends of the edge into file:
-  var aSims = indexedSimilarity.get(counter.subA);
+  var aSims = indexedSimilarity.get(subA);
   if (!aSims) {
     aSims = [];
-    indexedSimilarity.set(counter.subA, aSims);
+    indexedSimilarity.set(subA, aSims);
   }
   aSims.push({
-    sub: counter.subB,
+    sub: subB,
     score: similarity
   });
 
-  var bSims = indexedSimilarity.get(counter.subB);
+  var bSims = indexedSimilarity.get(subB);
   if (!bSims) {
     bSims = [];
-    indexedSimilarity.set(counter.subB, bSims);
+    indexedSimilarity.set(subB, bSims);
   }
 
   bSims.push({
-    sub: counter.subA,
+    sub: subA,
     score: similarity
   });
 }
@@ -182,22 +175,30 @@ function recordLastUser(subs) {
       var subB = subs[j];
 
       var processThisPair = false;
+
+      // we index only those subreddits that match our indexing rule
       if (shouldBeIndexed(subA.sub)) {
         writeOutputFor.add(subA.sub);
         processThisPair = true;
       }
+
       if (shouldBeIndexed(subB.sub)) {
         writeOutputFor.add(subB.sub);
         processThisPair = true;
       }
+
       if (!processThisPair) {
+        // If this pair can be skipped - we skip it. Assuming subsequent runs
+        // will cover it (e.g. we index only subreddits that starts with letter
+        // "a", on the subequent program run we will index subreddits that
+        // start with letter "b", and so on).
         continue;
       }
 
       var key = makeKey(subA.sub, subB.sub);
       let scores = keyToCount[key];
       if (!scores) {
-        scores = new Counter(subA.sub, subB.sub);
+        scores = new Counter();
         keyToCount[key] = scores;
       }
 
