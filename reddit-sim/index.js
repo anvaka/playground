@@ -15,7 +15,7 @@
 // me to count similarity without a need to keep track where each user posted.
 // (I.e. as long as user name the same, all subreddits that I see are "similar",
 // degree of similarity is determined once we process the entire file)
-var fileName = 'reddit_aug_2018'
+var fileName = 'github_watch.reddit_comments_2018_08.csv'
 
 // maps pair of subreddits into `Counter` object. I use object and not a Map
 // because Map in my node crashes with out of memory sooner ¯\_(ツ)_/¯

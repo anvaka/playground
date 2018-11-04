@@ -1,6 +1,12 @@
-let forEachLine = require('for-each-line');
+/**
+ * Counts all first letters in sbureddit names in a file
+ */
+var forEachLine = require('for-each-line');
+var fileName = process.argv[2] || 'github_watch.reddit_comments_2018_08.csv'
+
 var counts = new Map();
-var fileName = 'reddit_aug_2018'
+var fileName = ''
+
 forEachLine(fileName, (line) => {
   var parts = line.split(',')
   var sub = parts[1][0];

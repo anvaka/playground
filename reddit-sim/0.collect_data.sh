@@ -1,13 +1,14 @@
 #!/bin/bash
+set -e
 
-OUT_TABLE_NAME=github_watch.reddit_comments_2018
+OUT_TABLE_NAME=github_watch.reddit_comments_2018_09
 EXPORT_BUCKET=gh_watch
 
 OUT_FILE_NAME=$OUT_TABLE_NAME.csv
 ARCHIVE_NAME=$OUT_FILE_NAME.gz
 BUCKET_NAME=gs://$EXPORT_BUCKET/$ARCHIVE_NAME
 
-extract_filtered_posters_sql=`cat extract_filtered_posters.sql`
+extract_filtered_posters_sql=`cat ./sql/extract_filtered_posters.sql`
 echo "executing" $extract_filtered_posters_sql
 bq query --replace=true --use_legacy_sql=false --allow_large_results --destination_table=$OUT_TABLE_NAME "$extract_filtered_posters_sql"
 
