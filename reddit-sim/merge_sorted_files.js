@@ -1,3 +1,7 @@
+/**
+ * This file merges two subreddit commenters into one. It also
+ * likely has a bug
+ */
 const lineByLine = require('n-readlines');
 
 var files = process.argv.slice(2);
@@ -42,9 +46,9 @@ do {
   if (!nextReader) break;
 
   var currentCommenter = nextReader.lastCommenter()
-  console.log(nextReader.fileName + ': ' + nextReader.lastLine());
+  // console.log(nextReader.fileName + ': ' + nextReader.lastLine());
   if (lastCommentorAggregator && lastCommentorAggregator.user !== currentCommenter.user) {
-    console.log('printAll', nextReader.lastLine());
+//     console.log('printAll', nextReader.lastLine());
     lastCommentorAggregator.printAll();
     lastCommentorAggregator = new CommenterAggregator(currentCommenter);
   } else if (lastCommentorAggregator) {
@@ -58,7 +62,7 @@ do {
     removeReader(nextReader);
   }
   idx += 1;
-} while (idx < 50);
+} while (true);
 
 function reomveReader(reader) {
   let readerIndex = readers.indexOf(reader);
@@ -81,7 +85,7 @@ function readerIsNext(current, candidate) {
   if (subredditDiff) return subredditDiff;
 
   var countDiff = candidateCommenter.count - currentCommenter.count;
-  if (countDiff) return diff;
+  if (countDiff) return countDiff;
 
   return (candidate.fileName.localeCompare(current.fileName));
 }
