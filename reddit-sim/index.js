@@ -15,7 +15,8 @@
 // me to count similarity without a need to keep track where each user posted.
 // (I.e. as long as user name the same, all subreddits that I see are "similar",
 // degree of similarity is determined once we process the entire file)
-var fileName = 'github_watch.reddit_comments_2018_08.csv'
+//var fileName = 'github_watch.reddit_comments_2018_08.csv'
+var fileName = 'out.csv'
 
 // maps pair of subreddits into `Counter` object. I use object and not a Map
 // because Map in my node crashes with out of memory sooner ¯\_(ツ)_/¯
@@ -29,6 +30,8 @@ var indexedSimilarity = new Map();
 
 // this is passed by ./index_by_letter.js
 var startFrom = process.argv[2] || 'a';
+var firstLetter = startFrom[0].toLowerCase();
+var matchTest = new RegExp('^' + startFrom);
 
 var path = require('path');
 var fs = require('fs');
@@ -36,7 +39,7 @@ var JSONStream = require('JSONStream');
 
 var Counter = require('./lib/Counter');
 
-var outStream = createOutStream(path.join('data', 'Frelated-' + startFrom.toLowerCase() + '.json'));
+var outStream = createOutStream(path.join('data', 'related-' + firstLetter + '.json'));
 
 let forEachLine = require('for-each-line');
 var lineCount = 0;
@@ -46,7 +49,7 @@ var lastUserSubs;
 var writeOutputFor = new Set();
 
 function shouldBeIndexed(sub) {
-  return sub[0] === startFrom;
+  return sub.match(matchTest); //[0] === startFrom;
 }
 
 forEachLine(fileName, (line) => {

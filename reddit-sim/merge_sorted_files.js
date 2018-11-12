@@ -1,10 +1,13 @@
 /**
- * This file merges two subreddit commenters into one. It also
- * likely has a bug
+ * This file merges two subreddit user->subreddit logs into one.
  */
 const lineByLine = require('n-readlines');
 
+var OUT_FILE_NAME = 'out.csv';
+//['./part0.csv', './part1.csv'];//
 var files = process.argv.slice(2);
+
+var fs = require('fs');
 
 if (files.length === 0) {
   console.error('Pass file names to process');
@@ -14,57 +17,73 @@ if (files.length === 0) {
 var readers = files.map(toInitializedReader);
 console.warn('Initialized with ', files);
 
-var idx = 0;
-var lastCommentorAggregator = undefined;
+var lastUser = undefined;
+var buffer = [];
 
-class CommenterAggregator {
+class UserAggregator {
   constructor(commentor) {
-    this.subreddits = new Map();
-    this.user = commentor.user;
-    this.subreddits.set(commentor.subreddit, commentor.count);
+    this.subreddits = Object.create(null);
+    this.name = commentor.name;
+    this.subreddits[commentor.subreddit] = commentor.count;
   }
 
   printAll() {
-    this.subreddits.forEach((count, subreddit) => {
-      console.log(this.user + ',' + subreddit + ',' + count);
-    });
+    var name = this.name;
+    var subs = this.subreddits;
+    Object.keys(this.subreddits).forEach((subreddit => {
+      var line = name + ',' + subreddit + ',' + subs[subreddit];
+      buffer.push(line);
+
+      if (buffer.length > 10000) {
+        // async stream writing or console.log with redirect give out of memory on my box.
+        // So doing it this way.
+        fs.appendFileSync(OUT_FILE_NAME, buffer.join('\n'));
+        buffer = [];
+      }
+    }))
   }
 
   merge(otherCommentor) {
-    if (otherCommentor.user !== this.user) {
-      throw new Error('Wrong name ' + otherComment.user + ' !== ' +  this.user);
+    if (otherCommentor.name !== this.name) {
+      throw new Error('Wrong name ' + otherCommentor.name + ' !== ' +  this.name);
     }
 
-    this.subreddits.set(otherCommentor.subreddit,
-      (this.subreddits.get(otherCommentor.subreddit) || 0) + otherCommentor.count
-    );
+    this.subreddits[otherCommentor.subreddit] = (this.subreddits[otherCommentor.subreddit] || 0) + otherCommentor.count;
   }
 }
+
+var processed = 0;
 
 do {
   var nextReader = getReaderWithNextLine(readers);
   if (!nextReader) break;
+  if (processed % 100000 === 0) {
+    console.error('Processed lines: ', processed);
+  }
 
-  var currentCommenter = nextReader.lastCommenter()
-  // console.log(nextReader.fileName + ': ' + nextReader.lastLine());
-  if (lastCommentorAggregator && lastCommentorAggregator.user !== currentCommenter.user) {
-//     console.log('printAll', nextReader.lastLine());
-    lastCommentorAggregator.printAll();
-    lastCommentorAggregator = new CommenterAggregator(currentCommenter);
-  } else if (lastCommentorAggregator) {
-    lastCommentorAggregator.merge(currentCommenter);
+  var currentUser = nextReader.lastUser()
+  if (lastUser && lastUser.name !== currentUser.name) {
+    lastUser.printAll();
+    lastUser = new UserAggregator(currentUser);
+  } else if (lastUser) {
+    lastUser.merge(currentUser);
   } else {
-    lastCommentorAggregator = new CommenterAggregator(currentCommenter);
+    lastUser = new UserAggregator(currentUser);
   }
 
   if (!nextReader.next()) {
     // this one is over.
     removeReader(nextReader);
   }
-  idx += 1;
+  processed += 1;
 } while (true);
 
-function reomveReader(reader) {
+lastUser.printAll();
+if (buffer.length > 0) {
+  fs.appendFileSync(OUT_FILE_NAME, buffer.join('\n'));
+}
+
+function removeReader(reader) {
   let readerIndex = readers.indexOf(reader);
   readers.splice(readerIndex, 1);
 }
@@ -74,24 +93,20 @@ function getReaderWithNextLine(readers) {
   return readers[0];
 }
 
-function readerIsNext(current, candidate) {
-  let candidateCommenter = candidate.lastCommenter();
-  let currentCommenter = current.lastCommenter();
+function readerIsNext(aReader, bReader) {
+  let a = aReader.lastUser();
+  let b = bReader.lastUser();
 
-  let userDiff = candidateCommenter.user.localeCompare(currentCommenter.user);
-  if (userDiff) return -userDiff;
+  let userDiff = a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
+  if (userDiff) return userDiff;
 
-  let subredditDiff = candidateCommenter.subreddit.localeCompare(currentCommenter.subreddit);
+  let subredditDiff = a.subreddit < b.subreddit ? -1 : a.subreddit > b.subreddit ? 1 : 0;
   if (subredditDiff) return subredditDiff;
 
-  var countDiff = candidateCommenter.count - currentCommenter.count;
+  var countDiff = a.count - b.count;
   if (countDiff) return countDiff;
 
-  return (candidate.fileName.localeCompare(current.fileName));
-}
-
-function toLastLine(reader) {
-  return reader.line();
+  return (aReader.fileName.localeCompare(bReader.fileName));
 }
 
 function toInitializedReader(fileName) {
@@ -105,7 +120,7 @@ function createFileReader(fileName) {
   var finished = false;
   var line;
   var commenter = {
-    user: undefined,
+    name: undefined,
     subreddit: undefined,
     count: 0
   };
@@ -113,7 +128,7 @@ function createFileReader(fileName) {
   const liner = new lineByLine(fileName);
 
   return {
-    lastCommenter,
+    lastUser,
     lastLine,
     next,
     isFinished,
@@ -124,7 +139,7 @@ function createFileReader(fileName) {
     return finished;
   }
 
-  function lastCommenter() {
+  function lastUser() {
     return commenter;
   }
   function lastLine() {
@@ -141,7 +156,7 @@ function createFileReader(fileName) {
     let parts = line.split(',');
     if (parts.length !== 3) throw new Error('invalid format ' + line);
 
-    commenter.user = parts[0];
+    commenter.name = parts[0];
     commenter.subreddit = parts[1];
     commenter.count = Number.parseInt(parts[2], 10);
     if (!Number.isFinite(commenter.count)) throw new Error('Invalid count ' + line);
