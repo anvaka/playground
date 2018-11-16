@@ -32,7 +32,6 @@ export default function corsFetch(url, options) {
       return;
     }
 
-    console.log(e)
     actualResolve(e);
     dispose();
   }

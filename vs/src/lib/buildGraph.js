@@ -1,6 +1,7 @@
 import corsFetch from "./corsFetch";
+import bus from '../bus';
 
-const MAX_DEPTH = 2;
+export const MAX_DEPTH = 2;
 
 export default function buildGraph(entryWord) {
   let cancelled = false;
@@ -54,7 +55,11 @@ export default function buildGraph(entryWord) {
 
   function loadNext() {
     if (cancelled) return;
-    if (queue.length === 0) return;
+    if (queue.length === 0) {
+      bus.fire('graph-ready', graph);
+      return;
+    }
+
     let nextWord = queue.shift();
     fetchNext(nextWord);
   }
@@ -65,7 +70,7 @@ export default function buildGraph(entryWord) {
   }
 
   function onPendingReady(res, query) {
-    if (res.length === 2) {
+    if (res.length >= 2) {
       loadSiblings(query, res[1]);
     } else {
       console.error(res);

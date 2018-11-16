@@ -1,13 +1,19 @@
 import createPanZoom from 'panzoom';
+import {MAX_DEPTH} from './buildGraph';
+import createTextMeasure from './measureText';
+import createAggregateLayout from './aggregateLayout';
+import bus from '../bus';
 
 let svg = require('simplesvg');
-let createLayout = require('ngraph.forcelayout')
 
 export default function createRenderer() {
   const scene = document.querySelector('#scene');
   const panzoom = createPanZoom(scene);
+  panzoom.showRectangle({left: -500, right: 500, top: -500, bottom: 500});
   let nodes = new Map();
   let layout, graph, currentLayoutFrame = 0;
+  let textMeasure = createTextMeasure(scene);
+  bus.on('graph-ready', onGraphReady);
 
   return {
     render
@@ -16,21 +22,8 @@ export default function createRenderer() {
   function render(newGraph) {
     clearLastScene();
     graph = newGraph;
-    layout = createLayout(graph, {
-      springLength: 40,
-      springCoeff: 0.0005,
-      gravity: -1.2,
-      theta: 0.8,
-      dragCoeff: 0.02,
-      timeStep: 14,
-      nodeMass(nodeId) {
-        var links = graph.getLinks(nodeId);
-        var mul = links ? links.length : 1;
-        return nodeId.length * mul;
-      }
-    });
 
-    window.layout = layout;
+    layout = createAggregateLayout(graph);
     nodes = new Map();
 
     graph.forEachNode(addNode);
@@ -40,8 +33,15 @@ export default function createRenderer() {
     currentLayoutFrame = requestAnimationFrame(frame)
   }
 
+  function onGraphReady(readyGraph) {
+    if (readyGraph === graph) {
+      layout.setGraphReady();
+    }
+  }
+
   function frame() {
     currentLayoutFrame = requestAnimationFrame(frame)
+
     layout.step();
     updatePositions();
   }
@@ -61,25 +61,66 @@ export default function createRenderer() {
   }
 
   function addNode(node) {
+    const dRatio = (MAX_DEPTH - node.data.depth)/MAX_DEPTH;
+    const uiAttributes = getNodeUIAttributes(node.id, dRatio);
+
     const text = svg('text')
+    text.attr('font-size', uiAttributes.fontSize);
     text.text(node.id);
 
+    const rect = svg('rect');
+    rect.attr({
+      x: uiAttributes.x,
+      y: uiAttributes.y,
+      width: uiAttributes.width,
+      height: uiAttributes.height,
+      rx: uiAttributes.rx,
+      ry: uiAttributes.ry,
+      fill: 'transparent',
+      'stroke-width': uiAttributes.strokeWidth, 
+      stroke: '#58585A'
+    })
+
     const textContainer = svg('g');
+    textContainer.appendChild(rect);
     textContainer.appendChild(text);
-    let pos = layout.getNodePosition(node.id);
+    let pos = getNodePosition(node.id);
     if (node.data.depth === 0) {
-      layout.pinNode(node, true);
+      layout.pinNode(node);
     }
+    layout.addNode(node.id, uiAttributes);
 
     scene.appendChild(textContainer);
     nodes.set(node.id, textContainer);
     textContainer.attr('transform', `translate(${pos.x}, ${pos.y})`);
   }
 
+
+  function getNodeUIAttributes(nodeId, dRatio) {
+    const fontSize = 24 * dRatio + 12;
+    const size = textMeasure(nodeId, fontSize);
+    const width = size.totalWidth + size.spaceWidth * 6;
+    const height = fontSize * 1.6;
+
+    return {
+      fontSize,
+      width,
+      height,
+      x: -size.spaceWidth * 3,
+      y: -height * 0.7,
+      rx: 15 * dRatio + 2,
+      ry: 15 * dRatio + 2,
+      strokeWidth: 4 * dRatio + 1
+    };
+  }
   function updatePositions() {
-    nodes.forEach((container, nodeId) => {
-      let pos = layout.getNodePosition(nodeId);
-      container.attr('transform', `translate(${pos.x}, ${pos.y})`);
+    nodes.forEach((ui, nodeId) => {
+      let pos = getNodePosition(nodeId)
+      ui.attr('transform', `translate(${pos.x}, ${pos.y})`);
     });
+  }
+
+  function getNodePosition(nodeId) {
+    return layout.getNodePosition(nodeId);
   }
 }
