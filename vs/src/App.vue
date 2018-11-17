@@ -1,7 +1,7 @@
 <template>
   <div id="app">
-    <form v-on:submit.prevent="onSubmit">
-      <input type="text" v-model='query'>
+    <form v-on:submit.prevent="onSubmit" class='search-box'>
+      <input type="text" v-model='query' placeholder='Search query'>
     </form>
   </div>
 </template>
@@ -27,7 +27,7 @@ export default {
 }
 </script>
 
-<style>
+<style lang='stylus'>
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -35,7 +35,25 @@ export default {
   text-align: center;
   color: #2c3e50;
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 8px;
+  left: 14px;
+}
+.search-box {
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 -1px 0px rgba(0,0,0,0.02);
+  height: 48px;
+  width: 392px;
+  display: flex;
+
+  input {
+    flex: 1;
+    border: none;
+    font-size: 24px;
+    margin: 0 18px;
+
+    &:focus {
+      outline: none;
+    }
+  }
 }
 </style>

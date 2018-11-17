@@ -10,9 +10,11 @@
     "build": "node build/build.js"
   },
   "dependencies": {
+    "delaunator": "^3.0.2",
     "ngraph.events": "0.0.4",
     "ngraph.forcelayout": "^0.5.0",
     "ngraph.graph": "0.0.14",
+    "ngraph.kruskal": "^1.0.0",
     "ngraph.random": "^0.1.0",
     "panzoom": "^7.0.2",
     "query-state": "^4.2.0",
@@ -46,6 +48,8 @@
     "rimraf": "^2.6.0",
     "semver": "^5.3.0",
     "shelljs": "^0.7.6",
+    "stylus": "^0.54.5",
+    "stylus-loader": "^3.0.2",
     "uglifyjs-webpack-plugin": "^1.1.1",
     "url-loader": "^0.5.8",
     "vue-loader": "^13.3.0",

@@ -32,14 +32,14 @@ export default function buildGraph(entryWord) {
   }
 
   function loadSiblings(parent, results) {
-    let q = fullQuery(parent) + ' ';
+    let q = (fullQuery(parent) + ' ').toLocaleLowerCase();
     var parentNode = graph.getNode(parent);
 
     if (!parentNode) {
       throw new Error('Parent is missing for ' + parent);
     }
 
-    results.filter(x => x.indexOf(q) === 0)
+    results.filter(x => x.toLocaleLowerCase().indexOf(q) === 0)
       .map(x => x.substring(q.length))
       .forEach(other => {
         if (graph.hasNode(other)) return;

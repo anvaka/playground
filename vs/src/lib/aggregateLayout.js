@@ -1,24 +1,28 @@
 import {MAX_DEPTH} from './buildGraph';
-import createFakeLayout from './fakeLayout';
+import createFakeLayout from './boidLayout';
 import createInterpolateLayout from './createInterpolateLayout';
+import removeOverlaps from './layout/removeOverlaps';
+import Rect from './layout/Rect';
 
 let createLayout = require('ngraph.forcelayout')
 const USE_FAKE = 1;
 const USE_INTERPOLATE = 2;
-const USE_REAL = 3;
+const REMOVE_OVERLAPS = 3;
+const USE_REAL = 4;
 
 /**
  * Orchestrates layout of algorithm between phases.
  */
 export default function createAggregateLayout(graph) {
-  let physicsLayout = createPhysicsLayout();
-  let fakeLayout = createFakeLayout();
+  let physicsLayout = createPhysicsLayout(graph);
+  let fakeLayout = createFakeLayout(graph);
   let interpolateLayout = createInterpolateLayout(fakeLayout, physicsLayout);
 
   let isGraphReady = false;
   let layoutIterations = 0;
-  let maxLayoutIterations = 4000;
+  let maxLayoutIterations = 2000;
   let phase = USE_FAKE;
+  let rectangles = new Map();
 
   return {
     step,
@@ -35,10 +39,11 @@ export default function createAggregateLayout(graph) {
 
   function addNode(nodeId, rect) {
     fakeLayout.addNode(nodeId, rect);
+    rectangles.set(nodeId, rect);
   }
 
   function getNodePosition(nodeId) {
-    if (phase === USE_FAKE) return fakeLayout.getNodePosition(nodeId);
+    if (phase === USE_FAKE || phase === REMOVE_OVERLAPS) return fakeLayout.getNodePosition(nodeId);
     if (phase === USE_REAL) return physicsLayout.getNodePosition(nodeId);
     if (phase === USE_INTERPOLATE) return interpolateLayout.getNodePosition(nodeId);
   }
@@ -54,7 +59,10 @@ export default function createAggregateLayout(graph) {
         layoutIterations += 1;
       } while (window.performance.now() - start < 10)
 
-      if (layoutIterations >= maxLayoutIterations) phase = USE_INTERPOLATE;
+      if (layoutIterations >= maxLayoutIterations) phase = REMOVE_OVERLAPS;
+    } else if (phase === REMOVE_OVERLAPS) {
+      runOverlapsRemoval();
+      phase = USE_INTERPOLATE;
     } else if (phase === USE_INTERPOLATE) {
       interpolateLayout.step();
       if (interpolateLayout.done()) {
@@ -62,6 +70,37 @@ export default function createAggregateLayout(graph) {
       }
     } else {
     }
+  }
+
+  function runOverlapsRemoval() {
+    // TODO: Async?
+    let rectangles = getRectangles();
+    removeOverlaps(rectangles);
+    removeOverlaps(rectangles);
+    removeOverlaps(rectangles);
+    rectangles.forEach((rect, nodeId) => {
+      physicsLayout.setNodePosition(nodeId, rect.left - rect.dx, rect.top - rect.dy);
+    });
+  }
+
+  function getRectangles() {
+    let rects = new Map();
+    rectangles.forEach((rect, id) => {
+      let pos = physicsLayout.getNodePosition(id);
+      let {width, height} = rect;
+      const inflatedRect = new Rect({
+        id, 
+        left: pos.x + rect.x,
+        top: pos.y + rect.y,
+        dx: rect.x,
+        dy: rect.y,
+        width,
+        height,
+      });
+      rects.set(id, inflatedRect);
+    });
+
+    return rects;
   }
 
   function pinNode(node) {

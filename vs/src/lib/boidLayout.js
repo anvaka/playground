@@ -1,8 +1,10 @@
+import {Flock, Boid} from './flock';
 let createRandom = require('ngraph.random');
 
 export default function createFakeLayout(graph) {
   let nodes = new Map();
   let random = createRandom(42);
+  const flock = new Flock(graph);
   
   return {
     addNode,
@@ -15,8 +17,10 @@ export default function createFakeLayout(graph) {
       x: (random.nextDouble() - 0.5) * 1000,
       y: (random.nextDouble() - 0.5) * 1000
     }
-    nodes.set(nodeId, pos);
-    return pos;
+    const boid = new Boid(pos.x, pos.y);
+    flock.addBoid(nodeId, boid);
+    nodes.set(nodeId, boid);
+    return boid;
   }
 
   function getNodePosition(nodeId) {
@@ -24,10 +28,10 @@ export default function createFakeLayout(graph) {
     if (!pos) {
       pos = addNode(nodeId);
     } 
-    return pos;
+    return pos.position;
   }
 
   function step() {
-
+    flock.run();
   }
 }
