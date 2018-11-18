@@ -7,6 +7,8 @@ export default function buildGraph(entryWord, pattern, progress) {
   entryWord = entryWord && entryWord.trim();
   if (!entryWord) return;
 
+  entryWord = entryWord.toLocaleLowerCase();
+
   const insertPosition = pattern.indexOf('...');
   if (insertPosition < 0) {
     throw new Error('Query pattern is missing "..."');

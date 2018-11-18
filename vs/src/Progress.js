@@ -22,6 +22,12 @@ export default class Progress {
     this.phase = 'layout';
   }
 
+  setLayoutCompletion(layoutCompletion) {
+    if (this.phase === 'layout') {
+      this.message = `Finished download. Constructing layout ${layoutCompletion}%...`;
+    }
+  }
+
   updateLayout(remaining, nextWord) {
     this.download.currentWord = nextWord;
     this.download.remaining = remaining;

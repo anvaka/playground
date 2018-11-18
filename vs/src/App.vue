@@ -1,12 +1,14 @@
 <template>
   <div id="app">
     <form v-on:submit.prevent="onSubmit" class='search-box'>
-      <span>Graph for</span>
+      <span @click.prevent='forwardFocus'>Graph for</span>
       <!-- <input class='search-input' type="text" v-model='appState.query' placeholder='Enter query' autofocus> -->
-      <query-input class='query-input' placeholder='Enter query' v-model='appState.query' :pattern='appState.pattern'></query-input>
+      <query-input class='query-input' placeholder='Enter query' v-model='appState.query' :pattern='appState.pattern' ref='queryInput'></query-input>
       <a type='submit' class='search-submit' href='#' @click.prevent='onSubmit' v-if='appState.query'>Go</a>
     </form>
-    <!-- <div class='help' v-if='!isLoading'>Graph for <span class='special'>{{pattern}}</span> </div> -->
+    <div class='help' v-if='!isLoading'>
+      <a href='#' @click.prevent='aboutVisible = true'>what is this?</a>
+    </div>
     <div class='help' v-if='isLoading'>{{appState.progress.message}}</div>
     <div class='about-line'>
       <a class='about-link' href='#' @click.prevent='aboutVisible = true'>about</a>
@@ -61,18 +63,28 @@ export default {
     // }
   },
   methods: {
+    forwardFocus() {
+      this.$refs.queryInput.focus();
+    },
     onSubmit() {
       if (!appState.query) return;
 
       performSearch(appState.query)
       this.renderer.render(appState.graph);
+      const el = document.querySelector( ':focus' );
+      if(el) el.blur();
     },
+
     showTooltip(event) {
       const el = this.$refs.tooltip;
-      el.style.left = (event.x + 16) + 'px';
-      el.style.top = (event.y - 16) + 'px';
-      el.style.display = event.isVisible ? 'block' : 'none';
-      el.innerText = resolveQueryFromLink(event.from, event.to);
+      if (event.isVisible) {
+        el.classList.add('visible');
+        el.innerText = resolveQueryFromLink(event.from, event.to);
+        el.style.left = (event.x + 16) + 'px';
+        el.style.top = (event.y - 16) + 'px';
+      } else {
+        el.classList.remove('visible');
+      }
     }
   },
   mounted() {
@@ -108,21 +120,29 @@ export default {
   color: highlight-color;
 }
 
+rect, path, text {
+  transition: stroke 200ms, fill 200ms;
+}
+
 .hovered rect,
 path.hovered {
   stroke: highlight-color;
 }
 
 .hovered rect {
-  fill: highlight-color;
-}
-.hovered text {
-  fill: background-color;
+  stroke: highlight-color;
 }
 
 .help {
   font-size: 12px;
   margin-top: 8px;
+  a {
+    background: background-color;
+    color: secondary-color;
+    &:hover, &:focus {
+      color: highlight-color;
+    }
+  }
 }
 .search-submit {
   align-items: center;
@@ -155,6 +175,7 @@ a {
     display: block;
     text-align: right;
     font-size: 12px;
+    height: 28px;
     color: secondary-color;
     &:hover, &:focus {
       color: highlight-color;
@@ -169,7 +190,12 @@ a {
   padding: 8px;
   border: 1px solid border-color;
   pointer-events: none;
-  display: none;
+  opacity: 0;
+  transition-duration: 300ms;
+  transition-property: opacity;
+}
+.tooltip.visible {
+  opacity: 1;
 }
 
 .search-box {
@@ -179,9 +205,11 @@ a {
   display: flex;
   font-size: 16px;
   padding: 0 0 0 8px;
+  cursor: text;
 
   a {
     color: #B2B2B2
+    cursor: pointer;
   }
   span {
     display: flex;
@@ -204,7 +232,7 @@ a {
     padding: 0 8px;
   }
   .about-line {
-    bottom: 18px;
+    bottom: 0;
     top: initial;
     right: 0;
   }
@@ -213,8 +241,6 @@ a {
 @media (max-height: 550px) {
   .search-box {
     height: 32px;
-    box-shadow: none;
-    border-bottom: 1px solid border-color;
     input.search-input {  
       font-size: 16px;
     }

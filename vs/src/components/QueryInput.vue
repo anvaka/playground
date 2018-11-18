@@ -1,5 +1,5 @@
 <template>
-  <div class='query-input-container'>
+  <div class='query-input-container' @click.prevent='focus'>
     <input class='search-input' 
       :value='value' @input="$emit('input', $event.target.value)"
       type='text' :placeholder='placeholder' autofocus ref='input'>
@@ -22,6 +22,9 @@ export default {
     }
   },
   methods: {
+    focus() {
+      this.$refs.input.focus();
+    },
     ensureSuffixPos() {
       // Good thing that this doesn't happen often. Otherwise this would be super slow
       const {suffix, measure} = this.$refs;

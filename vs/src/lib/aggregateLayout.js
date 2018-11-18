@@ -15,7 +15,7 @@ const USE_REAL = 4;
 /**
  * Orchestrates layout of algorithm between phases.
  */
-export default function createAggregateLayout(graph) {
+export default function createAggregateLayout(graph, progress) {
   let physicsLayout = createPhysicsLayout(graph);
   let fakeLayout = createFakeLayout(graph);
   let interpolateLayout = createInterpolateLayout(fakeLayout, physicsLayout);
@@ -73,6 +73,8 @@ export default function createAggregateLayout(graph) {
       layoutTime += window.performance.now() - start;
       
       if (layoutTime > maxLayoutTime) layoutIterations = maxLayoutIterations;
+      const finished = Math.max(layoutTime/maxLayoutTime, layoutIterations/maxLayoutIterations);
+      progress.setLayoutCompletion(Math.round(finished * 100));
 
       if (layoutIterations >= maxLayoutIterations) phase = REMOVE_OVERLAPS;
 
