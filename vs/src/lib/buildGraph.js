@@ -3,13 +3,16 @@ import bus from '../bus';
 
 export const MAX_DEPTH = 2;
 
-export default function buildGraph(entryWord) {
+export default function buildGraph(entryWord, progress) {
+  entryWord = entryWord && entryWord.trim();
+  if (!entryWord) return;
   let cancelled = false;
   let pendingResponse;
   let graph = require('ngraph.graph')();
   let suffix = 'vs'
   let queue = [];
   let requestDelay = 300 + Math.random() * 100;
+  progress.startDownload();
 
   startQueryConstruction();
 
@@ -69,11 +72,15 @@ export default function buildGraph(entryWord) {
 
     let nextWord = queue.shift();
     fetchNext(nextWord);
+    progress.updateLayout(queue.length, nextWord);
   }
 
   function fetchNext(query) {
     pendingResponse = getResponse(fullQuery(query));
-    pendingResponse.then(res => onPendingReady(res, query));
+    pendingResponse.then(res => onPendingReady(res, query)).catch(() => {
+      progress.downloadError('Failed to download ' + query)
+      loadNext();
+    });
   }
 
   function onPendingReady(res, query) {

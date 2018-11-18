@@ -6,12 +6,14 @@ import bus from '../bus';
 
 let svg = require('simplesvg');
 
-export default function createRenderer() {
+export default function createRenderer(progress) {
   const scene = document.querySelector('#scene');
   const nodeContainer = scene.querySelector('#nodes');
   const edgeContainer = scene.querySelector('#edges');
   const panzoom = createPanZoom(scene);
-  panzoom.showRectangle({left: -500, right: 500, top: -500, bottom: 500});
+  const defaultRectangle = {left: -500, right: 500, top: -500, bottom: 500}
+  panzoom.showRectangle(defaultRectangle);
+
   let nodes = new Map();
   let layout, graph, currentLayoutFrame = 0;
   let textMeasure = createTextMeasure(scene);
@@ -40,6 +42,7 @@ export default function createRenderer() {
   function onGraphReady(readyGraph) {
     if (readyGraph === graph) {
       layout.setGraphReady();
+      progress.startLayout();
     }
   }
 
@@ -59,16 +62,24 @@ export default function createRenderer() {
   }
 
   function drawLinks() {
+    progress.done();
     graph.forEachLink(drawLink);
   }
 
   function drawLink(link) {
     let from = layout.getNodePosition(link.fromId);
     let to = layout.getNodePosition(link.toId);
+
+    let fromNode = graph.getNode(link.fromId).data;
+    let toNode = graph.getNode(link.toId).data;
+    const depth = (fromNode.depth + toNode.depth)/2;
+    const dRatio = (MAX_DEPTH - depth)/MAX_DEPTH;
+    const strokeWidth = 8 * dRatio + 2;
+    const color = Math.round((200 - 75) * (1 - dRatio) + 75);
     var path = svg('path', {
-      'stroke-width': 2,
+      'stroke-width': strokeWidth,
       fill: 'black',
-      stroke: 'darkgray',
+      stroke: `rgb(${color}, ${color}, ${color})`,
       d: `M${from.x},${from.y} L${to.x},${to.y}`
     });
     edgeContainer.appendChild(path);
@@ -90,10 +101,15 @@ export default function createRenderer() {
 
   function addNode(node) {
     const dRatio = (MAX_DEPTH - node.data.depth)/MAX_DEPTH;
-    const uiAttributes = getNodeUIAttributes(node.id, dRatio);
+    let pos = getNodePosition(node.id);
+    if (node.data.depth === 0) {
+      layout.pinNode(node);
+    }
 
-    const rect = svg('rect');
-    rect.attr({
+    const uiAttributes = getNodeUIAttributes(node.id, dRatio);
+    layout.addNode(node.id, uiAttributes);
+
+    const rectAttributes = {
       x: uiAttributes.x,
       y: uiAttributes.y,
       width: uiAttributes.width,
@@ -103,23 +119,29 @@ export default function createRenderer() {
       fill: 'white',
       'stroke-width': uiAttributes.strokeWidth, 
       stroke: '#58585A'
-    })
-
-    const text = svg('text', {
+    }
+    const textAttributes = {
       'font-size': uiAttributes.fontSize,
       x: uiAttributes.px,
       y: uiAttributes.py
-    })
+    }
+    
+    // svg.group({
+    //   transform: `translate(${pos.x}, ${pos.y})`
+    // }, [
+    //   rect(rectAttributes)
+    //   text(textAttributes, text)
+    // ]);
+
+    const rect = svg('rect');
+    rect.attr(rectAttributes)
+
+    const text = svg('text', textAttributes)
     text.text(node.id);
 
     const textContainer = svg('g');
     textContainer.appendChild(rect);
     textContainer.appendChild(text);
-    let pos = getNodePosition(node.id);
-    if (node.data.depth === 0) {
-      layout.pinNode(node);
-    }
-    layout.addNode(node.id, uiAttributes);
 
     nodeContainer.appendChild(textContainer);
     nodes.set(node.id, textContainer);

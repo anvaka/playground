@@ -1,4 +1,5 @@
 import buildGraph from './lib/buildGraph';
+import Progress from './Progress';
 
 const queryState = require('query-state');
 
@@ -12,12 +13,13 @@ let lastBuilder;
 const appStateFromQuery = qs.get();
 const appState = {
   hasGraph: false,
+  progress: new Progress(),
   graph: null,
   query: appStateFromQuery.query,
 }
 
 if (appState.query) {
-  // performSearch(appState.query);
+  performSearch(appState.query);
 }
 
 export default appState;
@@ -30,12 +32,14 @@ function updateAppState(newState) {
 
 export function performSearch(queryString) {
   appState.hasGraph = true;
+  appState.progress.reset();
+
   qs.set('query', queryString);
   if (lastBuilder) {
     lastBuilder.dispose();
   }
 
-  lastBuilder = buildGraph(queryString)
+  lastBuilder = buildGraph(queryString, appState.progress);
   appState.graph = Object.freeze(lastBuilder.graph);
   return lastBuilder.graph;
 }

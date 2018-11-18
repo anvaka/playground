@@ -4,8 +4,8 @@
       <input class='search-input' type="text" v-model='appState.query' placeholder='Enter query' autofocus>
       <a type='submit' class='search-submit' href='#' @click.prevent='onSubmit' v-if='appState.query'>Go</a>
     </form>
-    <div class='help'>Make a graph of Google's autocomplete
-      for pattern: <span class='special'>{{appState.query || '[your query]'}} vs ...</span> </div>
+    <div class='help' v-if='!isLoading'>Pattern: <span class='special'>{{appState.query || '[your query]'}} vs ...</span> </div>
+    <div class='help' v-if='isLoading'>{{appState.progress.message}}</div>
     <div class='about-line'>
       <a class='about-link' href='#' @click.prevent='aboutVisible = true'>about</a>
       <a class='bold' href='http://github.com/anvaka/vs'>source code</a>
@@ -33,6 +33,11 @@ export default {
   components: {
     About
   },
+  computed: {
+    isLoading() {
+      return appState.progress.working;
+    }
+  },
   methods: {
     onSubmit() {
       if (!appState.query) return;
@@ -42,7 +47,7 @@ export default {
     }
   },
   mounted() {
-    this.renderer = createRenderer();
+    this.renderer = createRenderer(appState.progress);
     if (appState.graph) {
       this.renderer.render(appState.graph);
     }

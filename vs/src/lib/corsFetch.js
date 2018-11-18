@@ -19,6 +19,7 @@ export default function corsFetch(url, options) {
 
     loadScript = document.createElement('script');
     loadScript.src = `${url}&callback=${name}`;
+    loadScript.onerror = reject;
     document.head.appendChild(loadScript);
   }
 
