@@ -44,3 +44,7 @@ export function performSearch(queryString) {
   appState.graph = Object.freeze(lastBuilder.graph);
   return lastBuilder.graph;
 }
+
+export function resolveQueryFromLink(from, to) {
+  return appState.pattern.replace('[query]', from).replace('...', to);
+}

@@ -22,7 +22,9 @@ export default function createAggregateLayout(graph) {
 
   let isGraphReady = false;
   let layoutIterations = 0;
+  let layoutTime = 0;
   let maxLayoutIterations = 2000;
+  let maxLayoutTime = 2000;
   let phase = USE_FAKE;
   let rectangles = new Map();
 
@@ -31,14 +33,20 @@ export default function createAggregateLayout(graph) {
     pinNode,
     getNodePosition,
     addNode,
-    setGraphReady
+    setGraphReady,
+    getGraphReady
   })
 
   return api;
 
   function setGraphReady() {
     layoutIterations = 0;
+    layoutTime = 0;
     isGraphReady = true;
+  }
+
+  function getGraphReady() {
+    return isGraphReady;
   }
 
   function addNode(nodeId, rect) {
@@ -62,19 +70,28 @@ export default function createAggregateLayout(graph) {
         physicsLayout.step();
         layoutIterations += 1;
       } while (window.performance.now() - start < 10)
+      layoutTime += window.performance.now() - start;
+      
+      if (layoutTime > maxLayoutTime) layoutIterations = maxLayoutIterations;
 
       if (layoutIterations >= maxLayoutIterations) phase = REMOVE_OVERLAPS;
+
+      return true;
     } else if (phase === REMOVE_OVERLAPS) {
       runOverlapsRemoval();
       phase = USE_INTERPOLATE;
+
+      return true;
     } else if (phase === USE_INTERPOLATE) {
       interpolateLayout.step();
       if (interpolateLayout.done()) {
         phase = USE_REAL;
         api.fire('ready', api);
       }
-    } else {
-    }
+      return true;
+    } 
+
+    return false;
   }
 
   function runOverlapsRemoval() {

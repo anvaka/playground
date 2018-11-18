@@ -10,17 +10,104 @@ export default function createRenderer(progress) {
   const scene = document.querySelector('#scene');
   const nodeContainer = scene.querySelector('#nodes');
   const edgeContainer = scene.querySelector('#edges');
+
+
   const panzoom = createPanZoom(scene);
   const defaultRectangle = {left: -500, right: 500, top: -500, bottom: 500}
   panzoom.showRectangle(defaultRectangle);
 
+  // maps node id to node ui
   let nodes = new Map();
+
+  // maps link id to link ui
+  let links = new Map();
+
   let layout, graph, currentLayoutFrame = 0;
   let textMeasure = createTextMeasure(scene);
   bus.on('graph-ready', onGraphReady);
 
   return {
-    render
+    render,
+    dispose
+  }
+
+  function dispose() {
+    clearLastScene();
+    bus.off('graph-ready', onGraphReady);
+  }
+
+  function showTooltip(e) {
+    const t = panzoom.getTransform();
+    let x = (e.clientX - t.x) / t.scale;
+    let y = (e.clientY - t.y) / t.scale;
+    var minDist = Number.POSITIVE_INFINITY;
+    var minLink;
+
+    graph.forEachLink(function(link) {
+      var from = layout.getNodePosition(link.fromId);
+      var to = layout.getNodePosition(link.toId);
+      var dist = getDistance(x, y, from, to);
+      if (dist < minDist) {
+        minLink = link;
+        minDist = dist;
+      }
+    })
+
+    let isVisible = minDist < 30;
+    bus.fire('show-tooltip', {
+      isVisible,
+      from: minLink.fromId, 
+      to: minLink.toId, 
+      x: e.clientX,
+      y: e.clientY
+    });
+
+    scene.querySelectorAll('.hovered').forEach(removeHoverClass);
+
+    if (isVisible) {
+      nodes.get(minLink.fromId).classList.add('hovered');
+      nodes.get(minLink.toId).classList.add('hovered');
+      links.get(minLink.id).classList.add('hovered');
+    }
+  }
+
+  function removeHoverClass(el) {
+    el.classList.remove('hovered');
+  }
+
+  function getDistance(x, y, from, to) {
+    var x1 = from.x, y1 = from.y;
+    var x2 = to.x, y2 = to.y;
+
+    var A = x - x1;
+    var B = y - y1;
+    var C = x2 - x1;
+    var D = y2 - y1;
+
+    var dot = A * C + B * D;
+    var len_sq = C * C + D * D;
+    var param = -1;
+    if (len_sq != 0) //in case of 0 length line
+        param = dot / len_sq;
+
+    var xx, yy;
+
+    if (param < 0) {
+      xx = x1;
+      yy = y1;
+    }
+    else if (param > 1) {
+      xx = x2;
+      yy = y2;
+    }
+    else {
+      xx = x1 + param * C;
+      yy = y1 + param * D;
+    }
+
+    var dx = x - xx;
+    var dy = y - yy;
+    return Math.sqrt(dx * dx + dy * dy);
   }
 
   function render(newGraph) {
@@ -30,7 +117,9 @@ export default function createRenderer(progress) {
     layout = createAggregateLayout(graph);
     
     layout.on('ready', drawLinks);
+
     nodes = new Map();
+    links = new Map();
 
     graph.forEachNode(addNode);
     graph.on('changed', onGraphStructureChanged);
@@ -47,9 +136,9 @@ export default function createRenderer(progress) {
   }
 
   function frame() {
-    currentLayoutFrame = requestAnimationFrame(frame)
-
-    layout.step();
+    if (layout.step()) {
+      currentLayoutFrame = requestAnimationFrame(frame)
+    }
     updatePositions();
   }
 
@@ -64,6 +153,7 @@ export default function createRenderer(progress) {
   function drawLinks() {
     progress.done();
     graph.forEachLink(drawLink);
+    document.addEventListener('mousemove', showTooltip);
   }
 
   function drawLink(link) {
@@ -76,21 +166,24 @@ export default function createRenderer(progress) {
     const dRatio = (MAX_DEPTH - depth)/MAX_DEPTH;
     const strokeWidth = 8 * dRatio + 2;
     const color = Math.round((200 - 75) * (1 - dRatio) + 75);
-    var path = svg('path', {
+    var ui = svg('path', {
       'stroke-width': strokeWidth,
       fill: 'black',
       stroke: `rgb(${color}, ${color}, ${color})`,
       d: `M${from.x},${from.y} L${to.x},${to.y}`
     });
-    edgeContainer.appendChild(path);
+    edgeContainer.appendChild(ui);
+
+    links.set(link.id, ui);
   }
 
   function clearLastScene() {
     clear(nodeContainer);
     clear(edgeContainer);
-    if (layout) {
-      layout.off('ready', drawLinks);
-    }
+
+    document.removeEventListener('mousemove', showTooltip);
+    if (layout) layout.off('ready', drawLinks);
+    if (graph) graph.off('changed', onGraphStructureChanged);
   }
 
   function clear(el) {
@@ -126,26 +219,18 @@ export default function createRenderer(progress) {
       y: uiAttributes.py
     }
     
-    // svg.group({
-    //   transform: `translate(${pos.x}, ${pos.y})`
-    // }, [
-    //   rect(rectAttributes)
-    //   text(textAttributes, text)
-    // ]);
-
-    const rect = svg('rect');
-    rect.attr(rectAttributes)
-
+    const rect = svg('rect', rectAttributes);
     const text = svg('text', textAttributes)
     text.text(node.id);
 
-    const textContainer = svg('g');
-    textContainer.appendChild(rect);
-    textContainer.appendChild(text);
+    const ui = svg('g', {
+      transform: `translate(${pos.x}, ${pos.y})`
+    });
+    ui.appendChild(rect);
+    ui.appendChild(text);
 
-    nodeContainer.appendChild(textContainer);
-    nodes.set(node.id, textContainer);
-    textContainer.attr('transform', `translate(${pos.x}, ${pos.y})`);
+    nodeContainer.appendChild(ui);
+    nodes.set(node.id, ui);
   }
 
 
@@ -168,6 +253,7 @@ export default function createRenderer(progress) {
       strokeWidth: 4 * dRatio + 1
     };
   }
+
   function updatePositions() {
     nodes.forEach((ui, nodeId) => {
       let pos = getNodePosition(nodeId)
