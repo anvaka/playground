@@ -4,7 +4,7 @@
       <input class='search-input' type="text" v-model='appState.query' placeholder='Enter query' autofocus>
       <a type='submit' class='search-submit' href='#' @click.prevent='onSubmit' v-if='appState.query'>Go</a>
     </form>
-    <div class='help' v-if='!isLoading'>Pattern: <span class='special'>{{appState.query || '[your query]'}} vs ...</span> </div>
+    <div class='help' v-if='!isLoading'>Pattern: <span class='special'>{{appState.pattern}}</span> </div>
     <div class='help' v-if='isLoading'>{{appState.progress.message}}</div>
     <div class='about-line'>
       <a class='about-link' href='#' @click.prevent='aboutVisible = true'>about</a>
@@ -12,6 +12,12 @@
     </div>
 
     <about v-if='aboutVisible' @close='aboutVisible = false'></about>
+    <div class='welcome' v-if='!appState.hasGraph'>
+      <h3>Welcome!</h3>
+      <p>This website renders graph of Google's auto-complete.
+      <a class='highlight' href='#' @click.prevent='aboutVisible = true'>Click here</a> to learn more, or <a class='highlight' href='?query=iphone'>try demo</a>.
+         </p>
+    </div>
 
   </div>
 </template>
@@ -134,6 +140,9 @@ a.about-link {
   #app {
     width: 100%;
     margin: 0;
+  }
+  .welcome {
+    padding: 16px;
   }
   .help {
     padding: 0 8px;

@@ -16,6 +16,7 @@ const appState = {
   progress: new Progress(),
   graph: null,
   query: appStateFromQuery.query,
+  pattern: appStateFromQuery.pattern || '[query] vs ...'
 }
 
 if (appState.query) {
@@ -39,7 +40,7 @@ export function performSearch(queryString) {
     lastBuilder.dispose();
   }
 
-  lastBuilder = buildGraph(queryString, appState.progress);
+  lastBuilder = buildGraph(queryString, appState.pattern, appState.progress);
   appState.graph = Object.freeze(lastBuilder.graph);
   return lastBuilder.graph;
 }

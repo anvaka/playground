@@ -3,13 +3,26 @@ import bus from '../bus';
 
 export const MAX_DEPTH = 2;
 
-export default function buildGraph(entryWord, progress) {
+export default function buildGraph(entryWord, pattern, progress) {
   entryWord = entryWord && entryWord.trim();
   if (!entryWord) return;
+
+  const insertPosition = pattern.indexOf('...');
+  if (insertPosition < 0) {
+    throw new Error('Query pattern is missing "..."');
+  }
+  const queryPosition = pattern.indexOf('[query]');
+  if (queryPosition < 0) {
+    throw new Error('Query pattern is missing "[query]" keyword');
+  }
+
+  if (insertPosition < queryPosition) {
+    throw new Error('[query] should come before ...');
+  }
+
   let cancelled = false;
   let pendingResponse;
   let graph = require('ngraph.graph')();
-  let suffix = 'vs'
   let queue = [];
   let requestDelay = 300 + Math.random() * 100;
   progress.startDownload();
@@ -35,7 +48,7 @@ export default function buildGraph(entryWord, progress) {
   }
 
   function loadSiblings(parent, results) {
-    let q = (fullQuery(parent) + ' ').toLocaleLowerCase();
+    let q = fullQuery(parent).toLocaleLowerCase();
     var parentNode = graph.getNode(parent);
 
     if (!parentNode) {
@@ -93,7 +106,7 @@ export default function buildGraph(entryWord, progress) {
   }
 
   function fullQuery(query) {
-    return query + ' ' + suffix;
+    return pattern.replace('[query]', query).replace('...', '');
   }
 
   function getResponse(query) {

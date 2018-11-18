@@ -42,6 +42,7 @@ export default class Progress {
     this.download.remaining = 0;
     this.download.currentWord = '';
     this.layout.iteration = 0;
+    this.message = '';
     this.working = true;
   }
 }
