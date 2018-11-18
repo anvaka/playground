@@ -13,6 +13,7 @@ let lastBuilder;
 const appStateFromQuery = qs.get();
 const appState = {
   hasGraph: false,
+  maxDepth: appStateFromQuery.maxDepth || 2,
   progress: new Progress(),
   graph: null,
   query: appStateFromQuery.query,
@@ -40,7 +41,7 @@ export function performSearch(queryString) {
     lastBuilder.dispose();
   }
 
-  lastBuilder = buildGraph(queryString, appState.pattern, appState.progress);
+  lastBuilder = buildGraph(queryString, appState.pattern, appState.maxDepth, appState.progress);
   appState.graph = Object.freeze(lastBuilder.graph);
   return lastBuilder.graph;
 }

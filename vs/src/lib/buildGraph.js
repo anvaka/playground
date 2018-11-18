@@ -1,9 +1,7 @@
 import corsFetch from "./corsFetch";
 import bus from '../bus';
 
-export const MAX_DEPTH = 2;
-
-export default function buildGraph(entryWord, pattern, progress) {
+export default function buildGraph(entryWord, pattern, MAX_DEPTH, progress) {
   entryWord = entryWord && entryWord.trim();
   if (!entryWord) return;
 
@@ -25,6 +23,7 @@ export default function buildGraph(entryWord, pattern, progress) {
   let cancelled = false;
   let pendingResponse;
   let graph = require('ngraph.graph')();
+  graph.maxDepth = MAX_DEPTH;
   let queue = [];
   let requestDelay = 300 + Math.random() * 100;
   progress.startDownload();

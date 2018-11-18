@@ -1,4 +1,3 @@
-import {MAX_DEPTH} from './buildGraph';
 import createFakeLayout from './boidLayout';
 import createInterpolateLayout from './createInterpolateLayout';
 import removeOverlaps from './layout/removeOverlaps';
@@ -16,6 +15,7 @@ const USE_REAL = 4;
  * Orchestrates layout of algorithm between phases.
  */
 export default function createAggregateLayout(graph, progress) {
+  const MAX_DEPTH = graph.maxDepth;
   let physicsLayout = createPhysicsLayout(graph);
   let fakeLayout = createFakeLayout(graph);
   let interpolateLayout = createInterpolateLayout(fakeLayout, physicsLayout);
@@ -73,7 +73,8 @@ export default function createAggregateLayout(graph, progress) {
       layoutTime += window.performance.now() - start;
       
       if (layoutTime > maxLayoutTime) layoutIterations = maxLayoutIterations;
-      const finished = Math.max(layoutTime/maxLayoutTime, layoutIterations/maxLayoutIterations);
+      const finished = Math.min(1, Math.max(layoutTime/maxLayoutTime, layoutIterations/maxLayoutIterations));
+
       progress.setLayoutCompletion(Math.round(finished * 100));
 
       if (layoutIterations >= maxLayoutIterations) phase = REMOVE_OVERLAPS;

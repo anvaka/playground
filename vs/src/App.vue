@@ -7,7 +7,8 @@
       <a type='submit' class='search-submit' href='#' @click.prevent='onSubmit' v-if='appState.query'>Go</a>
     </form>
     <div class='help' v-if='!isLoading'>
-      <a href='#' @click.prevent='aboutVisible = true'>what is this?</a>
+      The graph was made from Google's auto-complete.
+      <a href='#' @click.prevent='aboutVisible = true' class='highlight'>Learn more.</a>
     </div>
     <div class='help' v-if='isLoading'>{{appState.progress.message}}</div>
     <div class='about-line'>
@@ -138,10 +139,12 @@ path.hovered {
   margin-top: 8px;
   a {
     background: background-color;
-    color: secondary-color;
-    &:hover, &:focus {
-      color: highlight-color;
-    }
+  }
+}
+a {
+  &:hover, &:focus {
+    color: highlight-color;
+    border-bottom: 1px dashed;  
   }
 }
 .search-submit {
@@ -167,18 +170,25 @@ a {
 
 .about-line {
   position: fixed;
-  right: 8px;
+  right: 0;
   top: 8px;
-  padding: 7px 12px;
+  padding: 0px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+
   a {
-    background: background-color;
-    display: block;
     text-align: right;
+    background: background-color;
     font-size: 12px;
-    height: 28px;
+    padding: 0 8px;
+    line-height: 24px;
+    height: 24px;
     color: secondary-color;
+    border-bottom: 1px solid transparent;
     &:hover, &:focus {
       color: highlight-color;
+      border-bottom: 1px dashed;
     }
   }
 }

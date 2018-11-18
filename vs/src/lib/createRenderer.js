@@ -1,8 +1,8 @@
 import createPanZoom from 'panzoom';
-import {MAX_DEPTH} from './buildGraph';
 import createTextMeasure from './measureText';
 import createAggregateLayout from './aggregateLayout';
 import bus from '../bus';
+import createLinkAnimator from './renderer/linkAnimator';
 
 let svg = require('simplesvg');
 
@@ -19,10 +19,7 @@ export default function createRenderer(progress) {
   // maps node id to node ui
   let nodes = new Map();
 
-  // maps link id to link ui
-  let links = new Map();
-
-  let layout, graph, currentLayoutFrame = 0;
+  let layout, graph, currentLayoutFrame = 0, linkAnimator;
   let textMeasure = createTextMeasure(scene);
   bus.on('graph-ready', onGraphReady);
 
@@ -37,9 +34,8 @@ export default function createRenderer(progress) {
   }
 
   function onMouseMove(e) {
-
     const id = e.target && e.target.id;
-    const link = links.get(id);
+    const link = linkAnimator.getLinkInfo(id);
     if (link) {
       showTooltip(link, e.clientX, e.clientY);
     } else {
@@ -86,7 +82,6 @@ export default function createRenderer(progress) {
     layout.on('ready', drawLinks);
 
     nodes = new Map();
-    links = new Map();
 
     graph.forEachNode(addNode);
     graph.on('changed', onGraphStructureChanged);
@@ -119,30 +114,8 @@ export default function createRenderer(progress) {
 
   function drawLinks() {
     progress.done();
-    graph.forEachLink(drawLink);
+    linkAnimator = createLinkAnimator(graph, layout, edgeContainer);
     document.addEventListener('mousemove', onMouseMove);
-  }
-
-  function drawLink(link) {
-    let from = layout.getNodePosition(link.fromId);
-    let to = layout.getNodePosition(link.toId);
-
-    let fromNode = graph.getNode(link.fromId).data;
-    let toNode = graph.getNode(link.toId).data;
-    const depth = (fromNode.depth + toNode.depth)/2;
-    const dRatio = (MAX_DEPTH - depth)/MAX_DEPTH;
-    const strokeWidth = 8 * dRatio + 2;
-    const color = Math.round((200 - 75) * (1 - dRatio) + 75);
-    var ui = svg('path', {
-      id: link.id,
-      'stroke-width': strokeWidth,
-      fill: 'black',
-      stroke: `rgb(${color}, ${color}, ${color})`,
-      d: `M${from.x},${from.y} L${to.x},${to.y}`
-    });
-    edgeContainer.appendChild(ui);
-
-    links.set(link.id, {ui, link});
   }
 
   function clearLastScene() {
@@ -152,6 +125,7 @@ export default function createRenderer(progress) {
     document.removeEventListener('mousemove', onMouseMove);
     if (layout) layout.off('ready', drawLinks);
     if (graph) graph.off('changed', onGraphStructureChanged);
+    if (linkAnimator) linkAnimator.dispose();
   }
 
   function clear(el) {
@@ -161,7 +135,7 @@ export default function createRenderer(progress) {
   }
 
   function addNode(node) {
-    const dRatio = (MAX_DEPTH - node.data.depth)/MAX_DEPTH;
+    const dRatio = (graph.maxDepth - node.data.depth)/graph.maxDepth;
     let pos = getNodePosition(node.id);
     if (node.data.depth === 0) {
       layout.pinNode(node);
