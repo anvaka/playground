@@ -4,6 +4,8 @@ import createInterpolateLayout from './createInterpolateLayout';
 import removeOverlaps from './layout/removeOverlaps';
 import Rect from './layout/Rect';
 
+let eventify = require('ngraph.events');
+
 let createLayout = require('ngraph.forcelayout')
 const USE_FAKE = 1;
 const USE_INTERPOLATE = 2;
@@ -24,13 +26,15 @@ export default function createAggregateLayout(graph) {
   let phase = USE_FAKE;
   let rectangles = new Map();
 
-  return {
+  var api = eventify({
     step,
     pinNode,
     getNodePosition,
     addNode,
     setGraphReady
-  }
+  })
+
+  return api;
 
   function setGraphReady() {
     layoutIterations = 0;
@@ -67,6 +71,7 @@ export default function createAggregateLayout(graph) {
       interpolateLayout.step();
       if (interpolateLayout.done()) {
         phase = USE_REAL;
+        api.fire('ready', api);
       }
     } else {
     }

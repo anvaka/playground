@@ -42,7 +42,14 @@ export default function buildGraph(entryWord) {
     results.filter(x => x.toLocaleLowerCase().indexOf(q) === 0)
       .map(x => x.substring(q.length))
       .forEach(other => {
-        if (graph.hasNode(other)) return;
+        const hasOtherNode = graph.hasNode(other);
+        const hasOtherLink = graph.getLink(other, parent) || graph.getLink(parent, other);
+        if (hasOtherNode) {
+          if (!hasOtherLink) {
+            graph.addLink(parent, other);
+          }
+          return;
+        }
 
         let depth = parentNode.data.depth + 1;
         graph.addNode(other, {depth});
