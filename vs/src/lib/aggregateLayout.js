@@ -2,7 +2,6 @@ import createFakeLayout from './layout/boidLayout';
 import createInterpolateLayout from './createInterpolateLayout';
 import removeOverlaps from './layout/removeOverlaps';
 import Rect from './layout/Rect';
-import createAimlessLayout from './layout/aimlessLayout';
 
 let eventify = require('ngraph.events');
 
@@ -18,8 +17,7 @@ const USE_REAL = 4;
 export default function createAggregateLayout(graph, progress) {
   const MAX_DEPTH = graph.maxDepth;
   let physicsLayout = createPhysicsLayout(graph);
-  let noGoal = false;
-  let fakeLayout = noGoal ? createAimlessLayout(graph) : createFakeLayout(graph);
+  let fakeLayout = createFakeLayout(graph);
   let interpolateLayout = createInterpolateLayout(fakeLayout, physicsLayout);
 
   let isGraphReady = false;
