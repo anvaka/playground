@@ -1,7 +1,8 @@
-import createFakeLayout from './boidLayout';
+import createFakeLayout from './layout/boidLayout';
 import createInterpolateLayout from './createInterpolateLayout';
 import removeOverlaps from './layout/removeOverlaps';
 import Rect from './layout/Rect';
+import createAimlessLayout from './layout/aimlessLayout';
 
 let eventify = require('ngraph.events');
 
@@ -17,7 +18,8 @@ const USE_REAL = 4;
 export default function createAggregateLayout(graph, progress) {
   const MAX_DEPTH = graph.maxDepth;
   let physicsLayout = createPhysicsLayout(graph);
-  let fakeLayout = createFakeLayout(graph);
+  let noGoal = false;
+  let fakeLayout = noGoal ? createAimlessLayout(graph) : createFakeLayout(graph);
   let interpolateLayout = createInterpolateLayout(fakeLayout, physicsLayout);
 
   let isGraphReady = false;
@@ -72,8 +74,10 @@ export default function createAggregateLayout(graph, progress) {
       } while (window.performance.now() - start < 10)
       layoutTime += window.performance.now() - start;
       
+
       if (layoutTime > maxLayoutTime) layoutIterations = maxLayoutIterations;
       const finished = Math.min(1, Math.max(layoutTime/maxLayoutTime, layoutIterations/maxLayoutIterations));
+      syncLayouts();
 
       progress.setLayoutCompletion(Math.round(finished * 100));
 
@@ -95,6 +99,13 @@ export default function createAggregateLayout(graph, progress) {
     } 
 
     return false;
+  }
+
+  function syncLayouts() {
+    graph.forEachNode(function (node) {
+      var pos = physicsLayout.getNodePosition(node.id);
+      fakeLayout.setDesiredNodePosition(node.id, pos);
+    })
   }
 
   function runOverlapsRemoval() {

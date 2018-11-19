@@ -9,6 +9,7 @@ export default function createFakeLayout(graph) {
   return {
     addNode,
     getNodePosition,
+    setDesiredNodePosition,
     step
   };
 
@@ -33,5 +34,9 @@ export default function createFakeLayout(graph) {
 
   function step() {
     flock.run();
+  }
+
+  function setDesiredNodePosition(nodeId, pos) {
+    flock.setDesiredBoidPosition(nodeId, pos);
   }
 }

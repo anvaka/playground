@@ -1,3 +1,5 @@
+import { Vector } from './Vector';
+
 // https://processing.org/examples/flocking.html
 
 var random = require('ngraph.random')(45);
@@ -10,84 +12,27 @@ export class Flock {
   }
 
   run() {
-    this.neighbors.forEach(b => b.run(this.neighbors));
-    // let boids = this.boids;
-    // boids.forEach((boid, nodeId) => {
-    //   let neighbors = [];
-    //   this.graph.forEachLinkedNode(nodeId, function(other) {
-    //     let otherBoid = boids.get(other.id);
-    //     if (otherBoid) neighbors.push(otherBoid);
-    //   })
-    //   boid.run(neighbors);
-    // });
+    // this.neighbors.forEach(b => b.run(this.neighbors));
+    let boids = this.boids;
+    boids.forEach((boid, nodeId) => {
+      let neighbors = [];
+      this.graph.forEachLinkedNode(nodeId, function(other) {
+        let otherBoid = boids.get(other.id);
+        if (otherBoid) neighbors.push(otherBoid);
+      })
+      boid.run(neighbors);
+    });
   }
 
   addBoid(nodeId, b) {
     this.boids.set(nodeId, b);
     this.neighbors.push(b);
   }
-}
 
-class Vector {
-  constructor(x, y) {
-    this.x = x;
-    this.y = y;
-  }
-
-  static sub(a, b) {
-    return new Vector(a.x - b.x, a.y - b.y);
-  }
-
-  static dist(a, b) {
-    let dx = a.x - b.x;
-    let dy = a.y - b.y;
-    return Math.sqrt(dx * dx + dy * dy);
-  }
-
-  normalize() {
-    let l = Math.sqrt(this.x * this.x + this.y * this.y);
-    if (l === 0) l = 0.0001;
-
-    this.x /= l;
-    this.y /= l;
-  }
-
-  mag() {
-    return Math.sqrt(this.x * this.x + this.y * this.y);
-  }
-
-  add(other) {
-    this.x += other.x;
-    this.y += other.y;
-  }
-
-  sub(other) {
-    this.x -= other.x;
-    this.y -= other.y;
-  }
-
-  div(scalar) {
-    this.x /= scalar;
-    this.y /= scalar;
-  }
-
-  mult(scalar) {
-    this.x *= scalar;
-    this.y *= scalar;
-  }
-
-  limit(maxMag) {
-    let mag = this.mag();
-    if (mag > maxMag) {
-      this.x *= maxMag / mag;
-      this.y *= maxMag / mag;
-    }
-  }
-
-  distanceTo(other) {
-    let dx = this.x - other.x;
-    let dy = this.y - other.y;
-    return Math.sqrt(dx * dx + dy * dy);
+  setDesiredBoidPosition(boidId, pos) {
+    const boid = this.boids.get(boidId);
+    if (!boid) return;
+    boid.setDesiredPosition(pos.x, pos.y);
   }
 }
 
@@ -95,13 +40,13 @@ export class Boid {
   constructor(x, y) {
     this.acceleration = new Vector(0, 0);
 
-    // Leaving the code temporarily this way so that this example runs in JS
     let angle = random.nextDouble() * 2 * Math.PI;
     this.velocity = new Vector(Math.cos(angle), Math.sin(angle));
     this.position = new Vector(x, y);
-    this.r = 500.0;
-    this.maxspeed = 2;
-    this.maxforce = 0.03;
+    this.desiredPosition = new Vector(0, 0);
+    this.r = 400.0;
+    this.maxspeed = 3;
+    this.maxforce = 0.08;
   }
 
   run(boids) {
@@ -110,9 +55,15 @@ export class Boid {
     this.update();
   }
 
-  applyForce(force) {
+  applyForce(force, nCount) {
     // We could add mass here if we want A = F / M
+    force.div(nCount)
     this.acceleration.add(force);
+  }
+
+  setDesiredPosition(x, y) {
+    this.desiredPosition.x = x;
+    this.desiredPosition.y = y;
   }
 
   // We accumulate a new acceleration each time based on three rules
@@ -121,13 +72,20 @@ export class Boid {
     let ali = this.align(boids);      // Alignment
     let coh = this.cohesion(boids);   // Cohesion
     // Arbitrarily weight these forces
-    sep.mult(1.5);
-    ali.mult(1.0);
-    coh.mult(1.0);
+    // sep.mult(1.5);
+    // ali.mult(1.0);
+    // coh.mult(1.0);
     // Add the force vectors to acceleration
-    this.applyForce(sep);
-    this.applyForce(ali);
-    this.applyForce(coh);
+    const mass = boids.length || 1;
+    this.applyForce(sep, mass);
+    this.applyForce(ali, mass);
+    this.applyForce(coh, mass);
+
+    const pull = Vector.sub(this.desiredPosition, this.position);
+    // pull.div(boids.length);
+    //pull.normalize();
+    pull.limit(0.091);
+    this.applyForce(pull, mass);
   }
 
   // Method to update position
@@ -148,15 +106,16 @@ export class Boid {
     // Scale to maximum speed
     desired.normalize();
     desired.mult(this.maxspeed);
-
+ 
     // Steering = Desired minus Velocity
     let steer = Vector.sub(desired, this.velocity);
-    steer.limit(this.maxforce);  // Limit to maximum steering force
+    steer.limit(this.maxforce * 1);  // Limit to maximum steering force
     return steer;
   }
 
   // Wraparound
   borders() {
+    return;
     if (this.position.x < -this.r) this.velocity.x *= -1;
     if (this.position.y < -this.r) this.velocity.y *= -1;
     if (this.position.x > this.r) this.velocity.x *= -1;
@@ -166,7 +125,7 @@ export class Boid {
   // Separation
   // Method checks for nearby boids and steers away
   separate(boids) {
-    const desiredseparation = 125.0;
+    const desiredseparation = 40.0;
     const steer = new Vector(0, 0, 0);
     let count = 0;
     // For every boid in the system, check if it's too close
@@ -182,6 +141,7 @@ export class Boid {
         count++;            // Keep track of how many
       }
     });
+
     // Average -- divide by how many
     if (count > 0) {
       steer.div(count);
@@ -195,13 +155,14 @@ export class Boid {
       steer.sub(this.velocity);
       steer.limit(this.maxforce);
     }
+
     return steer;
   }
 
   // Alignment
   // For every nearby boid in the system, calculate the average velocity
   align(boids) {
-    const neighbordist = 150;
+    const neighbordist = 300;
     const sum = new Vector(0, 0);
     let count = 0;
     boids.forEach(other => {
@@ -228,8 +189,8 @@ export class Boid {
 
   // Cohesion
   // For the average position (i.e. center) of all nearby boids, calculate steering vector towards that position
-  cohesion (boids) {
-    const neighbordist = 150;
+  cohesion(boids) {
+    const neighbordist = 300;
     let sum = new Vector(0, 0);   // Start with empty vector to accumulate all positions
     let count = 0;
     boids.forEach(other => {
