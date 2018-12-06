@@ -1,9 +1,9 @@
 /**
  * This file processes redditor's comments files and produces a list of all
- * subreddits startin with a `startFrom` letter along with all similar subreddits
+ * subreddits starting with a `startFrom` letter along with all similar subreddits
  * (similar subreddits can start on any letter).
  *
- * The reason for such "strange" design is becuase I cannot fit the entire
+ * The reason for such "strange" design is because I cannot fit the entire
  * index in RAM. However I can easily fit index for all subreddits that start
  * on a given letter. This allows to process similarities in parallel batches too
  */

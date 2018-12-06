@@ -1,8 +1,8 @@
 /**
- * Counts number of unique commenters per redit
+ * Counts number of unique commenters per reddit
  */
 var forEachLine = require('for-each-line');
-var fileName = process.argv[2] || 'github_watch.reddit_comments_2018_08.csv'
+var fileName = process.argv[2] || 'all.csv'
 
 var counts = new Map();
 
@@ -11,10 +11,20 @@ forEachLine(fileName, (line) => {
   var sub = parts[1];
   counts.set(sub, (counts.get(sub) || 0) + 1);
 }).then(() => {
-  console.log(
-    Array.from(counts)
+  let buckets = [];
+  Array.from(counts)
       .sort((a, b) => b[1] - a[1])
-      .filter(x => x[1] > 1)
-      .join('\n')
-  );
+      .forEach(x => {
+        const bucketNumber = Math.round(Math.log(x[1])) - 5;
+        if (bucketNumber < 0) return;
+        const subName = x[0];
+        let bucket = buckets[bucketNumber];
+        if (!bucket) {
+          bucket = [subName];
+          buckets[bucketNumber] = bucket;
+        } else {
+          bucket.push(subName);
+        }
+      })
+  console.log(JSON.stringify(buckets));
 });
