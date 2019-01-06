@@ -8,7 +8,7 @@ var hours = ["00", "06", "12", "18"];
 
 var d = new Date(2018, 0);
 // d = new Date(2018, 2, 28) - apr 9 - missing;
-d = new Date(2018, 3, 10);
+d = new Date(2018, 5, 12);
 var year = d.getFullYear();
 do {
   saveJson(year, d.getMonth() + 1, d.getDate());
@@ -30,9 +30,15 @@ function saveJson(year, month, day) {
     var uFileName = fullFileName + "u";
     var vFileName = fullFileName + "v";
 
-    execSync(`curl "${url}" > ${fullFileName}`);
-    execSync(`grib_copy -w shortName=10u ${fullFileName} ${uFileName}`);
-    execSync(`grib_copy -w shortName=10v ${fullFileName} ${vFileName}`);
+    try {
+      execSync(`curl "${url}" > ${fullFileName}`);
+      execSync(`grib_copy -w shortName=10u ${fullFileName} ${uFileName}`);
+      execSync(`grib_copy -w shortName=10v ${fullFileName} ${vFileName}`);
+    } catch (e) {
+      console.log("Failed to download ", url);
+      console.log(e);
+      continue;
+    }
 
     var buff = execSync(
       `printf "{\\"u\\":\`grib_dump -j ${uFileName}\`,\\"v\\":\`grib_dump -j ${vFileName}\`}"`
