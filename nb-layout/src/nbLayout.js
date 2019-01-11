@@ -260,6 +260,8 @@ export default function nbLayout(graph, settings) {
         });
       });
       if (neighbors.length < 2) return;
+      // if (Math.random() < 0.4) return;
+      // if (Math.random() < 0.001) node.ascending = undefined;
       if (node.ascending === undefined) {
         node.ascending = Math.random() < 0.5;
       }
