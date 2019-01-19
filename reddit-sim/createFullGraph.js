@@ -1,9 +1,8 @@
-var createLayout = require('ngraph.offline.layout');
 var forEachSub = require('./lib/forEachSub');
 var createGraph = require('ngraph.graph');
-var tobinary = require('ngraph.tobinary');
+var todot = require('ngraph.todot');
 
-loadGraph().then(doLayout)
+loadGraph().then(printGraph)
 
 function loadGraph() {
   var aResolve, aReject;
@@ -26,14 +25,6 @@ function loadGraph() {
   });
 }
 
-function doLayout(graph) {
-  var layout = createLayout(graph, {
-    iterations: 500, 
-    saveEach: 10, // Save each `10th` iteration
-    outDir: './layout',
-  });
-  layout.run();
-  tobinary(graph, {
-    outDir: './layout'
-  })
+function printGraph(graph) {
+  console.log(todot(graph));
 }
