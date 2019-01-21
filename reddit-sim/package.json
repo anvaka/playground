@@ -4,8 +4,16 @@
     "event-stream": "^4.0.1",
     "for-each-line": "^1.0.0",
     "n-readlines": "^1.0.0",
+    "ngraph.cw": "^2.0.0",
+    "ngraph.fromdot": "^0.4.0",
     "ngraph.graph": "0.0.14",
+    "ngraph.louvain": "^1.1.0",
     "ngraph.offline.layout": "^1.1.1",
-    "ngraph.tobinary": "^1.0.1"
+    "ngraph.pagerank": "^0.1.4",
+    "ngraph.tobinary": "^1.0.1",
+    "yargs": "^12.0.5"
+  },
+  "devDependencies": {
+    "ngraph.todot": "^0.3.0"
   }
 }
