@@ -1,5 +1,9 @@
+/**
+ * Convert *.gz files into single file. Filtering papers with citations only
+ * 
+ * zcat *.gz | node index.js > all.txt
+ */
 const JSONStream = require('JSONStream');
-const fs = require('fs');
 const es = require('event-stream')
 
 let stream = JSONStream.parse();
@@ -8,6 +12,7 @@ stream.pipe(
     if (!data.outCitations.length) return;
     let record = {
       id: data.id,
+      t: data.title,
       y: data.year,
       o: data.outCitations,
       e: data.entities
@@ -17,7 +22,4 @@ stream.pipe(
   })
 );
 
-
-// fs.createReadStream(fileName)
 process.stdin.pipe(stream)
-
