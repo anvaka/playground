@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "ngraph.forcelayout": "^0.5.0",
+    "ngraph.fromjson": "^0.1.9",
+    "ngraph.graph": "0.0.15",
+    "ngraph.louvain": "^1.1.0"
+  }
+}
