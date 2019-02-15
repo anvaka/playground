@@ -21,8 +21,15 @@ const forEach = require('./lib/forEach.js');
 const { getAllFollowersByScreenName, getAllFollowersByUserId } = require('./lib/twitter-client.js');
 
 const argv = yargs.argv;
-const queueFile = path.join(argv.out, 'queue.json');
-const processedFile = path.join(argv.out, 'followers.json');
+
+if (!argv._.length) {
+  yargs.showHelp();
+  process.exit(1);
+}
+
+const screen_name = argv._[0];
+const queueFile = path.join(argv.out, screen_name + 'queue.json');
+const processedFile = path.join(argv.out, screen_name + 'followers.json');
 const outStream = createOutStream(processedFile);
 
 if (fs.existsSync(queueFile)) {
@@ -30,7 +37,6 @@ if (fs.existsSync(queueFile)) {
   let queue = JSON.parse(fs.readFileSync(queueFile, 'utf8'));
   processQueue(queue);
 } else if (argv._.length) {
-  const screen_name = argv._[0];
   console.log('Queue file is missing. Creating a new queue file for ' + screen_name);
   getAllFollowersByScreenName(screen_name, 400000).then(result => {
     const follower_ids = result.accumulator;

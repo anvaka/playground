@@ -1,13 +1,13 @@
 var createMultiKeyClient = require('./multi-key-account');
 
-// const client = createMultiKeyClient([{
-//   consumer_key:        process.env.TWITTER_CONSUMER_KEY,
-//   consumer_secret:     process.env.TWITTER_CONSUMER_SECRET,
-//   access_token:        process.env.TWITTER_ACCESS_TOKEN,
-//   access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
-// }]);
-//
-const client = createMultiKeyClient(require('/home/pnaka/twitter/arr.js'));
+const client = createMultiKeyClient([{
+  consumer_key:        process.env.TWITTER_CONSUMER_KEY,
+  consumer_secret:     process.env.TWITTER_CONSUMER_SECRET,
+  access_token:        process.env.TWITTER_ACCESS_TOKEN,
+  access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
+}]);
+
+//const client = createMultiKeyClient(require('/home/pnaka/twitter/arr.js'));
 
 const RATE_LIMIT_EXCEEDED = 88;
 const NOT_FOUND = 34;
@@ -51,7 +51,7 @@ function convertIdsToUser(ids, visitor) {
         const { data } = resp;
         if (data.errors) {
           // todo: this may need more handling
-          console.error(data.errors);
+          console.error(data.errors, '!!! error');
           throw new Error(data.errors);
         }
         data.forEach(user => visitor(user));
