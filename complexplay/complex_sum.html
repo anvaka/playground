@@ -11,64 +11,74 @@
 let cnv = document.getElementById('canvas');
 let ctx = cnv.getContext('2d');
 let width = ctx.width = cnv.width = 640;
-let height = ctx.height = cnv.height = 480;
+let height = ctx.height = cnv.height = 640;
+let PI_2 = 2 * Math.PI;
+ let idx = 1;
+frame();
 
-let points = getSumPoints(fn, 500);
- 
+function frame() {
+ let points = getSumPoints(fn, idx);
+ drawPolyline(points) ;
+  idx += 10;
+  requestAnimationFrame(frame);
 
-drawPolyline(points) ;
+}
 
 function drawPolyline(points) {
   if (points.length < 2) return;
-  
-  let pt = points[0]; 
-  ctx.strokeStyle = 'blue'
-  ctx.beginPath();
+
+  let pt = points[0];
+  ctx.beginPath()
+  ctx.fillStyle = 'white'
+  ctx.clearRect(0, 0, width, height);
+  ctx.stroke();
+  ctx.strokeStyle = `orange`;
   ctx.moveTo(pt.x, pt.y);
   for (let i = 1; i < points.length; ++i) {
     pt = points[i];
+
     ctx.lineTo(pt.x, pt.y);
   }
   ctx.stroke();
 }
 
 function fn(n) {
-  let l = Math.log(n);
-  return l * l ;
+  return n/4+n*n/5000;
 }
 
 function getSumPoints(fn, count) {
-  let pt = {x: 0, y: 0};
-  
+  let pt = {x: 0, y: 0, phi: 0};
+
   let result = [pt];
   let i = 1;
   let minX = Number.POSITIVE_INFINITY, minY = Number.POSITIVE_INFINITY;
   let maxX = Number.NEGATIVE_INFINITY, maxY = Number.NEGATIVE_INFINITY;
-  
-  while (i < count) {
-    let phi = fn(i);
+  let minPhi = Number.POSITIVE_INFINITY, maxPhi = Number.NEGATIVE_INFINITY;
 
-    let x = Math.cos(2 * Math.PI * phi);
-    let y = Math.sin(2 * Math.PI * phi);
+  while (i < count) {
+    let phi = PI_2 * fn(i, pt);;
+
+    let x = pt.x + Math.cos(phi);
+    let y = pt.y + Math.sin(phi);
 
     if (x < minX) minX = x; if (x > maxX) maxX = x;
     if (y < minY) minY = y; if (y > maxY) maxY = y;
-    
-    result.push({x: x, y: y});
+    if (phi < minPhi) minPhi = phi; if (phi > maxPhi) maxPhi = phi;
+    pt = {x, y, phi};
+    result.push(pt);
     i += 1;
   }
   let dx = maxX - minX;
   let dy = maxY - minY;
-      debugger;   
   return result.map(toScreenSize);
-  
+
   function toScreenSize(pt) {
     return {
       x: width * (pt.x - minX)/dx,
-      y: height * (pt.y - minY)/dy
+      y: height * (pt.y - minY)/dy,
+      phi: (pt.phi - minPhi)/(maxPhi - minPhi)
     };
   }
-}
-</script>
+}</script>
 </body>
 </html>
