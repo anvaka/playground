@@ -13,26 +13,34 @@ let ctx = cnv.getContext('2d');
 let width = ctx.width = cnv.width = 640;
 let height = ctx.height = cnv.height = 640;
 let PI_2 = 2 * Math.PI;
- let idx = 1;
+let idx = 1;
+let minX,maxX, maxPhi,minY, maxY, minPhi;
 frame();
 
 function frame() {
- let points = getSumPoints(fn, idx);
- drawPolyline(points) ;
+
+  ctx.beginPath()
+  ctx.fillStyle = 'white'
+  ctx.clearRect(0, 0, width, height);
+  ctx.stroke();
+
+  minX = Number.POSITIVE_INFINITY; minY = Number.POSITIVE_INFINITY;
+  maxX = Number.NEGATIVE_INFINITY; maxY = Number.NEGATIVE_INFINITY;
+  minPhi = Number.POSITIVE_INFINITY; maxPhi = Number.NEGATIVE_INFINITY;
+
+  drawPolyline(getSumPoints(fn, idx), 'orange') ;
+  drawPolyline(getSumPoints(fn2, idx), 'red') ;
   idx += 10;
   requestAnimationFrame(frame);
 
 }
 
-function drawPolyline(points) {
+function drawPolyline(points, color) {
   if (points.length < 2) return;
 
+    ctx.beginPath()
   let pt = points[0];
-  ctx.beginPath()
-  ctx.fillStyle = 'white'
-  ctx.clearRect(0, 0, width, height);
-  ctx.stroke();
-  ctx.strokeStyle = `orange`;
+  ctx.strokeStyle = color;
   ctx.moveTo(pt.x, pt.y);
   for (let i = 1; i < points.length; ++i) {
     pt = points[i];
@@ -43,17 +51,19 @@ function drawPolyline(points) {
 }
 
 function fn(n) {
-  return n/4+n*n/5000;
+
+  return n/40+ n * n /9;
 }
+function fn2(n) {
+  return n/50 + n * n /9;
+}
+
 
 function getSumPoints(fn, count) {
   let pt = {x: 0, y: 0, phi: 0};
 
   let result = [pt];
   let i = 1;
-  let minX = Number.POSITIVE_INFINITY, minY = Number.POSITIVE_INFINITY;
-  let maxX = Number.NEGATIVE_INFINITY, maxY = Number.NEGATIVE_INFINITY;
-  let minPhi = Number.POSITIVE_INFINITY, maxPhi = Number.NEGATIVE_INFINITY;
 
   while (i < count) {
     let phi = PI_2 * fn(i, pt);;
