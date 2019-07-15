@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<meta name="robots" content="noindex">
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>First 90 years in weeks</title>
+<style>
+svg, body {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+  padding: 0;
+}
+
+svg rect {
+  fill: transparent;
+  stroke: 'black';
+}
+</style>
+</head>
+<body>
+<svg>
+  <g id='scene'></g>
+</svg>
+<script>
+const BOX_WIDTH = 480; // SVG units
+const BOX_PADDING = 1.1;
+const OVERALL_PADDING = (1 + (BOX_PADDING - 1) * 2);
+const VIEW_PORT_WIDTH = Math.round(52 * BOX_WIDTH * OVERALL_PADDING);
+const VIEW_PORT_HEIGHT = Math.round(90 * BOX_WIDTH * OVERALL_PADDING);
+const YEARS_TO_DRAW = 9;
+
+let svg = document.querySelector('#scene-container');
+svg.setAttributeNS(null, 'viewBox', `0 0 ${VIEW_PORT_WIDTH} ${VIEW_PORT_HEIGHT}`);
+const scene = document.querySelector('#scene'); 
+panzoom(scene);
+
+drawLabels(YEARS_TO_DRAW, scene);
+drawYears(90, scene);
+
+function drawLabels(yearsCount, container) {
+  const labelsContainer = sivg('g');
+  for (let weekIndex = 0; weekIndex < 52; ++weekIndex) {
+    let offset = weekIndex * BOX_WIDTH * BOX_PADDING + BOX_WIDTH * .5;
+    let weekLabel = sivg('text', {
+      x: offset,
+      'font-size': BOX_WIDTH * 0.5,
+      'text-anchor': 'middle'
+    });
+    weekLabel.text(weekIndex + 1);
+    labelsContainer.appendChild(weekLabel);
+  } 
+  container.appendChild(labelsContainer);
+  
+}
+
+function drawYears(yearsCount, container) {
+  const yearsContainer = sivg('g')
+  for (let yearNumber = 0; yearNumber < yearsCount; ++yearNumber) {
+    for (let weekNumber = 0; weekNumber < 52; ++weekNumber) {
+      drawWeek(weekNumber, yearNumber, yearsContainer);
+    }
+  }
+  container.appendChild(yearsContainer);
+}
+
+function drawWeek(weekNumber, yearNumber, container) {
+  const verticalOffset = yearNumber * BOX_WIDTH * BOX_PADDING + 50;
+  const horizontalOffset = weekNumber * BOX_WIDTH * BOX_PADDING;
+  const week = sivg('rect', {
+    x: horizontalOffset,
+    y: verticalOffset,
+    width: BOX_WIDTH,
+    height: BOX_WIDTH
+  });
+  
+  container.appendChild(week);
+}
+
+</script>
+</body>
+</html>
