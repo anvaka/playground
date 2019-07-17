@@ -1,7 +1,13 @@
 var expoSum = require('./expoSum.js');
 
-var defaultCode = `function next(n) {
-  var l = Math.log(n);
+var defaultCode = `function f(k) {
+  // Return \`f(k)\` part of exponential sum:
+  //
+  //   sum{k=1..n} e^(2 * PI * i * f(k))
+  // 
+  // See syntax help above for more info.
+
+  var l = Math.log(k);
   return l * l * l * l;
 }`
 
@@ -145,7 +151,7 @@ function transform(pt) {
 
 function compileNextFunction(code) {
   try {
-    var creator = new Function(code + '\nreturn next;');
+    var creator = new Function(code + '\nreturn f;');
     var next = creator();
     next(0); // just a test.
     return next;

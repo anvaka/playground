@@ -10,8 +10,15 @@
           <div class='title'>Exponential Sum <a class='help-title' :class='{"syntax-visible": syntaxHelpVisible}' href='#' @click.prevent='syntaxHelpVisible = !syntaxHelpVisible' title='click to learn more about syntax'>syntax help</a></div>
           <div class='help' v-if='syntaxHelpVisible'>
             <p>An exponential sum is an expression of the form</p>
-            <p>$$\sum_{i=1}^n e^{2\pi i f(n)}$$</p>
+            <vue-mathjax formula='$$\sum_{k=1}^n e^{2\pi i f(k)}$$'></vue-mathjax>
+            <vue-mathjax formula='Type the formula for $f(k)$ below using plain javascript code'></vue-mathjax>
+            <p>
+            Sequence of partial sums is then plotted in the complex plane, with successive points joined by straight
+            line segments
+            </p>
+           <p>
             <a href="#" @click.prevent='syntaxHelpVisible = false' class='close'>Close help</a>
+            </p> 
           </div>
           <code-editor :model='code' ></code-editor>
         </div>
@@ -33,13 +40,13 @@
           </div>
           <div class='row'>
             <div class='col'>Line Color</div>
-            <div class="col">
+            <div class='col'>
               <color-picker :color='lineColor' @changed='updateLineColor'></color-picker>
             </div>
           </div>
           <div class='row'>
             <div class='col'>Background color</div>
-            <div class="col">
+            <div class='col'>
               <color-picker :color='fillColor' @changed='updateFillColor'></color-picker>
             </div>
           </div>
@@ -51,6 +58,7 @@
 </template>
 
 <script>
+import {VueMathjax} from 'vue-mathjax'
 import CodeEditor from './components/CodeEditor';
 import ColorPicker from './components/ColorPicker';
 import HelpIcon from './components/Icon';
@@ -65,7 +73,8 @@ export default {
   components: {
     CodeEditor,
     ColorPicker,
-    HelpIcon
+    HelpIcon,
+    VueMathjax
   },
   data() {
     return {

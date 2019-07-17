@@ -83,10 +83,9 @@ class ConstantFunction extends BaseFunctionNode {
 
 
 var fList = [
-  new ConstantFunction('p.x', 'POINT'),
-  new ConstantFunction('p.y', 'POINT'),
+  new ConstantFunction('k', 'POINT'),
 
-  new ConstantFunction('Math.sqrt(p.x*p.x + p.y * p.y)', 'LENGTH'),
+  new ConstantFunction('Math.sqrt(k)', 'LENGTH'),
 
   new SingleArgumentFunction(a => `Math.sin(${a})`, 'TRIGONOMETRY'),
   new SingleArgumentFunction(a => `Math.cos(${a})`, 'TRIGONOMETRY'),
@@ -94,10 +93,10 @@ var fList = [
   // new SingleArgumentFunction(a => `inversesqrt(${a})`, cfProb * 0.8),
 
 
-  new DualArgumentFunction((a, b) => `${a}*${b}`, 'ARITHMETICS'),
-  new DualArgumentFunction((a, b) => `${a}/${b}`, 'ARITHMETICS'),
-  new DualArgumentFunction((a, b) => `(${a}+${b})`, 'ARITHMETICS'),
-  new DualArgumentFunction((a, b) => `(${a}-${b})`, 'ARITHMETICS'),
+  // new DualArgumentFunction((a, b) => `${a}*${b}`, 'ARITHMETICS'),
+  // new DualArgumentFunction((a, b) => `${a}/${b}`, 'ARITHMETICS'),
+  // new DualArgumentFunction((a, b) => `(${a}+${b})`, 'ARITHMETICS'),
+  // new DualArgumentFunction((a, b) => `(${a}-${b})`, 'ARITHMETICS'),
 
   // new DualArgumentFunction((a, b) => {
   //   if (a === b) return a;
@@ -145,11 +144,7 @@ function generateArguments() {
 module.exports = function generate() {
   normalizeProbabilities();
   var vX = generateArguments();
-  var vY = generateArguments();
-  return `function getVelocity(p) {
-  return {
-    x: ${vX},
-    y: ${vY}
-  };
+  return `function f(k) {
+  return ${vX};
 }`;
 }
