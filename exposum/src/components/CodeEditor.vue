@@ -51,7 +51,7 @@ export default {
       // We don't want to update code on each key stroke. This would have negative
       // impact on performance.
       this.pendingSetCode = setTimeout(() => {
-        this.model.setCode(this.model.code);
+        this.model.setCode(this.model.code, true);
         this.pendingSetCode = 0;
       }, 300);
     },

@@ -11,6 +11,8 @@ var defaultCode = `function f(k) {
   return l * l * l * l;
 }`
 
+var boundingBox;
+
 var code = {
   code: defaultCode,
   error: null,
@@ -33,10 +35,10 @@ var code = {
 }
 
 var generatorOptions = {
-  next: null,
+  next: compileNextFunction(defaultCode),
   seed: seedPoint,
   stepsPerIteration: 10,
-  onPointAdded,
+  onFrame,
 };
 
 var lineColor = 'rgba(255, 255, 255, 0.6)';
@@ -77,12 +79,11 @@ var seedPoint = selectSeedPoint();
 module.exports = appState
 
 var lastLineRenderer;
-var canvas, ctx, width, height;
+var canvas = document.getElementById('scene-canvas'); 
+var ctx = canvas.getContext('2d'); 
+var width, height;
 
-function init(c) {
-  canvas = c;
-  ctx = canvas.getContext('2d');
-  generatorOptions.code = compileNextFunction(defaultCode);
+function init() {
   redraw();
 }
 
@@ -105,9 +106,6 @@ function redraw() {
   height = window.innerHeight;
   canvas.width = width;
   canvas.height = height;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = fillColor;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   render();
 }
@@ -123,24 +121,35 @@ function render() {
   }
 
   lastLineRenderer = expoSum(generatorOptions)
+  boundingBox = lastLineRenderer.getBoundingBox();
   lastLineRenderer.run();
 }
 
-function onPointAdded(a, b) {
+function onFrame(points) {
+  ctx.beginPath()
+  ctx.fillStyle = fillColor
+  ctx.clearRect(0, 0, width, height);
+  ctx.stroke();
+
   ctx.beginPath();
   ctx.strokeStyle = lineColor;
-  a = transform(a);
-  b = transform(b);
-  ctx.moveTo(a.x, a.y);
-  ctx.lineTo(b.x, b.y);
+  let pt = transform(points[0]);
+  ctx.moveTo(pt.x, pt.y);
+  for (let i = 1; i < points.length; ++i) {
+    pt = transform(points[i]);
+    ctx.lineTo(pt.x, pt.y);
+  }
   ctx.stroke();
   ctx.closePath();
   return true;
 }
 
 function transform(pt) {
-  var tx = (pt.x - boundingBox.left)/boundingBox.width;
-  var ty = (pt.y - boundingBox.top)/boundingBox.height;
+  const dx = (boundingBox.maxX - boundingBox.minX);
+  const dy = (boundingBox.maxY - boundingBox.minY);
+  // const scale = Math.max(dx, dy);
+  var tx = (pt.x - boundingBox.minX)/dx;
+  var ty = (pt.y - boundingBox.minY)/dy;
   // var ar = width/height;
   //tx /= ar;
   return {
