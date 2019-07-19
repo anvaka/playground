@@ -145,6 +145,15 @@ function onFrame(points) {
 }
 
 function transform(pt) {
+  let scaleBy = Math.min(width, height) * 0.9;
+  let xOffset = 0, yOffset = 0;
+  if (width < height) {
+    yOffset = (height - width) / 2;
+  } else if (height < width) {
+    xOffset = (width - height) / 2;
+  }
+
+
   const dx = (boundingBox.maxX - boundingBox.minX);
   const dy = (boundingBox.maxY - boundingBox.minY);
   // const scale = Math.max(dx, dy);
@@ -153,8 +162,8 @@ function transform(pt) {
   // var ar = width/height;
   //tx /= ar;
   return {
-    x: tx * width,
-    y: (1 - ty) * height
+    x: xOffset + scaleBy * 0.05+ tx * scaleBy,
+    y: yOffset + scaleBy * 0.05 + (1 - ty) * scaleBy
   }
 }
 
