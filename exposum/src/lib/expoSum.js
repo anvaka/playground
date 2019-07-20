@@ -8,8 +8,6 @@ function expoSum(options) {
   let next = options.next;
   let px = 0, py = 0;
 
-  let boundsChanged = false;
-
   let box = {
     minX: Number.POSITIVE_INFINITY, maxX: Number.NEGATIVE_INFINITY,
     minY: Number.POSITIVE_INFINITY, maxY: Number.NEGATIVE_INFINITY
@@ -19,7 +17,19 @@ function expoSum(options) {
     dispose,
     run,
     forEachPoint,
+    evaluateBoundingBox,
     getBoundingBox: () => box
+  }
+
+  function evaluateBoundingBox() {
+    px = 0;
+    py = 0;
+    for (let i = 0; i < 100; ++i) {
+      let pt = getNextPoint(i);
+      extendBoundingBoxIfNeeded(pt.x, pt.y);
+    }
+    px = 0;
+    py = 0;
   }
 
   function run() {
@@ -33,7 +43,9 @@ function expoSum(options) {
   function frame() {
     let i = 0;
     while (i < dn) {
-      updatePoints();
+      let pt = getNextPoint(n);
+      extendBoundingBoxIfNeeded(pt.x, pt.y);
+      points.push(pt);
       i += 1;
       n += 1;
     }
@@ -41,12 +53,15 @@ function expoSum(options) {
     rafHandle = requestAnimationFrame(frame);
   }
 
-  function updatePoints() {
+  function getNextPoint(n) {
     const phi = Math.PI * 2 * next(n);
     px += Math.cos(phi);
     py += Math.sin(phi);
-    points.push({x: px, y: py});
 
+    return {x: px, y: py}
+  }
+
+  function extendBoundingBoxIfNeeded(px, py) {
     if (px < box.minX) box.minX = px;
     if (px > box.maxX) box.maxX = px;
     if (py < box.minY) box.minY = py;

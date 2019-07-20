@@ -121,6 +121,7 @@ function render() {
   }
 
   lastLineRenderer = expoSum(generatorOptions)
+  lastLineRenderer.evaluateBoundingBox();
   boundingBox = lastLineRenderer.getBoundingBox();
   lastLineRenderer.run();
 }
@@ -145,20 +146,26 @@ function onFrame(points) {
 }
 
 function transform(pt) {
-  let scaleBy = Math.min(width, height) * 0.9;
+  let clientWidth = width;
   let xOffset = 0, yOffset = 0;
-  if (width < height) {
-    yOffset = (height - width) / 2;
-  } else if (height < width) {
-    xOffset = (width - height) / 2;
+  if (width > 1024) {
+    // align visualization to the right of the sidebar
+    xOffset = -440;
+    clientWidth -= xOffset;
   }
-
+  let scaleBy = Math.min(clientWidth, height) * 0.9;
+  if (clientWidth < height) {
+    yOffset = (height - clientWidth) / 2;
+  } else if (height < clientWidth) {
+    xOffset = (clientWidth - height) / 2;
+  }
 
   const dx = (boundingBox.maxX - boundingBox.minX);
   const dy = (boundingBox.maxY - boundingBox.minY);
+  const modelScale = Math.max(dx, dy);
   // const scale = Math.max(dx, dy);
-  var tx = (pt.x - boundingBox.minX)/dx;
-  var ty = (pt.y - boundingBox.minY)/dy;
+  var tx = (pt.x - boundingBox.minX)/modelScale;
+  var ty = (pt.y - boundingBox.minY)/modelScale;
   // var ar = width/height;
   //tx /= ar;
   return {

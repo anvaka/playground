@@ -34,7 +34,7 @@
             <div>
               <p>How far do we advance per animation step?</p>
               <ul>
-                <li>Increasing this value makes animation complete faster. Setting it too high gives inaccurate results</li>
+                <li>Increasing this value makes animation complete faster</li>
               </ul>
             </div>
           </div>
@@ -111,7 +111,7 @@ export default {
     },
     generateNewFunction() {
        var code = generateFunction();
-       appState.code.setCode(code, true);
+       appState.code.setCode(code);
     },
     onSubmit() {
       if (isSmallScreen()) {
