@@ -7,7 +7,11 @@ function getDivider() {
   // k/(6) + k * k * k /51;
   // k + k * k * k /35; // dog
   // k/6 + k * k /7 + k * k * k/6 // running man
+  // cross k/4 + k * k * k/18
   // apple logo k/6 + k * k /7 + k * k * k/14
+  // candy k/24 + k * k * k/12;
+  // mooseneckle   return k/90 + k * k * k/92;
+  // scary monster k/3 + k * k * k/61;
   //   return k/42 + k * k * k/18; 
   // if (Math.random() < 0.5) divider /= 100;
   return divider;
