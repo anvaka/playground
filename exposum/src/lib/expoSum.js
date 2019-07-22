@@ -1,7 +1,47 @@
 module.exports = expoSum;
 
+const SUM_LIMIT = 10;
+const PI_2 = Math.PI * 2;
+
+function cyclicArray(maxSize) {
+  let points = [];
+  let startFrom = 0;
+  return {
+    push,
+    forEach,
+    get length() {
+      return points.length
+    }
+  }
+
+  function push(point) {
+    if (points.length >= maxSize) {
+      points[startFrom] = point;
+      startFrom += 1;
+      if (startFrom === maxSize) startFrom = 0;
+    } else {
+      points.push(point);
+    }
+  }
+
+  function forEach(callback) {
+    let index = startFrom;
+    let visited = 0;
+
+    while (visited < points.length) {
+      callback(points[index], index);
+      index += 1;
+      visited += 1
+
+      if (index === maxSize) index = 0;
+    }
+  }
+}
+
 function expoSum(options) {
-  let points = [{x: 0, y: 0}];
+  let points = cyclicArray(10000);
+  points.push({x: 0, y: 0});
+
   let rafHandle;
   let n = 1;
   let dn = options.stepsPerIteration;
@@ -16,14 +56,25 @@ function expoSum(options) {
   return {
     dispose,
     run,
-    forEachPoint,
     evaluateBoundingBox,
     getBoundingBox: () => box
   }
 
+  function resetBoundingBox() {
+    box.minX = Number.POSITIVE_INFINITY; 
+    box.maxX = Number.NEGATIVE_INFINITY;
+    box.minY = Number.POSITIVE_INFINITY;
+    box.maxY = Number.NEGATIVE_INFINITY;
+
+    points.forEach((pt) => {
+      extendBoundingBoxIfNeeded(pt.x, pt.y);
+    });
+  };
+
   function evaluateBoundingBox() {
     px = 0;
     py = 0;
+    // resetBoundingBox();
     for (let i = 0; i < 100; ++i) {
       let pt = getNextPoint(i);
       extendBoundingBoxIfNeeded(pt.x, pt.y);
@@ -41,6 +92,7 @@ function expoSum(options) {
   }
 
   function frame() {
+    // resetBoundingBox();
     let i = 0;
     while (i < dn) {
       let pt = getNextPoint(n);
@@ -50,11 +102,11 @@ function expoSum(options) {
       n += 1;
     }
     options.onFrame(points);
-    rafHandle = requestAnimationFrame(frame);
+    if (n < SUM_LIMIT) rafHandle = requestAnimationFrame(frame);
   }
 
   function getNextPoint(n) {
-    const phi = Math.PI * 2 * next(n);
+    const phi = PI_2 * next(n);
     px += Math.cos(phi);
     py += Math.sin(phi);
 
@@ -66,9 +118,5 @@ function expoSum(options) {
     if (px > box.maxX) box.maxX = px;
     if (py < box.minY) box.minY = py;
     if (py > box.maxY) box.maxY = py;
-  }
-
-  function forEachPoint(callback) {
-
   }
 }
