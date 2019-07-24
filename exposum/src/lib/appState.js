@@ -7,8 +7,9 @@ var defaultCode = `function f(k) {
   // 
   // See syntax help above for more info.
 
-  var l = Math.log(k);
-  return l * l * l * l;
+  return k / 3;
+  // var l = Math.log(k);
+  // return l * l * l * l;
 }`
 
 var boundingBox;
@@ -82,6 +83,7 @@ var lastLineRenderer;
 var canvas = document.getElementById('scene-canvas'); 
 var ctx = canvas.getContext('2d'); 
 var width, height;
+init();
 
 function init() {
   redraw();
@@ -102,16 +104,22 @@ function getNumber(str, defaultValue) {
 
 function redraw() {
   appState.settingsPanel.isDirty = false;
-  width = window.innerWidth;
-  height = window.innerHeight;
-  canvas.width = width;
-  canvas.height = height;
-
+  updateSize();
   render();
 }
 
 function dirty() {
-  appState.settingsPanel.isDirty = true;
+  updateSize();
+  if (lastLineRenderer) {
+    drawPoints(lastLineRenderer.getPoints());
+  }
+}
+
+function updateSize() {
+  width = window.innerWidth;
+  height = window.innerHeight;
+  canvas.width = width;
+  canvas.height = height;
 }
 
 function render() {
@@ -127,6 +135,11 @@ function render() {
 }
 
 function onFrame(points) {
+  drawPoints(points);
+  return true;
+}
+
+function drawPoints(points) {
   ctx.beginPath()
   ctx.fillStyle = fillColor
   ctx.clearRect(0, 0, width, height);
@@ -134,43 +147,37 @@ function onFrame(points) {
 
   ctx.beginPath();
   ctx.strokeStyle = lineColor;
-  let pt = transform(points[0]);
-  ctx.moveTo(pt.x, pt.y);
-  for (let i = 1; i < points.length; ++i) {
-    pt = transform(points[i]);
-    ctx.lineTo(pt.x, pt.y);
-  }
+  points.forEach((point, index) => {
+    let pt = transform(point);
+    if (index) {
+      ctx.lineTo(pt.x, pt.y);
+    } else {
+      ctx.moveTo(pt.x, pt.y);
+    }
+  })
   ctx.stroke();
   ctx.closePath();
-  return true;
 }
 
 function transform(pt) {
-  let clientWidth = width;
-  let xOffset = 0, yOffset = 0;
-  if (width > 1024) {
-    // align visualization to the right of the sidebar
-    xOffset = -440;
-    clientWidth -= xOffset;
-  }
-  let scaleBy = Math.min(clientWidth, height) * 0.9;
-  if (clientWidth < height) {
-    yOffset = (height - clientWidth) / 2;
-  } else if (height < clientWidth) {
-    xOffset = (clientWidth - height) / 2;
-  }
-
+  const w = width;
+  const h = height;
   const dx = (boundingBox.maxX - boundingBox.minX);
   const dy = (boundingBox.maxY - boundingBox.minY);
-  const modelScale = Math.max(dx, dy);
   // const scale = Math.max(dx, dy);
-  var tx = (pt.x - boundingBox.minX)/modelScale;
-  var ty = (pt.y - boundingBox.minY)/modelScale;
+  var scaleX = w / dx;
+  var scaleY = h / dy;
+  var scale = scaleX * dy < h ? scaleX : scaleY;
+
+  var tx = (pt.x - boundingBox.minX) * scale;
+  var ty = (pt.y - boundingBox.minY) * scale;
+  var mp = (dx) / 2
+  console.log(mp, boundingBox.minX, boundingBox.maxX)
   // var ar = width/height;
   //tx /= ar;
   return {
-    x: xOffset + scaleBy * 0.05+ tx * scaleBy,
-    y: yOffset + scaleBy * 0.05 + (1 - ty) * scaleBy
+    x: tx,
+    y: ty
   }
 }
 

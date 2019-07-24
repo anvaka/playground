@@ -1,6 +1,6 @@
 module.exports = expoSum;
 
-const SUM_LIMIT = 10;
+const SUM_LIMIT = 10000;
 const PI_2 = Math.PI * 2;
 
 function cyclicArray(maxSize) {
@@ -57,7 +57,8 @@ function expoSum(options) {
     dispose,
     run,
     evaluateBoundingBox,
-    getBoundingBox: () => box
+    getBoundingBox: () => box,
+    getPoints: () => points
   }
 
   function resetBoundingBox() {
