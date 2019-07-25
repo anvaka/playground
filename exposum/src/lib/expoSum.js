@@ -1,7 +1,8 @@
 module.exports = expoSum;
+const Decimal = require('decimal.js');
+const PI_2 = Decimal.acos(-1).times(2);
 
-const SUM_LIMIT = 10000;
-const PI_2 = Math.PI * 2;
+const SUM_LIMIT = 100000;
 
 function cyclicArray(maxSize) {
   let points = [];
@@ -107,9 +108,9 @@ function expoSum(options) {
   }
 
   function getNextPoint(n) {
-    const phi = PI_2 * next(n);
-    px += Math.cos(phi);
-    py += Math.sin(phi);
+    const phi = next(n).times(PI_2);
+    px += Number(phi.cos());
+    py += Number(phi.sin());
 
     return {x: px, y: py}
   }

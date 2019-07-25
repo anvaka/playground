@@ -1,5 +1,6 @@
 function generateRandomSum() {
-  return `k/${getDivider()} + k * k * k/${getDivider()}`;
+  return `let kd = Decimal(k);
+return kd.div(${getDivider()}).plus(kd.times(kd).times(kd).div(${getDivider()}))`;
 }
 
 function getDivider() {
@@ -20,6 +21,6 @@ function getDivider() {
 module.exports = function generate() {
   var vX = generateRandomSum();
   return `function f(k) {
-  return ${vX};
+  ${vX};
 }`;
 }

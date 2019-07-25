@@ -1,5 +1,7 @@
 var expoSum = require('./expoSum.js');
+const Decimal = require('decimal.js');
 
+window.Decimal = Decimal;
 var defaultCode = `function f(k) {
   // Return \`f(k)\` part of exponential sum:
   //
@@ -7,7 +9,7 @@ var defaultCode = `function f(k) {
   // 
   // See syntax help above for more info.
 
-  return k / 3;
+  return (new Decimal(k)).div(3);
   // var l = Math.log(k);
   // return l * l * l * l;
 }`
@@ -171,8 +173,6 @@ function transform(pt) {
 
   var tx = (pt.x - boundingBox.minX) * scale;
   var ty = (pt.y - boundingBox.minY) * scale;
-  var mp = (dx) / 2
-  console.log(mp, boundingBox.minX, boundingBox.maxX)
   // var ar = width/height;
   //tx /= ar;
   return {
@@ -189,6 +189,7 @@ function compileNextFunction(code) {
     return next;
   } catch (e) {
     code.error = e.message;
+    console.error(e);
     return null;
   }
 }
