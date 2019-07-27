@@ -1,8 +1,8 @@
 module.exports = expoSum;
+const {useDecimal} = require('./config');
 const Decimal = require('decimal.js');
-const PI_2 = Decimal.acos(-1).times(2);
 
-const SUM_LIMIT = 100000;
+const PI_2 = useDecimal ? Decimal.acos(-1).times(2) : Math.PI * 2;
 
 function cyclicArray(maxSize) {
   let points = [];
@@ -30,7 +30,7 @@ function cyclicArray(maxSize) {
     let visited = 0;
 
     while (visited < points.length) {
-      callback(points[index], index);
+      callback(points[index], visited);
       index += 1;
       visited += 1
 
@@ -40,15 +40,17 @@ function cyclicArray(maxSize) {
 }
 
 function expoSum(options) {
-  let points = cyclicArray(10000);
+  let points = cyclicArray(options.totalSteps || 10000);
   points.push({x: 0, y: 0});
+  const getNextPoint = useDecimal ? getNextDecimalPoint : getNextFloatPoint;
 
   let rafHandle;
   let n = 1;
   let dn = options.stepsPerIteration;
+  let sumLimit = options.totalSteps;
   let next = options.next;
   let px = 0, py = 0;
-
+  
   let box = {
     minX: Number.POSITIVE_INFINITY, maxX: Number.NEGATIVE_INFINITY,
     minY: Number.POSITIVE_INFINITY, maxY: Number.NEGATIVE_INFINITY
@@ -59,7 +61,8 @@ function expoSum(options) {
     run,
     evaluateBoundingBox,
     getBoundingBox: () => box,
-    getPoints: () => points
+    getPoints: () => points,
+    isDone() { return n >= sumLimit; }
   }
 
   function resetBoundingBox() {
@@ -104,14 +107,25 @@ function expoSum(options) {
       n += 1;
     }
     options.onFrame(points);
-    if (n < SUM_LIMIT) rafHandle = requestAnimationFrame(frame);
+    scheduleNextFrame();
   }
 
-  function getNextPoint(n) {
+  function scheduleNextFrame() {
+    if (n < sumLimit) rafHandle = requestAnimationFrame(frame);
+  }
+
+  function getNextDecimalPoint(n) {
     const phi = next(n).times(PI_2);
     px += Number(phi.cos());
     py += Number(phi.sin());
 
+    return {x: px, y: py}
+  }
+
+  function getNextFloatPoint(n) {
+    const phi = next(n) * PI_2;
+    px += Math.cos(phi);
+    py += Math.sin(phi);
     return {x: px, y: py}
   }
 

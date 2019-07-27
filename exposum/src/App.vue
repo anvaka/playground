@@ -26,28 +26,23 @@
         <div class='block'>
           <div class='title'>Settings</div>
           <div class='row'>
-            <div class='col'>Drawing speed</div>
+            <div class='col'>Total steps</div>
+            <div class='col'><input type='number' :step='stepsPerIterationDelta' v-model='totalSteps' @keyup.enter='onSubmit' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" ></div>
+            <help-icon @show='totalStepsHelp = !totalStepsHelp' :class='{open: totalStepsHelp}'></help-icon>
+          </div>
+          <div class='row help' v-if='totalStepsHelp'>
+            <div>
+              <p>How many iterations should we make before stopping?</p>
+            </div>
+          </div>
+          <div class='row'>
+            <div class='col'>Steps per frame</div>
             <div class='col'><input type='number' :step='stepsPerIterationDelta' v-model='stepsPerIteration' @keyup.enter='onSubmit' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" ></div>
             <help-icon @show='stepsPerIterationHelp = !stepsPerIterationHelp' :class='{open: stepsPerIterationHelp}'></help-icon>
           </div>
           <div class='row help' v-if='stepsPerIterationHelp'>
             <div>
-              <p>How far do we advance per animation step?</p>
-              <ul>
-                <li>Increasing this value makes animation complete faster</li>
-              </ul>
-            </div>
-          </div>
-          <div class='row'>
-            <div class='col'>Line Color</div>
-            <div class='col'>
-              <color-picker :color='lineColor' @changed='updateLineColor'></color-picker>
-            </div>
-          </div>
-          <div class='row'>
-            <div class='col'>Background color</div>
-            <div class='col'>
-              <color-picker :color='fillColor' @changed='updateFillColor'></color-picker>
+              <p>How many iterations do we make per single frame?</p>
             </div>
           </div>
         </div>
@@ -82,29 +77,23 @@ export default {
       settingsPanel: appState.settingsPanel,
       code: appState.code,
 
-      lineColor: appState.getLineColor(),
-      fillColor: appState.getFillColor(),
-
       stepsPerIteration: appState.getStepsPerIteration(),
       stepsPerIterationHelp : false,
+
+      totalSteps: appState.getTotalSteps(),
+      totalStepsHelp: false
     }
   },
   computed: {
     stepsPerIterationDelta() { return exponentialStep(this.stepsPerIteration); },
+    totalStepsDelta() { return exponentialStep(this.totalSteps); },
   },
   watch: {
     stepsPerIteration(newValue) { appState.setStepsPerIteration(newValue); },
+    totalSteps(newValue) {appState.setTotalSteps(newValue); }
   },
   methods: {
     draw() { appState.redraw(); },
-    updateLineColor(c) {
-       appState.setLineColor(c.r, c.g, c.b, c.a); 
-       this.lineColor = appState.getLineColor();
-    },
-    updateFillColor(c) {
-       appState.setFillColor(c.r, c.g, c.b, c.a); 
-       this.fillColor = appState.getFillColor();
-    },
     toggleSettings() {
       this.settingsPanel.collapsed = !this.settingsPanel.collapsed;
       bus.fire('settings-collapsed', this.settingsPanel.collapsed);

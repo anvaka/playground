@@ -13,6 +13,7 @@
   "dependencies": {
     "decimal.js": "^10.2.0",
     "ngraph.events": "^1.0.0",
+    "panzoom": "^8.1.1",
     "vue": "^2.5.2",
     "vue-codemirror-lite": "^1.0.4",
     "vue-color": "^2.7.0",

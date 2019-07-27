@@ -1,18 +1,15 @@
-var expoSum = require('./expoSum.js');
+const {useDecimal} = require('./config');
+const expoSum = require('./expoSum.js');
+const panzoom = require('panzoom');
+
 const Decimal = require('decimal.js');
-
 window.Decimal = Decimal;
-var defaultCode = `function f(k) {
-  // Return \`f(k)\` part of exponential sum:
-  //
-  //   sum{k=1..n} e^(2 * PI * i * f(k))
-  // 
-  // See syntax help above for more info.
-
+var lastPoints;
+var defaultCode = useDecimal ? `function f(k) {
   return (new Decimal(k)).div(3);
-  // var l = Math.log(k);
-  // return l * l * l * l;
-}`
+}` : `function f(k) {
+  return k / 3;
+}`;
 
 var boundingBox;
 
@@ -41,6 +38,7 @@ var generatorOptions = {
   next: compileNextFunction(defaultCode),
   seed: seedPoint,
   stepsPerIteration: 10,
+  totalSteps: 20000,
   onFrame,
 };
 
@@ -55,15 +53,10 @@ var appState = {
   code,
   redraw,
 
-  getLineColor() { return lineColor },
-  setLineColor(r, g, b, a) { 
-    lineColor = `rgba(${r}, ${g}, ${b}, ${a})`; 
-    dirty();
-  },
-  getFillColor() { return fillColor; },
-  setFillColor(r, g, b, a) {
-    fillColor = `rgba(${r}, ${g}, ${b}, ${a})`; 
-    dirty();
+  getTotalSteps() { return generatorOptions.totalSteps; },
+  setTotalSteps(newValue) {
+    generatorOptions.totalSteps = getNumber(newValue, generatorOptions.totalSteps);
+    redraw();
   },
   getStepsPerIteration() { return generatorOptions.stepsPerIteration; },
   setStepsPerIteration(newValue) { 
@@ -82,7 +75,12 @@ var seedPoint = selectSeedPoint();
 module.exports = appState
 
 var lastLineRenderer;
+var transformMatrix = {};
 var canvas = document.getElementById('scene-canvas'); 
+var zoomer = panzoom(canvas, {
+  controller: canvasController(canvas, transformMatrix)
+});
+
 var ctx = canvas.getContext('2d'); 
 var width, height;
 init();
@@ -142,15 +140,22 @@ function onFrame(points) {
 }
 
 function drawPoints(points) {
+  lastPoints = points;
   ctx.beginPath()
   ctx.fillStyle = fillColor
   ctx.clearRect(0, 0, width, height);
   ctx.stroke();
-
+  
+  ctx.save();
+  
+  ctx.setTransform(
+    transformMatrix.scale, 
+    0, 0, transformMatrix.scale, transformMatrix.dx, transformMatrix.dy);
+    ctx.lineWidth = 1/transformMatrix.scale;
   ctx.beginPath();
   ctx.strokeStyle = lineColor;
-  points.forEach((point, index) => {
-    let pt = transform(point);
+  points.forEach((pt, index) => {
+    // let pt = transform(point);
     if (index) {
       ctx.lineTo(pt.x, pt.y);
     } else {
@@ -159,6 +164,7 @@ function drawPoints(points) {
   })
   ctx.stroke();
   ctx.closePath();
+  ctx.restore();
 }
 
 function transform(pt) {
@@ -192,4 +198,27 @@ function compileNextFunction(code) {
     console.error(e);
     return null;
   }
+}
+
+function canvasController(canvas, transform) {
+  var controller = {
+    applyTransform(newT) {
+      var pixelRatio = 1; // scene.getPixelRatio();
+
+      transform.dx = newT.x * pixelRatio;
+      transform.dy = newT.y * pixelRatio;
+      transform.scale = newT.scale;
+      transform.dirty = true;
+      if (lastLineRenderer.isDone()) {
+        // todo remove this.
+        drawPoints(lastPoints);
+      }
+      // scene.renderFrame()
+    },
+
+    getOwner() {
+      return canvas
+    }
+  }
+  return controller;
 }
