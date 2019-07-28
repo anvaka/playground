@@ -154,12 +154,17 @@ function drawPoints(points) {
     ctx.lineWidth = 1/transformMatrix.scale;
   ctx.beginPath();
   ctx.strokeStyle = lineColor;
+  const {minX, minY, maxX, maxY} = boundingBox;
+  const dx = (maxX - minX);
+  const dy = (maxY - minY);
+  const scale = Math.max(dx, dy);
+  
   points.forEach((pt, index) => {
     // let pt = transform(point);
     if (index) {
-      ctx.lineTo(pt.x, pt.y);
+      ctx.lineTo((pt.x - minX - dx/2)/scale, 1 - (pt.y - minY - dy / 2) / scale);
     } else {
-      ctx.moveTo(pt.x, pt.y);
+      ctx.moveTo((pt.x - minX - dx/2)/scale, 1 - (pt.y - minY - dy / 2) / scale);
     }
   })
   ctx.stroke();
