@@ -1,5 +1,5 @@
 const {useDecimal} = require('./config');
-const expoSum = require('./expoSum.js');
+const expoSum = require('./sumCalculator.js');
 const panzoom = require('panzoom');
 
 const Decimal = require('decimal.js');
