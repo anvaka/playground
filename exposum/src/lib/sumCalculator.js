@@ -1,45 +1,13 @@
-module.exports = expoSum;
+const cyclicArray = require("./cyclicArray");
+
 const {useDecimal} = require('./config');
 const Decimal = require('decimal.js');
 
 const PI_2 = useDecimal ? Decimal.acos(-1).times(2) : Math.PI * 2;
 
-function cyclicArray(maxSize) {
-  let points = [];
-  let startFrom = 0;
-  return {
-    push,
-    forEach,
-    get length() {
-      return points.length
-    }
-  }
+module.exports = sumCalculator;
 
-  function push(point) {
-    if (points.length >= maxSize) {
-      points[startFrom] = point;
-      startFrom += 1;
-      if (startFrom === maxSize) startFrom = 0;
-    } else {
-      points.push(point);
-    }
-  }
-
-  function forEach(callback) {
-    let index = startFrom;
-    let visited = 0;
-
-    while (visited < points.length) {
-      callback(points[index], visited);
-      index += 1;
-      visited += 1
-
-      if (index === maxSize) index = 0;
-    }
-  }
-}
-
-function expoSum(options) {
+function sumCalculator(options) {
   let points = cyclicArray(options.totalSteps || 10000);
   points.push({x: 0, y: 0});
   const getNextPoint = useDecimal ? getNextDecimalPoint : getNextFloatPoint;
