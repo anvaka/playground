@@ -8,29 +8,36 @@ const PI_2 = useDecimal ? Decimal.acos(-1).times(2) : Math.PI * 2;
 module.exports = sumCalculator;
 
 function sumCalculator(options) {
-  let points = cyclicArray(options.totalSteps || 10000);
-  points.push({x: 0, y: 0});
+  let frameCallback = Function.prototype;
+  let rafHandle;
+
+  let points;
   const getNextPoint = useDecimal ? getNextDecimalPoint : getNextFloatPoint;
 
-  let rafHandle;
-  let n = 1;
-  let dn = options.stepsPerIteration;
-  let sumLimit = options.totalSteps;
-  let next = options.next;
-  let px = 0, py = 0;
-  
-  let box = {
-    minX: Number.POSITIVE_INFINITY, maxX: Number.NEGATIVE_INFINITY,
-    minY: Number.POSITIVE_INFINITY, maxY: Number.NEGATIVE_INFINITY
-  };
+  let next;
+  let n;
+  let dn;
+  let sumLimit;
+  let px, py;
+  let box;
+
+  reset();
 
   return {
-    dispose,
+    stop,
+    reset,
     run,
     evaluateBoundingBox,
     getBoundingBox: () => box,
     getPoints: () => points,
     isDone() { return n >= sumLimit; }
+  }
+
+  function initialBoundingBox() {
+    return {
+      minX: Number.POSITIVE_INFINITY, maxX: Number.NEGATIVE_INFINITY,
+      minY: Number.POSITIVE_INFINITY, maxY: Number.NEGATIVE_INFINITY
+    };
   }
 
   function resetBoundingBox() {
@@ -47,6 +54,7 @@ function sumCalculator(options) {
   function evaluateBoundingBox() {
     px = 0;
     py = 0;
+    dn = options.stepsPerIteration;
     // resetBoundingBox();
     for (let i = 0; i < 100; ++i) {
       let pt = getNextPoint(i);
@@ -56,12 +64,25 @@ function sumCalculator(options) {
     py = 0;
   }
 
-  function run() {
+  function run(newFrameCallback) {
+    frameCallback = newFrameCallback;
     rafHandle = requestAnimationFrame(frame);
   }
 
-  function dispose() {
+  function stop() {
     cancelAnimationFrame(rafHandle);
+  }
+
+  function reset() {
+    next = options.next;
+    n = 1;
+    dn = options.stepsPerIteration;
+    sumLimit = options.totalSteps;
+    px = 0, py = 0;
+    
+    box = initialBoundingBox();
+    points = cyclicArray(options.totalSteps || 10000);
+    points.push({x: 0, y: 0});
   }
 
   function frame() {
@@ -74,7 +95,8 @@ function sumCalculator(options) {
       i += 1;
       n += 1;
     }
-    options.onFrame(points);
+
+    frameCallback(points);
     scheduleNextFrame();
   }
 
