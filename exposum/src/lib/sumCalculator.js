@@ -28,6 +28,9 @@ function sumCalculator(options) {
     reset,
     run,
     evaluateBoundingBox,
+    getOptions() {
+      return options;
+    },
     getBoundingBox: () => box,
     getPoints: () => points,
     isDone() { return n >= sumLimit; }
@@ -52,16 +55,16 @@ function sumCalculator(options) {
   };
 
   function evaluateBoundingBox() {
-    px = 0;
-    py = 0;
+    px = useDecimal ? Decimal(0) : 0; 
+    py = useDecimal ? Decimal(0) : 0;
     dn = options.stepsPerIteration;
     // resetBoundingBox();
     for (let i = 0; i < 100; ++i) {
       let pt = getNextPoint(i);
       extendBoundingBoxIfNeeded(pt.x, pt.y);
     }
-    px = 0;
-    py = 0;
+    px = useDecimal ? Decimal(0) : 0; 
+    py = useDecimal ? Decimal(0) : 0;
   }
 
   function run(newFrameCallback) {
@@ -78,25 +81,28 @@ function sumCalculator(options) {
     n = 1;
     dn = options.stepsPerIteration;
     sumLimit = options.totalSteps;
-    px = 0, py = 0;
+    px = useDecimal ? Decimal(0) : 0; 
+    py = useDecimal ? Decimal(0) : 0;
     
     box = initialBoundingBox();
-    points = cyclicArray(options.totalSteps || 10000);
+    points = cyclicArray(options.totalSteps);
     points.push({x: 0, y: 0});
   }
 
   function frame() {
     // resetBoundingBox();
     let i = 0;
+    let added = []
     while (i < dn) {
       let pt = getNextPoint(n);
       extendBoundingBoxIfNeeded(pt.x, pt.y);
-      points.push(pt);
+      // points.push(pt);
+      added.push(pt);
       i += 1;
       n += 1;
     }
 
-    frameCallback(points);
+    frameCallback(points, added);
     scheduleNextFrame();
   }
 
@@ -106,10 +112,10 @@ function sumCalculator(options) {
 
   function getNextDecimalPoint(n) {
     const phi = next(n).times(PI_2);
-    px += Number(phi.cos());
-    py += Number(phi.sin());
+    px = px.plus(phi.cos());
+    py = py.plus(phi.sin());
 
-    return {x: px, y: py}
+    return {x: Number(px), y: Number(py)}
   }
 
   function getNextFloatPoint(n) {

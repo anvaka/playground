@@ -3,6 +3,8 @@ const sumCalculator = require('./sumCalculator.js');
 const createScene = require('./scene');
 
 const Decimal = require('decimal.js');
+Decimal.set({ precision: 100, rounding: 8 })
+
 window.Decimal = Decimal;
 
 var defaultCode = useDecimal ? `function f(k) {

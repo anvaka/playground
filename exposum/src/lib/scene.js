@@ -1,18 +1,48 @@
 const panzoom = require('panzoom');
+const wgl = require('w-gl');
 
 module.exports = function createScene() {
   var lastSumCalculator;
   var transformMatrix = {};
-  var canvas = document.getElementById('scene-canvas');
-  var zoomer = panzoom(canvas, {
-    controller: canvasController(canvas, transformMatrix)
-  });
-
-  var ctx = canvas.getContext('2d');
   var width, height;
+  var canvas = document.getElementById('scene-canvas');
+  updateSize();
+
+  var webGLScene = wgl.scene(canvas, {
+      size: {
+        width,
+        height
+      }
+  });
+  webGLScene.setClearColor(12/255, 41/255, 82/255, 1)
+  webGLScene.setPixelRatio(1);
+
+  let initialSceneSize = 10;
+  webGLScene.setViewBox({
+    left:  -initialSceneSize,
+    top:   -initialSceneSize,
+    right:  initialSceneSize,
+    bottom: initialSceneSize,
+  })
+  let lines; // = new wgl.WireCollection(10);
+  // lines.add({
+  //   from: { x: 0, y: 0 },
+  //   to: { x: 10, y: 10 }
+  // })
+  // lines.add({
+  //   from: { x: 0, y: 0 },
+  //   to: { x: 10, y: 0 }
+  // })
+  // webGLScene.appendChild(lines);
+
+  // var zoomer = panzoom(canvas, {
+  //   controller: canvasController(canvas, transformMatrix)
+  // });
+
+  // var ctx = canvas.getContext('2d');
   var lineColor = 'rgba(255, 255, 255, 0.6)';
   var fillColor = 'rgba(27, 41, 74, 1.0)';
-  var lastPoints;
+  var lastPoints, lastPoint;
   var boundingBox;
 
   window.addEventListener('resize', redrawCurrentPoints);
@@ -39,17 +69,23 @@ module.exports = function createScene() {
     if (lastSumCalculator) {
       lastSumCalculator.stop();
       lastSumCalculator = null;
+      lastPoint = null;
     }
 
     lastSumCalculator = sumCalculator;
     lastSumCalculator.evaluateBoundingBox();
     boundingBox = lastSumCalculator.getBoundingBox();
-
+    let options = lastSumCalculator.getOptions();
+    if (lines) {
+      webGLScene.removeChild(lines);
+    }
+    lines = new wgl.WireCollection(options.totalSteps);
+    webGLScene.appendChild(lines);
     lastSumCalculator.run(onFrame);
   }
 
-  function onFrame(points) {
-    drawPoints(points);
+  function onFrame(points, newPoints) {
+    drawPoints(points, newPoints);
     return true;
   }
 
@@ -67,7 +103,26 @@ module.exports = function createScene() {
     canvas.height = height;
   }
 
-  function drawPoints(points) {
+  function drawPoints(points, newPoints) {
+    // lines.add({
+    //   from: { x: 0, y: 0 },
+    //   to: { x: 10, y: 0 }
+    // })
+    let addedPoints
+    if (newPoints) {
+      newPoints.forEach(point => {
+        if (lastPoint) {
+          lines.add({
+            from: {x: lastPoint.x, y: lastPoint.y},
+            to: {x: point.x, y: point.y}
+          });
+        }
+        lastPoint = point
+      })
+    }
+
+    webGLScene.renderFrame();
+    return;
     lastPoints = points;
     ctx.beginPath();
     ctx.fillStyle = fillColor;

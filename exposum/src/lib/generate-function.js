@@ -13,6 +13,7 @@ function generateRandomSum() {
 function getDivider() {
   let divider = Math.round((Math.random() * 100 + 2));
   // k/(6) + k * k * k /51;
+  // k/21 + k*k*k/27;  -- impossible loop
   // k + k * k * k /35; // dog
   // k/6 + k * k /7 + k * k * k/6 // running man
   // cross k/4 + k * k * k/18
