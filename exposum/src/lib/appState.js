@@ -40,7 +40,7 @@ var code = {
 
 var generatorOptions = {
   next: compileNextFunction(defaultCode),
-  stepsPerIteration: 10,
+  stepsPerIteration: 100,
   totalSteps: 20000,
 };
 

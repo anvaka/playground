@@ -1,3 +1,3 @@
 module.exports = {
-  useDecimal: true
+  useDecimal: false
 };

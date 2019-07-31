@@ -1,5 +1,3 @@
-const cyclicArray = require("./cyclicArray");
-
 const {useDecimal} = require('./config');
 const Decimal = require('decimal.js');
 
@@ -11,7 +9,6 @@ function sumCalculator(options) {
   let frameCallback = Function.prototype;
   let rafHandle;
 
-  let points;
   const getNextPoint = useDecimal ? getNextDecimalPoint : getNextFloatPoint;
 
   let next;
@@ -85,24 +82,20 @@ function sumCalculator(options) {
     py = useDecimal ? Decimal(0) : 0;
     
     box = initialBoundingBox();
-    points = cyclicArray(options.totalSteps);
-    points.push({x: 0, y: 0});
   }
 
   function frame() {
-    // resetBoundingBox();
     let i = 0;
     let added = []
     while (i < dn) {
       let pt = getNextPoint(n);
       extendBoundingBoxIfNeeded(pt.x, pt.y);
-      // points.push(pt);
       added.push(pt);
       i += 1;
       n += 1;
     }
 
-    frameCallback(points, added);
+    frameCallback(added);
     scheduleNextFrame();
   }
 
