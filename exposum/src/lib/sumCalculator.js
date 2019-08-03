@@ -12,9 +12,8 @@ function sumCalculator(options) {
   const getNextPoint = useDecimal ? getNextDecimalPoint : getNextFloatPoint;
 
   let next;
-  let n;
-  let dn;
-  let sumLimit;
+  let currentStep;
+  let maxTotalSteps;
   let px, py;
   let box;
 
@@ -24,44 +23,21 @@ function sumCalculator(options) {
     stop,
     reset,
     run,
-    evaluateBoundingBox,
     getOptions() {
       return options;
     },
     getBoundingBox: () => box,
     getPoints: () => points,
-    isDone() { return n >= sumLimit; }
+    isDone() { return currentStep >= maxTotalSteps; },
+    getCurrentStep() { return currentStep; },
+    getTotalSteps() { return maxTotalSteps; }
   }
 
   function initialBoundingBox() {
     return {
-      minX: Number.POSITIVE_INFINITY, maxX: Number.NEGATIVE_INFINITY,
-      minY: Number.POSITIVE_INFINITY, maxY: Number.NEGATIVE_INFINITY
+      minX: 0, maxX: 0,
+      minY: 0, maxY: 0
     };
-  }
-
-  function resetBoundingBox() {
-    box.minX = Number.POSITIVE_INFINITY; 
-    box.maxX = Number.NEGATIVE_INFINITY;
-    box.minY = Number.POSITIVE_INFINITY;
-    box.maxY = Number.NEGATIVE_INFINITY;
-
-    points.forEach((pt) => {
-      extendBoundingBoxIfNeeded(pt.x, pt.y);
-    });
-  };
-
-  function evaluateBoundingBox() {
-    px = useDecimal ? Decimal(0) : 0; 
-    py = useDecimal ? Decimal(0) : 0;
-    dn = options.stepsPerIteration;
-    // resetBoundingBox();
-    for (let i = 0; i < 100; ++i) {
-      let pt = getNextPoint(i);
-      extendBoundingBoxIfNeeded(pt.x, pt.y);
-    }
-    px = useDecimal ? Decimal(0) : 0; 
-    py = useDecimal ? Decimal(0) : 0;
   }
 
   function run(newFrameCallback) {
@@ -75,9 +51,8 @@ function sumCalculator(options) {
 
   function reset() {
     next = options.next;
-    n = 1;
-    dn = options.stepsPerIteration;
-    sumLimit = options.totalSteps;
+    currentStep = 1;
+    maxTotalSteps = options.totalSteps;
     px = useDecimal ? Decimal(0) : 0; 
     py = useDecimal ? Decimal(0) : 0;
     
@@ -85,14 +60,15 @@ function sumCalculator(options) {
   }
 
   function frame() {
-    let i = 0;
     let added = []
-    while (i < dn) {
-      let pt = getNextPoint(n);
+    let frameSteps = 0;
+    while (currentStep < maxTotalSteps && frameSteps < options.stepsPerIteration) {
+      let pt = getNextPoint(currentStep);
+      pt.y = -pt.y;
       extendBoundingBoxIfNeeded(pt.x, pt.y);
       added.push(pt);
-      i += 1;
-      n += 1;
+      currentStep += 1;
+      frameSteps += 1;
     }
 
     frameCallback(added);
@@ -100,7 +76,7 @@ function sumCalculator(options) {
   }
 
   function scheduleNextFrame() {
-    if (n < sumLimit) rafHandle = requestAnimationFrame(frame);
+    if (currentStep < maxTotalSteps) rafHandle = requestAnimationFrame(frame);
   }
 
   function getNextDecimalPoint(n) {

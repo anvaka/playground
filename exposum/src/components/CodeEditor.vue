@@ -71,7 +71,10 @@ function refreshEditor(isCollapsed) {
 @import './theme.styl'
 
 .code-editor {
-maxHeight = 320px;
+  .error {
+    white-space: normal;
+  }
+  maxHeight = 320px;
 
   .CodeMirror {
     height: auto;

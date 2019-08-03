@@ -8,12 +8,12 @@
 </template>
 
 <script>
-import { Chrome } from 'vue-color';
+import { Sketch  } from 'vue-color';
 export default {
   name: 'ColorPicker',
   props: ['color'],
   components: {
-    'chrome-color-picker': Chrome
+    'chrome-color-picker': Sketch
   },
   data() {
     return {

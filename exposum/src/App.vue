@@ -21,10 +21,26 @@
             </p> 
           </div>
           <code-editor :model='code' ></code-editor>
+          <div>
+            {{current}} / {{outOf}}
+          </div>
         </div>
 
         <div class='block'>
           <div class='title'>Settings</div>
+
+        <div class='row'>
+            <div class='col'>Line Color</div>
+            <div class="col">
+              <color-picker :color='lineColor' @changed='updateLineColor'></color-picker>
+            </div>
+          </div>
+          <div class='row'>
+            <div class='col'>Background color</div>
+            <div class="col">
+              <color-picker :color='fillColor' @changed='updateFillColor'></color-picker>
+            </div>
+          </div>
           <div class='row'>
             <div class='col'>Total steps</div>
             <div class='col'><input type='number' :step='stepsPerIterationDelta' v-model='totalSteps' @keyup.enter='onSubmit' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" ></div>
@@ -42,9 +58,23 @@
           </div>
           <div class='row help' v-if='stepsPerIterationHelp'>
             <div>
-              <p>How many iterations do we make per single frame?</p>
+              <p>How many iterations do we make per single rendering frame?</p>
             </div>
           </div>
+          <div class='row'>
+            <div class='col'>Buffer size</div>
+            <div class='col'><input type='number' :step='bufferSizeDelta' v-model='bufferSize' @keyup.enter='onSubmit' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" ></div>
+            <help-icon @show='bufferSizeHelp = !bufferSizeHelp' :class='{open: bufferSizeHelp}'></help-icon>
+          </div>
+          <div class='row help' v-if='bufferSizeHelp'>
+            <div>
+              <p>Maximum number of line endpoints rendered on screen at once. This attribute controls how many lines 
+                visible. When we render more than this number, the program reuses buffer, and overwrites old lines.
+                Which gives "snake-chasing-tail" effect.
+              </p>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -71,28 +101,49 @@ export default {
     HelpIcon,
     VueMathjax
   },
+  mounted() {
+    bus.on('progress', this.onProgress)
+  },
+  beforeDestroy() {
+    bus.off('progress', this.onProgress)
+  },
   data() {
     return {
       syntaxHelpVisible: false,
       settingsPanel: appState.settingsPanel,
       code: appState.code,
 
+      lineColor: appState.getLineColor(),
+      fillColor: appState.getFillColor(),
+
       stepsPerIteration: appState.getStepsPerIteration(),
       stepsPerIterationHelp : false,
 
       totalSteps: appState.getTotalSteps(),
-      totalStepsHelp: false
+      totalStepsHelp: false,
+
+      bufferSize: appState.getBufferSize(),
+      bufferSizeHelp: false,
+
+      current: 0,
+      outOf: 0
     }
   },
   computed: {
     stepsPerIterationDelta() { return exponentialStep(this.stepsPerIteration); },
     totalStepsDelta() { return exponentialStep(this.totalSteps); },
+    bufferSizeDelta() { return exponentialStep(this.bufferSize); }
   },
   watch: {
     stepsPerIteration(newValue) { appState.setStepsPerIteration(newValue); },
-    totalSteps(newValue) {appState.setTotalSteps(newValue); }
+    totalSteps(newValue) { appState.setTotalSteps(newValue); },
+    bufferSize(newValue) { appState.setBufferSize(newValue); }
   },
   methods: {
+    onProgress(current, outOf) {
+      this.current = current;
+      this.outOf = outOf;
+    },
     draw() { appState.redraw(); },
     toggleSettings() {
       this.settingsPanel.collapsed = !this.settingsPanel.collapsed;
@@ -107,6 +158,15 @@ export default {
         appState.settingsPanel.collapsed = true;
       }
       appState.redraw();
+    },
+
+    updateLineColor(c) {
+       appState.setLineColor(c.r, c.g, c.b, c.a); 
+       this.lineColor = appState.getLineColor();
+    },
+    updateFillColor(c) {
+       appState.setFillColor(c.r, c.g, c.b, c.a); 
+       this.fillColor = appState.getFillColor();
     },
   }
 }
@@ -337,13 +397,6 @@ pre.error {
 @media print {
   #app {
     display: none;
-  }
-  canvas {
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    position: absolute;
   }
 }
 </style>

@@ -1,34 +1,66 @@
-const panzoom = require('panzoom');
 const wgl = require('w-gl');
+const bus = require('../bus');
+const LineStrip = require('./lines/LineStrip').default;
 
 module.exports = function createScene() {
   let lastSumCalculator;
-  let width, height;
+  // let width, height;
   let touched = false;
   let lines;
-  let lastPoint = {x: 0, y: 0};
+  let lineA = 0.06, lineR = 255, lineG = 255, lineB = 255;
+  let sceneA = 1, sceneR = 12, sceneG = 41, sceneB = 82;
   let boundingBox;
 
   let canvas = document.getElementById('scene-canvas');
-  updateSize();
   listenToEvents();
 
-  let webGLScene = wgl.scene(canvas, {
-      size: {
-        width,
-        height
-      }
-  });
-  webGLScene.setClearColor(12/255, 41/255, 82/255, 1)
+  let webGLScene = wgl.scene(canvas, {});
+  webGLScene.setClearColor(sceneR/255, sceneG/255, sceneB/255, sceneA)
   webGLScene.setPixelRatio(1);
 
   window.addEventListener('resize', redrawCurrentPoints);
 
   return {
     setSumCalculator,
-    redrawCurrentPoints,
     restartCalculator,
-    dispose
+    redrawCurrentPoints,
+    dispose,
+    setClearColor,
+    getClearColor,
+    setLineColor,
+    getLineColor
+  }
+
+  function setClearColor(r, g, b, a) {
+    sceneR = r;
+    sceneG = g;
+    sceneB = b;
+    sceneA = Math.round(a * 100)/100;
+
+    webGLScene.setClearColor(sceneR/255, sceneG/255, sceneB/255, sceneA)
+  }
+
+  function setLineColor(r, g, b, a) {
+    lineR = r;
+    lineG = g;
+    lineB = b;
+    lineA = a;
+
+    if (lines) {
+      lines.color.r = lineR/255;
+      lines.color.g = lineG/255;
+      lines.color.b = lineB/255;
+      lines.color.a = lineA;
+      webGLScene.renderFrame();
+    }
+  }
+
+  function getLineColor() {
+    return `rgba(${lineR}, ${lineG}, ${lineB}, ${Math.round(lineA * 100)/100})`; 
+  }
+
+  function getClearColor() {
+    return `rgba(${sceneR}, ${sceneG}, ${sceneB}, ${sceneA})`; 
   }
 
   function dispose() {
@@ -50,8 +82,20 @@ module.exports = function createScene() {
 
   function setSumCalculator(sumCalculator) {
     touched = false;
-    updateSize();
     createSumCalculator(sumCalculator);
+  }
+
+  function createSumCalculator(sumCalculator) {
+    if (lastSumCalculator) {
+      lastSumCalculator.stop();
+      lastSumCalculator = null;
+    }
+
+    lastSumCalculator = sumCalculator;
+    // lastSumCalculator.evaluateBoundingBox();
+    // boundingBox = lastSumCalculator.getBoundingBox();
+    updateLines();
+    lastSumCalculator.run(drawPoints);
   }
 
   function restartCalculator() {
@@ -64,18 +108,6 @@ module.exports = function createScene() {
     lastSumCalculator.run(drawPoints);
   }
 
-  function createSumCalculator(sumCalculator) {
-    if (lastSumCalculator) {
-      lastSumCalculator.stop();
-      lastSumCalculator = null;
-    }
-
-    lastSumCalculator = sumCalculator;
-    lastSumCalculator.evaluateBoundingBox();
-    boundingBox = lastSumCalculator.getBoundingBox();
-    updateLines();
-    lastSumCalculator.run(drawPoints);
-  }
 
   function updateLines() {
     lastPoint = {x: 0, y: 0};
@@ -83,21 +115,17 @@ module.exports = function createScene() {
     if (lines) {
       webGLScene.removeChild(lines);
     }
-    lines = new wgl.WireCollection(options.totalSteps);
-    // lines.color.a = 0.4;
+    lines = new LineStrip(Math.min(options.bufferSize));
+    lines.color.r = lineR/255;
+    lines.color.g = lineG/255;
+    lines.color.b = lineB/255;
+    lines.color.a = lineA;
+    lines.add(0, 0);
     webGLScene.appendChild(lines);
   }
 
   function redrawCurrentPoints() {
-    updateSize();
     webGLScene.renderFrame();
-  }
-
-  function updateSize() {
-    width = window.innerWidth;
-    height = window.innerHeight;
-    canvas.width = width;
-    canvas.height = height;
   }
 
   function markTouched() {
@@ -105,27 +133,30 @@ module.exports = function createScene() {
   }
 
   function drawPoints(newPoints) {
+    if (!lastSumCalculator) {
+      return;
+    }
     if (newPoints) {
       newPoints.forEach(point => {
-        lines.add({
-          from: {x: lastPoint.x, y: lastPoint.y},
-          to: {x: point.x, y: point.y}
-        });
-        lastPoint = point
+        lines.add(point.x, point.y);
       })
     }
-    if (lastSumCalculator && !touched) {
+
+    if (!touched) {
       boundingBox = lastSumCalculator.getBoundingBox();
+      let dx = (boundingBox.maxX - boundingBox.minX) * 0.1;
+      let dy = (boundingBox.maxY - boundingBox.minY) * 0.1;
 
       webGLScene.setViewBox({
-        left:  boundingBox.minX,
-        top:   boundingBox.minY,
-        right:  boundingBox.maxX,
-        bottom: boundingBox.maxY,
+        left:  boundingBox.minX - dx,
+        top:   boundingBox.minY - dy,
+        right:  boundingBox.maxX + dx,
+        bottom: boundingBox.maxY + dy,
       })
     }
 
     webGLScene.renderFrame();
+    bus.fire('progress', lastSumCalculator.getCurrentStep(), lastSumCalculator.getTotalSteps())
     return;
   }
 };
