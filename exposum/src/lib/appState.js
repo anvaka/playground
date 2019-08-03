@@ -1,26 +1,44 @@
 const {useDecimal} = require('./config');
+const queryState = require('query-state');
+var qs = queryState({
+  code: 'x / 3',
+  bufferSize: 12000,
+  totalSteps: 30000,
+  spi: 500 // stepsPerIteration
+}, {
+  useSearch: true
+});
+
 const sumCalculator = require('./sumCalculator.js');
 const createScene = require('./scene');
 const {parse} = require('../js-arithmetics');
-
+const {parse:parseDecimal} = require('../decimal-arithmetics');
 const Decimal = require('decimal.js');
-Decimal.set({ precision: 100, rounding: 8 })
 window.Decimal = Decimal;
+Decimal.PI = Decimal.acos(-1);
+Decimal.E = Decimal(1).exp();
 
-var defaultCode = useDecimal ? `function f(k) {
-  return (new Decimal(k)).div(3);
-}` : `x / 3`;
 
 const scene = createScene();
+const persistedState = qs.get();
+
+let generatorOptions = {
+  next: null,
+  bufferSize: persistedState.bufferSize,
+  stepsPerIteration: persistedState.spi,
+  totalSteps: persistedState.totalSteps,
+};
+
 
 var code = {
-  code: defaultCode,
+  code: persistedState.code,
   error: null,
   isImmediate: false,
   setCode(newCode, immediate) {
     var newNext = compileNextFunction(newCode);
     if (!newNext) return; // error
 
+    qs.set('code', newCode);
     code.error = null;
     code.code = newCode;
 
@@ -36,13 +54,6 @@ var code = {
   }
 }
 
-var generatorOptions = {
-  next: compileNextFunction(defaultCode),
-  bufferSize: 90000,
-  stepsPerIteration: 500,
-  totalSteps: 3000000,
-};
-
 var appState = {
   code,
 
@@ -57,18 +68,21 @@ var appState = {
   getTotalSteps() { return generatorOptions.totalSteps; },
   setTotalSteps(newValue) {
     generatorOptions.totalSteps = getNumber(newValue, generatorOptions.totalSteps);
+    qs.set('totalSteps', generatorOptions.bufferSize);
     scene.restartCalculator();
   },
 
   getBufferSize() { return generatorOptions.bufferSize; },
   setBufferSize(newValue) {
     generatorOptions.bufferSize = getNumber(newValue, generatorOptions.bufferSize);
+    qs.set('bufferSize', generatorOptions.bufferSize);
     scene.restartCalculator();
   },
 
   getStepsPerIteration() { return generatorOptions.stepsPerIteration; },
   setStepsPerIteration(newValue) { 
     generatorOptions.stepsPerIteration = getNumber(newValue, generatorOptions.stepsPerIteration);
+    qs.set('spi', generatorOptions.stepsPerIteration);
     scene.redrawCurrentPoints()
   },
 
@@ -79,6 +93,10 @@ var appState = {
 
 module.exports = appState
 
+code.setCode(persistedState.code, true);
+// if (!code.error) {
+//   scene.
+// }
 
 function getNumber(str, defaultValue) {
   var parsed = Number.parseFloat(str);
@@ -86,11 +104,11 @@ function getNumber(str, defaultValue) {
   return parsed;
 }
 
-
 function compileNextFunction(newCode) {
   try {
     console.log('compiling ' + newCode);
-    const compiledCode = parse(newCode);
+    const compiledCode = useDecimal ? parseDecimal(newCode) : parse(newCode);
+    console.log('compiled: ' + compiledCode)
     var creator = new Function(`function f(x) {
   return ${compiledCode};
 }

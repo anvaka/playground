@@ -4,12 +4,11 @@ const LineStrip = require('./lines/LineStrip').default;
 
 module.exports = function createScene() {
   let lastSumCalculator;
-  // let width, height;
+  let lastFrame;
   let touched = false;
   let lines;
   let lineA = 0.06, lineR = 255, lineG = 255, lineB = 255;
   let sceneA = 1, sceneR = 12, sceneG = 41, sceneB = 82;
-  let boundingBox;
 
   let canvas = document.getElementById('scene-canvas');
   listenToEvents();
@@ -38,6 +37,7 @@ module.exports = function createScene() {
     sceneA = Math.round(a * 100)/100;
 
     webGLScene.setClearColor(sceneR/255, sceneG/255, sceneB/255, sceneA)
+    redrawCurrentPoints();
   }
 
   function setLineColor(r, g, b, a) {
@@ -66,6 +66,10 @@ module.exports = function createScene() {
   function dispose() {
     webGLScene.dispose();
     removeEventListeners();
+    if (lastFrame) {
+      cancelAnimationFrame(lastFrame);
+      lastFrame = 0;
+    }
   }
 
   function listenToEvents() {
@@ -86,77 +90,69 @@ module.exports = function createScene() {
   }
 
   function createSumCalculator(sumCalculator) {
-    if (lastSumCalculator) {
-      lastSumCalculator.stop();
-      lastSumCalculator = null;
-    }
-
     lastSumCalculator = sumCalculator;
-    // lastSumCalculator.evaluateBoundingBox();
-    // boundingBox = lastSumCalculator.getBoundingBox();
-    updateLines();
-    lastSumCalculator.run(drawPoints);
+    resetLines();
   }
 
   function restartCalculator() {
-    if (!lastSumCalculator) {
-      return;
-    }
-    lastSumCalculator.stop();
+    if (!lastSumCalculator) return;
     lastSumCalculator.reset();
-    updateLines();
-    lastSumCalculator.run(drawPoints);
+    resetLines();
   }
 
+  function resetLines() {
+    if (lines) webGLScene.removeChild(lines);
 
-  function updateLines() {
-    lastPoint = {x: 0, y: 0};
     let options = lastSumCalculator.getOptions();
-    if (lines) {
-      webGLScene.removeChild(lines);
-    }
     lines = new LineStrip(Math.min(options.bufferSize));
     lines.color.r = lineR/255;
     lines.color.g = lineG/255;
     lines.color.b = lineB/255;
     lines.color.a = lineA;
     lines.add(0, 0);
+    lastSumCalculator.setPolyLine(lines);
+
     webGLScene.appendChild(lines);
+    scheduleNextFrame();
+  }
+
+  function scheduleNextFrame() {
+    if (lastSumCalculator.isDone() || lastFrame) return;
+    lastFrame = requestAnimationFrame(nextFrame);
+  }
+
+  function nextFrame() {
+    lastFrame = 0;
+    lastSumCalculator.compute();
+    
+    updateBoundingBox();
+    webGLScene.renderFrame();
+    bus.fire('progress', lastSumCalculator.getCurrentStep(), lastSumCalculator.getTotalSteps())
+    scheduleNextFrame();
   }
 
   function redrawCurrentPoints() {
     webGLScene.renderFrame();
   }
 
-  function markTouched() {
-    touched = true;
-  }
+  function markTouched() { touched = true; }
 
-  function drawPoints(newPoints) {
-    if (!lastSumCalculator) {
+  function updateBoundingBox() {
+    if (touched || !lastSumCalculator.bboxChanged) {
       return;
     }
-    if (newPoints) {
-      newPoints.forEach(point => {
-        lines.add(point.x, point.y);
-      })
-    }
 
-    if (!touched) {
-      boundingBox = lastSumCalculator.getBoundingBox();
-      let dx = (boundingBox.maxX - boundingBox.minX) * 0.1;
-      let dy = (boundingBox.maxY - boundingBox.minY) * 0.1;
+    let boundingBox = lastSumCalculator.getBoundingBox();
+    let dx = (boundingBox.maxX - boundingBox.minX) * 0.1;
+    let dy = (boundingBox.maxY - boundingBox.minY) * 0.1;
 
-      webGLScene.setViewBox({
-        left:  boundingBox.minX - dx,
-        top:   boundingBox.minY - dy,
-        right:  boundingBox.maxX + dx,
-        bottom: boundingBox.maxY + dy,
-      })
-    }
+    webGLScene.setViewBox({
+      left:  boundingBox.minX - dx,
+      top:   boundingBox.minY - dy,
+      right:  boundingBox.maxX + dx,
+      bottom: boundingBox.maxY + dy,
+    })
 
-    webGLScene.renderFrame();
-    bus.fire('progress', lastSumCalculator.getCurrentStep(), lastSumCalculator.getTotalSteps())
-    return;
+    lastSumCalculator.bboxChanged = false;
   }
 };

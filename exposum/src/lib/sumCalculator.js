@@ -6,9 +6,6 @@ const PI_2 = useDecimal ? Decimal.acos(-1).times(2) : Math.PI * 2;
 module.exports = sumCalculator;
 
 function sumCalculator(options) {
-  let frameCallback = Function.prototype;
-  let rafHandle;
-
   const getNextPoint = useDecimal ? getNextDecimalPoint : getNextFloatPoint;
 
   let next;
@@ -16,22 +13,23 @@ function sumCalculator(options) {
   let maxTotalSteps;
   let px, py;
   let box;
+  let polyLine;
 
-  reset();
-
-  return {
-    stop,
+  const api = {
     reset,
-    run,
-    getOptions() {
-      return options;
-    },
+    compute,
+    setPolyLine,
+    bboxChanged: false,
+    getOptions() { return options; },
     getBoundingBox: () => box,
     getPoints: () => points,
     isDone() { return currentStep >= maxTotalSteps; },
     getCurrentStep() { return currentStep; },
     getTotalSteps() { return maxTotalSteps; }
   }
+
+  reset();
+  return api;
 
   function initialBoundingBox() {
     return {
@@ -40,13 +38,8 @@ function sumCalculator(options) {
     };
   }
 
-  function run(newFrameCallback) {
-    frameCallback = newFrameCallback;
-    rafHandle = requestAnimationFrame(frame);
-  }
-
-  function stop() {
-    cancelAnimationFrame(rafHandle);
+  function setPolyLine(newPolyLine) {
+    polyLine = newPolyLine;
   }
 
   function reset() {
@@ -57,26 +50,24 @@ function sumCalculator(options) {
     py = useDecimal ? Decimal(0) : 0;
     
     box = initialBoundingBox();
+    api.bboxChanged = true;
   }
 
-  function frame() {
-    let added = []
+  function compute() {
     let frameSteps = 0;
+    let start = window.performance.now();
     while (currentStep < maxTotalSteps && frameSteps < options.stepsPerIteration) {
       let pt = getNextPoint(currentStep);
       pt.y = -pt.y;
       extendBoundingBoxIfNeeded(pt.x, pt.y);
-      added.push(pt);
+      polyLine.add(pt.x, pt.y);
       currentStep += 1;
       frameSteps += 1;
+      let elapsed = window.performance.now() - start;
+      if (elapsed > 12) break;
     }
 
-    frameCallback(added);
-    scheduleNextFrame();
-  }
-
-  function scheduleNextFrame() {
-    if (currentStep < maxTotalSteps) rafHandle = requestAnimationFrame(frame);
+    return (currentStep < maxTotalSteps);
   }
 
   function getNextDecimalPoint(n) {
@@ -95,9 +86,9 @@ function sumCalculator(options) {
   }
 
   function extendBoundingBoxIfNeeded(px, py) {
-    if (px < box.minX) box.minX = px;
-    if (px > box.maxX) box.maxX = px;
-    if (py < box.minY) box.minY = py;
-    if (py > box.maxY) box.maxY = py;
+    if (px < box.minX) { box.minX = px; api.bboxChanged = true; }
+    if (px > box.maxX) { box.maxX = px; api.bboxChanged = true; }
+    if (py < box.minY) { box.minY = py; api.bboxChanged = true; }
+    if (py > box.maxY) { box.maxY = py; api.bboxChanged = true; }
   }
 }

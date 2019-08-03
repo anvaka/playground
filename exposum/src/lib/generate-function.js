@@ -1,25 +1,26 @@
 const {useDecimal} = require('./config');
-let generateFunction = useDecimal ? generateRandomDecimalSum : generateRandomSum;
+let generateFunction = generateRandomSum;
 generateFunction = generateRandomPeriod;
-
-function generateRandomDecimalSum() {
-  return `let kd = Decimal(k);
-return kd.div(${getDivider()}).plus(kd.times(kd).times(kd).div(${getDivider()}))`;
-}
+generateFunction = generateSimplePeriod;
 
 function generateRandomSum() {
-  return `return k/${getDivider()} + k*k*k/${getDivider()}`;
+  return `x/${getDivider()} + x*x*x/${getDivider()}`;
 }
 
 function generateRandomPeriod() {
-  return `x/${getDivider()} + sin(x*${getDivider()}/PI)`;
+  return `x/${getDivider()} + cos(x*${getDivider()}/PI)+ sin(x*${getDivider()}/PI)`;
 }
 
-function getDivider() {
-  let divider = Math.round((Math.random() * 100 + 2));
+function generateSimplePeriod() {
+  return `x/${getDivider(85)} + cos(x*${getDivider(100, 1000)})`;
+}
+
+function getDivider(cap = 100, exponent = 0) {
+  let value = Math.random() * cap + 2;
+  let divider = exponent === 0 ? Math.round(value) : Math.round(value * exponent) / exponent;
   // k/32 + k*k*k/62 - eye
   // k/(6) + k * k * k /51;
-  // k/21 + k*k*k/27;  -- impossible loop
+  // x/21 + x*x*x/27;  -- impossible loop
   // k + k * k * k /35; // dog
   // k/39 + k*k*k/39; // another dog
   //   return k/8 + k*k*k/24004; -- clown
@@ -33,7 +34,7 @@ function getDivider() {
   //   return k/3+Math.sin(k*2/Math.PI)+k * k/61;
   //   return k/3 + Math.sin(230*k/Math.E*Math.PI);  
     // return k/4+Math.sin(k*5/Math.PI);
-    // return k/3 + Math.sin(k*45/Math.PI) + Math.sin(k*5/Math.PI); // ring
+    // x/3 + sin(x*45/PI) + sin(x*5/PI); // ring
 // function f(k) {
 //   return k/3+Math.sin(k*5/Math.PI);  
 // }

@@ -3,66 +3,64 @@
 Expression
   = _ head:Term tail:(_ ("+" / "-") _ Term)* _ {
       return tail.reduce(function(result, element) {
-        if (element[1] === "+") { return result +' + ' + element[3]; }
-        if (element[1] === "-") { return result + ' - ' + element[3]; }
+        if (element[1] === "+") { return result +'.plus(' + element[3] + ')'; }
+        if (element[1] === "-") { return result + '.minus(' + element[3] + ')'; }
       }, head);
     }
 
 Term
-  = head:Factor tail:(_ ("*" / "/" / "^" / "%") _ Factor)* {
+  = head:Factor tail:(_ ("*" / "/" / "^") _ Factor)* {
       return tail.reduce(function(result, element) {
-        if (element[1] === "*") { return result + ' * ' + element[3]; }
-        if (element[1] === "/") { return result + ' / ' + element[3]; }
-        if (element[1] === "^") { return 'Math.pow(' + result + ', ' + element[3] + ')'; }
-        if (element[1] === "%") { return result + '%' + element[3]; }
+        if (element[1] === "*") { return result + '.times(' + element[3] + ')'; }
+        if (element[1] === "/") { return result + '.div(' + element[3] +')'; }
+        if (element[1] === "^") { return result + '.pow(' + element[3] + ')'; }
       }, head);
     }
 
 Factor
   = "(" _ expr:Expression _ ")" { return '(' + expr + ')'; }
-  / Number
+  / s:Number { return 'Decimal(' + s + ')'; }
   / trig
   / power
-  / root
 
 power = (log / ln / exp / pow)
 
 log = "log(" v:Expression ws ")"
-  { return "Math.log10(" + v + ")"; }
+  { return v+".log()"; }
 
 ln = "ln(" v:Expression ws ")"
-  { return "Math.log(" + v + ")"; }
+  { return v+".ln()"; }
 
 exp = "exp(" v:Expression ws ")"
-  { return "Math.exp(" + v + ")"; }
+  { return v+".exp()"; }
 
 pow = "pow(" ws base:Expression ws', 'ws exponent:Expression ')'
-  { return "Math.pow(" + base + ',' + exponent +')'; }
+  { return  base + '.pow(' + exponent +')'; }
 
 trig = (sin / cos / tan / sec / csc / cot)
 
 sin = "sin(" v:Expression ws ")"
-  { return "Math.sin(" + v + ")"; }
+  { return v+".sin()"; }
 
 cos = "cos(" v:Expression ws ")"
-  { return "Math.cos(" + v + ")"; }
+  { return v+".cos()"; }
 
 tan = "tan(" v:Expression ws ")"
-  { return "Math.tan(" + v + ")"; }
+  { return v+".tan()"; }
 
 sec = "sec(" v:Expression ws ")"
-  { return "1/Math.cos(" + v + ")"; }
+  { return "Decimal(1).div(" + v + ".cos())"; }
 
 csc = "csc(" v:Expression ws ")"
-  { return "1/Math.sin(" + v + ")"; }
+  { return "Decimal(1).div("+v+".sin()"; }
 
 cot = "cot(" v:Expression ws ")"
-  { return "1/Math.tan(" + v + ")"; }
+  { return "Decimal(1).div("+v+".tan())"; }
 
 root = (sqrt)
 
 sqrt = "sqrt(" v:Expression ws ")"
-  { return "Math.sqrt(" + v + ")"; }
+  { return v + ".sqrt()"; }
   
 // ==== Numbers ====
 Number = s:Scientific
@@ -82,14 +80,14 @@ Unsigned = v:([0-9]+)
   { return v.join(""); }
 Sign = '-'/'+'
 
-Constant = sign:Sign?_ v:(E / Pi) 
-  { return (sign ? sign : '') + v}
+Constant = sign:Sign? _ v:(E / Pi) 
+  { return (sign === '-' ? v + '.neg()' : '') + v}
 
 E = ('e' / 'E' )
-  { return "Math.E"; }
+  { return "Decimal.E"; }
 
 Pi = ('Pi' / 'pi' / 'PI' )
-  { return "Math.PI"; }
+  { return "Decimal.PI"; }
   
 Variable = sign:Sign?_ [xX]
   { return (sign ? sign : '') + "x"; }

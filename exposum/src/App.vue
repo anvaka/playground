@@ -10,8 +10,8 @@
           <div class='title'>Exponential Sum <a class='help-title' :class='{"syntax-visible": syntaxHelpVisible}' href='#' @click.prevent='syntaxHelpVisible = !syntaxHelpVisible' title='click to learn more about syntax'>syntax help</a></div>
           <div class='help' v-if='syntaxHelpVisible'>
             <p>An exponential sum is an expression of the form</p>
-            <vue-mathjax formula='$$\sum_{k=1}^n e^{2\pi i f(k)}$$'></vue-mathjax>
-            <vue-mathjax formula='Type the formula for $f(k)$ below using plain javascript code'></vue-mathjax>
+            <vue-mathjax formula='$$\sum_{x=1}^n e^{2\pi i f(x)}$$'></vue-mathjax>
+            <vue-mathjax formula='Type the formula for $f(x)$ below using plain javascript code'></vue-mathjax>
             <p>
             Sequence of partial sums is then plotted in the complex plane, with successive points joined by straight
             line segments

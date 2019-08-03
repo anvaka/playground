@@ -9,12 +9,14 @@
     "start": "npm run dev",
     "lint": "eslint --ext .js,.vue src",
     "build": "node build/build.js",
-    "grammar": "pegjs src/js-arithmetics.pegjs"
+    "grammar": "pegjs src/js-arithmetics.pegjs",
+    "grammar-dec": "pegjs src/decimal-arithmetics.pegjs"
   },
   "dependencies": {
     "decimal.js": "^10.2.0",
     "ngraph.events": "^1.0.0",
     "panzoom": "^8.1.1",
+    "query-state": "^4.2.0",
     "vue": "^2.5.2",
     "vue-codemirror-lite": "^1.0.4",
     "vue-color": "^2.7.0",
