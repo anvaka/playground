@@ -10,7 +10,7 @@ export default class LineStripCollection extends Element {
     this.drawCount = 0;
     this.madeFullCircle = false;
 
-    this.itemsPerLine = 2;
+    this.itemsPerLine = 3;
     this.capacity = capacity;
     this.nextElementIndex = 1;
     this._program = null;
@@ -31,6 +31,7 @@ export default class LineStripCollection extends Element {
     var offset = this.nextElementIndex * this.itemsPerLine;
     this.buffer[offset] = x;
     this.buffer[offset + 1] = y;
+    this.buffer[offset + 2] = (this.nextElementIndex % 10);
     this.nextElementIndex += 1;
     this.drawCount += 1;
 
@@ -38,6 +39,7 @@ export default class LineStripCollection extends Element {
       this.nextElementIndex = 1;
       this.buffer[0] = x;
       this.buffer[0 + 1] = y;
+      this.buffer[0 + 2] = this.buffer[offset + 2];
       this.madeFullCircle = true;
     }
   }

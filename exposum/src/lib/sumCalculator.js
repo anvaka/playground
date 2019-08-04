@@ -80,8 +80,9 @@ function sumCalculator(options) {
 
   function getNextFloatPoint(n) {
     const phi = next(n) * PI_2;
-    px += Math.cos(phi);
-    py += Math.sin(phi);
+    // const r = PI_2 * 12 * n;
+    px += Math.cos(phi); // * Math.cos(r) - Math.sin(phi) * Math.sin(r);
+    py += Math.sin(phi); // * Math.cos(r) + Math.cos(phi) * Math.sin(r);
     return {x: px, y: py}
   }
 

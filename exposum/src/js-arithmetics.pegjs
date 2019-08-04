@@ -25,7 +25,14 @@ Factor
   / power
   / root
 
-power = (log / ln / exp / pow)
+power = (log / ln / exp / pow / js)
+
+js = 
+ "abs(" v:Expression ws ")" { return Math.abs(v); }
+/ "ceil(" v:Expression ws ")" { return Math.abs(v); }
+/ "floor(" v:Expression ws ")" { return Math.floor(v); }
+/ "round(" v:Expression ws ")" { return Math.round(v); }
+/ "random(" v:Expression? ws ")" { return 'Math.random()' + (v ? '*' + v : '') ; }
 
 log = "log(" v:Expression ws ")"
   { return "Math.log10(" + v + ")"; }
@@ -39,7 +46,7 @@ exp = "exp(" v:Expression ws ")"
 pow = "pow(" ws base:Expression ws', 'ws exponent:Expression ')'
   { return "Math.pow(" + base + ',' + exponent +')'; }
 
-trig = (sin / cos / tan / sec / csc / cot)
+trig = (sin / cos / tan / sec / csc / cot / invtrig)
 
 sin = "sin(" v:Expression ws ")"
   { return "Math.sin(" + v + ")"; }
@@ -58,6 +65,10 @@ csc = "csc(" v:Expression ws ")"
 
 cot = "cot(" v:Expression ws ")"
   { return "1/Math.tan(" + v + ")"; }
+
+invtrig = "asin(" v:Expression ws ")" { return "Math.asin(" + v + ")"; }
+  / "acos(" v:Expression ws ")" { return "Math.acos(" + v + ")"; }
+  / "atan(" v:Expression ws ")" { return "Math.atan(" + v + ")"; }
 
 root = (sqrt)
 

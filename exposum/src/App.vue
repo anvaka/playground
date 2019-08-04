@@ -1,6 +1,8 @@
 <template>
   <div id="app">
     <div class='controls-container'>
+
+      <formula-editor :model='code' ></formula-editor>
       <div class='controls'>
         <a href='#' @click.prevent='toggleSettings' class='action'>{{(settingsPanel.collapsed ? "Edit..." : "Close Editor")}}</a>
         <a href='#' @click.prevent='generateNewFunction'>Randomize</a>
@@ -20,7 +22,7 @@
             <a href="#" @click.prevent='syntaxHelpVisible = false' class='close'>Close help</a>
             </p> 
           </div>
-          <code-editor :model='code' ></code-editor>
+          <!-- <code-editor :model='code' ></code-editor> -->
           <div>
             {{current}} / {{outOf}}
           </div>
@@ -85,6 +87,7 @@
 <script>
 import {VueMathjax} from 'vue-mathjax'
 import CodeEditor from './components/CodeEditor';
+import FormulaEditor from './components/FormulaEditor';
 import ColorPicker from './components/ColorPicker';
 import HelpIcon from './components/Icon';
 
@@ -97,6 +100,7 @@ export default {
   name: 'App',
   components: {
     CodeEditor,
+    FormulaEditor,
     ColorPicker,
     HelpIcon,
     VueMathjax

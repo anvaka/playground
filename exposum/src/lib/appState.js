@@ -68,7 +68,7 @@ var appState = {
   getTotalSteps() { return generatorOptions.totalSteps; },
   setTotalSteps(newValue) {
     generatorOptions.totalSteps = getNumber(newValue, generatorOptions.totalSteps);
-    qs.set('totalSteps', generatorOptions.bufferSize);
+    qs.set('totalSteps', generatorOptions.totalSteps);
     scene.restartCalculator();
   },
 

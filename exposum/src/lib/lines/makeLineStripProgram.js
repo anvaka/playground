@@ -5,15 +5,36 @@ import panzoomVS from 'w-gl/src/shaderGraph/panzoom.js';
 export default makeLineProgram;
 
 
-const lineVSSrc = shaderGraph.getVSCode([
-  panzoomVS
-]);
+const lineVSSrc = shaderGraph.getVSCode([{
+  globals() {
+    return `
+attribute vec3 aPosition;
+uniform vec2 uScreenSize;
+uniform mat4 uTransform;
+varying float vColor;
+`;
+  },
+  mainBody() {
+    return `
+  mat4 transformed = mat4(uTransform);
+
+  // Translate screen coordinates to webgl space
+  vec2 vv = 2.0 * uTransform[3].xy/uScreenSize;
+  transformed[3][0] = vv.x - 1.0;
+  transformed[3][1] = 1.0 - vv.y;
+  vec2 xy = 2.0 * aPosition.xy/uScreenSize;
+  gl_Position = transformed * vec4(xy.x, -xy.y, 0.0, 1.0);
+  vColor = aPosition.z;
+`
+  }
+}]);
 
 const lineFSSrc = `
 precision highp float;
 uniform vec4 uColor;
+varying float vColor;
 void main() {
-  gl_FragColor = uColor;
+  gl_FragColor = vec4(uColor.r,uColor.g, uColor.b, uColor.a);
 }
 `;
 
@@ -58,10 +79,11 @@ function makeLineProgram(gl, data) {
     gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
     gl.enableVertexAttribArray(locations.attributes.aPosition)
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-    gl.vertexAttribPointer(locations.attributes.aPosition, 2, gl.FLOAT, false, 0, 0)
+    const itemsPerVertex = 3;
+    gl.vertexAttribPointer(locations.attributes.aPosition, itemsPerVertex, gl.FLOAT, false, 0, 0)
 
     if (madeFullCircle) {
-      let elementsCount = ((data.length) / 2) - startFrom;
+      let elementsCount = ((data.length) / itemsPerVertex) - startFrom;
       gl.drawArrays(gl.LINE_STRIP, startFrom, elementsCount); 
       if (startFrom > 1) gl.drawArrays(gl.LINE_STRIP, 0, startFrom - 1); 
     } else {
