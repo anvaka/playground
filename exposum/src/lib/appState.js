@@ -14,6 +14,7 @@ const createScene = require('./scene');
 const {parse} = require('../js-arithmetics');
 const {parse:parseDecimal} = require('../decimal-arithmetics');
 const Decimal = require('decimal.js');
+let shouldIgnoreCodeChange = false;
 window.Decimal = Decimal;
 Decimal.PI = Decimal.acos(-1);
 Decimal.E = Decimal(1).exp();
@@ -35,6 +36,11 @@ var code = {
   error: null,
   isImmediate: false,
   setCode(newCode, immediate) {
+    if (shouldIgnoreCodeChange) {
+      shouldIgnoreCodeChange = false;
+      return;
+    }
+
     var newNext = compileNextFunction(newCode);
     if (!newNext) return; // error
 
@@ -57,6 +63,9 @@ var code = {
 var appState = {
   code,
 
+  ignoreNextEditorChange() {
+    shouldIgnoreCodeChange = true;
+  },
   getLineColor() { return scene.getLineColor() },
   setLineColor(r, g, b, a) { 
     scene.setLineColor(r, g, b, a);
@@ -66,16 +75,19 @@ var appState = {
     scene.setClearColor(r, g, b, a);
   },
   getTotalSteps() { return generatorOptions.totalSteps; },
-  setTotalSteps(newValue) {
+  setTotalSteps(newValue, doNotRestart) {
     generatorOptions.totalSteps = getNumber(newValue, generatorOptions.totalSteps);
     qs.set('totalSteps', generatorOptions.totalSteps);
+    if (doNotRestart) return;
     scene.restartCalculator();
   },
 
   getBufferSize() { return generatorOptions.bufferSize; },
-  setBufferSize(newValue) {
+  setBufferSize(newValue, doNotRestart) {
     generatorOptions.bufferSize = getNumber(newValue, generatorOptions.bufferSize);
     qs.set('bufferSize', generatorOptions.bufferSize);
+
+    if (doNotRestart) return;
     scene.restartCalculator();
   },
 

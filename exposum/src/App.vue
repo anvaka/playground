@@ -15,13 +15,13 @@
           href="#"
           @click.prevent="toggleSettings()"
           title="Click here to toggle visualization settings"
-        >{{syntaxHelpVisible ? 'Hide settings' : 'Show settings'}}</a>
+        >{{settingsPanel.collapsed ? 'Show settings' : 'Hide settings' }}</a>
         <a
           class="generate-trigger"
           href="#"
           @click.prevent="generateNewFunction"
           title="Click here to generate a new random image"
-        >create a new image</a>
+        >Create new image</a>
       </div>
       <div class="help" v-if="syntaxHelpVisible">
         <p>This website visualizes exponential sums. An exponential sum is an expression of the form</p>
@@ -209,11 +209,17 @@ export default {
     },
     toggleSettings() {
       this.settingsPanel.collapsed = !this.settingsPanel.collapsed;
+      this.syntaxHelpVisible = false;
       bus.fire("settings-collapsed", this.settingsPanel.collapsed);
     },
     generateNewFunction() {
-      var code = generateFunction();
-      appState.code.setCode(code);
+      var settings = generateFunction();
+      this.stepsPerIteration = settings.stepsPerIteration;
+      this.totalSteps = settings.totalSteps;
+      this.bufferSize = settings.bufferSize;
+      this.updateLineColor(settings.color);
+      appState.code.setCode(settings.code, true);
+      appState.ignoreNextEditorChange();
     },
     onSubmit() {
       if (isSmallScreen()) {
@@ -221,7 +227,6 @@ export default {
       }
       appState.redraw();
     },
-
     updateLineColor(c) {
       appState.setLineColor(c.r, c.g, c.b, c.a);
       this.lineColor = appState.getLineColor();
@@ -264,11 +269,19 @@ a {
   background: window-background;
   display: flex;
   flex-direction: row;
+  border-right: 1px solid secondary-border;
+  border-bottom: 1px solid secondary-border;
 
   a.generate-trigger {
     font-size: 16px;
     padding: 8px;
     flex: 1;
+    height: 42px;
+    display: flex;
+    align-self: stretch;
+    align-items: center;
+    justify-content: center;
+    border-left: 1px solid secondary-border;
 
     &:hover {
       background-color: #174e9b;
@@ -297,6 +310,8 @@ a.help-title {
   background-color: status-color;
   color: secondary-text;
   padding: 8px;
+  overflow: auto;
+  max-height: 100%;
 }
 
 #app {
@@ -313,6 +328,7 @@ a.help-title {
 .controls-container {
   z-index: 1;
   position: absolute;
+  background-color: #061838;
   max-height: 100%;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   width: 440px;
