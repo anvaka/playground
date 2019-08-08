@@ -60,7 +60,7 @@ function sumCalculator(options) {
       let pt = getNextPoint(currentStep);
       pt.y = -pt.y;
       extendBoundingBoxIfNeeded(pt.x, pt.y);
-      polyLine.add(pt.x, pt.y);
+      polyLine.add(pt.x, pt.y, 0x10000000);
       currentStep += 1;
       frameSteps += 1;
       let elapsed = window.performance.now() - start;
