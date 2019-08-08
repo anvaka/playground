@@ -1,5 +1,6 @@
 const {useDecimal} = require('./config');
 const Decimal = require('decimal.js');
+const { encodeColor } = require("./encodeColor");
 
 const PI_2 = useDecimal ? Decimal.acos(-1).times(2) : Math.PI * 2;
 
@@ -60,7 +61,7 @@ function sumCalculator(options) {
       let pt = getNextPoint(currentStep);
       pt.y = -pt.y;
       extendBoundingBoxIfNeeded(pt.x, pt.y);
-      polyLine.add(pt.x, pt.y, 0x10000000);
+      polyLine.add(pt.x, pt.y);
       currentStep += 1;
       frameSteps += 1;
       let elapsed = window.performance.now() - start;

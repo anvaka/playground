@@ -116,6 +116,8 @@ module.exports = function createScene() {
     scheduleNextFrame();
   }
 
+
+
   function scheduleNextFrame() {
     if (lastSumCalculator.isDone() || lastFrame) return;
     lastFrame = requestAnimationFrame(nextFrame);
