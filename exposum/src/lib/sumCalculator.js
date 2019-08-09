@@ -94,3 +94,11 @@ function sumCalculator(options) {
     if (py > box.maxY) { box.maxY = py; api.bboxChanged = true; }
   }
 }
+
+function getColor(r, g, b, a) {
+  r = Math.round(r * 255); 
+  g = Math.round(g * 255);
+  b = Math.round(b * 255);
+  a = Math.round(a * 255);
+  return (r << 24) | (g << 16) | (b << 8) | a;
+}

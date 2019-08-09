@@ -9,17 +9,22 @@ module.exports = function createScene() {
   let lines;
   let lineA = 0.06, lineR = 255, lineG = 255, lineB = 255;
   let sceneA = 1, sceneR = 12, sceneG = 41, sceneB = 82;
-
   let canvas = document.getElementById('scene-canvas');
-  listenToEvents();
+  let webGLScene;
 
-  let webGLScene = wgl.scene(canvas, {});
-  webGLScene.setClearColor(sceneR/255, sceneG/255, sceneB/255, sceneA)
-  webGLScene.setPixelRatio(1);
+  let webGLEnabled = wgl.isWebGLEnabled(canvas);
+  if (webGLEnabled) {
+    listenToEvents();
 
-  window.addEventListener('resize', redrawCurrentPoints);
+    webGLScene = wgl.scene(canvas, {});
+    webGLScene.setClearColor(sceneR/255, sceneG/255, sceneB/255, sceneA)
+    webGLScene.setPixelRatio(1);
+
+    window.addEventListener('resize', redrawCurrentPoints);
+  }
 
   return {
+    webGLEnabled,
     setSumCalculator,
     restartCalculator,
     redrawCurrentPoints,

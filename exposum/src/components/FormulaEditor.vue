@@ -4,7 +4,7 @@
     <div class='formula math'>𝑓(x) = </div>
     <div class='input-container'>
       <div class='syntax math offset' v-html='codeHighlight' ref='syntax'></div>
-      <input class='math offset' type="text" v-model='model.code' ref='editor' @keydown.capture="syncScroll" @keyup="syncScroll"> 
+      <input class='math offset' type="text" v-model='model.code' ref='editor' @keydown.capture="handleKeyDown" @keyup="syncScroll"> 
     </div>
   </div>
     <div class='error-container'>
@@ -35,6 +35,29 @@ export default {
 
       syntax.scrollLeft = editor.scrollLeft;
     },
+    handleKeyDown(e) {
+      this.syncScroll();
+      let direction = 0;
+      if (e.keyCode === 38) { // arrow up
+        direction = 1;
+      } else if (e.keyCode === 40) {
+        direction = -1; // arrow down
+      }
+      if (direction) {
+        e.preventDefault();
+        let {value, selectionStart} = this.$refs.editor;
+        let result = queryNumberAndCursor(value, selectionStart)
+        if (result) {
+          const prefix = value.substring(0, result.from);
+          const suffix = value.substring(result.to + 1);
+          const newCode = (prefix + (result.number + direction) + suffix)
+          this.model.setCode(newCode);
+          this.$nextTick(() => {
+            setCaretPosition(this.$refs.editor, selectionStart);
+          })
+        }
+      }
+    }
   },
 
   watch: {
@@ -55,6 +78,49 @@ export default {
 }
 function evaluateRule(code, rule) {
   return code.replace(rule.pattern, match => `<span class=${rule.className}>${match}</span>`);
+}
+
+function queryNumberAndCursor(value, from) {
+  return (getNumber(value, from) || getNumber(value, from - 1));
+}
+
+function getNumber(string, at) {
+  if (!string || at < 0 || string.length < at) return;
+  if (!isDigitOrDot(string[at])) return;
+  let from = at;
+  while (isDigitOrDot(string[from - 1])) from -= 1;
+
+  let to = at;
+  while (isDigitOrDot(string[to + 1])) to += 1;
+
+  return {
+    from, 
+    to, 
+    number: Number.parseFloat(string.substring(from, to + 1)),
+  }
+}
+
+function isDigitOrDot(ch) {
+  return ch && ch.match(/[0-9.]/);
+}
+
+function setCaretPosition(elem, caretPos) {
+  if(elem === null) {
+    return;
+  }
+  if(elem.createTextRange) {
+      var range = elem.createTextRange();
+      range.move('character', caretPos);
+      range.select();
+  }
+  else {
+      if(elem.selectionStart) {
+          elem.focus();
+          elem.setSelectionRange(caretPos, caretPos);
+      }
+      else
+          elem.focus();
+  }
 }
 
 </script>

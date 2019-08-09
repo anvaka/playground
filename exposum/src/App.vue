@@ -1,13 +1,21 @@
 <template>
   <div id="app">
-    <div class="controls-container">
+    <div v-if='!webGLEnabled'>
+      <div class='absolute no-webgl'>
+        <h4>WebGL is not enabled :(</h4>
+        <p>This website needs <a href='https://en.wikipedia.org/wiki/WebGL' class='highlighted'>WebGL</a> to render visualization.
+        </p> <p>
+        You can try another browser. If problem persists - very likely your video card isn't supported then.
+        </p>
+      </div>
+    </div>
+    <div class="controls-container" v-if='webGLEnabled'>
       <formula-editor :model="code" @toggle-settings="toggleSettings()"></formula-editor>
       <a
         href="#"
         class="help-title"
-        @click.prevent="syntaxHelpVisible = !syntaxHelpVisible"
+        @click.prevent='aboutVisible = !aboutVisible'
         title="click to learn more about this website"
-        :class="{'syntax-visible': syntaxHelpVisible}"
       >what is this?</a>
       <div class="status-bar">
         <a
@@ -23,24 +31,7 @@
           title="Click here to generate a new random image"
         >Create new image</a>
       </div>
-      <div class="help" v-if="syntaxHelpVisible">
-        <p>This website visualizes exponential sums. An exponential sum is an expression of the form</p>
-        <vue-mathjax formula="$$\sum_{x=1}^n e^{2\pi i f(x)}$$"></vue-mathjax>
-        <p>Which translates to complex plane as</p>
-        <vue-mathjax formula="$$x = \cos(2\pi f(x))\\y = sin(2\pi f(x))$$"></vue-mathjax>
-        <p>Sequence of partial sums is plotted as sequence of connected points by this visualization.</p>
-        <p>
-          <vue-mathjax formula="Type the formula for $f(x)$ above to generate a new visualization"></vue-mathjax>
-        </p>
-        <p>
-          <a href="#" @click.prevent="syntaxHelpVisible = false" class="close">Close help</a>
-        </p>
-      </div>
-      <!-- <div class='block'>
-          <div>
-            {{current}} / {{outOf}}
-          </div>
-      </div>-->
+
       <div class="settings" v-show="!settingsPanel.collapsed">
         <div class="block">
           <div class="title">Settings</div>
@@ -126,7 +117,9 @@
         </div>
       </div>
     </div>
-    <a href="https://github.com/anvaka/exposum" class="about-link">Source code</a>
+
+    <about @close='aboutVisible = false' v-if='aboutVisible'></about>
+    <a href="https://github.com/anvaka/e-sum" class="about-link">Source code</a>
   </div>
 </template>
 
@@ -134,6 +127,7 @@
 import { VueMathjax } from "vue-mathjax";
 import FormulaEditor from "./components/FormulaEditor";
 import ColorPicker from "./components/ColorPicker";
+import About from "./components/About";
 import HelpIcon from "./components/Icon";
 
 var isSmallScreen = require("./lib/isSmallScreen");
@@ -145,6 +139,7 @@ export default {
   name: "App",
   components: {
     FormulaEditor,
+    About,
     ColorPicker,
     HelpIcon,
     VueMathjax
@@ -157,7 +152,8 @@ export default {
   },
   data() {
     return {
-      syntaxHelpVisible: false,
+      aboutVisible: false,
+      webGLEnabled: appState.webGLEnabled,
       settingsPanel: appState.settingsPanel,
       code: appState.code,
 
@@ -209,7 +205,7 @@ export default {
     },
     toggleSettings() {
       this.settingsPanel.collapsed = !this.settingsPanel.collapsed;
-      this.syntaxHelpVisible = false;
+      this.aboutVisible = false;
       bus.fire("settings-collapsed", this.settingsPanel.collapsed);
     },
     generateNewFunction() {
@@ -253,6 +249,17 @@ function exponentialStep(value) {
 
 status-color = #1B294A;
 
+.no-webgl {
+  width: 100%;
+  color: hsla(215, 37%, 55%, 1);
+  flex-direction: column; text-align: center;
+  padding: 12px;
+}
+.no-webgl h4 {
+  margin: 7px 0;
+  font-size: 24px;
+}
+
 * {
   box-sizing: border-box;
   -webkit-touch-callout: none;
@@ -294,6 +301,9 @@ a {
     color: white;
     font-style: normal;
   }
+}
+.absolute {
+  position: absolute;
 }
 
 a.help-title {

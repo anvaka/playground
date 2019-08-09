@@ -36,6 +36,8 @@ var code = {
   error: null,
   isImmediate: false,
   setCode(newCode, immediate) {
+    if (!appState.webGLEnabled) return;
+
     if (shouldIgnoreCodeChange) {
       shouldIgnoreCodeChange = false;
       return;
@@ -62,6 +64,7 @@ var code = {
 
 var appState = {
   code,
+  webGLEnabled: scene.webGLEnabled,
 
   ignoreNextEditorChange() {
     shouldIgnoreCodeChange = true;
@@ -106,9 +109,6 @@ var appState = {
 module.exports = appState
 
 code.setCode(persistedState.code, true);
-// if (!code.error) {
-//   scene.
-// }
 
 function getNumber(str, defaultValue) {
   var parsed = Number.parseFloat(str);
