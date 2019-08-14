@@ -26,7 +26,7 @@ function processNext() {
         posts
       })
     })
-    .then(_ => wait(3000))
+    .then(() => wait(3000))
     .then(processNext)
 }
 
