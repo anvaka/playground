@@ -18,13 +18,17 @@ function processSubreddit(subredditSnapshot) {
 }
 
 function processPost(post, currentTime) {
-  let postCreated = new Date(post.created_utc * 1000 + utcOffset)
-  if (currentTime - postCreated > maxPostLifeSpan) return;
+  let postCreated = new Date(post.created_utc * 1000)
+  let elapsed = currentTime - postCreated;
+  if (elapsed > maxPostLifeSpan) return;
+  let fiveMinutes = 5 * 60 * 1000;
+  let band = Math.floor(elapsed/fiveMinutes);
 
   let postDataPoints = getOrCreatePostDataPoints(post.permalink)
   postDataPoints.push({
     date: currentTime,
     score: post.score,
+    band,
     comments: post.num_comments
   })
 }
@@ -40,14 +44,14 @@ function getOrCreatePostDataPoints(postId) {
 }
 
 function saveSeries() {
-  console.log('post_id,date,score,comments');
+  console.log('post_id,date,band,score,comments');
   posts.forEach((points, postId) => printPostPoints(points, postId))
 }
 
 function printPostPoints(points, postId) {
   console.log(
     points.map(x => [
-        postId, x.date.toISOString(), x.score, x.comments
+        postId, x.date.toISOString(), x.band, x.score, x.comments
       ].join(',')
     ).join('\n')
   );
