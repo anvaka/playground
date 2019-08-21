@@ -3,10 +3,8 @@ let forEachRecord = require('./lib/forEachRecord');
 let inputFileName = 'subreddits.json';
 let subreddit = 'dataisbeautiful';
 
-let utcOffset = (new Date()).getTimezoneOffset()*60000;
 let maxPostLifeSpan = 24 * 60 * 60 * 1000;
 let posts = new Map();
-let series = [];
 
 forEachRecord(inputFileName, subredditSnapshot => {
   if (subredditSnapshot.name === subreddit) processSubreddit(subredditSnapshot)
