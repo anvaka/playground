@@ -25,9 +25,9 @@ function processPost(post, currentTime) {
   let postDataPoints = getOrCreatePostDataPoints(post.permalink)
   postDataPoints.push({
     date: currentTime,
-    score: post.score,
+    score: post.score || 0,
     band,
-    comments: post.num_comments
+    comments: post.num_comments || 0
   })
 }
 
