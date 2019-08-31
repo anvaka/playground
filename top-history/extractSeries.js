@@ -1,7 +1,7 @@
 let forEachRecord = require('./lib/forEachRecord');
 
 let inputFileName = 'subreddits.json';
-let subreddit = 'dataisbeautiful';
+let subreddit = 'math';
 
 let maxPostLifeSpan = 24 * 60 * 60 * 1000;
 let posts = new Map();
@@ -12,24 +12,29 @@ forEachRecord(inputFileName, subredditSnapshot => {
 
 function processSubreddit(subredditSnapshot) {
   let currentTime = new Date(subredditSnapshot.time);
-  subredditSnapshot.posts.forEach(post => processPost(post, currentTime));
+  let position = 1;
+  subredditSnapshot.posts.forEach((post) => processPost(post, currentTime));
+
+  function processPost(post, currentTime) {
+    let postCreated = new Date(post.created_utc * 1000)
+    let elapsed = currentTime - postCreated;
+    if (elapsed > maxPostLifeSpan) return;
+    let fiveMinutes = 5 * 60 * 1000;
+    let band = Math.floor(elapsed/fiveMinutes);
+
+    let postDataPoints = getOrCreatePostDataPoints(post.permalink)
+    postDataPoints.push({
+      date: currentTime,
+      score: post.score || 0,
+      band,
+      position,
+      comments: post.num_comments || 0
+    });
+
+    position += 1;
+  }
 }
 
-function processPost(post, currentTime) {
-  let postCreated = new Date(post.created_utc * 1000)
-  let elapsed = currentTime - postCreated;
-  if (elapsed > maxPostLifeSpan) return;
-  let fiveMinutes = 5 * 60 * 1000;
-  let band = Math.floor(elapsed/fiveMinutes);
-
-  let postDataPoints = getOrCreatePostDataPoints(post.permalink)
-  postDataPoints.push({
-    date: currentTime,
-    score: post.score || 0,
-    band,
-    comments: post.num_comments || 0
-  })
-}
 
 function getOrCreatePostDataPoints(postId) {
   let points = posts.get(postId);
@@ -42,14 +47,14 @@ function getOrCreatePostDataPoints(postId) {
 }
 
 function saveSeries() {
-  console.log('post_id,date,band,score,comments');
+  console.log('post_id,date,band,score,comments,position');
   posts.forEach((points, postId) => printPostPoints(points, postId))
 }
 
 function printPostPoints(points, postId) {
   console.log(
     points.map(x => [
-        postId, x.date.toISOString(), x.band, x.score, x.comments
+        postId, x.date.toISOString(), x.band, x.score, x.comments, x.position
       ].join(',')
     ).join('\n')
   );
