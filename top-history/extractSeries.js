@@ -1,7 +1,7 @@
 let forEachRecord = require('./lib/forEachRecord');
 
-let inputFileName = 'subreddits.json';
-let subreddit = 'math';
+let inputFileName = process.argv[2] || 'subreddits.json';
+let subreddit = process.argv[3] || 'dataisbeautiful';
 
 let maxPostLifeSpan = 24 * 60 * 60 * 1000;
 let posts = new Map();
