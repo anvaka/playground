@@ -11,7 +11,12 @@ forEachRecord(inputFileName, subredditSnapshot => {
 }).then(dump);
 
 function processSubreddit(subredditSnapshot) {
-  if (all.length < 50) all.push(subredditSnapshot);
+  const time = new Date(subredditSnapshot.time);
+  subredditSnapshot.posts = subredditSnapshot.posts.filter(post => {
+    const within24Hours = Math.abs(time - new Date(post.created_utc * 1000)) < 24*60*60*1000
+    return within24Hours && post.score;
+  })
+  all.push(subredditSnapshot);
 }
 
 function dump() {
