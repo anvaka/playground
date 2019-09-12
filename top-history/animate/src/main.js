@@ -2,7 +2,11 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
 import App from './App'
-// import data from '../static/posts_dataisbeautiful.json';
+
+import bands from '../static/coeff.json';
+import story from '../static/values.json'
+window.bands = bands;
+window.story = story;
 
 Vue.config.productionTip = false
 
