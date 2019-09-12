@@ -2,7 +2,7 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
 import App from './App'
-import data from '../static/posts_dataisbeautiful.json';
+// import data from '../static/posts_dataisbeautiful.json';
 
 Vue.config.productionTip = false
 
@@ -13,7 +13,7 @@ new Vue({
   template: '<App/>'
 })
 
-runAnimation(document.getElementById('canvas'), data)
+// runAnimation(document.getElementById('canvas'), data)
 
 function runAnimation(canvas, data) {
   const ctx = canvas.getContext('2d');
