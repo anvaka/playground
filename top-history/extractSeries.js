@@ -20,9 +20,9 @@ function processSubreddit(subredditSnapshot) {
     let elapsed = currentTime - postCreated;
     if (elapsed > maxPostLifeSpan) return;
     let fiveMinutes = 5 * 60 * 1000;
-    let band = Math.floor(elapsed/fiveMinutes);
 
     let postDataPoints = getOrCreatePostDataPoints(post.permalink)
+    let band = Math.round(elapsed/fiveMinutes);
     postDataPoints.push({
       date: currentTime,
       score: post.score || 0,
