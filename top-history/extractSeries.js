@@ -24,29 +24,50 @@ function processSubreddit(subredditSnapshot) {
 
     let postDataPoints = getOrCreatePostDataPoints(post.permalink)
     let band = Math.round(elapsed/fiveMinutes);
-    let prevPoint = postDataPoints[postDataPoints.length - 1];
-    const score = post.score || 0;
-    let velocity = getVelocity(prevPoint, band, score);
+    const nextScore = post.score || 0;
+    const nextComments = post.num_comments || 0;
 
-    postDataPoints.push({
-      date: currentTime,
-      band,
-      score,
-      velocity,
-      position,
-      comments: post.num_comments || 0
-    });
+    if (postDataPoints.length === 0 && band > 0) {
+      postDataPoints.push({
+        date: currentTime,
+        band: band,
+        score: nextScore,
+        position,
+        comments: nextComments,
+        velocity: 0
+      })
+      return;
+    }
+
+    let prevPoint = postDataPoints[postDataPoints.length - 1] || {
+      date: (new Date(currentTime)).setMilliseconds(-fiveMinutes),
+      band: -1,
+      score: 0,
+      comments: 0,
+    };
+
+    let bandDiff = (band - prevPoint.band);
+    let velocity = (nextScore - prevPoint.score)/bandDiff;
+    let dComments = (nextComments - prevPoint.comments)/bandDiff;
+    while (bandDiff > 0) {
+      let time = new Date(prevPoint.date);
+      time.setMilliseconds(fiveMinutes);
+      let nextPoint = {
+        date: time,
+        band: prevPoint.band + 1,
+        score: prevPoint.score + velocity,
+        position,
+        comments: prevPoint.comments + dComments,
+        velocity: velocity
+      };
+      postDataPoints.push(nextPoint);
+      prevPoint = nextPoint;
+      bandDiff -= 1;
+    }
 
     position += 1;
   }
 }
-
-function getVelocity(prevPoint, currentBand, currentScore) {
-  if (!prevPoint) return 0;
-  let bandChange = currentBand - prevPoint.band;
-  return (currentScore - prevPoint.score) / bandChange;
-}
-
 
 function getOrCreatePostDataPoints(postId) {
   let points = posts.get(postId);
@@ -59,7 +80,7 @@ function getOrCreatePostDataPoints(postId) {
 }
 
 function saveSeries() {
-  console.log('post_id,date,band,score,score_final,velocity,comments,position');
+  console.log('post_id,date,band,score,scoreAt24h,velocity,comments,position');
   posts.forEach((points, postId) => printPostPoints(points, postId))
 }
 
@@ -68,7 +89,6 @@ function printPostPoints(points, postId) {
   if (scoreAt24hMark === undefined) {
     return; // we couldn't collect this, so can't learn from it.
   }
-  return;
   console.log(
     points.map(x => {
       return [
@@ -79,6 +99,15 @@ function printPostPoints(points, postId) {
 }
 
 function getScoreAt24HMark(points) {
+  // if (points.length < 288) return;
+  // for (let i = 0; i < 288; ++i) {
+  //   if (points[i].band !== i) {
+  //     debugger;
+  //     return;
+  //   }
+  // }
+  // return points[287].score;
+
   for (let i = points.length - 1; i > 0; i--) {
     let post = points[i];
     if (post.band === 287) return post.score;
