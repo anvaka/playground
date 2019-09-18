@@ -3,7 +3,7 @@
 import Vue from 'vue'
 import App from './App'
 
-import bands from '../static/coeff.json';
+import bands from '../static/coeff_split.json';
 import story from '../static/values.json'
 window.bands = bands;
 window.story = story;
