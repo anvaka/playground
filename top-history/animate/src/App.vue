@@ -91,7 +91,9 @@ function createDecayingSeriesBuffer(trueSeries, count) {
 function makePredictions(band, score, appendToSeries) {
   let threshold = window.bands.split[band];
   let x = score;
-  const model = (score < threshold ? window.bands.low : window.bands.high)[band];
+  let model = (score < threshold ? window.bands.low : window.bands.high)[band];
+  model = window.bands.all[band];
+
   let values = [];
   for (let i = 0; i < band; ++i) {
     values.push('-');
