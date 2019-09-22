@@ -1,3 +1,4 @@
+const fs = require('fs');
 let forEachRecord = require('./lib/forEachRecord');
 
 let inputFileName = process.argv[2] || 'subreddits.json';
@@ -5,6 +6,7 @@ let subreddit = process.argv[3] || 'dataisbeautiful';
 
 let maxPostLifeSpan = 24 * 60 * 60 * 1000;
 let posts = new Map();
+let saveScoresOnly = true;
 
 forEachRecord(inputFileName, subredditSnapshot => {
   if (subredditSnapshot.name === subreddit) processSubreddit(subredditSnapshot)
@@ -55,7 +57,7 @@ function processSubreddit(subredditSnapshot) {
       let nextPoint = {
         date: time,
         band: prevPoint.band + 1,
-        score: prevPoint.score + velocity,
+        score: Math.round((prevPoint.score + velocity) * 100)/100,
         position,
         comments: prevPoint.comments + dComments,
         velocity: velocity
@@ -80,6 +82,38 @@ function getOrCreatePostDataPoints(postId) {
 }
 
 function saveSeries() {
+  if (saveScoresOnly) {
+    saveScores();
+  } else {
+    saveCSV();
+  }
+}
+
+function saveScores() {
+  const bands = [];
+  const postIdToIndex = {}
+  let index = 0;
+  posts.forEach((points, postId) => {
+    postIdToIndex[postId] = index++;
+  });
+
+  posts.forEach((points, postId) => {
+    let postIndex = postIdToIndex[postId];
+    points.map(x => {
+      let bandPost = bands[x.band];
+      if (!bandPost) bandPost = bands[x.band] = {};
+      bandPost[postIndex] = x.score;
+    });
+  });
+  const scoresFileName = 'scores.json';
+  console.log('saving scores to ' + scoresFileName);
+  fs.writeFileSync(scoresFileName, JSON.stringify(bands));
+  const postIndexFileName = 'postIndex.json';
+  console.log('saving post index to ' + postIndexFileName);
+  fs.writeFileSync(postIndexFileName, JSON.stringify(postIdToIndex));
+}
+
+function saveCSV() {
   console.log('post_id,date,band,score,scoreAt24h,velocity,comments,position');
   posts.forEach((points, postId) => printPostPoints(points, postId))
 }
