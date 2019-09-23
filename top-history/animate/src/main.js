@@ -2,21 +2,25 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
 import App from './App'
+import createPredictor from './lib/predictor';
 
-import bands from '../static/coeff_split.json';
-import story from '../static/values.json'
-window.bands = bands;
-window.story = story;
+fetch('static/scores.bin').then(response => {
+  return response.arrayBuffer();
+}).then(buffer => {
+  let data = new Uint32Array(buffer);
+  window.predictor = createPredictor(data);
+  new Vue({
+    el: '#app',
+    components: { App },
+    template: '<App/>'
+  });
+}).catch(e => {
+  debugger;
+})
 
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */
-new Vue({
-  el: '#app',
-  components: { App },
-  template: '<App/>'
-})
-
 // runAnimation(document.getElementById('canvas'), data)
 
 function runAnimation(canvas, data) {

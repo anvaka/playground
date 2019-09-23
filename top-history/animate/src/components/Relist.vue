@@ -15,6 +15,7 @@
 </template>
 <script>
 export default {
+  props: ['predictor'],
   data() {
     return {
       time: new Date(),
@@ -42,17 +43,25 @@ export default {
         }).filter(x => {
           return (now - x.created) < 24 * 60 * 60 * 1000
         });
+
         posts.forEach(post => {
-          let model = bands[post.band];
-          if (!model) return;
           let x = post.score;
-          let x_2 = x * x;
           let offset = new Date(post.created).setMinutes(post.created.getMinutes() + post.band * 5, 0);
-          post.predictions = model.map((coeff, idx) => {
-            let time = new Date(offset);
-            time.setMinutes(time.getMinutes() + (idx + 1) * 5);
-            return time.toLocaleTimeString() + ' - ' + Math.round(coeff[0] + coeff[1] * x + coeff[2] * x_2);
-          }).join('\n');
+          const predictions = []
+          let idx = post.band + 1;
+
+          let time = new Date(offset);
+          time.setMinutes(time.getMinutes() + idx * 5);
+          const stats = window.predictor.predictScore(x, post.band, idx);
+          const value = time.toLocaleTimeString() + ': ' + `(${stats.q1}, ${stats.mean}, ${stats.q3})`
+          post.predictions = [
+            value
+          ].join('\n');
+          // model.map((coeff, idx) => {
+          //   let time = new Date(offset);
+          //   time.setMinutes(time.getMinutes() + (idx + 1) * 5);
+          //   return time.toLocaleTimeString() + ' - ' + this.predictor.predictScore(x, post.band, idx)
+          // }).join('\n');
         })
         this.posts = posts;
       })

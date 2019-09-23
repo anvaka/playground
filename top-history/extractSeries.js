@@ -93,21 +93,37 @@ function saveScores() {
   const bands = [];
   const postIdToIndex = {}
   let index = 0;
+  console.log('Total posts: ', posts.size);
   posts.forEach((points, postId) => {
     postIdToIndex[postId] = index++;
   });
-
+  let buffer = new Uint32Array(posts.size * 288);
   posts.forEach((points, postId) => {
-    let postIndex = postIdToIndex[postId];
-    points.map(x => {
-      let bandPost = bands[x.band];
-      if (!bandPost) bandPost = bands[x.band] = {};
-      bandPost[postIndex] = x.score;
-    });
+    let offset = postIdToIndex[postId] * 288;
+    let i = 0;
+    let bandIndex = 0;
+    while (i < 288) {
+      const bandDetails = points[bandIndex];
+      const bandMatch = bandDetails && bandDetails.band === i;
+      let score = bandMatch ? Math.round(bandDetails.score) : -1;
+      if (bandMatch) bandIndex += 1;
+      buffer[offset + i] = score;
+      i++;
+    }
   });
-  const scoresFileName = 'scores.json';
-  console.log('saving scores to ' + scoresFileName);
-  fs.writeFileSync(scoresFileName, JSON.stringify(bands));
+
+  fs.writeFileSync('scores.bin', new Buffer(buffer.buffer));
+  // posts.forEach((points, postId) => {
+  //   let postIndex = postIdToIndex[postId];
+  //   points.map(x => {
+  //     let bandPost = bands[x.band];
+  //     if (!bandPost) bandPost = bands[x.band] = {};
+  //     bandPost[postIndex] = x.score;
+  //   });
+  // });
+  // const scoresFileName = 'scores.json';
+  // console.log('saving scores to ' + scoresFileName);
+  // fs.writeFileSync(scoresFileName, JSON.stringify(bands));
   const postIndexFileName = 'postIndex.json';
   console.log('saving post index to ' + postIndexFileName);
   fs.writeFileSync(postIndexFileName, JSON.stringify(postIdToIndex));
