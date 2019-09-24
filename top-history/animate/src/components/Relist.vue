@@ -46,12 +46,11 @@ export default {
 
         posts.forEach(post => {
           let x = post.score;
-          let offset = new Date(post.created).setMinutes(post.created.getMinutes() + post.band * 5, 0);
+          let time = new Date(post.created);
+          time.setMinutes(post.created.getMinutes() + 285 * 5, 0);
           const predictions = []
-          let idx = post.band + 1;
+          let idx = 285;
 
-          let time = new Date(offset);
-          time.setMinutes(time.getMinutes() + idx * 5);
           const stats = window.predictor.predictScore(x, post.band, idx);
           const value = time.toLocaleTimeString() + ': ' + `(${stats.q1}, ${stats.mean}, ${stats.q3})`
           post.predictions = [
