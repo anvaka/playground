@@ -2,7 +2,7 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
 import App from './App'
-import createPredictor from './lib/predictor';
+const createPredictor = require('./lib/predictor');
 
 fetch('static/scores.bin').then(response => {
   return response.arrayBuffer();

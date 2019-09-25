@@ -49,7 +49,7 @@ export default {
           let time = new Date(post.created);
           time.setMinutes(post.created.getMinutes() + 285 * 5, 0);
           const predictions = []
-          let idx = 285;
+          let idx = 287;
 
           const stats = window.predictor.predictScore(x, post.band, idx);
           const value = time.toLocaleTimeString() + ': ' + `(${stats.q1}, ${stats.mean}, ${stats.q3})`

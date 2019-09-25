@@ -6,7 +6,7 @@ let subreddit = process.argv[3] || 'dataisbeautiful';
 
 let maxPostLifeSpan = 24 * 60 * 60 * 1000;
 let posts = new Map();
-let saveScoresOnly = true;
+let saveScoresOnly = false;
 
 forEachRecord(inputFileName, subredditSnapshot => {
   if (subredditSnapshot.name === subreddit) processSubreddit(subredditSnapshot)

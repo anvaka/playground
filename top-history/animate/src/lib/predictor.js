@@ -1,9 +1,10 @@
-const STRIDE = 288;
-const MISSING = 4294967295;
+const STRIDE = 288; // How many records per row we have
+const MISSING = 4294967295; // If post didn't have score, its value is equal to this
 
 export default function createPredictor(buffer) {
+//module.exports = function createPredictor(buffer) {
   let bandCount = buffer.length / STRIDE;
-  let neighborsCount = 9;
+  let neighborsCount = 10;
   if (Math.round(bandCount) !== bandCount) {
     throw new Error('Invalid buffer size');
   }
@@ -43,11 +44,11 @@ export default function createPredictor(buffer) {
       if (value === MISSING) continue;
       values.push({
         id,
-        distance: value - currentValue
+        distance: Math.abs(value - currentValue)
       });
     }
     values.sort((a, b) => {
-      return Math.abs(a.distance) - Math.abs(b.distance);
+      return a.distance - b.distance;
     })
     if (values.length < neighborsCount) {
       console.error('Not enough data');
@@ -56,10 +57,16 @@ export default function createPredictor(buffer) {
     let lastDistance;
     let next = values[index];
     let result = [];
+    let uniqueCount = 0;
     while (next && (
       (next.distance === lastDistance) ||
-      result.length < neighborsCount)
+      uniqueCount < neighborsCount)
     ) {
+      if (result.length === 0 || 
+          (lastDistance !== next.distance)
+        ) {
+        uniqueCount += 1;
+      }
       lastDistance = next.distance;
       result.push(next);
       index += 1;

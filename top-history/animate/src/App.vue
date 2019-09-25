@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <Relist :predict='predict'/>
+    <Relist :predictor='predictor'/>
   </div>
 </template>
 
