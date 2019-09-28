@@ -9,6 +9,7 @@ fetch('static/scores.bin').then(response => {
 }).then(buffer => {
   let data = new Uint32Array(buffer);
   window.predictor = createPredictor(data);
+/* eslint-disable no-new */
   // new Vue({
   //   el: '#app',
   //   components: { App },
@@ -21,7 +22,6 @@ fetch('static/scores.bin').then(response => {
 
 Vue.config.productionTip = false
 
-/* eslint-disable no-new */
 function runAnimation(canvas, data) {
   let width = 640;
   let height = 480;
@@ -41,10 +41,6 @@ function runAnimation(canvas, data) {
     if (bandIndex >= maxBands) return;
     let distribution = bandDist[maxBands - 1];
     let score = (distribution.max - distribution.min) * (1 - clientY / height);
-    // 232
-    //  debugger;
-    // const fist = findNeighborsInBand(48205.2, 232);
-    // const second = findNeighborsInBand(48372, 232);
     const nearest = findNeighborsInBand(score, bandIndex, 10);
 
     ctx.clearRect(0, 0, width, height);
