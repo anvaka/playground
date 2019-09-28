@@ -2,18 +2,19 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
 import App from './App'
-const createPredictor = require('./lib/predictor');
+import createPredictor from './lib/predictor';
 
 fetch('static/scores.bin').then(response => {
   return response.arrayBuffer();
 }).then(buffer => {
   let data = new Uint32Array(buffer);
   window.predictor = createPredictor(data);
-  new Vue({
-    el: '#app',
-    components: { App },
-    template: '<App/>'
-  });
+  // new Vue({
+  //   el: '#app',
+  //   components: { App },
+  //   template: '<App/>'
+  // });
+  runAnimation(document.getElementById('canvas'), data)
 }).catch(e => {
   debugger;
 })
@@ -21,97 +22,127 @@ fetch('static/scores.bin').then(response => {
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */
-// runAnimation(document.getElementById('canvas'), data)
-
 function runAnimation(canvas, data) {
+  let width = 640;
+  let height = 480;
+  let maxBands = 288;
+  const MISSING = 4200000000; // If post didn't have score, its value is larger than this
+  let postCount = data.length / maxBands;
+  canvas.width = width;
+  canvas.height = height;
   const ctx = canvas.getContext('2d');
-  const r = 100;
-  const w = 640;
-  const h = 480;
-  const canvasPoints = getCanvasPoints(data);
-  const bounds = computeMinMax(canvasPoints);
-  canvas.width = ctx.width = w;
-  canvas.height = ctx.height = w;
-  drawCircle(0, 0, r);
+  const bandDist = collectBandsDistribution(data);
 
-  let lastPoint = 0;
-  frame();
+  canvas.addEventListener('mousemove', handleMouseMove);
 
-  console.log(data);
+  function handleMouseMove(e) {
+    let {clientX, clientY} = e;
+    let bandIndex = Math.floor(maxBands * clientX/width);
+    if (bandIndex >= maxBands) return;
+    let distribution = bandDist[maxBands - 1];
+    let score = (distribution.max - distribution.min) * (1 - clientY / height);
+    // 232
+    //  debugger;
+    // const fist = findNeighborsInBand(48205.2, 232);
+    // const second = findNeighborsInBand(48372, 232);
+    const nearest = findNeighborsInBand(score, bandIndex, 10);
 
-  function frame() {
-    let i = 0;
-    const canvasData = ctx.getImageData(0, 0, w, h);
-    let max = {score: Number.NEGATIVE_INFINITY};
-    while (lastPoint < canvasPoints.length && i < 100) {
-      const pt = canvasPoints[lastPoint];
-      drawPoint(pt);
-      if (pt.score > max.score) max = pt;
-      i += 1;
-      lastPoint += 1;
-    }
-    console.log(max, lastPoint);
-    ctx.putImageData(canvasData, 0, 0);
-    if (lastPoint < canvasPoints.length) requestAnimationFrame(frame);
-
-    function drawPoint(modelPoint) {
-      const pt = toCanvasPoint(modelPoint.x, modelPoint.y);
-      const index = (Math.round(pt.x) + Math.round(pt.y) * w) * 4;
-      canvasData.data[index + 0] = 0;
-      canvasData.data[index + 1] = 0;
-      canvasData.data[index + 2] = 244;
-      canvasData.data[index + 3] = 255;
-    }
-  }
-
-  function computeMinMax(array) {
-    let minX = Number.POSITIVE_INFINITY;
-    let minY = Number.POSITIVE_INFINITY;
-    let maxX = Number.NEGATIVE_INFINITY;
-    let maxY = Number.NEGATIVE_INFINITY;
-    array.forEach(pt => {
-      if (pt.x < minX) minX = pt.x;
-      if (pt.x > maxX) maxX = pt.x;
-      if (pt.y < minY) minY = pt.y;
-      if (pt.y > maxY) maxY = pt.y;
-    });
-    return {minX, minY, maxX, maxY};
-  }
-
-  function getCanvasPoints(data) {
-    const canvasPoints = [];
-    data.forEach((snapshot) => {
-      let time = new Date(snapshot.time);
-      let minutes = time.getHours() * 60 + time.getMinutes();
-      let angle = 2 * Math.PI * minutes/(24 * 60);
-      snapshot.posts.forEach(post => {
-        if (Math.abs(time - new Date(post.created_utc * 1000)) > 24*60*60*1000) {
-          return;
-        }
-        const score = post.score || 0;
-        let pointR = score + r;
-        const x = pointR * Math.cos(angle);
-        const y = pointR * Math.sin(angle);
-        const pt = {x, y, a: 0.3, score, title: post.title}
-        canvasPoints.push(pt)
-      })
-    });
-
-    return canvasPoints;
-  }
-
-  function drawCircle(x, y, r) {
-    let pt = toCanvasPoint(x, y);
-    ctx.arc(pt.x, pt.y, r, 0, 2 * Math.PI);
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = 'blue';
+    ctx.beginPath();
+    ctx.fillRect(width * bandIndex / maxBands - 2, height * (1 - score / (distribution.max - distribution.min)) - 2, 4, 4);
     ctx.stroke();
+
+    let top = nearest.splice(0, 1)
+    console.log(bandIndex, score, nearest.map(x => x.id + ' - ' + x.distance).join('; '));
+    nearest.forEach(x => drawSeries(x.id, '#99999933'));
+    top.forEach(x => drawSeries(x.id, '#004466'));
+
+    function drawSeries(seriesId, color = '#333') {
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      let moved = false;
+      for (let i = 0; i < maxBands; ++i) {
+        let value = data[maxBands * seriesId + i];
+        if (value > MISSING) continue;
+        let distribution = bandDist[maxBands - 1];
+        let y = Math.round(height * (1 - value / (distribution.max - distribution.min)));
+        let x = Math.floor( width * i / maxBands);
+        if (moved) ctx.lineTo(x, y);
+        else {
+          ctx.moveTo(x, y)
+          moved = true;
+        }
+      }
+      ctx.stroke();
+    }
   }
 
-  function toCanvasPoint(x, y) {
-    const cw = (bounds.maxX - bounds.minX);
-    const ch = (bounds.maxY - bounds.minY);
+  function collectBandsDistribution(data) {
+    let distributions = [];
+    for (let i = 0; i < maxBands; ++i) {
+      distributions.push(getBandStats(data, i));
+    }
+    return distributions;
+  }
+
+  function findNeighborsInBand(currentValue, currentBand, neighborsCount = 3) {
+    let values = [];
+    for (let id = 0; id < postCount; ++id) {
+      let value = data[id * maxBands + currentBand];
+
+      if (value > MISSING) continue;
+      values.push({
+        id,
+        distance: Math.abs(value - currentValue)
+      });
+    }
+    values.sort((a, b) => {
+      return (a.distance - b.distance);
+    })
+    if (values.length < neighborsCount) {
+      console.error('Not enough data');
+    }
+    let index = 0;
+    let lastDistance;
+    let next = values[index];
+    let result = [];
+    let uniqueCount = 0;
+    while (next && (
+      (next.distance === lastDistance) ||
+      uniqueCount < neighborsCount)
+    ) {
+      if (result.length === 0 || 
+          (lastDistance !== next.distance)
+        ) {
+        uniqueCount += 1;
+      }
+      lastDistance = next.distance;
+      result.push(next);
+      index += 1;
+      next = values[index];
+    }
+    return result;
+  }
+
+
+  function getBandStats(data, band) {
+    let scores = [];
+    for (let i = 0; i < postCount; ++i) {
+      const value = data[i * maxBands + band]
+      if (value > MISSING) continue;
+
+      scores.push({
+        id: i,
+        value: value
+      });
+    }
+    scores.sort((a, b) => a.value - b.value);
+
     return {
-      x: w * (x - bounds.minX)/cw,
-      y: h * (y - bounds.minY)/ch
+      scores,
+      min: scores[0].value,
+      max: scores[scores.length - 1].value
     }
   }
 }
