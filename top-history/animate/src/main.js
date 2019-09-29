@@ -4,21 +4,19 @@ import Vue from 'vue'
 import App from './App'
 import createPredictor from './lib/predictor';
 
-fetch('static/scores.bin').then(response => {
-  return response.arrayBuffer();
-}).then(buffer => {
-  let data = new Uint32Array(buffer);
-  window.predictor = createPredictor(data);
-/* eslint-disable no-new */
-  // new Vue({
-  //   el: '#app',
-  //   components: { App },
-  //   template: '<App/>'
-  // });
-  runAnimation(document.getElementById('canvas'), data)
-}).catch(e => {
-  debugger;
-})
+  new Vue({
+    el: '#app',
+    components: { App },
+    template: '<App/>'
+  });
+// fetch('static/scores.bin').then(response => {
+//   return response.arrayBuffer();
+// }).then(buffer => {
+//   let data = new Uint32Array(buffer);
+// //  runAnimation(document.getElementById('canvas'), data)
+// }).catch(e => {
+//   debugger;
+// })
 
 Vue.config.productionTip = false
 
