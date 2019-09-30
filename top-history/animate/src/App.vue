@@ -1,18 +1,21 @@
 <template>
   <div id="app">
-    <h3>Today vs Past of <strong>/r/dataisbeautiful</strong></h3>
-    <p class='info'>
-      Compare today's <a href=''>/r/dataisbeautiful</a> posts
-      with posts that had similar scores in the past.
-    </p>
+    <h3>Today vs Past</h3>
+    <div class='info' v-html="subtitle"></div>
     <div v-if='loading'>Loading archive from the past...</div>
-    <div v-if='!loading'>Loaded {{postCount}} posts</div>
+    <div v-if='error'>
+      <div class='error'>{{this.error}}</div>
+      <div class='error'>Please <a href='https://twitter.com/anvaka' target='_blank'>ping anvaka@</a> to get this fixed</div>
+    </div>
+    <canvas ref='scene'></canvas>
   </div>
 </template>
 
 <script>
 import Relist from './components/Relist';
-import getArchive from './lib/getArchive'
+import fetchArchive from './lib/fetchArchive';
+import formatNumber from './lib/formatNumber';
+import createSceneRenderer from './lib/createSceneRenderer';
 
 export default {
   name: 'App',
@@ -23,17 +26,37 @@ export default {
   data() {
     return {
       loading: true,
-      postCount: 0
+      postCount: 0,
+      error: null,
+      subreddit: '/r/dataisbeautiful'
     };
   },
+  computed: {
+    subtitle() {
+      const prefix = `Compare today's scores in <a href='https://www.reddit.com${this.subreddit}'>${this.subreddit}</a> with`;
+      const suffix = ' posts that had similar scores in the past.';
+      return prefix + (this.isLoading ? suffix : formatNumber(this.postCount) + ' ' + suffix);
+    }
+  },
+
   mounted() {
-    getArchive().then((archive) => {
+    fetchArchive().then((archive) => {
       this.loading = false;
       this.postCount = archive.postCount;
+      this.sceneRenderer = createSceneRenderer(archive, this.$refs.scene)
     })
-  }
-}
+    .catch(e => {
+      this.loading = false;
+      this.error = 'Could not download archive. ' + e + '.';
+      console.error('Could not download archive', e);
+      debugger;
+    })
+  },
 
+  beforeDestroy() {
+    this.sceneRenderer.dispose();
+  },
+}
 </script>
 
 <style>
@@ -43,17 +66,25 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
   margin: 8px;
+  text-align: center;
 }
 h3 {
   font-weight: normal;
   font-size: 21px;
   margin: 0;
 }
-p.info {
-  margin: 0;
-  max-width: 450px;
+.info {
+  max-width: 640px;
   color: #333;
   font-size: 14px;
+  margin: auto;
 
+}
+.error {
+  font-family: monospace;
+  color: orangered;
+}
+canvas {
+  margin-top: 12px;
 }
 </style>

@@ -9,14 +9,6 @@ import createPredictor from './lib/predictor';
     components: { App },
     template: '<App/>'
   });
-// fetch('static/scores.bin').then(response => {
-//   return response.arrayBuffer();
-// }).then(buffer => {
-//   let data = new Uint32Array(buffer);
-// //  runAnimation(document.getElementById('canvas'), data)
-// }).catch(e => {
-//   debugger;
-// })
 
 Vue.config.productionTip = false
 
