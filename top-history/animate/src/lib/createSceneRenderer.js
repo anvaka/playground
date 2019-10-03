@@ -1,4 +1,5 @@
 import formatNumber from "./formatNumber";
+import { getHumanFriendlyTimeSinceCreation } from "./getHumanFriendlyTimeSinceCreation";
 
 export default function createSceneRenderer(archive, canvas) {
   const width = canvas.width = 640;
@@ -18,6 +19,7 @@ export default function createSceneRenderer(archive, canvas) {
   const xAxisYCoordinate = sceneHeight + paddingTop;
   const yAxisXCoordinate = paddingLeft;
 
+  let currentPosts;
   let nearestCount = 15;
   let currentBandAndScore;
 
@@ -28,7 +30,8 @@ export default function createSceneRenderer(archive, canvas) {
   return {
     getNearestCount: () => nearestCount,
     setNearestCount,
-    dispose
+    dispose,
+    renderPosts
   }
 
   function setNearestCount(newNeighborsToLookup) {
@@ -41,6 +44,11 @@ export default function createSceneRenderer(archive, canvas) {
     canvas.removeEventListener('mousemove', handleMouseMove);
   }
 
+  function renderPosts(posts) {
+    currentPosts = posts;
+    redraw();
+  }
+
   function handleMouseMove(e) {
     currentBandAndScore = getBandAndScoreFromCanvasCoordinates(e.offsetX, e.offsetY);
     redraw();
@@ -51,11 +59,28 @@ export default function createSceneRenderer(archive, canvas) {
 
     clearScene();
     drawAxes();
+    drawPosts();
 
     const neighbors = archive.findNeighborsInBand(currentBandAndScore, nearestCount);
-    drawNeighbors(neighbors);
+    drawNeighbors(neighbors, currentBandAndScore);
 
     drawPointerAt(currentBandAndScore);
+  }
+
+  function drawPosts() {
+    if (!currentPosts) return;
+    let selectedPostIndex = 0;
+    currentPosts.forEach((post, idx) => {
+      ctx.beginPath();
+      let isSelected = idx === selectedPostIndex;
+      ctx.fillStyle = isSelected ? 'green' : '#333';
+      const location = getMouseCoordinatesFromBandAndScore({
+        band: post.band,
+        score: post.score
+      });
+      ctx.arc(location.x, location.y, isSelected ? 5 : 2, 0, 2 * Math.PI);
+      ctx.fill();
+    })
   }
 
   function drawAxes() {
@@ -105,10 +130,13 @@ export default function createSceneRenderer(archive, canvas) {
     ctx.fillText('time since post creation', right, xAxisYCoordinate + labelPadding);
   }
 
-  function drawNeighbors(neighbors) {
+  function drawNeighbors(neighbors, referenceBandAndScore) {
     neighbors.forEach(x => {
       const postHistory = archive.getPostHistory(x.postId);
-      drawPoints(postHistory, SECONDARY_COLOR)
+
+      const last = postHistory[postHistory.length - 1];
+      drawPoints(postHistory, last.band > referenceBandAndScore.band &&
+        last.score < referenceBandAndScore.score ? SECONDARY_COLOR : '#666666ff')
     });
   }
 
@@ -173,10 +201,5 @@ export default function createSceneRenderer(archive, canvas) {
     return {band, score};
   }
 
-  function getHumanFriendlyTimeSinceCreation(band) {
-    const minutes = band * 5;
-    const hours = Math.floor(minutes / 60);
-    const minutesInHour = minutes - hours * 60;
-    return hours ? `${hours}h ${minutesInHour}m` : `${minutesInHour}m`;
-  }
 }
+

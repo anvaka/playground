@@ -14,6 +14,7 @@
 <script>
 import Relist from './components/Relist';
 import fetchArchive from './lib/fetchArchive';
+import fetchPosts from './lib/fetchPosts';
 import formatNumber from './lib/formatNumber';
 import createSceneRenderer from './lib/createSceneRenderer';
 
@@ -35,7 +36,16 @@ export default {
     subtitle() {
       const prefix = `Compare today's scores in <a href='https://www.reddit.com${this.subreddit}'>${this.subreddit}</a> with`;
       const suffix = ' posts that had similar scores in the past.';
-      return prefix + (this.isLoading ? suffix : formatNumber(this.postCount) + ' ' + suffix);
+      return prefix + (this.isLoading ? suffix : ' ' + formatNumber(this.postCount) + ' ' + suffix);
+    }
+  },
+
+  methods: {
+    ensurePostsAreRendered() {
+      if (!this.sceneRenderer || !this.posts) {
+        return;
+      }
+      this.sceneRenderer.renderPosts(this.posts);
     }
   },
 
@@ -44,12 +54,18 @@ export default {
       this.loading = false;
       this.postCount = archive.postCount;
       this.sceneRenderer = createSceneRenderer(archive, this.$refs.scene)
+      this.ensurePostsAreRendered();
     })
     .catch(e => {
       this.loading = false;
       this.error = 'Could not download archive. ' + e + '.';
       console.error('Could not download archive', e);
       debugger;
+    });
+
+    fetchPosts().then(posts => {
+      this.posts = posts;
+      this.ensurePostsAreRendered();
     })
   },
 
