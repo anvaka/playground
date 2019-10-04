@@ -55,14 +55,21 @@ export default function createSceneRenderer(archive, canvas) {
   }
 
   function redraw() {
-    if (!currentBandAndScore) return;
+    if (!currentBandAndScore) {
+
+      if (currentPosts) {
+        currentBandAndScore = currentPosts[0];
+      } else {
+        return;
+      }
+    }
 
     clearScene();
     drawAxes();
-    drawPosts();
 
     const neighbors = archive.findNeighborsInBand(currentBandAndScore, nearestCount);
     drawNeighbors(neighbors, currentBandAndScore);
+    drawPosts();
 
     drawPointerAt(currentBandAndScore);
   }
