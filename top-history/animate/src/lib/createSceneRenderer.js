@@ -6,8 +6,11 @@ export default function createSceneRenderer(archive, canvas) {
   const height = canvas.height = 480;
 
   const AXIS_COLOR = 'black';
-  const SECONDARY_COLOR = '#99999933';
-  const POINTER_COLOR = 'blue';
+  const SECONDARY_COLOR = '#CFCFCF';
+  const TERNARY_COLOR = '#66666633'
+  const POINTER_COLOR = '#2D72B1';
+  const DOT_COLOR_SELECTED = '#2D72B1'
+  const DOT_COLOR_UNSELECTED = '#333'
 
   const paddingLeft = width * 0.07;
   const paddingRight = width * 0.05;
@@ -80,7 +83,7 @@ export default function createSceneRenderer(archive, canvas) {
     currentPosts.forEach((post, idx) => {
       ctx.beginPath();
       let isSelected = idx === selectedPostIndex;
-      ctx.fillStyle = isSelected ? 'green' : '#333';
+      ctx.fillStyle = isSelected ? DOT_COLOR_SELECTED : DOT_COLOR_UNSELECTED;
       const location = getMouseCoordinatesFromBandAndScore({
         band: post.band,
         score: post.score
@@ -143,7 +146,7 @@ export default function createSceneRenderer(archive, canvas) {
 
       const last = postHistory[postHistory.length - 1];
       drawPoints(postHistory, last.band > referenceBandAndScore.band &&
-        last.score < referenceBandAndScore.score ? SECONDARY_COLOR : '#666666ff')
+        last.score < referenceBandAndScore.score ? SECONDARY_COLOR : TERNARY_COLOR)
     });
   }
 
@@ -164,7 +167,8 @@ export default function createSceneRenderer(archive, canvas) {
   }
 
   function clearScene() {
-    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = '#EDEDED';
+    ctx.fillRect(0, 0, width, height);
   }
 
   function drawPointerAt(bandAndScore) {
