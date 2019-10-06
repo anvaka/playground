@@ -8,20 +8,21 @@
       <div class='error'>Please <a href='https://twitter.com/anvaka' target='_blank'>ping anvaka@</a> to get this fixed</div>
     </div>
     <canvas ref='scene'></canvas>
+    <post-selector :subreddit='subreddit' @loaded='onPostsLoaded'></post-selector>
   </div>
 </template>
 
 <script>
-import Relist from './components/Relist';
 import fetchArchive from './lib/fetchArchive';
-import fetchPosts from './lib/fetchPosts';
 import formatNumber from './lib/formatNumber';
+import PostSelector from './components/PostSelector';
 import createSceneRenderer from './lib/createSceneRenderer';
 
 export default {
   name: 'App',
 
   components: {
+    PostSelector
   },
 
   data() {
@@ -46,6 +47,11 @@ export default {
         return;
       }
       this.sceneRenderer.renderPosts(this.posts);
+    },
+
+    onPostsLoaded(posts) {
+      this.posts = posts;
+      this.ensurePostsAreRendered();
     }
   },
 
@@ -62,11 +68,6 @@ export default {
       console.error('Could not download archive', e);
       debugger;
     });
-
-    fetchPosts().then(posts => {
-      this.posts = posts;
-      this.ensurePostsAreRendered();
-    })
   },
 
   beforeDestroy() {
@@ -102,5 +103,7 @@ h3 {
 }
 canvas {
   margin-top: 12px;
+  max-width: 640px;
+  width: 100%;
 }
 </style>

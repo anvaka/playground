@@ -2,9 +2,6 @@ import formatNumber from "./formatNumber";
 import { getHumanFriendlyTimeSinceCreation } from "./getHumanFriendlyTimeSinceCreation";
 
 export default function createSceneRenderer(archive, canvas) {
-  const width = canvas.width = 640;
-  const height = canvas.height = 480;
-
   const AXIS_COLOR = 'black';
   const SECONDARY_COLOR = '#CFCFCF';
   const TERNARY_COLOR = '#66666633'
@@ -12,15 +9,20 @@ export default function createSceneRenderer(archive, canvas) {
   const DOT_COLOR_SELECTED = '#2D72B1'
   const DOT_COLOR_UNSELECTED = '#333'
 
-  const paddingLeft = width * 0.07;
-  const paddingRight = width * 0.05;
-  const paddingTop = height * 0.05;
-  const paddingBottom = height * 0.10;
-  const sceneWidth = width - paddingLeft - paddingRight;
-  const sceneHeight = height - paddingTop - paddingBottom;
+  let width;
+  let height;
 
-  const xAxisYCoordinate = sceneHeight + paddingTop;
-  const yAxisXCoordinate = paddingLeft;
+  let paddingLeft;
+  let paddingRight;
+  let paddingTop;
+  let paddingBottom;
+  let sceneWidth;
+  let sceneHeight;
+
+  let xAxisYCoordinate;
+  let yAxisXCoordinate;
+
+  updateDimensions();
 
   let currentPosts;
   let nearestCount = 15;
@@ -29,12 +31,29 @@ export default function createSceneRenderer(archive, canvas) {
   const ctx = canvas.getContext('2d');
   ctx.font = `'Avenir', Helvetica, Arial, sans-serif`
   canvas.addEventListener('mousemove', handleMouseMove);
+  window.addEventListener('resize', onResize);
 
   return {
     getNearestCount: () => nearestCount,
     setNearestCount,
     dispose,
     renderPosts
+  }
+
+  function updateDimensions() {
+    let isSmall = window.innerWidth < 640;
+    width = canvas.width = isSmall ? 480 : 640;
+    height = canvas.height = isSmall ? 320 : 480;
+
+    paddingLeft = width * 0.07;
+    paddingRight = width * 0.05;
+    paddingTop = height * 0.08;
+    paddingBottom = height * 0.10;
+    sceneWidth = width - paddingLeft - paddingRight;
+    sceneHeight = height - paddingTop - paddingBottom;
+
+    xAxisYCoordinate = sceneHeight + paddingTop;
+    yAxisXCoordinate = paddingLeft;
   }
 
   function setNearestCount(newNeighborsToLookup) {
@@ -45,6 +64,12 @@ export default function createSceneRenderer(archive, canvas) {
 
   function dispose() {
     canvas.removeEventListener('mousemove', handleMouseMove);
+    window.removeEventListener('resize', onResize);
+  }
+
+  function onResize() {
+    updateDimensions();
+    redraw();
   }
 
   function renderPosts(posts) {
