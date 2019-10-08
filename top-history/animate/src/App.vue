@@ -8,7 +8,7 @@
       <div class='error'>Please <a href='https://twitter.com/anvaka' target='_blank'>ping anvaka@</a> to get this fixed</div>
     </div>
     <canvas ref='scene'></canvas>
-    <post-selector :subreddit='subreddit' @loaded='onPostsLoaded'></post-selector>
+    <post-selector :subreddit='subreddit' @loaded='onPostsLoaded' @selected='onPostSelected'></post-selector>
   </div>
 </template>
 
@@ -52,6 +52,10 @@ export default {
     onPostsLoaded(posts) {
       this.posts = posts;
       this.ensurePostsAreRendered();
+    },
+
+    onPostSelected(post) {
+      this.sceneRenderer.selectPost(post);
     }
   },
 

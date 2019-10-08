@@ -1,3 +1,4 @@
+import formatNumber from "./formatNumber";
 import { getHumanFriendlyTimeSinceCreation } from "./getHumanFriendlyTimeSinceCreation";
 
 export default function fetchPosts(subreddit = '/r/dataisbeautiful') {
@@ -16,11 +17,17 @@ export default function fetchPosts(subreddit = '/r/dataisbeautiful') {
           permalink: 'https://www.reddit.com' + p.permalink,
           title: p.title,
           band,
-          createdStr: getHumanFriendlyTimeSinceCreation(band)
+          isModerator: p.distinguished === 'moderator',
+          createdStr: getHumanFriendlyTimeSinceCreation(band),
+          scoreStr: formatNumber(p.score)
         }
       }).filter(x => {
-        return x.band > 0 && x.band < 288;
+        return x.band > 0 && x.band < 288 && !x.isModerator;
+      }).map((post, index) => {
+        post.index = index;
+        return post;
       });
+
       return posts;
-      });
+    });
 }

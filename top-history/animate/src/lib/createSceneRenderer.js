@@ -12,6 +12,8 @@ export default function createSceneRenderer(archive, canvas) {
   let width;
   let height;
 
+  let scaleX, scaleY;
+  let canvasBoundingClientRect;
   let paddingLeft;
   let paddingRight;
   let paddingTop;
@@ -21,6 +23,7 @@ export default function createSceneRenderer(archive, canvas) {
 
   let xAxisYCoordinate;
   let yAxisXCoordinate;
+  let selectedPostIndex = 0;
 
   updateDimensions();
 
@@ -37,7 +40,8 @@ export default function createSceneRenderer(archive, canvas) {
     getNearestCount: () => nearestCount,
     setNearestCount,
     dispose,
-    renderPosts
+    renderPosts,
+    selectPost
   }
 
   function updateDimensions() {
@@ -54,6 +58,10 @@ export default function createSceneRenderer(archive, canvas) {
 
     xAxisYCoordinate = sceneHeight + paddingTop;
     yAxisXCoordinate = paddingLeft;
+
+    canvasBoundingClientRect = canvas.getBoundingClientRect(),
+    scaleX = canvas.width / canvasBoundingClientRect.width,
+    scaleY = canvas.height / canvasBoundingClientRect.height;
   }
 
   function setNearestCount(newNeighborsToLookup) {
@@ -77,21 +85,23 @@ export default function createSceneRenderer(archive, canvas) {
     redraw();
   }
 
+  function selectPost(post) {
+    currentBandAndScore = {
+      band: post.band,
+      score: post.score
+    },
+    selectedPostIndex = post.index;
+    redraw();
+  }
+
   function handleMouseMove(e) {
-    currentBandAndScore = getBandAndScoreFromCanvasCoordinates(e.offsetX, e.offsetY);
+    let x = (e.offsetX) * scaleX;
+    let y = (e.offsetY) * scaleY;
+    currentBandAndScore = getBandAndScoreFromCanvasCoordinates(x, y);
     redraw();
   }
 
   function redraw() {
-    if (!currentBandAndScore) {
-
-      if (currentPosts) {
-        currentBandAndScore = currentPosts[0];
-      } else {
-        return;
-      }
-    }
-
     clearScene();
     drawAxes();
 
@@ -104,7 +114,6 @@ export default function createSceneRenderer(archive, canvas) {
 
   function drawPosts() {
     if (!currentPosts) return;
-    let selectedPostIndex = 0;
     currentPosts.forEach((post, idx) => {
       ctx.beginPath();
       let isSelected = idx === selectedPostIndex;
