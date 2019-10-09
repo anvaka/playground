@@ -1,7 +1,7 @@
 <template>
   <div class='template-selector'>
-    <div class='loading' v-if='loading'>Loading top posts</div>
-    <div v-if='!loading' class='content-container'>
+    <div class='loading' v-if='loading && !error'>Loading top posts</div>
+    <div v-if='!loading && !error' class='content-container'>
       <a class='button' href='#' v-if='canSelectPrev' @click.prevent='selectPrev'>Prev</a>
       <div class='post-info'>
         <h3><a target='_blank' :href='selected.permalink'>{{selected.title}}</a></h3>
@@ -15,6 +15,10 @@
         </div>
       </div>
       <a class='button' href='#' v-if='canSelectNext' @click.prevent='selectNext'>Next</a>
+    </div>
+    <div v-if='error'>
+      <h3>Oops</h3>
+      <div>{{error}}</div>
     </div>
   </div>
 </template>
@@ -32,6 +36,7 @@ export default {
       selected: undefined,
       canSelectNext: false,
       canSelectPrev: false,
+      error: null,
       posts: []
     }
   },
@@ -58,6 +63,9 @@ export default {
       this.select(0);
       this.loading = false;
       this.$emit('loaded', posts);
+    }).catch(err => {
+      this.error = 'Failed to load latest posts.'
+      console.error(err);
     });
   }
 }
