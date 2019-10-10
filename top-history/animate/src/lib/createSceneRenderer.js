@@ -170,8 +170,10 @@ export default function createSceneRenderer(archive, canvas) {
     ctx.fill();
     ctx.textAlign = 'right';
 
-    const labelPadding = currentBandAndScore.band > 230 ? 30 : 18;
-    ctx.fillText('time since post creation', right, xAxisYCoordinate + labelPadding);
+    if (currentBandAndScore) {
+      const labelPadding = currentBandAndScore.band > 230 ? 30 : 18;
+      ctx.fillText('time since post creation', right, xAxisYCoordinate + labelPadding);
+    }
   }
 
   function drawNeighbors(neighbors, referenceBandAndScore) {
@@ -206,6 +208,8 @@ export default function createSceneRenderer(archive, canvas) {
   }
 
   function drawPointerAt(bandAndScore) {
+    if (!bandAndScore) return;
+
     const location = getMouseCoordinatesFromBandAndScore(bandAndScore)
 
     ctx.beginPath();

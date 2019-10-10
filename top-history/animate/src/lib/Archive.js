@@ -4,6 +4,7 @@
  */
 const MISSING = 4200000000; // If post didn't have score, its value is larger than this
 const STRIDE = 288;
+const EMPTY = [];
 
 export default class Archive {
   constructor(data) {
@@ -29,6 +30,7 @@ export default class Archive {
   }
 
   findNeighborsInBand(bandAndScore, neighborsCount = 3) {
+    if (!bandAndScore) return EMPTY;
     let allNeighbors = this._getAllSortedNeighborsInBand(bandAndScore);
     return this._getUniqueNearestNeighbors(allNeighbors, neighborsCount);
   }
