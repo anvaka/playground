@@ -4,6 +4,7 @@
  */
 const MISSING = 4200000000; // If post didn't have score, its value is larger than this
 const STRIDE = 288;
+const LAST_BAND = STRIDE - 1;
 const EMPTY = [];
 
 export default class Archive {
@@ -27,6 +28,21 @@ export default class Archive {
     let value = this.data[STRIDE * postId + band];
     if (value > MISSING) return;
     return value;
+  }
+
+  getStats(bandAndScore, neighborsCount) {
+    let neighbors = this.findNeighborsInBand(bandAndScore, neighborsCount);
+    return this.getStatsFromNeighbors(neighbors, LAST_BAND);
+  }
+
+  getStatsFromNeighbors(neighbors, atBandValue) {
+    let scores = neighbors.map(post => this.getPostValueAtBand(post.postId, atBandValue)).filter(x => x);
+    scores.sort((a, b) => a - b);
+
+    return {
+      count: scores.length,
+      median: scores[Math.floor(scores.length / 2)]
+    };
   }
 
   findNeighborsInBand(bandAndScore, neighborsCount = 3) {
@@ -79,6 +95,9 @@ export default class Archive {
     for (let postId = 0; postId < this.postCount; ++postId) {
       let postScore = this.getPostValueAtBand(postId, bandAndScore.band);
       if (postScore === undefined) continue;
+      let value = this.getPostValueAtBand(postId, LAST_BAND);
+      if (value === undefined || value < bandAndScore.score) continue;
+
       values.push({
         postId,
         distance: Math.abs(postScore - bandAndScore.score)

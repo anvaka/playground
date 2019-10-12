@@ -6,7 +6,7 @@
       <div class='post-info'>
         <h3><a target='_blank' :href='selected.permalink'>{{selected.title}}</a></h3>
         <div class='label'>Posted: <strong>{{selected.createdStr}}</strong> ago. Score: <strong>{{selected.scoreStr}}</strong>. </div>
-        <div class='label'>Historical scores at 24h mark for posts with similar scores at this time. <strong>Median: {{selected.createdStr}}</strong> ago. Score: <strong>{{selected.scoreStr}}</strong>. </div>
+        <div class='label'>At <strong>24h</strong> mark median score is <strong>{{selected.median}}</strong> (computed from {{selected.neighborCount}} nearest neighbors with similar score at {{selected.createdStr}} mark) </div>
       </div>
       <a class='button' href='#' v-if='canSelectNext' @click.prevent='selectNext'>Next</a>
     </div>
@@ -19,10 +19,12 @@
 
 <script>
 import fetchPosts from '../lib/fetchPosts';
+import formatNumber from '../lib/formatNumber';
+import settings from '../lib/settings';
 
 export default {
   name: 'PostSelector',
-  props: ['subreddit'],
+  props: ['subreddit', 'archive'],
   data() {
     return {
       loading: true,
@@ -37,7 +39,12 @@ export default {
   methods: {
     select(postIndex) {
       this.index = postIndex;
-      this.selected = this.posts[postIndex];
+      const selectedPost = this.posts[postIndex];
+      const stats = this.archive.getStats(selectedPost, settings.nearestCount);
+
+      this.selected = selectedPost;
+      this.selected.median = formatNumber(stats.median);
+      this.selected.neighborCount = formatNumber(stats.count);
       this.canSelectNext = postIndex < this.posts.length;
       this.canSelectPrev = postIndex > 0 ;
 

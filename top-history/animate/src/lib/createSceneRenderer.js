@@ -1,5 +1,6 @@
-import formatNumber from "./formatNumber";
-import { getHumanFriendlyTimeSinceCreation } from "./getHumanFriendlyTimeSinceCreation";
+import formatNumber from './formatNumber';
+import settings from './settings'
+import { getHumanFriendlyTimeSinceCreation } from './getHumanFriendlyTimeSinceCreation';
 
 export default function createSceneRenderer(archive, canvas) {
   const AXIS_COLOR = 'black';
@@ -9,6 +10,7 @@ export default function createSceneRenderer(archive, canvas) {
   const POINTER_COLOR = '#2D72B1';
   const DOT_COLOR_SELECTED = '#2D72B1'
   const DOT_COLOR_UNSELECTED = '#333'
+  const MEDIAN_COLOR = '#B03471';
 
   let width;
   let height;
@@ -29,7 +31,6 @@ export default function createSceneRenderer(archive, canvas) {
   updateDimensions();
 
   let currentPosts;
-  let nearestCount = 15;
   let currentBandAndScore;
 
   const ctx = canvas.getContext('2d');
@@ -38,8 +39,7 @@ export default function createSceneRenderer(archive, canvas) {
   window.addEventListener('resize', onResize);
 
   return {
-    getNearestCount: () => nearestCount,
-    setNearestCount,
+    getNearestCount: () => settings.nearestCount,
     dispose,
     renderPosts,
     selectPost
@@ -63,12 +63,6 @@ export default function createSceneRenderer(archive, canvas) {
     canvasBoundingClientRect = canvas.getBoundingClientRect(),
     scaleX = canvas.width / canvasBoundingClientRect.width,
     scaleY = canvas.height / canvasBoundingClientRect.height;
-  }
-
-  function setNearestCount(newNeighborsToLookup) {
-    if (newNeighborsToLookup < 1) throw new Error('At least one nearest neighbor is required');
-    nearestCount = newNeighborsToLookup;
-    redraw();
   }
 
   function dispose() {
@@ -106,10 +100,13 @@ export default function createSceneRenderer(archive, canvas) {
     clearScene();
     drawAxes();
 
-    const neighbors = archive.findNeighborsInBand(currentBandAndScore, nearestCount);
+    const neighbors = archive.findNeighborsInBand(currentBandAndScore, settings.nearestCount);
     drawNeighbors(neighbors, currentBandAndScore);
     drawPosts();
 
+    if (currentBandAndScore) {
+      drawMedian(currentBandAndScore.band + 1, neighbors);
+    }
     drawPointerAt(currentBandAndScore);
   }
 
@@ -234,7 +231,28 @@ export default function createSceneRenderer(archive, canvas) {
     ctx.fillStyle = POINTER_COLOR;
     ctx.fillRect(location.x - 2, location.y - 2, 4, 4);
     ctx.stroke();
+  }
 
+  function drawMedian(startFrom, neighbors) {
+    let count = 0;
+    ctx.beginPath();
+    ctx.strokeStyle = MEDIAN_COLOR;
+    ctx.lineWidth = 2;
+
+    while (startFrom < archive.STRIDE) {
+      let score = archive.getStatsFromNeighbors(neighbors, startFrom).median;
+      const point = getMouseCoordinatesFromBandAndScore({band: startFrom, score});
+      if (count === 0) {
+        ctx.moveTo(point.x, point.y);
+      } else {
+        ctx.lineTo(point.x, point.y);
+      }
+
+      startFrom += 1;
+      count += 1;
+    }
+
+    ctx.stroke();
   }
 
   function getMouseCoordinatesFromBandAndScore(bandAndScore) {

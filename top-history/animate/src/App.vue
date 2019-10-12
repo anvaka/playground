@@ -8,7 +8,7 @@
       <div class='error'>Please <a href='https://twitter.com/anvaka' target='_blank'>ping anvaka@</a> to get this fixed</div>
     </div>
     <canvas ref='scene'></canvas>
-    <post-selector :subreddit='subreddit' @loaded='onPostsLoaded' @selected='onPostSelected'></post-selector>
+    <post-selector :subreddit='subreddit' @loaded='onPostsLoaded' @selected='onPostSelected' :archive='archive'></post-selector>
   </div>
 </template>
 
@@ -27,6 +27,7 @@ export default {
 
   data() {
     return {
+      archive: null,
       loading: true,
       postCount: 0,
       error: null,
@@ -62,6 +63,7 @@ export default {
   mounted() {
     fetchArchive().then((archive) => {
       this.loading = false;
+      this.archive = archive;
       this.postCount = archive.postCount;
       this.sceneRenderer = createSceneRenderer(archive, this.$refs.scene)
       this.ensurePostsAreRendered();
