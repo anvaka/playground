@@ -3,6 +3,7 @@ import { getHumanFriendlyTimeSinceCreation } from "./getHumanFriendlyTimeSinceCr
 
 export default function createSceneRenderer(archive, canvas) {
   const AXIS_COLOR = 'black';
+  const BACKGROUND_COLOR = '#EDEDED';
   const SECONDARY_COLOR = '#CFCFCF';
   const TERNARY_COLOR = '#66666633'
   const POINTER_COLOR = '#2D72B1';
@@ -203,7 +204,7 @@ export default function createSceneRenderer(archive, canvas) {
   }
 
   function clearScene() {
-    ctx.fillStyle = '#EDEDED';
+    ctx.fillStyle = BACKGROUND_COLOR;
     ctx.fillRect(0, 0, width, height);
   }
 

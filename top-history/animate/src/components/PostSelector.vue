@@ -5,14 +5,8 @@
       <a class='button' href='#' v-if='canSelectPrev' @click.prevent='selectPrev'>Prev</a>
       <div class='post-info'>
         <h3><a target='_blank' :href='selected.permalink'>{{selected.title}}</a></h3>
-        <div class='row'>
-          <div class='label'>Posted: </div>
-          <div class='value'>{{selected.createdStr}} ago</div>
-        </div>
-        <div class='row'>
-          <div class='label'>Score: </div>
-          <div class='value'>{{selected.scoreStr}}</div>
-        </div>
+        <div class='label'>Posted: <strong>{{selected.createdStr}}</strong> ago. Score: <strong>{{selected.scoreStr}}</strong>. </div>
+        <div class='label'>Historical scores at 24h mark for posts with similar scores at this time. <strong>Median: {{selected.createdStr}}</strong> ago. Score: <strong>{{selected.scoreStr}}</strong>. </div>
       </div>
       <a class='button' href='#' v-if='canSelectNext' @click.prevent='selectNext'>Next</a>
     </div>
@@ -100,6 +94,18 @@ a.button, .button-spacer {
 .row {
   display: flex;
   flex-direction: row;
+}
+
+.label {
+  color: #999;
+  font-size: 12px;
+  text-align: left;
+}
+
+.label strong{
+  color: #333;
+  font-weight: bold;
+  font-size: 14px;
 }
 
 .value {
