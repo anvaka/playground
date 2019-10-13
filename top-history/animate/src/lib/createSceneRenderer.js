@@ -234,24 +234,33 @@ export default function createSceneRenderer(archive, canvas) {
   }
 
   function drawMedian(startFrom, neighbors) {
-    let count = 0;
+    const statisticRecords = [];
+
+    for (let i = 0; i < archive.STRIDE - startFrom; ++i) {
+      let band = startFrom + i;
+      statisticRecords.push({
+        stat: archive.getStatsFromNeighbors(neighbors, band),
+        band
+      });
+    }
+
+    drawStatRecords(statisticRecords, 'avg', MEDIAN_COLOR);
+    drawStatRecords(statisticRecords, 'median', 'blue');
+  }
+
+  function drawStatRecords(statisticRecords, statisticName, color) {
     ctx.beginPath();
-    ctx.strokeStyle = MEDIAN_COLOR;
+    ctx.strokeStyle = color;
     ctx.lineWidth = 2;
 
-    while (startFrom < archive.STRIDE) {
-      let score = archive.getStatsFromNeighbors(neighbors, startFrom).median;
-      const point = getMouseCoordinatesFromBandAndScore({band: startFrom, score});
-      if (count === 0) {
+    statisticRecords.forEach((record, index) => {
+      const point = getMouseCoordinatesFromBandAndScore({band: record.band, score: record.stat[statisticName]});
+      if (index === 0) {
         ctx.moveTo(point.x, point.y);
       } else {
         ctx.lineTo(point.x, point.y);
       }
-
-      startFrom += 1;
-      count += 1;
-    }
-
+    });
     ctx.stroke();
   }
 

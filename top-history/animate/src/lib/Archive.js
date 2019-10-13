@@ -38,10 +38,12 @@ export default class Archive {
   getStatsFromNeighbors(neighbors, atBandValue) {
     let scores = neighbors.map(post => this.getPostValueAtBand(post.postId, atBandValue)).filter(x => x);
     scores.sort((a, b) => a - b);
+    let avg = scores.reduce((prev, current) => prev + current, 0) / scores.length;
 
     return {
       count: scores.length,
-      median: scores[Math.floor(scores.length / 2)]
+      median: scores[Math.floor(scores.length / 2)],
+      avg,
     };
   }
 
