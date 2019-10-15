@@ -1,11 +1,9 @@
 const STRIDE = 288; // How many records per row we have
-const MISSING = 4294967295; // If post didn't have score, its value is equal to this
-
-export default function createPredictor(buffer) {
-//module.exports = function createPredictor(buffer) {
-  let bandCount = buffer.length / STRIDE;
-  let neighborsCount = 10;
-  if (Math.round(bandCount) !== bandCount) {
+const MISSING = 4200000000; // If post didn't have score, its value is larger than this
+// export default function createPredictor(buffer) {
+module.exports = function createPredictor(data, nToConsider = 4, eps = 1e-6) {
+  let postCount = data.length / STRIDE;
+  if (Math.round(postCount) !== postCount) {
     throw new Error('Invalid buffer size');
   }
 
@@ -14,64 +12,118 @@ export default function createPredictor(buffer) {
       if (currentBand >= STRIDE) {
         throw new Error('Band is out of range');
       }
-      let neighbors = findNeighborsInBand(currentValue, currentBand)
-      return getBandStats(neighbors, finalBand);
+      // let neighbors = findNeighborsInBand({band: currentBand, score: currentValue});
+
+      let band = currentBand;
+      let score = currentValue;
+      while (band < finalBand) {
+        let bands = {band, score}
+        let vec = getVector(bands);
+        band += 1;
+        score = vec + score;
+      } 
+      return {
+        median: score
+      }
+      // return getStatsFromNeighbors(neighbors, finalBand);
     }
   }
 
-  function getBandStats(neighbors, finalBand) {
-    let values = neighbors.map(x => {
-      let value = buffer[x.id * STRIDE + finalBand];
-      return value === MISSING ? Number.NaN : value;
-    }).filter(x => Number.isFinite(x));
+  function getVector(bandAndScore) {
+    if (bandAndScore.band >= STRIDE - 1) {
+      return 0;
+    }
+    let neighbors = findNeighborsInBand(bandAndScore, nToConsider);
+    let vectors = neighbors.map(post => {
+      let currentValue = getPostValueAtBand(post.postId, bandAndScore.band);
+      let nextValue = getPostValueAtBand(post.postId, bandAndScore.band + 1);
+      return {
+        y: nextValue - currentValue,
+        d: post.distance
+      }
+    }).filter(v => Number.isFinite(v.y));
 
-    let count = values.length;
-    values.sort((a, b) => a - b);
-    let avg = values.reduce((sum, x) => sum + x, 0) / count;
+    let result = 0;
+    vectors.forEach(v => {
+      result += v.y * rbf(v.d);
+    });
+
+    return result/vectors.length;
+  }
+
+  function getStats(bandAndScore, neighborsCount) {
+    let neighbors = findNeighborsInBand(bandAndScore, neighborsCount);
+    return getStatsFromNeighbors(neighbors, STRIDE - 1);
+  }
+
+  function getStatsFromNeighbors(neighbors, atBandValue) {
+    let scores = neighbors.map(post => getPostValueAtBand(post.postId, atBandValue)).filter(x => x);
+    scores.sort((a, b) => a - b);
+    let avg = scores.reduce((prev, current) => prev + current, 0) / scores.length;
+
     return {
-      avg, 
-      mean: values[Math.floor(values.length / 2)],
-      q1: values[Math.floor(values.length / 4)],
-      q3: values[Math.floor(values.length * 3 / 4)],
-    }
+      count: scores.length,
+      median: scores[Math.floor(scores.length / 2)],
+      avg,
+    };
   }
 
-  function findNeighborsInBand(currentValue, currentBand) {
-    let values = [];
-    for (let id = 0; id < bandCount; ++id) {
-      let value = buffer[id * STRIDE + currentBand];
+  function findNeighborsInBand(bandAndScore, neighborsCount = 3) {
+    if (!bandAndScore) return [];
+    let allNeighbors = _getAllSortedNeighborsInBand(bandAndScore);
+    return _getUniqueNearestNeighbors(allNeighbors, neighborsCount);
+  }
 
-      if (value === MISSING) continue;
+  function _getAllSortedNeighborsInBand(bandAndScore) {
+    const values = [];
+    for (let postId = 0; postId < postCount; ++postId) {
+      let postScore = getPostValueAtBand(postId, bandAndScore.band);
+      if (postScore === undefined) continue;
+      // let value = this.getPostValueAtBand(postId, LAST_BAND);
+      // if (value === undefined || value < bandAndScore.score) continue;
+
       values.push({
-        id,
-        distance: Math.abs(value - currentValue)
+        postId,
+        distance: Math.abs(postScore - bandAndScore.score),
+        sign: Math.sign(postScore - bandAndScore.score)
       });
     }
-    values.sort((a, b) => {
-      return a.distance - b.distance;
-    })
-    if (values.length < neighborsCount) {
-      console.error('Not enough data');
-    }
-    let index = 0;
+
+    values.sort((a, b) => a.distance - b.distance);
+    return values;
+  }
+
+  function _getUniqueNearestNeighbors(allNeighbors, neighborsCount) {
+    let neighborIndex = 0;
     let lastDistance;
-    let next = values[index];
+    let next = allNeighbors[neighborIndex];
     let result = [];
     let uniqueCount = 0;
-    while (next && (
-      (next.distance === lastDistance) ||
-      uniqueCount < neighborsCount)
+
+    // we want to get `neighborsCount` with unique scores.
+    while (next && 
+      ((next.distance === lastDistance) || (uniqueCount < neighborsCount))
     ) {
-      if (result.length === 0 || 
-          (lastDistance !== next.distance)
-        ) {
-        uniqueCount += 1;
-      }
+
+      if ((result.length === 0) || (lastDistance !== next.distance)) uniqueCount += 1;
+
       lastDistance = next.distance;
       result.push(next);
-      index += 1;
-      next = values[index];
+
+      next = allNeighbors[++neighborIndex];
     }
+
     return result;
   }
+
+
+  function getPostValueAtBand(postId, band) {
+    let value = data[STRIDE * postId + band];
+    if (value > MISSING) return;
+    return value;
+  }
+function rbf(r) {
+  return  1./(1 + r * r*eps);
+  return Math.exp(-r * r * 1e-7);
+}
 }
