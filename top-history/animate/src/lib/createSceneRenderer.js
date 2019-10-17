@@ -105,7 +105,16 @@ export default function createSceneRenderer(archive, canvas) {
     drawPosts();
 
     if (currentBandAndScore) {
-      drawMedian(currentBandAndScore.band + 1, neighbors);
+      // drawMedian(currentBandAndScore.band + 1, neighbors);
+      let band = currentBandAndScore.band;
+      let score = currentBandAndScore.score;
+      while (band < archive.STRIDE) {
+        let bands = {band, score}
+        let vec = archive.getVector(bands);
+        drawVector(bands, vec);
+        band += 1;
+        score = vec + score;
+      }
     }
     drawPointerAt(currentBandAndScore);
   }
@@ -231,6 +240,20 @@ export default function createSceneRenderer(archive, canvas) {
     ctx.fillStyle = POINTER_COLOR;
     ctx.fillRect(location.x - 2, location.y - 2, 4, 4);
     ctx.stroke();
+  }
+
+  function drawVector(bandAndScore, vector) {
+      const from = getMouseCoordinatesFromBandAndScore(bandAndScore);
+      const to = getMouseCoordinatesFromBandAndScore({
+        band: bandAndScore.band + 1,
+        score: bandAndScore.score + vector
+      });
+      ctx.beginPath();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = MEDIAN_COLOR;
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y)
+      ctx.stroke();
   }
 
   function drawMedian(startFrom, neighbors) {

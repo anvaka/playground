@@ -30,6 +30,35 @@ export default class Archive {
     return value;
   }
 
+  getVector(bandAndScore) {
+    if (bandAndScore.band >= LAST_BAND) {
+      return 0;
+    }
+    let neighbors = this.findNeighborsInBand(bandAndScore, 3);
+    let vectors = neighbors.map(post => {
+      let currentValue = this.getPostValueAtBand(post.postId, bandAndScore.band);
+      let nextValue = this.getPostValueAtBand(post.postId, bandAndScore.band + 1);
+      return {
+        y: nextValue - currentValue,
+        d: post.distance * post.sign
+      }
+    }).filter(v => Number.isFinite(v.y));
+
+
+    let mean = vectors.reduce((p, c) => p + c.d, 0)/vectors.length;
+    let std = vectors.reduce((p, c) => p + (c.d - mean) * (c.d - mean), 0) / vectors.length;
+    std = Math.sqrt(std);
+
+    let result = 0;
+    vectors.forEach(v => {
+      let dstd = (v.d - mean)/std;
+      v.std = dstd;
+      result += v.y * rbf(dstd);
+    });
+
+    return result/vectors.length;
+  }
+
   getStats(bandAndScore, neighborsCount) {
     let neighbors = this.findNeighborsInBand(bandAndScore, neighborsCount);
     return this.getStatsFromNeighbors(neighbors, LAST_BAND);
@@ -97,12 +126,13 @@ export default class Archive {
     for (let postId = 0; postId < this.postCount; ++postId) {
       let postScore = this.getPostValueAtBand(postId, bandAndScore.band);
       if (postScore === undefined) continue;
-      let value = this.getPostValueAtBand(postId, LAST_BAND);
-      if (value === undefined || value < bandAndScore.score) continue;
+      // let value = this.getPostValueAtBand(postId, LAST_BAND);
+      // if (value === undefined || value < bandAndScore.score) continue;
 
       values.push({
         postId,
-        distance: Math.abs(postScore - bandAndScore.score)
+        distance: Math.abs(postScore - bandAndScore.score),
+        sign: Math.sign(postScore - bandAndScore.score)
       });
     }
 
@@ -124,4 +154,11 @@ export default class Archive {
 
     return {minScore, maxScore};
   }
+}
+
+function rbf(r) {
+  
+
+  // return 1/(1 + r*r);//1./(1);
+  return Math.exp(-r * r * 1e-8);
 }
