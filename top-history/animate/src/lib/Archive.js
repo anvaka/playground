@@ -51,9 +51,9 @@ export default class Archive {
 
     let result = 0;
     vectors.forEach(v => {
-      let dstd = (v.d - mean)/std;
-      v.std = dstd;
-      result += v.y * rbf(dstd);
+      let zScore = (v.d - mean)/std;
+      v.std = zScore;
+      result += v.y * rbf(zScore);
     });
 
     return result/vectors.length;
