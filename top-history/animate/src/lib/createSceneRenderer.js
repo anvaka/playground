@@ -256,37 +256,6 @@ export default function createSceneRenderer(archive, canvas) {
       ctx.stroke();
   }
 
-  function drawMedian(startFrom, neighbors) {
-    const statisticRecords = [];
-
-    for (let i = 0; i < archive.STRIDE - startFrom; ++i) {
-      let band = startFrom + i;
-      statisticRecords.push({
-        stat: archive.getStatsFromNeighbors(neighbors, band),
-        band
-      });
-    }
-
-    drawStatRecords(statisticRecords, 'avg', MEDIAN_COLOR);
-    drawStatRecords(statisticRecords, 'median', 'blue');
-  }
-
-  function drawStatRecords(statisticRecords, statisticName, color) {
-    ctx.beginPath();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-
-    statisticRecords.forEach((record, index) => {
-      const point = getMouseCoordinatesFromBandAndScore({band: record.band, score: record.stat[statisticName]});
-      if (index === 0) {
-        ctx.moveTo(point.x, point.y);
-      } else {
-        ctx.lineTo(point.x, point.y);
-      }
-    });
-    ctx.stroke();
-  }
-
   function getMouseCoordinatesFromBandAndScore(bandAndScore) {
     return  {
       x: paddingLeft + sceneWidth * bandAndScore.band / archive.STRIDE, 
