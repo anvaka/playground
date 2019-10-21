@@ -30,6 +30,21 @@ export default class Archive {
     return value;
   }
 
+  getPredictionSeries(currentBandAndScore) {
+    let band = currentBandAndScore.band;
+    let score = currentBandAndScore.score;
+    let series = [];
+
+    while (band < STRIDE) {
+      let bands = {band, score};
+      score += this.getVector(bands);
+      series.push({band, score})
+      band += 1;
+    }
+
+    return series;
+  }
+
   getVector(bandAndScore) {
     if (bandAndScore.band >= LAST_BAND) {
       return 0;
@@ -43,7 +58,6 @@ export default class Archive {
         d: post.distance * post.sign
       }
     }).filter(v => Number.isFinite(v.y));
-
 
     let mean = vectors.reduce((p, c) => p + c.d, 0)/vectors.length;
     let std = vectors.reduce((p, c) => p + (c.d - mean) * (c.d - mean), 0) / vectors.length;
@@ -60,8 +74,13 @@ export default class Archive {
   }
 
   getStats(bandAndScore, neighborsCount) {
+    let result = this.getPredictionSeries(bandAndScore);
     let neighbors = this.findNeighborsInBand(bandAndScore, neighborsCount);
-    return this.getStatsFromNeighbors(neighbors, LAST_BAND);
+    return {
+      count: neighbors.length,
+      median: Math.round(result[result.length - 1].score)
+    }
+    //this.getStatsFromNeighbors(neighbors, LAST_BAND);
   }
 
   getStatsFromNeighbors(neighbors, atBandValue) {
@@ -157,8 +176,7 @@ export default class Archive {
 }
 
 function rbf(r) {
-  
-
+  return 1;
   // return 1/(1 + r*r);//1./(1);
   return Math.exp(-r * r * 1e-8);
 }
