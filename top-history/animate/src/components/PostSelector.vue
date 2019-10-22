@@ -6,7 +6,7 @@
       <div class='post-info'>
         <h3><a target='_blank' :href='selected.permalink'>{{selected.title}}</a></h3>
         <div class='label'>Posted: <strong>{{selected.createdStr}}</strong> ago. Score: <strong>{{selected.scoreStr}}</strong>. </div>
-        <div class='label'>At <strong>24h</strong> mark median score is <strong>{{selected.median}}</strong> (computed from {{selected.neighborCount}} nearest neighbors with similar score at {{selected.createdStr}} mark) </div>
+        <div class='label'>At <strong>24h</strong> the predicted score is <strong>{{selected.median}}</strong> (computed based on posts with similar score in the past) </div>
       </div>
       <a class='button' href='#' v-if='canSelectNext' @click.prevent='selectNext'>Next</a>
     </div>

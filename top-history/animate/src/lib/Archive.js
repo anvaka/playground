@@ -80,7 +80,6 @@ export default class Archive {
       count: neighbors.length,
       median: Math.round(result[result.length - 1].score)
     }
-    //this.getStatsFromNeighbors(neighbors, LAST_BAND);
   }
 
   getStatsFromNeighbors(neighbors, atBandValue) {
