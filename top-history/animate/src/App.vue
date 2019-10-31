@@ -37,7 +37,7 @@ export default {
   computed: {
     subtitle() {
       const prefix = `Compare today's scores in <a href='https://www.reddit.com${this.subreddit}'>${this.subreddit}</a> with`;
-      const suffix = ' posts that had similar scores in the past.';
+      const suffix = ' posts in the past.';
       return prefix + (this.isLoading ? suffix : ' ' + formatNumber(this.postCount) + ' ' + suffix);
     }
   },
