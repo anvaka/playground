@@ -1,6 +1,8 @@
 import formatNumber from './formatNumber';
 import settings from './settings'
+import {Delaunay} from 'd3-delaunay';
 import { getHumanFriendlyTimeSinceCreation } from './getHumanFriendlyTimeSinceCreation';
+import bus from '../bus';
 
 export default function createSceneRenderer(archive, canvas) {
   const AXIS_COLOR = 'black';
@@ -14,6 +16,7 @@ export default function createSceneRenderer(archive, canvas) {
 
   let width;
   let height;
+  let postIndex;
 
   let scaleX, scaleY;
   let canvasBoundingClientRect;
@@ -35,7 +38,7 @@ export default function createSceneRenderer(archive, canvas) {
 
   const ctx = canvas.getContext('2d');
   ctx.font = `'Avenir', Helvetica, Arial, sans-serif`
-  canvas.addEventListener('mousemove', handleMouseMove);
+  canvas.addEventListener('click', handleClick);
   window.addEventListener('resize', onResize);
 
   return {
@@ -66,7 +69,7 @@ export default function createSceneRenderer(archive, canvas) {
   }
 
   function dispose() {
-    canvas.removeEventListener('mousemove', handleMouseMove);
+    canvas.removeEventListener('mousemove', handleClick);
     window.removeEventListener('resize', onResize);
   }
 
@@ -77,6 +80,15 @@ export default function createSceneRenderer(archive, canvas) {
 
   function renderPosts(posts) {
     currentPosts = posts;
+    let points = posts.map(post => {
+      let pos = getMouseCoordinatesFromBandAndScore({
+        band: post.band,
+        score: post.score
+      });
+      return [pos.x, pos.y];
+    });
+    
+    postIndex = Delaunay.from(points);
     redraw();
   }
 
@@ -89,11 +101,15 @@ export default function createSceneRenderer(archive, canvas) {
     redraw();
   }
 
-  function handleMouseMove(e) {
+  function handleClick(e) {
     let x = (e.offsetX) * scaleX;
     let y = (e.offsetY) * scaleY;
-    currentBandAndScore = getBandAndScoreFromCanvasCoordinates(x, y);
-    redraw();
+    if (postIndex) {
+      bus.fire('post-selected', postIndex.find(x, y));
+    } else {
+      currentBandAndScore = getBandAndScoreFromCanvasCoordinates(x, y);
+      redraw();
+    }
   }
 
   function redraw() {

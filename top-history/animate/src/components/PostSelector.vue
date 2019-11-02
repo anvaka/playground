@@ -21,6 +21,7 @@
 import fetchPosts from '../lib/fetchPosts';
 import formatNumber from '../lib/formatNumber';
 import settings from '../lib/settings';
+import bus from '../bus.js';
 
 export default {
   name: 'PostSelector',
@@ -38,6 +39,10 @@ export default {
   },
   methods: {
     select(postIndex) {
+      if (postIndex === this.index) {
+        return;
+      }
+
       this.index = postIndex;
       const selectedPost = this.posts[postIndex];
       const stats = this.archive.getStats(selectedPost, settings.nearestCount);
@@ -56,8 +61,13 @@ export default {
 
     selectPrev() {
       if (this.canSelectPrev) this.select(this.index - 1);
-    }
+    },
   },
+
+  beforeDestroy() {
+    bus.off('post-selected', this.select);
+  },
+
   mounted() {
     fetchPosts().then(posts => {
       this.posts = posts;
@@ -68,6 +78,7 @@ export default {
       this.error = 'Failed to load latest posts.'
       console.error(err);
     });
+    bus.on('post-selected', this.select);
   }
 }
 </script>
