@@ -1,4 +1,5 @@
 subreddits.json
+*.gz
 *.csv
 .ipynb_checkpoints
 coeff*.json
