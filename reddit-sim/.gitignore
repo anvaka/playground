@@ -1,4 +1,6 @@
 data
+data-back
+data-compact
 node_modules
 package-lock.json
 
