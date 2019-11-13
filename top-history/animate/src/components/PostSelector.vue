@@ -39,10 +39,6 @@ export default {
   },
   methods: {
     select(postIndex) {
-      if (postIndex === this.index) {
-        return;
-      }
-
       this.index = postIndex;
       const selectedPost = this.posts[postIndex];
       const stats = this.archive.getStats(selectedPost, settings.nearestCount);

@@ -2,3 +2,5 @@ subreddits.json
 *.csv
 .ipynb_checkpoints
 coeff*.json
+data
+scores.bin
