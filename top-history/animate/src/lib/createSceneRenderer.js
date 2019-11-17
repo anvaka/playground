@@ -30,6 +30,7 @@ export default function createSceneRenderer(archive, canvas) {
   let xAxisYCoordinate;
   let yAxisXCoordinate;
   let selectedPostIndex = 0;
+  let lastScore;
 
   updateDimensions();
 
@@ -38,14 +39,42 @@ export default function createSceneRenderer(archive, canvas) {
 
   const ctx = canvas.getContext('2d');
   ctx.font = `'Avenir', Helvetica, Arial, sans-serif`
-  canvas.addEventListener('click', handleClick);
+  canvas.addEventListener('mousemove', handleMove);
   window.addEventListener('resize', onResize);
+  window.showPost = showPost;
 
   return {
     getNearestCount: () => settings.nearestCount,
     dispose,
     renderPosts,
     selectPost
+  }
+
+  function showPost(index) {
+    let history = window.testPosts.getPostHistory(index);
+    let actualLast = history[history.length - 1];
+
+    let animationIndex = 0;
+    let error = 0;
+    frame();
+
+    function frame() {
+      let post = history[animationIndex];
+      if (!post) {
+        console.log('Total error: ' + error);
+        return;
+      }
+      lastScore = null;
+
+      selectPost(post);
+      if (actualLast.band == lastScore.band) {
+        let dError = Math.abs(lastScore.score - actualLast.score);
+        error += dError;
+        console.log('Predicted: ' + lastScore.score + '; Actual: ' + actualLast.score + '; Error: ' + dError);
+      }
+      animationIndex += 1;
+      requestAnimationFrame(frame);
+    }
   }
 
   function updateDimensions() {
@@ -69,7 +98,7 @@ export default function createSceneRenderer(archive, canvas) {
   }
 
   function dispose() {
-    canvas.removeEventListener('mousemove', handleClick);
+    canvas.removeEventListener('mousemove', handleMove);
     window.removeEventListener('resize', onResize);
   }
 
@@ -101,6 +130,14 @@ export default function createSceneRenderer(archive, canvas) {
     redraw();
   }
 
+  function handleMove(e) {
+    let x = (e.offsetX) * scaleX;
+    let y = (e.offsetY) * scaleY;
+
+    currentBandAndScore = getBandAndScoreFromCanvasCoordinates(x, y);
+    redraw();
+  }
+
   function handleClick(e) {
     let x = (e.offsetX) * scaleX;
     let y = (e.offsetY) * scaleY;
@@ -123,6 +160,7 @@ export default function createSceneRenderer(archive, canvas) {
     if (currentBandAndScore) {
       let series = archive.getPredictionSeries(currentBandAndScore, archive.STRIDE)
       drawSeries(series);
+      lastScore = series[series.length - 1];
     }
     drawPointerAt(currentBandAndScore);
   }

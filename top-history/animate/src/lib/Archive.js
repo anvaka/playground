@@ -7,7 +7,7 @@ const STRIDE = 288;
 const LAST_BAND = STRIDE - 1;
 const EMPTY = [];
 
-export default class Archive {
+class Archive {
   constructor(data) {
     this.STRIDE = STRIDE;
 
@@ -173,6 +173,10 @@ export default class Archive {
     return {minScore, maxScore};
   }
 }
+
+Archive.STRIDE = STRIDE;
+
+export default Archive;
 
 function rbf(r) {
   return 1;
