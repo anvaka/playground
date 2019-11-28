@@ -31,6 +31,7 @@ export default function createSceneRenderer(archive, canvas) {
   let yAxisXCoordinate;
   let selectedPostIndex = 0;
   let lastScore;
+  let lastFrame;
 
   updateDimensions();
 
@@ -56,6 +57,7 @@ export default function createSceneRenderer(archive, canvas) {
 
     let animationIndex = 0;
     let error = 0;
+    cancelAnimationFrame(lastFrame);
     frame();
 
     function frame() {
@@ -70,10 +72,12 @@ export default function createSceneRenderer(archive, canvas) {
       if (actualLast.band == lastScore.band) {
         let dError = Math.abs(lastScore.score - actualLast.score);
         error += dError;
-        console.log('Predicted: ' + lastScore.score + '; Actual: ' + actualLast.score + '; Error: ' + dError);
+        console.log('Predicted: ' + lastScore.score +
+          '; Actual: ' + actualLast.score + 
+          '; Error: ' + dError/actualLast.score);
       }
       animationIndex += 1;
-      requestAnimationFrame(frame);
+      lastFrame = requestAnimationFrame(frame);
     }
   }
 
