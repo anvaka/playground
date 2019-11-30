@@ -142,6 +142,7 @@ export default function createSceneRenderer(archive, canvas) {
     redraw();
   }
 
+  // eslint-disable-next-line
   function handleClick(e) {
     let x = (e.offsetX) * scaleX;
     let y = (e.offsetY) * scaleY;
