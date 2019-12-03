@@ -1,9 +1,7 @@
 import Archive from './Archive';
-import createRandom from 'ngraph.random';
+import splitTestTrain from './splitTestTrain';
 
 export default function fetchArchive() {
-  let random = createRandom(42);
-
   return fetch('static/scores.bin')
     .then(response => response.arrayBuffer())
     .then(buffer => {
@@ -12,19 +10,5 @@ export default function fetchArchive() {
       window.testPosts = new Archive(testPosts);
       return new Archive(trainPosts);
     });
-
-  function splitTestTrain(splitRatio, allPosts) {
-    let trainPosts = [];
-    let testPosts = [];
-    let stride = Archive.STRIDE;
-    let postCount = allPosts.length / stride;
-
-    for (let i = 0; i < postCount; ++i) {
-      let writeTo = random.nextDouble() < splitRatio ? trainPosts : testPosts;
-      for (let j = 0; j < stride; ++j) writeTo.push(allPosts[i * stride + j]);
-    }
-
-    return {trainPosts, testPosts};
-  }
 }
 
