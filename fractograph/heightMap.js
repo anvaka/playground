@@ -1,18 +1,22 @@
+document.body.innerHTML = '<canvas id="scene"></canvas>';
+
 var visited = new Map();
 var maxIntensity = 15;
-var canvasWidth = 640; 
-var canvasHeight = 480;
-var minX = -1.3, maxX = 1.3;
-var minY = -1.3, maxY = 1.3;
+var scaleFactor = 1
+var canvasWidth = 640*scaleFactor; 
+var canvasHeight = 480*scaleFactor;
+var precisionValue = 50; 
+var minX = -1.1, maxX = 0.1;
+var minY = -0.5, maxY = 0.5;
 var cx = minX, cy = minY;
 
 var dx = (maxX - minX) / canvasWidth;
 var dy = (maxY - minY) / canvasHeight;
-document.body.innerHTML = '<canvas id="scene"></canvas>';
 var scene = document.getElementById('scene');
 var ctx = scene.getContext('2d');
 var imageData; 
-scene.width = ctx.width = canvasWidth;
+var maxPointsLength = 1000;
+scene.width = ctx.width = canvasWidth; 
 scene.height = ctx.height = canvasHeight;
 
 frame();
@@ -26,13 +30,13 @@ function frame() {
     return;
   } 
 
- requestAnimationFrame(frame);
+//  requestAnimationFrame(frame);
 }
 
 function drawNext() {
   let rowNumber = 0; 
-  // noprotec
-  while (rowNumber < 1) { 
+  // noprotect
+  while (rowNumber < canvasHeight) { 
     for (cx = minX; cx < maxX; cx += dx) {
       var z = {x: cx, y: cy}; 
       for(var i = 0; i < 32; ++i) {
@@ -52,8 +56,8 @@ function drawNext() {
     } else {
 
       return true; // done.
-    }
-        rowNumber += 1;
+    } 
+    rowNumber += 1;
   } 
 }
 
@@ -83,12 +87,17 @@ function recordPoint(current) {
   pointRecord.value += 1; 
   let exist = pointRecord.point.find(pt => pt.x === current.x && pt.y === current.y);
 
+  if (pointRecord.point.length > maxPointsLength) {
+    maxPointsLength = pointRecord.point.length;
+    console.log(maxPointsLength);
+//     debugger; 
+  }
   if (!exist) {
     pointRecord.point.push(current);
   }
   if (pointRecord.value > maxIntensity) {
     maxIntensity = pointRecord.value;
-    console.log(maxIntensity, cy) ;
+//     console.log(maxIntensity, cy) ;
   } 
   
   visited.set(key, pointRecord);
@@ -112,7 +121,7 @@ function makeKey(p) {
 }
 
 function precision(x) {
-  return Math.round(x * 100);
+  return Math.round(x * precisionValue);
 }
 
 

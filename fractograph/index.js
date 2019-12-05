@@ -1,4 +1,4 @@
-// Source for https://twitter.com/anvaka/status/1091994047286104064 
+// Source for https://twitter.com/anvaka/status/1091994047286104064
 var graph = require('ngraph.graph')();
 var todot = require('ngraph.todot');
 var minX = -3, maxX = 3;
@@ -10,7 +10,6 @@ var dy = (maxY - minY) / 300;
 
 
 while (!drawNext()) {}
-//console.log(graph.getLinksCount());
  console.log(todot(graph))
 
 function drawNext() {
