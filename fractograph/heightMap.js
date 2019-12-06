@@ -3,19 +3,23 @@ document.body.innerHTML = '<canvas id="scene"></canvas>';
 var visited = new Map();
 var maxIntensity = 15;
 var scaleFactor = 1
-var canvasWidth = 640*scaleFactor; 
-var canvasHeight = 480*scaleFactor;
-var precisionValue = 50; 
-var minX = -1.1, maxX = 0.1;
-var minY = -0.5, maxY = 0.5;
+var canvasWidth = 512*scaleFactor; 
+var canvasHeight = 512*scaleFactor;
+var intencities = [];
+var aspectRatio = canvasWidth/canvasHeight;
+var minX = -2, maxX = 1;
+var renderWidth = maxX - minX;
+var renderHeight = renderWidth / aspectRatio;
+
+var minY = -1.1, maxY = minX + renderHeight;
 var cx = minX, cy = minY;
 
 var dx = (maxX - minX) / canvasWidth;
 var dy = (maxY - minY) / canvasHeight;
+var precisionValue = 1/(1.*dx); 
 var scene = document.getElementById('scene');
 var ctx = scene.getContext('2d');
 var imageData; 
-var maxPointsLength = 1000;
 scene.width = ctx.width = canvasWidth; 
 scene.height = ctx.height = canvasHeight;
 
@@ -25,18 +29,17 @@ function frame() {
   beginChange();   
   var done = drawNext();
   commitChange();
-  
+   
   if (done) { 
     return;
   } 
 
-//  requestAnimationFrame(frame);
+ requestAnimationFrame(frame);
 }
 
 function drawNext() {
   let rowNumber = 0; 
-  // noprotect
-  while (rowNumber < canvasHeight) { 
+  while (rowNumber < 2) { 
     for (cx = minX; cx < maxX; cx += dx) {
       var z = {x: cx, y: cy}; 
       for(var i = 0; i < 32; ++i) {
@@ -47,14 +50,16 @@ function drawNext() {
         zn.y += cy;   
 
 
-        recordPoint(z); 
+        recordPoint({
+          x: z.x,
+          y: z.y
+        }); 
         z = zn;
       }  
     }
     if (cy < maxY) {
       cy += dy;
     } else {
-
       return true; // done.
     } 
     rowNumber += 1;
@@ -67,48 +72,40 @@ function beginChange() {
 }
 
 function commitChange() {
-  visited.forEach(function(pointRecord) {
-    var c = Math.round(255 * pointRecord.value / maxIntensity);
-    pointRecord.point.forEach(pt => drawPoint(pt, c, c, c));
-  }); 
+  intencities.forEach((key, index) => {
+    var record = visited.get(key);
+    if (!record) return;
+    var c = Math.round(255 * record.value / maxIntensity);
+    var x = index % canvasWidth;
+    var y = Math.floor(index / canvasWidth);
+    drawPoint(x, y, c, c, c);
+  });
   ctx.putImageData(imageData, 0, 0);
 } 
 
 function recordPoint(current) {
+  var x = Math.round(canvasWidth * (current.x - minX)/(maxX - minX));
+  var y = canvasHeight -  Math.round(canvasHeight * (current.y - minY) / (maxY - minY));
+  if (y < 0 || y > canvasHeight) return;
+  if (x < 0 || x > canvasWidth) return;  
+
   var key = makeKey(current);
   var pointRecord = visited.get(key);
   if (!pointRecord) {
-    pointRecord = { 
-      point: [current],
-      value: 0
-    };
+    pointRecord = { value: 0 };
   }
-  
-  pointRecord.value += 1; 
-  let exist = pointRecord.point.find(pt => pt.x === current.x && pt.y === current.y);
 
-  if (pointRecord.point.length > maxPointsLength) {
-    maxPointsLength = pointRecord.point.length;
-    console.log(maxPointsLength);
-//     debugger; 
-  }
-  if (!exist) {
-    pointRecord.point.push(current);
-  }
+  pointRecord.value += 1; 
+  intencities[x + y * canvasWidth] = key;
+
   if (pointRecord.value > maxIntensity) {
     maxIntensity = pointRecord.value;
-//     console.log(maxIntensity, cy) ;
   } 
   
   visited.set(key, pointRecord);
 }
 
-function drawPoint(point, r, g, b) {
-  var x = Math.round(canvasWidth * (point.x - minX)/(maxX - minX));
-  var y = canvasHeight -  Math.round(canvasHeight * (point.y - minY) / (maxY - minY));
-  if (y < 0 || y > canvasHeight) return;
-  if (x < 0 || x > canvasWidth) return;  
-  
+function drawPoint(x, y, r, g, b) {
   var index = (x + y * canvasWidth)*4; 
   imageData.data[index] = r;
   imageData.data[index + 1] = g;
