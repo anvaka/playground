@@ -1,5 +1,3 @@
-document.body.innerHTML = '<canvas id="scene"></canvas>';
-
 var visited = new Map();
 var maxIntensity = 15;
 var scaleFactor = 1
