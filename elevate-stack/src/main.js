@@ -1,11 +1,8 @@
 /**
  * This is the website startup point.
  */
-import * as osm from './lib/osm';
 import appState from './appState';
 import bus from './bus';
-import constructGraph from './lib/constructGraph';
-import formatNumber from './lib/formatNumber';
 import mapboxgl from 'mapbox-gl';
 import { getRegion, lat2tile, long2tile, tile2long } from './elevation';
 
@@ -23,38 +20,39 @@ var cancelDownload;
 
 // Let the vue know what to call to start the app.
 appState.init = init;
+appState.redraw = updateHeights;
 
 function init() {
   // TODO: Do I need to hide this?
   mapboxgl.accessToken = 'pk.eyJ1IjoiYW52YWthIiwiYSI6ImNqaWUzZmhqYzA1OXMza213YXh2ZzdnOWcifQ.t5yext53zn1c9Ixd7Y41Dw';
   map = new mapboxgl.Map({
       container: 'map',
-      style: {
-        "version": 8,
-        "name": "Hillshade-only",
-        "center": [-112.81596278901452, 37.251160384573595],
-        "zoom": 11.560975632435424,
-        "bearing": 0,
-        "pitch": 0,
-        "sources": {
-            "mapbox://mapbox.terrain-rgb": {
-                "url": "mapbox://mapbox.terrain-rgb",
-                "type": "raster-dem",
-                "tileSize": 256
-            }
-        },
-        "layers": [
-            {
-                "id": "mapbox-terrain-rgb",
-                "type": "hillshade",
-                "source": "mapbox://mapbox.terrain-rgb",
-                "layout": {},
-                "paint": {}
-            }
-        ]
-    },
+    //   style: {
+    //     "version": 8,
+    //     "name": "Hillshade-only",
+    //     "center": [-112.81596278901452, 37.251160384573595],
+    //     "zoom": 11.560975632435424,
+    //     "bearing": 0,
+    //     "pitch": 0,
+    //     "sources": {
+    //         "mapbox://mapbox.terrain-rgb": {
+    //             "url": "mapbox://mapbox.terrain-rgb",
+    //             "type": "raster-dem",
+    //             "tileSize": 256
+    //         }
+    //     },
+    //     "layers": [
+    //         {
+    //             "id": "mapbox-terrain-rgb",
+    //             "type": "hillshade",
+    //             "source": "mapbox://mapbox.terrain-rgb",
+    //             "layout": {},
+    //             "paint": {}
+    //         }
+    //     ]
+    // },
       
-      //'mapbox://styles/mapbox/streets-v9',
+      style: 'mapbox://styles/mapbox/streets-v9',
       center: [-122.2381,47.624],
       zoom: 11.32,
       hash: true
@@ -62,7 +60,9 @@ function init() {
 
   map.addControl(new mapboxgl.NavigationControl({showCompass: false}), 'bottom-right');
   map.addControl(new MapboxGeocoder({accessToken: mapboxgl.accessToken}));
+  map.on('zoomstart', hideHeights);
   map.on('zoomend', updateHeights);
+  map.on('dragstart', hideHeights);
   map.on('dragend', updateHeights);
   map.on('load', updateHeights);
 
@@ -75,6 +75,11 @@ function init() {
   });
 }
 
+function hideHeights() {
+  let canvas = document.querySelector('.height-map');
+  if (canvas) document.body.removeChild(canvas);
+}
+
 function updateHeights() {
   const bounds = map.getBounds();
   const sw = bounds.getSouthWest();
@@ -85,6 +90,7 @@ function updateHeights() {
   const endTileLng = long2tile(ne.lng, zoom);
   const endTileLat = lat2tile(sw.lat, zoom);
 
+  const oceanLevel = Number.parseFloat(appState.oceanLevel);
   let startXOffset = Math.round((startTileLng - Math.floor(startTileLng)) * 256);
   let startYOffset = Math.round((startTileLat - Math.floor(startTileLat)) * 256);
   let endXOffset = Math.round((Math.ceil(endTileLng) - endTileLng) * 256);
@@ -99,50 +105,112 @@ function updateHeights() {
     let now = performance.now();
     let resHeight = map.transform.height;
     let resWidth = map.transform.width;
-    debugger;
 
     let result = document.createElement('canvas');
     result.classList.add('height-map')
-    let ctx = result.getContext('2d');
-    result.width = ctx.width = resWidth;
-    result.height = ctx.height = resHeight;
-
-    let rowCount = Math.round(resHeight/4);
-    let columnCount = Math.round(resWidth/4);
-    let scale = 84;
-    const regionIterator = createRegionIterator(region, 
-      startXOffset, startYOffset,
-      region.width - endXOffset, region.height - endYOffset
-    );
-    let {minH, maxH} = regionIterator.getMinMaxHeight();
-    
-    let dh = maxH - minH;
-    regionIterator.forEachRowColumn(rowCount, columnCount, function(row, col, height) {
-        let heightRatio = (height - minH)/dh;
-        let fX = resWidth * col;
-        let fY = resHeight * row - scale * heightRatio;
-
-        if(fY > resHeight) return;
-        if (col === 0 || heightRatio < 0.0) {
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.moveTo(fX, fY)
-        } else {
-          ctx.lineTo(fX, fY)
-        }
-    });
-    ctx.stroke();
-
-    let elapsed = performance.now() - now;
-    console.log('Elapsed: ', elapsed/1000);
-  //  document.body.appendChild(region);
     if (document.querySelector('.height-map')) {
       document.body.replaceChild(result, document.querySelector('.height-map'))
     } else {
       document.body.appendChild(result);
     }
+
+    let ctx = result.getContext('2d');
+    result.width = ctx.width = resWidth;
+    result.height = ctx.height = resHeight;
+
+    let rowCount = Math.round(resHeight * appState.lineDensity/100);
+    let scale = appState.heightScale;
+    const regionIterator = createRegionIterator(region, 
+      startXOffset, startYOffset,
+      region.width - endXOffset, region.height - endYOffset
+    );
+    let {minH, maxH, maxRow} = regionIterator.getMinMaxHeight();
+
+    let dh = maxH - minH;
+
+    ctx.beginPath();
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, resWidth, resHeight);
+    let lastLine = [];
+    regionIterator.forEachRow(rowCount, maxRow, function(row) {
+      drawPolyLine(lastLine);
+
+      lastLine = [];
+      for (let x = 0; x < resWidth; ++x) {
+        let height = regionIterator.getHeight(row, x/resWidth)
+
+        let heightRatio = (height - minH)/dh;
+        let fY = Math.floor(resHeight * row) - Math.floor(scale * heightRatio);
+
+        if (height <= oceanLevel) {
+          drawPolyLine(lastLine);
+          lastLine = [];
+        } else {
+          lastLine.push(x, fY);
+        }
+      }
+    });
+
+    drawPolyLine(lastLine);
+
+    let elapsed = performance.now() - now;
+    console.log('Elapsed: ', elapsed/1000);
+  //  document.body.appendChild(region);
+
+    function drawPolyLine(points) {
+      if (points.length < 3) return;
+
+      let smoothResult = smooth(points, 8);
+      points = smoothResult.points;
+
+      if (smoothResult.max - smoothResult.min > 2) {
+        ctx.beginPath();
+        ctx.fillStyle = 'white';
+        ctx.moveTo(points[0], points[1]);
+        for (let i = 2; i < points.length; i += 2) {
+          ctx.lineTo(points[i], points[i + 1]);
+        }
+        ctx.lineTo(points[points.length - 2], smoothResult.max);
+        ctx.lineTo(points[0], smoothResult.max);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.beginPath();
+      ctx.strokeStyle = 'black'
+      ctx.moveTo(points[0], points[1]);
+      for (let i = 2; i < points.length; i += 2) {
+        ctx.lineTo(points[i], points[i + 1]);
+      }
+      ctx.stroke();
+    }
+
   });
 
+}
+
+function smooth(points, neighborsCount) {
+  let result = [];
+  let max = Number.NEGATIVE_INFINITY;
+  let min = Number.POSITIVE_INFINITY;
+  for (let i = 0; i < points.length; i += 2) {
+    let sum = 0; let count = 0;
+    for (let j = 0; j < neighborsCount * 2; j += 2) {
+      if (j < points.length) {
+        sum += points[j + i + 1];
+        count += 1;
+      }
+      result[i] = points[i]; //sum / count;
+      result[i + 1] = sum/count;
+      if (max < result[i + 1]) max = result[i + 1];
+      if (min > result[i + 1]) min = result[i + 1];
+    }
+  }
+  return {
+    points: result,
+    min,
+    max
+  };
 }
 
 function createRegionIterator(region, left, top, right, bottom) {
@@ -150,12 +218,26 @@ function createRegionIterator(region, left, top, right, bottom) {
 
   return {
     getMinMaxHeight,
-    forEachRowColumn
+    forEachRow,
+    getHeight
+  }
+
+  function getHeight(row, col) {
+    let x = Math.round(left + col * (right - left));
+    let y = Math.round(top + row * (bottom - top));
+
+    let index = (y * region.width + x) * 4;
+    let R = data[index + 0];
+    let G = data[index + 1];
+    let B = data[index + 2];
+    let height = -10000 + ((R * 256 * 256 + G * 256 + B) * 0.1)
+    return height;
   }
 
   function getMinMaxHeight() {
     let minH = Number.POSITIVE_INFINITY;
     let maxH = Number.NEGATIVE_INFINITY;
+    let maxRow = -1;
     for (let x = left; x < right; ++x) {
       for (let y = top; y < bottom; ++y) {
         let index = (y * region.width + x) * 4;
@@ -164,28 +246,24 @@ function createRegionIterator(region, left, top, right, bottom) {
         let B = data[index + 2];
         let height = -10000 + ((R * 256 * 256 + G * 256 + B) * 0.1)
         if (height < minH) minH = height;
-        if (height > maxH) maxH = height;
+        if (height > maxH) {
+          maxH = height;
+          maxRow = y;
+        }
       }
     }
 
-    return {minH, maxH};
+    return {minH, maxH, maxRow};
   }
 
-  function forEachRowColumn(maxRows, maxColumns, heightCallback) {
+  function forEachRow(maxRows, includeRowIndex, rowCallback) {
     let dRows = 1/maxRows;
-    let dColumns = 1/maxColumns;
-    for (let row = 0; row < 1; row += dRows) {
-      for (let col = 0; col < 1; col += dColumns) {
-        let x = Math.round(left + col * (right - left));
-        let y = Math.round(top + row * (bottom - top));
-
-        let index = (y * region.width + x) * 4;
-        let R = data[index + 0];
-        let G = data[index + 1];
-        let B = data[index + 2];
-        let height = -10000 + ((R * 256 * 256 + G * 256 + B) * 0.1)
-        heightCallback(row, col, height);
-      }
+    let hitOffset = includeRowIndex/region.height;
+    let pos = hitOffset - dRows;
+    while (pos > 0) pos -= dRows;
+    if (pos < 0) pos += dRows;
+    for (let row = pos; row < 1; row += dRows) {
+      rowCallback(row);
     }
   }
 }

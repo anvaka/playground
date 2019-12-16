@@ -17,7 +17,7 @@ export default function createScene(canvas) {
   let linkIdToUI = new Map();
   let layoutSteps = 500; // how many frames shall we run layout?
   let transitionSteps = 0;
-  let boidSteps = 500;
+  let boidSteps = 2000;
   let rafHandle;
 
   loadGraph(getGraph());
@@ -102,7 +102,7 @@ export default function createScene(canvas) {
     lines.color.r = 6/255;
     lines.color.g = 28/255;
     lines.color.b = 70/255;
-    lines.color.a = 0.2;
+    lines.color.a = 0.0;
 
     graph.forEachLink(link => {
       var from = layout.getNodePosition(link.fromId);
@@ -113,6 +113,14 @@ export default function createScene(canvas) {
     });
 
     scene.appendChild(lines);
+      requestAnimationFrame(updateLineAlpha);
+
+    function updateLineAlpha() {
+      if (lines.color.a < 0.2) {
+        lines.color.a += 0.02
+        requestAnimationFrame(updateLineAlpha);
+      } 
+    }
   }
 
   function frame() {
@@ -120,8 +128,12 @@ export default function createScene(canvas) {
 
     if (boidSteps > 0) {
       boidSteps -= 1;
-      boidLayout.step();
       forceLayout.step()
+      // graph.forEachNode(function(node) {
+      //   var pos = forceLayout.getNodePosition(node.id);
+      //   boidLayout.setDesiredNodePosition(node.id, pos);
+      // })
+      boidLayout.step();
       if (boidSteps === 50) {
         transitionSteps = 1000;
         layout = createTransitionLayout(graph, boidLayout, forceLayout);
@@ -131,7 +143,7 @@ export default function createScene(canvas) {
     if (transitionSteps > 0) {
       transitionSteps -= 1;
       layout.step();
-      if (!drawLinks && transitionLayout.isDone()) {
+      if (!drawLinks && transitionLayout.isDone(10)) {
         drawLinks = true;
         createLinksElements();
       }
@@ -171,7 +183,7 @@ function createTransitionLayout(graph, fromLayout, toLayout) {
 
   graph.forEachNode(node => {
     let startAt = Math.max(0, Math.round(random.gaussian() * 10) + 20);
-    let lifeSpan = 100;
+    let lifeSpan = 50;
     if (startAt + lifeSpan > maxFrame) maxFrame = startAt + lifeSpan;
     nodes.set(node.id, {
       from: fromLayout.getNodePosition(node.id),
@@ -187,8 +199,8 @@ function createTransitionLayout(graph, fromLayout, toLayout) {
     isDone
   };
 
-  function isDone() {
-    return timeFrame > maxFrame * 0.85;
+  function isDone(delta = 0) {
+    return timeFrame + delta > maxFrame * 0.85;
   }
 
   function step() {

@@ -1,6 +1,10 @@
 // const ratio = 540/230 - mug
 const appState = {
   currentState: 'intro',
+  lineDensity: 20,
+  mapOpacity: 100,
+  heightScale: 84,
+  oceanLevel: 0,
   selected: null,
   aboutVisible: false,
   blank: false,

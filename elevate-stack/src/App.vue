@@ -35,8 +35,25 @@
           </div>
         </div>
       </div>
-      <div class='download' v-if='!building && currentState === "intro"'>
-        <a href="#" @click.prevent='downloadAllRoads()'>Start</a>
+      <div class='form' v-if='!building && currentState === "intro"'>
+        <div class='row'>
+          <div class='col'>Line density</div>
+          <div class='col'>
+            <input type="range" min="1" max="100" step="1" v-model="lineDensity"> 
+            <input type='number' :step='1' v-model='lineDensity'  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" min='1' max='100'>
+          </div>
+        </div>
+        <div class='row'>
+          <div class='col'>Height scale</div>
+          <div class='col'>
+            <input type="range" min="10" max="800" step="1" v-model="heightScale"> 
+            <input type='number' :step='1' v-model='heightScale'  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" min='10' max='800'>
+          </div>
+        </div>
+        <div class='row'>
+          <div class='col'>Ocean level</div>
+          <div class='col'><input type='number' :step='1' v-model='oceanLevel' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" ></div>
+        </div>
       </div>
       <div v-if='blank' class='no-roads padded'>
         Hm... There is nothing here. Try a different area?
@@ -96,6 +113,17 @@ export default {
     bus.off('graph-loaded', this.createScene);
     this.ensurePreviousSceneDestroyed();
     window.removeEventListener('resize', this.onResize, true);
+  },
+  watch: {
+    lineDensity(newValue, oldValue) {
+      this.redraw();
+    },
+    oceanLevel(newValue, oldValue) {
+      this.redraw();
+    },
+    heightScale() {
+      this.redraw();
+    }
   },
   methods: {
     updateLayerColor(layer) {
@@ -274,7 +302,7 @@ h3 {
 .height-map {
   position: absolute;
   pointer-events: none;
-  background: white;
+  // background: white;
   left: 0px;
   top: 62.2315px;
   width: 1309px;
@@ -360,18 +388,11 @@ h3 {
   color: orangered;
 }
 
-.download {
+.block {
+  margin-top: 12px;
+  padding-top: 10px;
   display: flex;
-  align-items: stretch;
-  height: 42px;
-
-  a {
-    text-align: center;
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
+  flex-direction: column;
 }
 a {
   color: primary-action-color;
@@ -456,6 +477,16 @@ a {
 }
 .title {
   font-size: 18px;
+}
+.row {
+  display: flex;
+  flex-direction: row;
+}
+.center {
+  justify-content: center;
+}
+.col {
+  flex: 1;
 }
 
 @media (max-width: small-screen) {
