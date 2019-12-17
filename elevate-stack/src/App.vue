@@ -22,18 +22,7 @@
             </div>
           </div>
         </div>
-        <div class='preview-actions'>
-          <a href='#' @click.prevent='previewOrOpen' v-if='!generatingPreview && !zazzleLink' class='action' :class='{"has-link": zazzleLink}'>
-            Preview mug
-          </a>
-          <div v-if='zazzleLink' class='padded popup-help'>
-            If your browser has blocked the new window, please <a :href='zazzleLink' target='_blank'>click here</a>
-            to open it.
-          </div>
-          <div v-if='generatingPreview' class='loading-container'>
-            <loading></loading> Generating preview url...
-          </div>
-        </div>
+        
       </div>
       <div class='form' v-if='!building && currentState === "intro"'>
         <div class='row'>
@@ -53,6 +42,32 @@
         <div class='row'>
           <div class='col'>Ocean level</div>
           <div class='col'><input type='number' :step='1' v-model='oceanLevel' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" ></div>
+        </div>
+        <div class='row'>
+          <div class='col'>Smooth steps</div>
+          <div class='col'>
+            <input type="range" min="1" max="50" step="1" v-model="smoothSteps"> 
+            <input type='number' :step='1' v-model='smoothSteps'  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" min='1' max='100'>
+          </div>
+        </div>
+        <div class='row'>
+          <div class='col'>Overlay opacity</div>
+          <div class='col'>
+            <input type="range" min="1" max="100" step="1" v-model="mapOpacity"> 
+            <input type='number' :step='1' v-model='mapOpacity'  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" min='1' max='100'>
+          </div>
+        </div>
+        <div class='preview-actions'>
+          <a href='#' @click.prevent='previewOrOpen' v-if='!generatingPreview && !zazzleLink' class='action' :class='{"has-link": zazzleLink}'>
+            Preview mug
+          </a>
+          <div v-if='zazzleLink' class='padded popup-help'>
+            If your browser has blocked the new window, please <a :href='zazzleLink' target='_blank'>click here</a>
+            to open it.
+          </div>
+          <div v-if='generatingPreview' class='loading-container'>
+            <loading></loading> Generating preview url...
+          </div>
         </div>
       </div>
       <div v-if='blank' class='no-roads padded'>
@@ -123,6 +138,15 @@ export default {
     },
     heightScale() {
       this.redraw();
+    },
+    smoothSteps() {
+      this.redraw();
+    },
+    mapOpacity(newValue) {
+      let heightMap = document.querySelector('.height-map')
+      if (heightMap) {
+        heightMap.style.opacity = parseFloat(newValue) / 100;
+      }
     }
   },
   methods: {
@@ -164,25 +188,21 @@ export default {
         return;
       }
 
-      let canvas = getRoadsCanvas();
+      let canvas = document.querySelector('.height-map')
+      if (!canvas) {
+        return;
+      }
       appState.generatingPreview = true;
 
-      const scene = this.scene;
-      scene.prepareForExport();
-
-      requestAnimationFrame(() => {
-        generateZazzleLink(canvas).then(link => {
-          scene.cleanAfterExport();
-          appState.zazzleLink = link;
-          window.open(link, '_blank');
-          recordOpenClick(link);
-          appState.generatingPreview = false;
-        }).catch(e => {
-          scene.cleanAfterExport();
-          appState.error = e;
-          appState.generatingPreview = false;
-        });
-      })
+      generateZazzleLink(canvas).then(link => {
+        appState.zazzleLink = link;
+        window.open(link, '_blank');
+        recordOpenClick(link);
+        appState.generatingPreview = false;
+      }).catch(e => {
+        appState.error = e;
+        appState.generatingPreview = false;
+      });
     },
 
     ensurePreviousSceneDestroyed() {
@@ -304,9 +324,10 @@ h3 {
   pointer-events: none;
   // background: white;
   left: 0px;
-  top: 62.2315px;
-  width: 1309px;
-  height: 557.537px;
+  top: 68px;
+  z-index: 3;
+  width: 1440px;
+  height: 614px;
 }
 
 .col {
