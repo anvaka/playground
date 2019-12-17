@@ -5,6 +5,7 @@ import appState from './appState';
 import bus from './bus';
 import mapboxgl from 'mapbox-gl';
 import { getRegion, lat2tile, long2tile, tile2long } from './elevation';
+import {pointToTile} from '@mapbox/tilebelt';
 
 var MapboxGeocoder = require('@mapbox/mapbox-gl-geocoder');
 
@@ -52,6 +53,7 @@ function init() {
     //     ]
     // },
       
+      minZoom: 1,
       style: 'mapbox://styles/mapbox/streets-v9',
       center: [-122.2381,47.624],
       zoom: 11.32,
@@ -76,8 +78,8 @@ function init() {
 }
 
 function hideHeights() {
-  let canvas = document.querySelector('.height-map');
-  if (canvas) document.body.removeChild(canvas);
+  //let canvas = document.querySelector('.height-map');
+  //if (canvas) document.body.removeChild(canvas);
 }
 
 function updateHeights() {
@@ -105,9 +107,11 @@ function updateHeights() {
     let now = performance.now();
     let resHeight = map.transform.height;
     let resWidth = map.transform.width;
+    let smoothSteps = appState.smoothSteps;
 
     let result = document.createElement('canvas');
     result.classList.add('height-map')
+    result.style.opacity = appState.mapOpacity/100;
     if (document.querySelector('.height-map')) {
       document.body.replaceChild(result, document.querySelector('.height-map'))
     } else {
@@ -132,15 +136,16 @@ function updateHeights() {
     ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, resWidth, resHeight);
     let lastLine = [];
-    regionIterator.forEachRow(rowCount, maxRow, function(row) {
+    let iteratorSettings = regionIterator.getIteratorSettings(rowCount, resHeight, maxRow);
+    for (let row = iteratorSettings.start; row < iteratorSettings.stop; row += iteratorSettings.step) {
       drawPolyLine(lastLine);
-
       lastLine = [];
+
       for (let x = 0; x < resWidth; ++x) {
-        let height = regionIterator.getHeight(row, x/resWidth)
+        let height = regionIterator.getHeight(row/resHeight, x/resWidth);
 
         let heightRatio = (height - minH)/dh;
-        let fY = Math.floor(resHeight * row) - Math.floor(scale * heightRatio);
+        let fY = row - Math.floor(scale * heightRatio);
 
         if (height <= oceanLevel) {
           drawPolyLine(lastLine);
@@ -149,7 +154,7 @@ function updateHeights() {
           lastLine.push(x, fY);
         }
       }
-    });
+    }
 
     drawPolyLine(lastLine);
 
@@ -160,7 +165,7 @@ function updateHeights() {
     function drawPolyLine(points) {
       if (points.length < 3) return;
 
-      let smoothResult = smooth(points, 8);
+      let smoothResult = smooth(points, smoothSteps);
       points = smoothResult.points;
 
       if (smoothResult.max - smoothResult.min > 2) {
@@ -193,18 +198,35 @@ function smooth(points, neighborsCount) {
   let result = [];
   let max = Number.NEGATIVE_INFINITY;
   let min = Number.POSITIVE_INFINITY;
-  for (let i = 0; i < points.length; i += 2) {
-    let sum = 0; let count = 0;
-    for (let j = 0; j < neighborsCount * 2; j += 2) {
-      if (j < points.length) {
-        sum += points[j + i + 1];
-        count += 1;
-      }
-      result[i] = points[i]; //sum / count;
-      result[i + 1] = sum/count;
-      if (max < result[i + 1]) max = result[i + 1];
-      if (min > result[i + 1]) min = result[i + 1];
+  let runningSum = 0;
+  neighborsCount = Math.min(points.length / 2, neighborsCount);
+  for (let j = 0; j < neighborsCount; j++) {
+    runningSum += points[j * 2 + 1];
+  }
+  for (let j = 0; j < neighborsCount; j++) {
+    let smoothHeight = runningSum / neighborsCount;
+    result[j * 2] = points[j * 2];
+    result[j * 2 + 1] = smoothHeight;
+
+    if (max < smoothHeight) max = smoothHeight;
+    if (min > smoothHeight) min = smoothHeight;
+  }
+  let neighborsStep = neighborsCount * 2;
+  let dt = Math.floor(neighborsCount / 2);
+
+  for (let i = neighborsStep; i < points.length; i += 2) {
+    runningSum -= points[i - neighborsStep + 1];
+    runningSum += points[i + 1];
+
+    let smoothHeight = runningSum / neighborsCount;
+    result[i] = points[i]; 
+    if (i < points.length - dt * 2){
+      result[i + 1 - dt * 2] = smoothHeight;
+    } else {
+      result[i + 1] = smoothHeight;
     }
+    if (max < smoothHeight) max = smoothHeight;
+    if (min > smoothHeight) min = smoothHeight;
   }
   return {
     points: result,
@@ -218,7 +240,7 @@ function createRegionIterator(region, left, top, right, bottom) {
 
   return {
     getMinMaxHeight,
-    forEachRow,
+    getIteratorSettings,
     getHeight
   }
 
@@ -230,8 +252,11 @@ function createRegionIterator(region, left, top, right, bottom) {
     let R = data[index + 0];
     let G = data[index + 1];
     let B = data[index + 2];
-    let height = -10000 + ((R * 256 * 256 + G * 256 + B) * 0.1)
-    return height;
+    return decodeHeight(R, G, B);
+  }
+
+  function decodeHeight(R, G, B) {
+    return -10000 + ((R * 256 * 256 + G * 256 + B) * 0.1)
   }
 
   function getMinMaxHeight() {
@@ -244,7 +269,7 @@ function createRegionIterator(region, left, top, right, bottom) {
         let R = data[index + 0];
         let G = data[index + 1];
         let B = data[index + 2];
-        let height = -10000 + ((R * 256 * 256 + G * 256 + B) * 0.1)
+        let height = decodeHeight(R, G, B)
         if (height < minH) minH = height;
         if (height > maxH) {
           maxH = height;
@@ -256,14 +281,16 @@ function createRegionIterator(region, left, top, right, bottom) {
     return {minH, maxH, maxRow};
   }
 
-  function forEachRow(maxRows, includeRowIndex, rowCallback) {
-    let dRows = 1/maxRows;
-    let hitOffset = includeRowIndex/region.height;
-    let pos = hitOffset - dRows;
-    while (pos > 0) pos -= dRows;
-    if (pos < 0) pos += dRows;
-    for (let row = pos; row < 1; row += dRows) {
-      rowCallback(row);
+
+  function getIteratorSettings(rowCount, resHeight, includeRowIndex) {
+    let stepSize = Math.round(resHeight / rowCount);
+    let pos = includeRowIndex - stepSize;
+    while (pos - stepSize > 0) pos -= stepSize;
+
+    return {
+      start: pos,
+      step: stepSize,
+      stop: resHeight
     }
   }
 }

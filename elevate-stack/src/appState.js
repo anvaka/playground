@@ -2,6 +2,7 @@
 const appState = {
   currentState: 'intro',
   lineDensity: 20,
+  smoothSteps: 8,
   mapOpacity: 100,
   heightScale: 84,
   oceanLevel: 0,
@@ -46,7 +47,6 @@ const appState = {
   getProjector,
 
   addKMLLayer,
-  removeKMLLayer
 };
 
 var graph;
@@ -84,14 +84,6 @@ function startOver() {
 
 function addKMLLayer(name, layer) {
   appState.kmlLayers.push(makeKMLLayerViewModel(name, layer));
-}
-
-function removeKMLLayer(layerModel) {
-  let layerIndex = appState.kmlLayers.indexOf(layerModel);
-  if (layerIndex < 0) {
-    throw new Error('Invalid layer to remove');
-  }
-  appState.kmlLayers.splice(layerIndex, 1);
 }
 
 export default appState;
