@@ -98,6 +98,9 @@ function updateHeights() {
     heightMapCanvas.style.display = '';
   }
 
+  if (heightMapRenderer){
+    heightMapRenderer.cancel();
+  }
   heightMapRenderer = createHeightMapRenderer(appState, map, heightMapCanvas);
   heightMapRenderer.render();
 }

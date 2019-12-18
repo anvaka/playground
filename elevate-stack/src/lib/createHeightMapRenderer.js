@@ -1,112 +1,132 @@
-import { getRegion, lat2tile, long2tile, tile2long } from '../elevation';
-import {MAPBOX_TOKEN} from '../config';
+import { getRegion } from '../elevation';
 
 export default function createHeightMapRenderer(appState, map, canvas) {
+  let renderHandle;
+  let progressHandle;
+  let isCancelled = false;
+
   return {
-    render
+    render,
+    cancel
+  }
+
+  function cancel() {
+    cancelAnimationFrame(renderHandle)
+    clearTimeout(progressHandle);
+    isCancelled = true;
+    appState.renderProgress = null;
+    appState.showPrintMessage = false;
   }
 
   function render() {
-    // this is a mess, made on purpose - I'm just experimenting.
     const bounds = map.getBounds();
-    const sw = bounds.getSouthWest();
-    const ne = bounds.getNorthEast()
     const zoom = Math.floor(map.getZoom(zoom));
-    const startTileLat = lat2tile(ne.lat, zoom);
-    const startTileLng = long2tile(sw.lng, zoom);
-    const endTileLng = long2tile(ne.lng, zoom);
-    const endTileLat = lat2tile(sw.lat, zoom);
+    appState.showPrintMessage = false;
+    appState.renderProgress = {
+      message: '',
+      isCancelled: false,
+      completed: false
+    };
 
-    const oceanLevel = Number.parseFloat(appState.oceanLevel);
-    let startXOffset = Math.round((startTileLng - Math.floor(startTileLng)) * 256);
-    let startYOffset = Math.round((startTileLat - Math.floor(startTileLat)) * 256);
-    let endXOffset = Math.round((Math.ceil(endTileLng) - endTileLng) * 256);
-    let endYOffset = Math.round((Math.ceil(endTileLat) - endTileLat) * 256);
+    getRegion(bounds.getNorthEast(), bounds.getSouthWest(), zoom, appState.renderProgress)
+      .then(drawRegion);
 
-    getRegion(
-      startTileLat, startTileLng,
-      endTileLat, endTileLng,
-      zoom,
-      `https://api.mapbox.com/v4/mapbox.terrain-rgb/zoom/tLong/tLat.pngraw?access_token=${MAPBOX_TOKEN}`
-    ).then(region => {
-    let now = performance.now();
-    let resHeight = canvas.height;
-    let resWidth = canvas.width;
-    let smoothSteps = parseFloat(appState.smoothSteps);
+    function drawRegion(regionInfo) {
+      if (isCancelled) return;
 
-    canvas.style.opacity = appState.mapOpacity/100;
+      appState.renderProgress.message = 'Rendering...'
 
-    let ctx = canvas.getContext('2d');
-    let lineStroke = getColor(appState.lineColor);
-    let lineFill = getColor(appState.lineBackground);
+      const oceanLevel = Number.parseFloat(appState.oceanLevel);
+      let resHeight = canvas.height;
+      let resWidth = canvas.width;
+      let smoothSteps = parseFloat(appState.smoothSteps);
 
-    let rowCount = Math.round(resHeight * appState.lineDensity/100);
-    let scale = appState.heightScale;
-    const regionIterator = createRegionIterator(region, 
-      startXOffset, startYOffset,
-      region.width - endXOffset, region.height - endYOffset
-    );
-    let {minH, maxH, maxRow} = regionIterator.getMinMaxHeight();
+      canvas.style.opacity = appState.mapOpacity/100;
 
-    let dh = maxH - minH;
+      let ctx = canvas.getContext('2d');
+      let lineStroke = getColor(appState.lineColor);
+      let lineFill = getColor(appState.lineBackground);
 
-    ctx.beginPath();
-    ctx.fillStyle = getColor(appState.backgroundColor);
-    ctx.fillRect(0, 0, resWidth, resHeight);
-    let lastLine = [];
-    let iteratorSettings = regionIterator.getIteratorSettings(rowCount, resHeight, maxRow);
-    for (let row = iteratorSettings.start; row < iteratorSettings.stop; row += iteratorSettings.step) {
-      drawPolyLine(lastLine);
-      lastLine = [];
+      let rowCount = Math.round(resHeight * appState.lineDensity/100);
+      let scale = appState.heightScale;
+      const regionIterator = createRegionIterator(regionInfo);
+      let {minH, maxH, maxRow} = regionIterator.getMinMaxHeight();
+      let dh = maxH - minH;
 
-      for (let x = 0; x < resWidth; ++x) {
-        let height = regionIterator.getHeight(row/resHeight, x/resWidth);
+      ctx.beginPath();
+      ctx.fillStyle = getColor(appState.backgroundColor);
+      ctx.fillRect(0, 0, resWidth, resHeight);
+      let lastLine = [];
+      let iteratorSettings = regionIterator.getIteratorSettings(rowCount, resHeight, maxRow);
+      let lastRow = iteratorSettings.start;
+      renderRows();
 
-        let heightRatio = (height - minH)/dh;
-        let fY = row - Math.floor(scale * heightRatio);
+      function renderRows() {
+        let now = performance.now();
 
-        if (height <= oceanLevel) {
+        for (let row = lastRow; row < iteratorSettings.stop; row += iteratorSettings.step) {
           drawPolyLine(lastLine);
           lastLine = [];
-        } else {
-          lastLine.push(x, fY);
+
+          for (let x = 0; x < resWidth; ++x) {
+            let height = regionIterator.getHeight(row/resHeight, x/resWidth);
+
+            let heightRatio = (height - minH)/dh;
+            let fY = row - Math.floor(scale * heightRatio);
+
+            if (height <= oceanLevel) {
+              drawPolyLine(lastLine);
+              lastLine = [];
+            } else {
+              lastLine.push(x, fY);
+            }
+          }
+
+          lastRow = row + iteratorSettings.step;
+          let elapsed = performance.now() - now;
+          if (elapsed > 2000) {
+            renderHandle = requestAnimationFrame(renderRows);
+            return;
+          }
         }
+
+        drawPolyLine(lastLine);
+
+        appState.renderProgress.message = 'Done!'
+        appState.renderProgress = null;
+        progressHandle = setTimeout(function() {
+          appState.showPrintMessage = true;
+        }, 5000)
       }
-    }
 
-    drawPolyLine(lastLine);
+      function drawPolyLine(points) {
+        if (points.length < 3) return;
 
-    let elapsed = performance.now() - now;
-    console.log('Elapsed: ', elapsed/1000);
+        let smoothResult = smooth(points, smoothSteps);
+        points = smoothResult.points;
 
-    function drawPolyLine(points) {
-      if (points.length < 3) return;
+        if (smoothResult.max - smoothResult.min > 2) {
+          ctx.beginPath();
+          ctx.fillStyle = lineFill;
+          ctx.moveTo(points[0], points[1]);
+          for (let i = 2; i < points.length; i += 2) {
+            ctx.lineTo(points[i], points[i + 1]);
+          }
+          ctx.lineTo(points[points.length - 2], smoothResult.max);
+          ctx.lineTo(points[0], smoothResult.max);
+          ctx.closePath();
+          ctx.fill();
+        }
 
-      let smoothResult = smooth(points, smoothSteps);
-      points = smoothResult.points;
-
-      if (smoothResult.max - smoothResult.min > 2) {
         ctx.beginPath();
-        ctx.fillStyle = lineFill;
+        ctx.strokeStyle = lineStroke;
         ctx.moveTo(points[0], points[1]);
         for (let i = 2; i < points.length; i += 2) {
           ctx.lineTo(points[i], points[i + 1]);
         }
-        ctx.lineTo(points[points.length - 2], smoothResult.max);
-        ctx.lineTo(points[0], smoothResult.max);
-        ctx.closePath();
-        ctx.fill();
+        ctx.stroke();
       }
-
-      ctx.beginPath();
-      ctx.strokeStyle = lineStroke;
-      ctx.moveTo(points[0], points[1]);
-      for (let i = 2; i < points.length; i += 2) {
-        ctx.lineTo(points[i], points[i + 1]);
-      }
-      ctx.stroke();
-    }
-  });
+  }
 }
 
 function smooth(points, windowSize) {
@@ -133,37 +153,7 @@ function smooth(points, windowSize) {
     if (max < smoothHeight) max = smoothHeight;
     if (min > smoothHeight) min = smoothHeight;
   }
-  // let runningSum = 0;
-  // neighborsCount = Math.min(points.length / 2, neighborsCount);
-  // for (let j = 0; j < neighborsCount; j++) {
-  //   runningSum += points[j * 2 + 1];
-  // }
 
-  // for (let j = 0; j < neighborsCount; j++) {
-  //   let smoothHeight = runningSum / neighborsCount;
-  //   result[j * 2] = points[j * 2];
-  //   result[j * 2 + 1] = smoothHeight;
-
-  //   if (max < smoothHeight) max = smoothHeight;
-  //   if (min > smoothHeight) min = smoothHeight;
-  // }
-  // let neighborsStep = neighborsCount * 2;
-  // let dt = Math.floor(neighborsCount / 2);
-
-  // for (let i = neighborsStep; i < points.length; i += 2) {
-  //   runningSum -= points[i - neighborsStep + 1];
-  //   runningSum += points[i + 1];
-
-  //   let smoothHeight = runningSum / neighborsCount;
-  //   result[i] = points[i]; 
-  //   if (i < points.length - dt * 2){
-  //     result[i + 1 - dt * 2] = smoothHeight;
-  //   } else {
-  //     result[i + 1] = smoothHeight;
-  //   }
-  //   if (max < smoothHeight) max = smoothHeight;
-  //   if (min > smoothHeight) min = smoothHeight;
-  // }
   return {
     points: result,
     min,
@@ -171,8 +161,13 @@ function smooth(points, windowSize) {
   };
 }
 
-function createRegionIterator(region, left, top, right, bottom) {
-  let data = region.getContext('2d').getImageData(0, 0, region.width, region.height).data;
+function createRegionIterator(regionInfo) {
+  const elevationCanvas = regionInfo.canvas;
+  const {left, top, right, bottom} = regionInfo;
+  const width = elevationCanvas.width;
+  let data = elevationCanvas.getContext('2d')
+    .getImageData(0, 0, elevationCanvas.width, elevationCanvas.height)
+    .data;
 
   return {
     getMinMaxHeight,
@@ -184,7 +179,7 @@ function createRegionIterator(region, left, top, right, bottom) {
     let x = Math.round(left + col * (right - left));
     let y = Math.round(top + row * (bottom - top));
 
-    let index = (y * region.width + x) * 4;
+    let index = (y * width + x) * 4;
     let R = data[index + 0];
     let G = data[index + 1];
     let B = data[index + 2];
@@ -207,7 +202,7 @@ function createRegionIterator(region, left, top, right, bottom) {
     let maxRow = -1;
     for (let x = left; x < right; ++x) {
       for (let y = top; y < bottom; ++y) {
-        let index = (y * region.width + x) * 4;
+        let index = (y * width + x) * 4;
         let R = data[index + 0];
         let G = data[index + 1];
         let B = data[index + 2];
@@ -222,7 +217,6 @@ function createRegionIterator(region, left, top, right, bottom) {
 
     return {minH, maxH, maxRow};
   }
-
 
   function getIteratorSettings(rowCount, resHeight, includeRowIndex) {
     let stepSize = Math.round(resHeight / rowCount);

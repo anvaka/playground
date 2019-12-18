@@ -2,6 +2,9 @@
   <div class='app-container'>
     <div id='map' ref='map'></div>
     <canvas class='absolute height-map' ref='heightMap'></canvas>
+    <div id='progress' :style="{opacity: !settingsOpen && renderProgress ? 1 : 0}">
+      {{renderProgress && renderProgress.message}}
+    </div>
     <div id="app" class='absolute'> 
       <div class='row control-panel'>
         <a href="#" class='settings' @click.prevent='settingsOpen = !settingsOpen' title='Toggle settings'>
@@ -70,13 +73,13 @@
         </div>
       </div>
 
-      <div class='preview-actions' v-if='shouldDraw'>
-        <div v-if='!generatingPreview && !zazzleLink'>
-          <span>Like what you see?</span>
-          <a href='#' @click.prevent='previewOrOpen' class='action' :class='{"has-link": zazzleLink}'>
-            Print it on a mug!
-          </a>
-        </div>
+      <div class='preview-actions' v-if='shouldDraw && showPrintMessage && !hidePrintMessageForSession'>
+          <div v-if='!zazzleLink'>
+            <span>Like what you see?</span>
+            <a href='#' @click.prevent='previewOrOpen' class='action' :class='{"has-link": zazzleLink}'>
+              Print it on a mug!
+            </a>
+          </div>
           <div v-if='zazzleLink' class='padded popup-help'>
             If your browser has blocked the new window, please <a :href='zazzleLink' target='_blank'>click here</a>
             to open it.
@@ -84,6 +87,7 @@
           <div v-if='generatingPreview' class='loading-container'>
             <loading></loading> Generating preview url...
           </div>
+          <a href="#" @click.prevent='handleHideClick' class='hide-print-message'>x</a>
       </div>
       <div class='error padded' v-if='error'>
         <h5>Error occurred:</h5>
@@ -93,6 +97,7 @@
     </div>
 
     <div class='about-line'>
+      <a href='#' @click.prevent='aboutVisible = true'>about website</a>
     </div>
 
     <about v-if='aboutVisible' @close='aboutVisible = false'></about>
@@ -172,11 +177,19 @@ export default {
     settingsOpen(newValue) {
       if (newValue) {
         this.shouldDraw = true;
+        this.redraw();
       }
-      this.redraw();
     }
   },
   methods: {
+    handleHideClick() {
+      if (this.zazzleLink) {
+        this.showPrintMessage = false;
+        this.zazzleLink = null;
+      } else {
+        this.hidePrintMessageForSession = true
+      }
+    },
     onMainActionClick() {
       if (this.settingsOpen) {
         this.settingsOpen = false;
@@ -318,7 +331,7 @@ function recordOpenClick(link) {
 <style lang='stylus'>
 border-color = #d8d8d8;
 primary-action-color = #ff4081;
-small-screen = 500px;
+small-screen = 700px;
 
 .app-container {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
@@ -336,6 +349,11 @@ small-screen = 500px;
 h3 {
   margin: 12px 0;
 }
+.hide-print-message {
+  position: absolute;
+  right: 8px;
+}
+
 .height-map {
   position: absolute;
   z-index: 3;
@@ -478,13 +496,16 @@ a {
   cursor: pointer;
 }
 .about-line {
-  display: flex;
-  flex-direction: column;
-  position: fixed;
+  position: fixed
 
-  top: 12px;
-  right: 10px;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
   font-size: 14px;
+  a {
+    background: rgba(255, 255, 255, 0.58)
+    padding: 0 4px;
+  }
 }
 .title {
   font-size: 18px;
@@ -500,26 +521,36 @@ a {
   flex: 1;
 }
 
+#progress {
+  transition: opacity .2s ease-in-out;
+  animation: blink 1.5s ease-in-out infinite alternate;
+  position: absolute;
+  top: 43px;
+  left: 0;
+  width: 400px;
+  font-size: 12px;
+  color: #333;
+  opacity: 0;
+  text-align: center;
+  background: rgba(255, 255, 255,.22);
+  box-shadow: -1px 1px 4px rgba(134, 132, 132, 0.8)
+  user-select: none;
+}
+
 @media (max-width: small-screen) {
   #app {
     width: 100%;
   }
+  #progress {
+    width: 100%;
+  }
+
   .mapboxgl-ctrl-geocoder {
     display: none;
   }
 
   .title {
     font-size: 16px;
-  }
-  .about-line {
-    display: flex;
-    flex-direction: row;
-    bottom: 50px;
-    top: inherit;
-    left: 0;
-    right: 0;
-    justify-content: space-between;
-    padding: 12px;
   }
 }
 </style>

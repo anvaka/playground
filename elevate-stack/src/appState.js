@@ -14,6 +14,9 @@ const appState = {
   generatingPreview: false,
   settingsOpen: false,
   shouldDraw: false,
+  showPrintMessage: false,
+  renderProgress: null,
+  hidePrintMessageForSession: false,
 
   backgroundColor: {
     r: 255, g: 255, b: 255, a: 1

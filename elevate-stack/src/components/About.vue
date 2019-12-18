@@ -2,21 +2,16 @@
   <div class='about'>
     <div class='background absolute' @click.prevent='close'></div>
     <div class='content'>
-      <h3>Map Print <a class='close bold' href='#' @click.prevent='close'>close</a></h3>
+      <h3>Peak map <a class='close bold' href='#' @click.prevent='close'>close</a></h3>
       <p>
-        This website is allows you to create personalized mugs from your travels.
+        This website is allows you to pick any region of the world and print its high points in artistic, joyful manner.
       </p>
 
-      <p>Align the boundaries of the map that you'd like to see on a mug and click "Start".
-        Every single road is downloaded and rendered on a canvas.</p>
-      <p> After that you can print the map on a mug with Zazzle. </p>
-      <p>The roads/buildings are downloaded from amazing <a href='http://www.openstreetmap.org/' target='_blank' class='highlighted'>OpenStreetMap</a>.
-      </p>
+      <p>After the map is generated you can print it on a mug with Zazzle. This would not only delight a happy 
+        recipient of the unique gift, but would also support yours humble author of this website :).</p>
       <ul>
         <li>
-          <a href='https://github.com/anvaka/map-print' class='highlighted'>Learn more </a> about this project on GitHub
-        </li><li>
-        Stay tuned for updates on <a href='https://twitter.com/anvaka' class='highlighted'>Twitter.</a>
+          Stay tuned for updates on <a href='https://twitter.com/anvaka' class='highlighted'>Twitter.</a>
         </li>
       </ul>
       <p>With passion,<br/> Anvaka</p>

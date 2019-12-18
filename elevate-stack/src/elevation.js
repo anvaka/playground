@@ -1,3 +1,5 @@
+import { MAPBOX_TOKEN } from "./config";
+
 export function loadImage(url) {
   return new Promise((accept, error) => {
     const img = new Image();
@@ -10,17 +12,29 @@ export function loadImage(url) {
   });
 }
 
-export function getRegion(startTileLat, startTileLng, endTileLat, endTileLng, zoom, apiURL) {
-  // const canvas1 = document.createElement("canvas");
-  // const ctx1 = canvas1.getContext('2d');
-  // ctx1.width = canvas1.width = 512;
-  // ctx1.height = canvas1.height = 683;
-  // return loadImage('http://127.0.0.1:8081/cat.png')
-  //     .then(image => {
-  //       ctx1.drawImage(image, 0, 0);
-  //       return canvas1;
-  //     });
+export function getRegion(ne, sw, zoom, progress) {
+  if (!progress) progress = {};
 
+  const renderHD = true;
+
+  const tileSize = renderHD ? 512 : 256;
+  const hdSuffix = renderHD ? '@2x' : '';
+
+  // these are precise coordinates of the visible area (they are not integers):
+  let startTileLat = lat2tile(ne.lat, zoom);
+  let startTileLng = long2tile(sw.lng, zoom);
+  let endTileLng = long2tile(ne.lng, zoom);
+  let endTileLat = lat2tile(sw.lat, zoom);
+
+  // Map can cover tiles partially. We need to know offsets, so that we align
+  // rendered height map with partially covered height tiles.
+  let startXOffset = Math.round((startTileLng - Math.floor(startTileLng)) * tileSize);
+  let startYOffset = Math.round((startTileLat - Math.floor(startTileLat)) * tileSize);
+  let endXOffset = Math.round((Math.ceil(endTileLng) - endTileLng) * tileSize);
+  let endYOffset = Math.round((Math.ceil(endTileLat) - endTileLat) * tileSize);
+
+
+  // Now that we know offsets, let's convert them to integer tile query:
   startTileLat = Math.floor(startTileLat);
   startTileLng = Math.floor(startTileLng);
   endTileLat = Math.floor(endTileLat);
@@ -40,11 +54,12 @@ export function getRegion(startTileLat, startTileLng, endTileLat, endTileLng, zo
   const canvas = document.createElement("canvas");
   const width = endTileLng - startTileLng + 1;
   const height = endTileLat - startTileLat + 1;
-  if (width > 5 || height > 5) throw new Error('check the tiling')
-  const scaler = 1;
-  canvas.width = width * scaler * 256;
-  canvas.height = height * scaler * 256;
+  if (width > 50 || height > 50) throw new Error('Too many tiles request. How did you do it?');
+  canvas.width = width * tileSize;
+  canvas.height = height * tileSize;
   let work = [];
+
+  const apiURL = `https://api.mapbox.com/v4/mapbox.terrain-rgb/zoom/tLong/tLat${hdSuffix}.pngraw?access_token=${MAPBOX_TOKEN}`;
   for (let x = 0; x < width; x++) {
     let _tLong = startTileLng + x;
 
@@ -67,26 +82,45 @@ export function getRegion(startTileLat, startTileLng, endTileLat, endTileLng, zo
 
         work.push({
           url: url,
-          x: x * scaler * 256,
-          y: y * scaler * 256
+          x: x * tileSize,
+          y: y * tileSize
         })
     }
   }
 
+  progress.total = work.length;
+
   const ctx = canvas.getContext('2d');
+  advanceProgress();
 
   return Promise.all(work.map(request => {
     return loadImage(request.url)
       .then(image => {
         ctx.drawImage(image, request.x, request.y);
+        advanceProgress();
       }).catch(e => {
         ctx.beginPath();
         ctx.fillStyle = '#0186a0'; // zero height
-        ctx.fillRect(request.x, request.y, scaler * 256, scaler * 256);
+        ctx.fillRect(request.x, request.y, tileSize, tileSize);
+        advanceProgress();
       });
   })).then(() => {
-    return canvas;
+    return {
+      canvas,
+      left: startXOffset,
+      top: startYOffset, 
+      right: canvas.width - endXOffset,
+      bottom: canvas.height - endYOffset
+    };
   });
+
+  function advanceProgress() {
+    if (progress.completed === undefined) {
+      progress.completed = -1;
+    }
+    progress.completed = Math.min(progress.total, progress.completed + 1);
+    progress.message = `Downloading tiles: ${progress.completed} of ${progress.total}...`
+  }
 }
 
 export function long2tile(l, zoom) {
