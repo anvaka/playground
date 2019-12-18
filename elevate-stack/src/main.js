@@ -7,6 +7,7 @@ import mapboxgl from 'mapbox-gl';
 import { getRegion, lat2tile, long2tile, tile2long } from './elevation';
 import {pointToTile} from '@mapbox/tilebelt';
 
+
 var MapboxGeocoder = require('@mapbox/mapbox-gl-geocoder');
 
 // Load vue asyncronously
@@ -27,6 +28,7 @@ function init() {
   // TODO: Do I need to hide this?
   mapboxgl.accessToken = 'pk.eyJ1IjoiYW52YWthIiwiYSI6ImNqaWUzZmhqYzA1OXMza213YXh2ZzdnOWcifQ.t5yext53zn1c9Ixd7Y41Dw';
   map = new mapboxgl.Map({
+      trackResize: true,
       container: 'map',
     //   style: {
     //     "version": 8,
@@ -53,10 +55,10 @@ function init() {
     //     ]
     // },
       
-      minZoom: 1,
-      style: 'mapbox://styles/mapbox/streets-v9',
-      center: [-122.2381,47.624],
-      zoom: 11.32,
+      minZoom: 0,
+      style: 'mapbox://styles/mapbox/light-v10',
+      center: [-122.574,47.727],
+      zoom: 7.68,
       hash: true
   });
 
@@ -78,11 +80,23 @@ function init() {
 }
 
 function hideHeights() {
-  //let canvas = document.querySelector('.height-map');
-  //if (canvas) document.body.removeChild(canvas);
+  appState.zazzleLink = null;
+  let canvas = document.querySelector('.height-map');
+  if (canvas) canvas.style.opacity = 0.02;
 }
 
 function updateHeights() {
+  if (!map) return;
+  let heightMapCanvas = document.querySelector('.height-map');
+  if (!heightMapCanvas) return;
+
+  if (!appState.shouldDraw) {
+    heightMapCanvas.style.display = 'none';
+    return;
+  } else {
+    heightMapCanvas.style.display = '';
+  }
+  // this is a mess, made on purpose - I'm just experimenting.
   const bounds = map.getBounds();
   const sw = bounds.getSouthWest();
   const ne = bounds.getNorthEast()
@@ -105,22 +119,17 @@ function updateHeights() {
     `https://api.mapbox.com/v4/mapbox.terrain-rgb/zoom/tLong/tLat.pngraw?access_token=${mapboxgl.accessToken}`
   ).then(region => {
     let now = performance.now();
-    let resHeight = map.transform.height;
-    let resWidth = map.transform.width;
-    let smoothSteps = appState.smoothSteps;
+    let resHeight = heightMapCanvas.height;
+    let resWidth = heightMapCanvas.width;
+    let smoothSteps = parseFloat(appState.smoothSteps);
 
-    let result = document.createElement('canvas');
-    result.classList.add('height-map')
-    result.style.opacity = appState.mapOpacity/100;
-    if (document.querySelector('.height-map')) {
-      document.body.replaceChild(result, document.querySelector('.height-map'))
-    } else {
-      document.body.appendChild(result);
-    }
+    heightMapCanvas.style.opacity = appState.mapOpacity/100;
 
-    let ctx = result.getContext('2d');
-    result.width = ctx.width = resWidth;
-    result.height = ctx.height = resHeight;
+    let ctx = heightMapCanvas.getContext('2d');
+    // heightMapCanvas.width = ctx.width = resWidth;
+    // heightMapCanvas.height = ctx.height = resHeight;
+    let lineStroke = getColor(appState.lineColor);
+    let lineFill = getColor(appState.lineBackground);
 
     let rowCount = Math.round(resHeight * appState.lineDensity/100);
     let scale = appState.heightScale;
@@ -133,7 +142,7 @@ function updateHeights() {
     let dh = maxH - minH;
 
     ctx.beginPath();
-    ctx.fillStyle = '#fff';
+    ctx.fillStyle = getColor(appState.backgroundColor);
     ctx.fillRect(0, 0, resWidth, resHeight);
     let lastLine = [];
     let iteratorSettings = regionIterator.getIteratorSettings(rowCount, resHeight, maxRow);
@@ -160,7 +169,6 @@ function updateHeights() {
 
     let elapsed = performance.now() - now;
     console.log('Elapsed: ', elapsed/1000);
-  //  document.body.appendChild(region);
 
     function drawPolyLine(points) {
       if (points.length < 3) return;
@@ -170,7 +178,7 @@ function updateHeights() {
 
       if (smoothResult.max - smoothResult.min > 2) {
         ctx.beginPath();
-        ctx.fillStyle = 'white';
+        ctx.fillStyle = lineFill;
         ctx.moveTo(points[0], points[1]);
         for (let i = 2; i < points.length; i += 2) {
           ctx.lineTo(points[i], points[i + 1]);
@@ -182,52 +190,71 @@ function updateHeights() {
       }
 
       ctx.beginPath();
-      ctx.strokeStyle = 'black'
+      ctx.strokeStyle = lineStroke;
       ctx.moveTo(points[0], points[1]);
       for (let i = 2; i < points.length; i += 2) {
         ctx.lineTo(points[i], points[i + 1]);
       }
       ctx.stroke();
     }
-
   });
-
 }
 
-function smooth(points, neighborsCount) {
+function smooth(points, windowSize) {
   let result = [];
   let max = Number.NEGATIVE_INFINITY;
   let min = Number.POSITIVE_INFINITY;
-  let runningSum = 0;
-  neighborsCount = Math.min(points.length / 2, neighborsCount);
-  for (let j = 0; j < neighborsCount; j++) {
-    runningSum += points[j * 2 + 1];
-  }
-  for (let j = 0; j < neighborsCount; j++) {
-    let smoothHeight = runningSum / neighborsCount;
-    result[j * 2] = points[j * 2];
-    result[j * 2 + 1] = smoothHeight;
+  let length = points.length / 2;
+  for (let i = 0; i < length; i += 1) {
+    const leftOffset = i - windowSize;
+    const from = leftOffset >= 0 ? leftOffset : 0
+    const to = i + windowSize + 1;
 
-    if (max < smoothHeight) max = smoothHeight;
-    if (min > smoothHeight) min = smoothHeight;
-  }
-  let neighborsStep = neighborsCount * 2;
-  let dt = Math.floor(neighborsCount / 2);
-
-  for (let i = neighborsStep; i < points.length; i += 2) {
-    runningSum -= points[i - neighborsStep + 1];
-    runningSum += points[i + 1];
-
-    let smoothHeight = runningSum / neighborsCount;
-    result[i] = points[i]; 
-    if (i < points.length - dt * 2){
-      result[i + 1 - dt * 2] = smoothHeight;
-    } else {
-      result[i + 1] = smoothHeight;
+    let count = 0
+    let sum = 0
+    for (let j = from; j < to && j < length; j += 1) {
+      sum += points[2 * j + 1]
+      count += 1
     }
+
+    let smoothHeight = sum / count;
+    result[2 * i] = points[2 * i];
+    result[2 * i + 1] = smoothHeight;
+
     if (max < smoothHeight) max = smoothHeight;
     if (min > smoothHeight) min = smoothHeight;
   }
+  // let runningSum = 0;
+  // neighborsCount = Math.min(points.length / 2, neighborsCount);
+  // for (let j = 0; j < neighborsCount; j++) {
+  //   runningSum += points[j * 2 + 1];
+  // }
+
+  // for (let j = 0; j < neighborsCount; j++) {
+  //   let smoothHeight = runningSum / neighborsCount;
+  //   result[j * 2] = points[j * 2];
+  //   result[j * 2 + 1] = smoothHeight;
+
+  //   if (max < smoothHeight) max = smoothHeight;
+  //   if (min > smoothHeight) min = smoothHeight;
+  // }
+  // let neighborsStep = neighborsCount * 2;
+  // let dt = Math.floor(neighborsCount / 2);
+
+  // for (let i = neighborsStep; i < points.length; i += 2) {
+  //   runningSum -= points[i - neighborsStep + 1];
+  //   runningSum += points[i + 1];
+
+  //   let smoothHeight = runningSum / neighborsCount;
+  //   result[i] = points[i]; 
+  //   if (i < points.length - dt * 2){
+  //     result[i + 1 - dt * 2] = smoothHeight;
+  //   } else {
+  //     result[i + 1] = smoothHeight;
+  //   }
+  //   if (max < smoothHeight) max = smoothHeight;
+  //   if (min > smoothHeight) min = smoothHeight;
+  // }
   return {
     points: result,
     min,
@@ -256,7 +283,13 @@ function createRegionIterator(region, left, top, right, bottom) {
   }
 
   function decodeHeight(R, G, B) {
-    return -10000 + ((R * 256 * 256 + G * 256 + B) * 0.1)
+    let height = -10000 + ((R * 256 * 256 + G * 256 + B) * 0.1)
+    if (height < -100) {
+      // Fiji islands data has huge caves, which pushes the entire thing up.
+      // I'm reducing it.
+      height = height / 5000;
+    }
+    return height;
   }
 
   function getMinMaxHeight() {
@@ -293,4 +326,8 @@ function createRegionIterator(region, left, top, right, bottom) {
       stop: resHeight
     }
   }
+}
+
+function getColor(color) {
+  return `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`
 }

@@ -4,9 +4,6 @@ export function loadImage(url) {
     img.onload = () => {
       accept(img);
     };
-    img.onerror = (e) => {
-      error(e);
-    }
     img.onerror = error;
     img.crossOrigin = "anonymous";
     img.src = url;
@@ -84,7 +81,7 @@ export function getRegion(startTileLat, startTileLng, endTileLat, endTileLng, zo
         ctx.drawImage(image, request.x, request.y);
       }).catch(e => {
         ctx.beginPath();
-        ctx.fillStyle = '#0286a0';
+        ctx.fillStyle = '#0186a0'; // zero height
         ctx.fillRect(request.x, request.y, scaler * 256, scaler * 256);
       });
   })).then(() => {

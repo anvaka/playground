@@ -1,30 +1,18 @@
 <template>
   <div class='app-container'>
     <div id='map' ref='map'></div>
-    <canvas class='absolute scene-roads' ref='roadsCanvas'></canvas>
-    <canvas class='absolute ctx2d' ref='canvasLayer'></canvas>
+    <canvas class='absolute height-map' ref='heightMap'></canvas>
     <div id="app" class='absolute'> 
-      <div v-if='currentState === "intro"' class='step padded title'>
+      <div class='row control-panel'>
+        <a href="#" class='settings' @click.prevent='settingsOpen = !settingsOpen' title='Toggle settings'>
+          <svg  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="24" height="24" fill="none" stroke="currentcolor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+              <path d="M13 2 L13 6 11 7 8 4 4 8 7 11 6 13 2 13 2 19 6 19 7 21 4 24 8 28 11 25 13 26 13 30 19 30 19 26 21 25 24 28 28 24 25 21 26 19 30 19 30 13 26 13 25 11 28 8 24 4 21 7 19 6 19 2 Z" />
+              <circle cx="16" cy="16" r="4" />
+          </svg>
+        </a>
+        <a href="#" class='draw' title='Draw the heightmap chart' @click.prevent='onMainActionClick'>{{mainActionText}}</a>
       </div>
-
-      <div v-if='currentState === "canvas"' class='canvas-settings'>
-        <div class='step'>
-          <a href='#' @click.prevent='resetAllAndStartOver' v-if='!generatingPreview' class='start-over'>Start over</a>
-          <h3 class='left-right-padded'>Tune Color</h3>
-          <div class='row left-right-padded'>
-            <div class='col'>
-              Background
-              <color-picker v-model='backgroundColor' @change='updateBackground'></color-picker>
-            </div>
-            <div class='col'>
-              Foreground
-              <color-picker v-model='lineColor' @change='updateLinesColor'></color-picker>
-            </div>
-          </div>
-        </div>
-        
-      </div>
-      <div class='form' v-if='!building && currentState === "intro"'>
+      <div class='settings-form' v-if='settingsOpen'>
         <div class='row'>
           <div class='col'>Line density</div>
           <div class='col'>
@@ -35,19 +23,22 @@
         <div class='row'>
           <div class='col'>Height scale</div>
           <div class='col'>
-            <input type="range" min="10" max="800" step="1" v-model="heightScale"> 
-            <input type='number' :step='1' v-model='heightScale'  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" min='10' max='800'>
+            <input type='range' min='10' max='800' step='1' v-model='heightScale'> 
+            <input type='number' :step='1' v-model='heightScale'  autocomplete='off' autocorrect='off' autocapitalize="off" spellcheck="false" min='10' max='800'>
           </div>
         </div>
         <div class='row'>
           <div class='col'>Ocean level</div>
-          <div class='col'><input type='number' :step='1' v-model='oceanLevel' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" ></div>
+          <div class='col'>
+            <input type='range' min='-20' max='500' step='1' v-model='oceanLevel'> 
+            <input type='number' :step='1' v-model='oceanLevel' autocomplete='off' autocorrect='off' autocapitalize='off' spellcheck='false' max='500' min='-20'>
+          </div>
         </div>
         <div class='row'>
           <div class='col'>Smooth steps</div>
           <div class='col'>
-            <input type="range" min="1" max="50" step="1" v-model="smoothSteps"> 
-            <input type='number' :step='1' v-model='smoothSteps'  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" min='1' max='100'>
+            <input type='range' min='1' max='12' step='1' v-model='smoothSteps'> 
+            <input type='number' :step='1' v-model='smoothSteps'  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" min='1' max='12'>
           </div>
         </div>
         <div class='row'>
@@ -57,10 +48,35 @@
             <input type='number' :step='1' v-model='mapOpacity'  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" min='1' max='100'>
           </div>
         </div>
-        <div class='preview-actions'>
-          <a href='#' @click.prevent='previewOrOpen' v-if='!generatingPreview && !zazzleLink' class='action' :class='{"has-link": zazzleLink}'>
-            Preview mug
+
+        <div class='row'>
+          <div class='col'>Line color</div>
+          <div class='col'>
+            <color-picker v-model='lineColor' @change='updateLinesColor'></color-picker>
+          </div>
+        </div>
+        <div class='row'>
+          <div class='col'>Line background</div>
+          <div class='col'>
+            <color-picker v-model='lineBackground' @change='updateLinesColor'></color-picker>
+          </div>
+        </div>
+
+        <div class='row'>
+          <div class='col'>Scene color</div>
+          <div class='col'>
+            <color-picker v-model='backgroundColor' @change='updateBackground'></color-picker>
+          </div>
+        </div>
+      </div>
+
+      <div class='preview-actions' v-if='shouldDraw'>
+        <div v-if='!generatingPreview && !zazzleLink'>
+          <span>Like what you see?</span>
+          <a href='#' @click.prevent='previewOrOpen' class='action' :class='{"has-link": zazzleLink}'>
+            Print it on a mug!
           </a>
+        </div>
           <div v-if='zazzleLink' class='padded popup-help'>
             If your browser has blocked the new window, please <a :href='zazzleLink' target='_blank'>click here</a>
             to open it.
@@ -68,14 +84,6 @@
           <div v-if='generatingPreview' class='loading-container'>
             <loading></loading> Generating preview url...
           </div>
-        </div>
-      </div>
-      <div v-if='blank' class='no-roads padded'>
-        Hm... There is nothing here. Try a different area?
-      </div>
-      <div class='loading padded' v-if='building'>
-        <div class='loading-container'><loading></loading> {{buildingMessage}}</div>
-        <a href="#" @click.prevent='cancelDownload()' v-if='showCancelDownload' class='align-center cancel-button'>Cancel</a>
       </div>
       <div class='error padded' v-if='error'>
         <h5>Error occurred:</h5>
@@ -84,13 +92,10 @@
 
     </div>
 
-    <div class='intro-help' v-if='currentState === "intro"' >
-    </div>
     <div class='about-line'>
     </div>
 
     <about v-if='aboutVisible' @close='aboutVisible = false'></about>
-
   </div>
 </template>
 
@@ -101,10 +106,7 @@ import ColorPicker from './components/ColorPicker';
 import Loading from './components/Loading';
 import About from './components/About';
 import generateZazzleLink from './lib/getZazzleLink';
-import createWglScene from './lib/createWglScene';
-import parseKMLFile from './lib/parseKMLFile.js';
 
-const wgl = require('w-gl');
 
 export default {
   name: 'App',
@@ -117,23 +119,34 @@ export default {
     ColorPicker
   },
   mounted() {
-    this.webGLEnabled = wgl.isWebGLEnabled(getRoadsCanvas());
-    bus.on('graph-loaded', this.createScene, this);
     updateSizes(this.$refs);
     this.init();
     this.onResize = () => updateSizes(this.$refs);
     window.addEventListener('resize', this.onResize, true);
   },
+
   beforeDestroy() {
-    bus.off('graph-loaded', this.createScene);
-    this.ensurePreviousSceneDestroyed();
     window.removeEventListener('resize', this.onResize, true);
   },
+  computed: {
+    mainActionText() {
+      if (!this.shouldDraw) {
+        return 'Draw the height map'
+      }
+
+      if (this.settingsOpen) {
+        return 'Close settings'
+      }
+
+      return 'Show the original map';
+    }
+  },
+
   watch: {
-    lineDensity(newValue, oldValue) {
+    lineDensity() {
       this.redraw();
     },
-    oceanLevel(newValue, oldValue) {
+    oceanLevel() {
       this.redraw();
     },
     heightScale() {
@@ -143,42 +156,46 @@ export default {
       this.redraw();
     },
     mapOpacity(newValue) {
-      let heightMap = document.querySelector('.height-map')
+      let heightMap = this.$refs.heightMap;
       if (heightMap) {
         heightMap.style.opacity = parseFloat(newValue) / 100;
       }
+    },
+    shouldDraw(newValue) {
+      if (!newValue) {
+        this.settingsOpen = false;
+        this.zazzleLink = null;
+        this.error = null;
+      }
+      this.redraw();
+    },
+    settingsOpen(newValue) {
+      if (newValue) {
+        this.shouldDraw = true;
+      }
+      this.redraw();
     }
   },
   methods: {
+    onMainActionClick() {
+      if (this.settingsOpen) {
+        this.settingsOpen = false;
+        return;
+      }
+
+      this.shouldDraw = !this.shouldDraw;
+    },
     updateLayerColor(layer) {
       layer.updateColor();
       this.scene.renderFrame();
     },
 
-    getGuideLineStyle() {
-      let d = getCanvasDimensions();
-      return {
-        top: px(d.top),
-        left: px(d.left),
-        width: px(d.width),
-        height: px(d.height)
-      };
-    },
-
     updateBackground(x) {
-      this.scene.setBackgroundColor(appState.backgroundColor);
+      this.redraw();
     },
 
     updateLinesColor(x) {
-      this.scene.setLinesColor(appState.lineColor);
-    },
-
-    downloadAllRoads() {
-      bus.fire('download-all-roads');
-    },
-
-    cancelDownload() {
-      bus.fire('cancel-download-all-roads');
+      this.redraw();
     },
 
     previewOrOpen() {
@@ -188,7 +205,7 @@ export default {
         return;
       }
 
-      let canvas = document.querySelector('.height-map')
+      let canvas = this.$refs.heightMap;
       if (!canvas) {
         return;
       }
@@ -205,44 +222,35 @@ export default {
       });
     },
 
-    ensurePreviousSceneDestroyed() {
-      if (this.scene) {
-        this.scene.dispose();
-        this.scene = null;
-      }
-
-      var canvas = getRoadsCanvas();
-      canvas.style.display = 'none';
-    },
-
     resetAllAndStartOver() {
       this.ensurePreviousSceneDestroyed();
       appState.startOver();
-    },
-
-    createScene() {
-      this.ensurePreviousSceneDestroyed();
-
-      this.graphLoaded = true;
-
-      const roadsCanvas = getRoadsCanvas();    
-      roadsCanvas.style.display = 'block';
-      this.scene = createWglScene(roadsCanvas, get2dCanvas(), appState);
-    },
+    }
   }
 }
 function updateSizes(refs) {
   let dimensions = getCanvasDimensions();
-  setGuideLineSize(refs.map, dimensions);
-  setGuideLineSize(refs.roadsCanvas, dimensions);
-  setGuideLineSize(refs.canvasLayer, dimensions);
+  if (refs.map) {
+    // refs.map.style.transform = 'scale(' + dimensions.trueWidth/dimensions.width + ')';
+    // refs.map.style.transformOrigin = 'scale(' + dimensions.width/dimensions.trueWidth + ')';
+    refs.map.style.left = px(dimensions.left);
+    refs.map.style.top = px(dimensions.top);
+    refs.map.style.width = px(dimensions.width);
+    refs.map.style.height = px(dimensions.height);
+    refs.map.style.transformOrigin = 'left top'
+  }
+  setGuideLineSize(refs.heightMap, dimensions);
+  appState.redraw();
 }
 
 function setGuideLineSize(el, dimensions) {
+  if (!el) return;
+  el.width = dimensions.width;
+  el.height = dimensions.height;
   el.style.left = px(dimensions.left);
   el.style.top = px(dimensions.top);
-  el.style.width = px(dimensions.width);
-  el.style.height = px(dimensions.height);
+  el.style.width = px(dimensions.trueWidth);
+  el.style.height = px(dimensions.trueHeight);
 }
 
 function px(x) {
@@ -250,41 +258,50 @@ function px(x) {
 }
 
 function getCanvasDimensions() {
-
-  // return {
-  //   width: 512,
-  //   height: 512,
-  //   left: 128,
-  //   top: 128
-  // };
   let {innerWidth: w, innerHeight: h} = window;
+  let trueWidth = w;
   let desiredRatio = 540/230; // mug ratio on zazzle. TODO: Customize for other products.
-  let guidelineHeight = w / desiredRatio;
-
-  let guideLineWidth = w;
-  let left = 0;
-
-  if (guidelineHeight > h) {
-    guidelineHeight = h;
-    guideLineWidth = guidelineHeight * desiredRatio;
-    left = (w - guideLineWidth) / 2;
+  let guideLineWidth = trueWidth;
+  if (guideLineWidth < 1280) {
+    guideLineWidth = 1280;
   }
 
-  let top = (h - guidelineHeight)/2;
+  let guidelineHeight = guideLineWidth / desiredRatio;
+  let trueHeight = trueWidth / desiredRatio;
 
+  let left = 0;
+
+  if (trueHeight > h) {
+    trueHeight = h;
+    trueWidth = trueHeight * desiredRatio;
+    guidelineHeight = Math.max(h, 768);
+    guideLineWidth = guidelineHeight * desiredRatio;
+    // guidelineHeight = h;
+    // guideLineWidth = guidelineHeight * desiredRatio;
+    left = (w - trueWidth) / 2;
+  }
+
+  let top = (h - trueHeight)/2;
+
+  return {
+    width: window.innerWidth,
+    height: window.innerHeight,
+    left: 0,
+    top: 0,
+    trueWidth: window.innerWidth,
+    trueHeight: window.innerHeight
+  };
   return {
     width: guideLineWidth,
     height: guidelineHeight,
     left: left,
-    top: top
+    top: top,
+    trueWidth,
+    trueHeight
   };
 }
 function getRoadsCanvas() {
   return document.querySelector('.scene-roads');
-}
-
-function get2dCanvas() {
-  return document.querySelector('.ctx2d');
 }
 
 function recordOpenClick(link) {
@@ -321,13 +338,9 @@ h3 {
 }
 .height-map {
   position: absolute;
-  pointer-events: none;
-  // background: white;
-  left: 0px;
-  top: 68px;
   z-index: 3;
-  width: 1440px;
-  height: 614px;
+  pointer-events: none;
+  transition: opacity 100ms ease-in-out;
 }
 
 .col {
@@ -345,68 +358,66 @@ h3 {
   height: 32px;
 }
 
+.control-panel {
+  height: 42px;
+  margin: 0;
+  justify-items: stretch;
+  border-bottom: 1px solid border-color;
+  a {
+    display: flex;
+    align-items: center;
+  }
+  a.settings {
+    border-right: 1px solid border-color;
+    color: border-color;
+    padding: 0 16px;
+    &:hover {
+      color: primary-action-color;
+    }
+  }
+  .draw {
+    margin: 0 16px;
+    flex: 1;
+  }
+}
+.settings-form {
+  padding: 0 16px;
+}
+
 .file-row {
   display: flex;
   align-items: center;
   justify-content: space-around;
+}
+.mapboxgl-ctrl-top-right .mapboxgl-ctrl {
+  margin: 0;
 }
 
 .preview-actions {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  border-top: 1px solid border-color;
-  margin-top: 12px;
-  min-height: 32px;
-  
-  a.action {
-    flex: 1;
-    align-items: center;
-    display: flex;
-    justify-content: center;
-    border-bottom: 1px solid border-color;
-  }
-  a.action.has-link {
-    border-bottom: none;
-  }
+  font-size: 14px;
+  align-items: center;
+  display: flex;
+  margin: 4px 16px;
 
-  .preview-btn {
-    border-left: 1px solid border-color;
-  }
   .popup-help {
-    border-bottom: 1px solid border-color;
     text-align: center;
   }
 }
-.cancel-button {
-    width: 100%;
-    display: block;
-    margin-top: 8px;
-}
+
 .align-center {
   text-align: center;
 }
+
 .left-right-padded {
   padding-left: 12px;
   padding-right: 12px;
 }
-.start-over {
-  position: absolute;
-  right: 8px;
-  top: 8px;
-  display: block;
-  font-size: 12px;
-}
-.scene-roads {
-  display: none;
-  z-index: 3;
-}
 
 .padded {
   padding: 12px;
-}
-.no-roads {
-  color: orangered;
 }
 
 .block {
@@ -441,10 +452,12 @@ a {
 .loading-container {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-top: 12px;
+  justify-content: left;
+  font-size: 14px;
+  margin: 4px 0;
   svg {
     margin-right: 12px;
+    margin-left: 12px;
   }
 }
 .script-presets {
@@ -461,24 +474,6 @@ a {
   color: primary-action-color;
   cursor: pointer;
 }
-.zoom-warning {
-  position: fixed;
-  z-index: 10;
-  bottom: 10px;
-  padding: 7px;
-  right: 0;
-  pointer-events: none;
-  background: rgba(0, 0, 0, 0.3);
-  color: white;
-  h4 {
-    margin: 7px 0;
-  }
-}
-.intro-help {
-  position: absolute;
-  top: 12px;
-  left: 50%;
-}
 .about-line {
   display: flex;
   flex-direction: column;
@@ -487,14 +482,6 @@ a {
   top: 12px;
   right: 10px;
   font-size: 14px;
-}
-.osm-note {
-  position: fixed;
-  padding: 12px;
-
-  bottom: 0;
-  right: 0;
-  font-size: 12px;
 }
 .title {
   font-size: 18px;

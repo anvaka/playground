@@ -20,26 +20,7 @@ export default function createWglScene(canvas, canvas2d, appState) {
     renderFrame,
     getWGLScene,
     dispose,
-
-    addKMLLayer,
-    removeKMLLayer,
-
-    prepareForExport,
-    cleanAfterExport
   };
-
-  function prepareForExport() {
-    mergeLayer = new MergeCanvasLayer(canvasLayer.ctx.canvas);
-    scene.appendChild(mergeLayer);
-    scene.renderFrame();
-  }
-
-  function cleanAfterExport() {
-    if (mergeLayer) {
-      scene.removeChild(mergeLayer);
-      mergeLayer = null;
-    }
-  }
 
   function dispose() {
     scene.dispose();
@@ -107,18 +88,6 @@ export default function createWglScene(canvas, canvas2d, appState) {
 
   function resetLink() {
     appState.zazzleLink = null;
-  }
-
-  function addKMLLayer(file) {
-    let layer = new KMLLayer(file, appState.getProjector());
-    appState.addKMLLayer(file.name, layer);
-    canvasLayer.appendChild(layer);
-  }
-
-  function removeKMLLayer(layerModel) {
-    let layer = layerModel.getKMLLayer();
-    canvasLayer.removeChild(layer);
-    appState.removeKMLLayer(layerModel);
   }
 
   function makeLines(lineColor) {
