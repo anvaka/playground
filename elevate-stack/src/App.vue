@@ -392,6 +392,9 @@ h3 {
 .mapboxgl-ctrl-top-right .mapboxgl-ctrl {
   margin: 0;
 }
+.mapboxgl-ctrl-geocoder input[type='text'] {
+  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+}
 
 .preview-actions {
   display: flex;
