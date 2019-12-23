@@ -17,63 +17,62 @@
       </div>
       <div class='settings-form' v-if='settingsOpen'>
         <div class='row'>
-          <div class='col'>Line density</div>
-          <div class='col'>
-            <input type="range" min="1" max="100" step="1" v-model="lineDensity"> 
+          <div class='col label'>Line density</div>
+          <div class='col value'>
+            <input type='range' min='1' max='100' step='1' v-model="lineDensity"> 
             <input type='number' :step='1' v-model='lineDensity'  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" min='1' max='100'>
           </div>
         </div>
         <div class='row'>
-          <div class='col'>Height scale</div>
-          <div class='col'>
+          <div class='col label'>Height scale</div>
+          <div class='col value'>
             <input type='range' min='10' max='800' step='1' v-model='heightScale'> 
             <input type='number' :step='1' v-model='heightScale'  autocomplete='off' autocorrect='off' autocapitalize="off" spellcheck="false" min='10' max='800'>
           </div>
         </div>
         <div class='row'>
-          <div class='col'>Ocean level</div>
-          <div class='col'>
-            <input type='range' min='-20' max='500' step='1' v-model='oceanLevel'> 
-            <input type='number' :step='1' v-model='oceanLevel' autocomplete='off' autocorrect='off' autocapitalize='off' spellcheck='false' max='500' min='-20'>
+          <div class='col label'>Ocean level</div>
+          <div class='col value'>
+            <input type='range' min='-8300' max='22000' step='1' v-model='oceanLevel'> 
+            <input type='number' :step='1' v-model='oceanLevel' autocomplete='off' autocorrect='off' autocapitalize='off' spellcheck='false' max='22000' min='-8300'>
           </div>
         </div>
         <div class='row'>
           <div class='col'>Smooth steps</div>
-          <div class='col'>
+          <div class='col value'>
             <input type='range' min='1' max='12' step='1' v-model='smoothSteps'> 
             <input type='number' :step='1' v-model='smoothSteps'  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" min='1' max='12'>
           </div>
         </div>
         <div class='row'>
-          <div class='col'>Overlay opacity</div>
-          <div class='col'>
+          <div class='col label'>Overlay opacity</div>
+          <div class='col value'>
             <input type="range" min="1" max="100" step="1" v-model="mapOpacity"> 
             <input type='number' :step='1' v-model='mapOpacity'  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" min='1' max='100'>
           </div>
         </div>
-
         <div class='row'>
-          <div class='col'>Line color</div>
+          <div class='col label'>Line color</div>
           <div class='col'>
             <color-picker v-model='lineColor' @change='updateLinesColor'></color-picker>
           </div>
         </div>
         <div class='row'>
-          <div class='col'>Line background</div>
+          <div class='col label'>Line background</div>
           <div class='col'>
             <color-picker v-model='lineBackground' @change='updateLinesColor'></color-picker>
           </div>
         </div>
 
         <div class='row'>
-          <div class='col'>Scene color</div>
+          <div class='col label'>Scene color</div>
           <div class='col'>
             <color-picker v-model='backgroundColor' @change='updateBackground'></color-picker>
           </div>
         </div>
       </div>
 
-      <div class='preview-actions' v-if='shouldDraw && showPrintMessage && !hidePrintMessageForSession'>
+      <div class='preview-actions' v-if='!settingsOpen && shouldDraw && showPrintMessage && !hidePrintMessageForSession'>
           <div v-if='!zazzleLink'>
             <span>Like what you see?</span>
             <a href='#' @click.prevent='previewOrOpen' class='action' :class='{"has-link": zazzleLink}'>
@@ -106,12 +105,10 @@
 
 <script>
 import appState from './appState';
-import bus from './bus';
 import ColorPicker from './components/ColorPicker';
 import Loading from './components/Loading';
 import About from './components/About';
 import generateZazzleLink from './lib/getZazzleLink';
-
 
 export default {
   name: 'App',
@@ -126,13 +123,17 @@ export default {
   mounted() {
     updateSizes(this.$refs);
     this.init();
-    this.onResize = () => updateSizes(this.$refs);
+    this.onResize = () => {
+      this.width = window.innerWidth;
+      this.height = window.innerHeight;
+    }
     window.addEventListener('resize', this.onResize, true);
   },
 
   beforeDestroy() {
     window.removeEventListener('resize', this.onResize, true);
   },
+
   computed: {
     mainActionText() {
       if (!this.shouldDraw) {
@@ -198,10 +199,7 @@ export default {
 
       this.shouldDraw = !this.shouldDraw;
     },
-    updateLayerColor(layer) {
-      layer.updateColor();
-      this.scene.renderFrame();
-    },
+
 
     updateBackground(x) {
       this.redraw();
@@ -224,7 +222,26 @@ export default {
       }
       appState.generatingPreview = true;
 
-      generateZazzleLink(canvas).then(link => {
+      let context = map.painter.context;
+      let width = map.painter.width;
+      let height = map.painter.height;
+
+      let blended = document.createElement('canvas');
+      let blendedCtx = blended.getContext('2d');
+      blended.width = width;
+      blended.height = height;
+      const globalAlpha = Number.parseFloat(appState.mapOpacity)/100;
+
+      if (globalAlpha < 1) {
+        map._render();
+        blendedCtx.drawImage(map.getCanvas(), 0, 0)
+      }
+      if (globalAlpha > 0) {
+        blendedCtx.globalAlpha = globalAlpha;
+        blendedCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, width, height);
+      }
+
+      generateZazzleLink(blended).then(link => {
         appState.zazzleLink = link;
         window.open(link, '_blank');
         recordOpenClick(link);
@@ -234,23 +251,16 @@ export default {
         appState.generatingPreview = false;
       });
     },
-
-    resetAllAndStartOver() {
-      this.ensurePreviousSceneDestroyed();
-      appState.startOver();
-    }
   }
 }
+
 function updateSizes(refs) {
   let dimensions = getCanvasDimensions();
   if (refs.map) {
-    // refs.map.style.transform = 'scale(' + dimensions.trueWidth/dimensions.width + ')';
-    // refs.map.style.transformOrigin = 'scale(' + dimensions.width/dimensions.trueWidth + ')';
     refs.map.style.left = px(dimensions.left);
     refs.map.style.top = px(dimensions.top);
     refs.map.style.width = px(dimensions.width);
     refs.map.style.height = px(dimensions.height);
-    refs.map.style.transformOrigin = 'left top'
   }
   setGuideLineSize(refs.heightMap, dimensions);
   appState.redraw();
@@ -271,50 +281,15 @@ function px(x) {
 }
 
 function getCanvasDimensions() {
-  let {innerWidth: w, innerHeight: h} = window;
-  let trueWidth = w;
-  let desiredRatio = 540/230; // mug ratio on zazzle. TODO: Customize for other products.
-  let guideLineWidth = trueWidth;
-  if (guideLineWidth < 1280) {
-    guideLineWidth = 1280;
-  }
-
-  let guidelineHeight = guideLineWidth / desiredRatio;
-  let trueHeight = trueWidth / desiredRatio;
-
-  let left = 0;
-
-  if (trueHeight > h) {
-    trueHeight = h;
-    trueWidth = trueHeight * desiredRatio;
-    guidelineHeight = Math.max(h, 768);
-    guideLineWidth = guidelineHeight * desiredRatio;
-    // guidelineHeight = h;
-    // guideLineWidth = guidelineHeight * desiredRatio;
-    left = (w - trueWidth) / 2;
-  }
-
-  let top = (h - trueHeight)/2;
 
   return {
-    width: window.innerWidth,
-    height: window.innerHeight,
+    width: appState.width,
+    height: appState.height,
     left: 0,
     top: 0,
     trueWidth: window.innerWidth,
     trueHeight: window.innerHeight
   };
-  return {
-    width: guideLineWidth,
-    height: guidelineHeight,
-    left: left,
-    top: top,
-    trueWidth,
-    trueHeight
-  };
-}
-function getRoadsCanvas() {
-  return document.querySelector('.scene-roads');
 }
 
 function recordOpenClick(link) {
@@ -402,18 +377,6 @@ h3 {
   padding: 0 16px;
 }
 
-.file-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-}
-.mapboxgl-ctrl-top-right .mapboxgl-ctrl {
-  margin: 0;
-}
-.mapboxgl-ctrl-geocoder input[type='text'] {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-}
-
 .preview-actions {
   display: flex;
   flex-direction: column;
@@ -457,19 +420,19 @@ a {
 .error pre {
   overflow-x: auto;
 }
-.guidelines {
-  position: absolute;
-  border: 2px solid gray;
-  pointer-events: none;
 
-  .label {
-    text-align: center;
-    padding: 2px 10px;
-    background: rgba(255, 255, 255, 0.3);
-    position: absolute;
-    bottom: 0;
+.col.value {
+  display: flex;
+  flex-direction: row;
+  
+  input[type='range'] {
+    flex: 1;
+  }
+  input[type='number'] {
+    width: 50px;
   }
 }
+
 .loading-container {
   display: flex;
   align-items: center;
@@ -503,7 +466,8 @@ a {
   transform: translateX(-50%);
   font-size: 14px;
   a {
-    background: rgba(255, 255, 255, 0.58)
+    color: white;
+    font-size: 16px;
     padding: 0 4px;
   }
 }
@@ -543,6 +507,9 @@ a {
   }
   #progress {
     width: 100%;
+  }
+  .mapboxgl-ctrl-top-right {
+    top: 52px;
   }
 
   .mapboxgl-ctrl-geocoder {
