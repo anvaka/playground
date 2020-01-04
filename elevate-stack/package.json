@@ -1,7 +1,7 @@
 {
-  "name": "@anvaka/map-print",
+  "name": "@anvaka/peak-on-mars",
   "version": "1.0.0",
-  "description": "Print a map on a mug",
+  "description": "Map of mars",
   "author": "anvaka",
   "private": true,
   "scripts": {
@@ -10,13 +10,8 @@
     "build": "node build/build.js"
   },
   "dependencies": {
-    "@mapbox/mapbox-gl-geocoder": "^2.3.0",
-    "@mapbox/tilebelt": "^1.0.1",
-    "d3-geo": "^1.10.0",
-    "mapbox-gl": "^1.6.0",
-    "ngraph.graph": "0.0.14",
-    "rafor": "^1.0.2",
-    "tiny.xml": "^1.0.1",
+    "mapbox-gl": "^1.6.1",
+    "query-state": "^4.3.0",
     "tinycolor2": "^1.4.1",
     "vue": "^2.5.2",
     "vue-color": "^2.4.6",

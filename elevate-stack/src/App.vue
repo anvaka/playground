@@ -16,63 +16,93 @@
         <a href="#" class='draw' title='Draw the heightmap chart' @click.prevent='onMainActionClick'>{{mainActionText}}</a>
       </div>
       <div class='settings-form' v-if='settingsOpen'>
+        <h3>Map settings</h3>
         <div class='row'>
-          <div class='col label'>Line density</div>
+          <div class='col label'>
+            Theme
+          </div>
+          <div class='col value' >
+            <select v-model="theme" @change="setThemeName(theme)">
+              <option v-for="(themeName, index) in computedThemes" :key="index" :value="themeName"
+              >{{themeName}}</option>
+            </select>
+          </div>
+        </div>
+        <div class='row'>
+          <div class='col label'>
+            <label for="labels">Show labels</label>
+          </div>
           <div class='col value'>
-            <input type='range' min='1' max='100' step='1' v-model="lineDensity"> 
-            <input type='number' :step='1' v-model='lineDensity'  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" min='1' max='100'>
+            <input type="checkbox" id="labels" name="scales" v-model='showLabels'>
           </div>
         </div>
-        <div class='row'>
-          <div class='col label'>Height scale</div>
-          <div class='col value'>
-            <input type='range' min='10' max='800' step='1' v-model='heightScale'> 
-            <input type='number' :step='1' v-model='heightScale'  autocomplete='off' autocorrect='off' autocapitalize="off" spellcheck="false" min='10' max='800'>
+        <div v-if='shouldDraw'>
+          <h3>Height map settings</h3>
+          <div class='row'>
+            <div class='col label'>Line density</div>
+            <div class='col value'>
+              <input type='range' min='1' max='100' step='1' v-model="lineDensity"> 
+              <input type='number' :step='1' v-model='lineDensity'  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" min='1' max='100'>
+            </div>
           </div>
-        </div>
-        <div class='row'>
-          <div class='col label'>Ocean level</div>
-          <div class='col value'>
-            <input type='range' min='-8300' max='22000' step='1' v-model='oceanLevel'> 
-            <input type='number' :step='1' v-model='oceanLevel' autocomplete='off' autocorrect='off' autocapitalize='off' spellcheck='false' max='22000' min='-8300'>
+          <div class='row'>
+            <div class='col label'>Height scale</div>
+            <div class='col value'>
+              <input type='range' min='10' max='128' step='1' v-model='heightScale'> 
+              <input type='number' :step='1' v-model='heightScale'  autocomplete='off' autocorrect='off' autocapitalize="off" spellcheck="false" min='10' max='128'>
+            </div>
           </div>
-        </div>
-        <div class='row'>
-          <div class='col'>Smooth steps</div>
-          <div class='col value'>
-            <input type='range' min='1' max='12' step='1' v-model='smoothSteps'> 
-            <input type='number' :step='1' v-model='smoothSteps'  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" min='1' max='12'>
+          <div class='row'>
+            <div class='col label'>Ocean level</div>
+            <div class='col value'>
+              <input type='range' min='-8300' max='22000' step='1' v-model='oceanLevel'> 
+              <input type='number' :step='1' v-model='oceanLevel' autocomplete='off' autocorrect='off' autocapitalize='off' spellcheck='false' max='22000' min='-8300'>
+            </div>
           </div>
-        </div>
-        <div class='row'>
-          <div class='col label'>Overlay opacity</div>
-          <div class='col value'>
-            <input type="range" min="1" max="100" step="1" v-model="mapOpacity"> 
-            <input type='number' :step='1' v-model='mapOpacity'  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" min='1' max='100'>
+          <div class='row'>
+            <div class='col'>Smooth steps</div>
+            <div class='col value'>
+              <input type='range' min='1' max='12' step='1' v-model='smoothSteps'> 
+              <input type='number' :step='1' v-model='smoothSteps'  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" min='1' max='12'>
+            </div>
           </div>
-        </div>
-        <div class='row'>
-          <div class='col label'>Line color</div>
-          <div class='col'>
-            <color-picker v-model='lineColor' @change='updateLinesColor'></color-picker>
+          <div class='row'>
+            <div class='col label'>Overlay opacity</div>
+            <div class='col value'>
+              <input type="range" min="1" max="100" step="1" v-model="mapOpacity"> 
+              <input type='number' :step='1' v-model='mapOpacity'  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" min='1' max='100'>
+            </div>
           </div>
-        </div>
-        <div class='row'>
-          <div class='col label'>Line background</div>
-          <div class='col'>
-            <color-picker v-model='lineBackground' @change='updateLinesColor'></color-picker>
+          <div class='row'>
+            <div class='col label'>Line width</div>
+            <div class='col'>
+              <input type="range" min="1" max="10" step="1" v-model="lineWidth"> 
+              <input type='number' :step='1' v-model='lineWidth' style='width: 100%'  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" min='1' max='100'>
+            </div>
           </div>
-        </div>
+          <div class='row'>
+            <div class='col label'>Line stroke</div>
+            <div class='col'>
+              <color-picker v-model='lineColor' @change='updateLinesColor'></color-picker>
+            </div>
+          </div>
+          <div class='row'>
+            <div class='col label'>Line fill</div>
+            <div class='col'>
+              <color-picker v-model='lineBackground' @change='updateLinesColor'></color-picker>
+            </div>
+          </div>
 
-        <div class='row'>
-          <div class='col label'>Scene color</div>
-          <div class='col'>
-            <color-picker v-model='backgroundColor' @change='updateBackground'></color-picker>
+          <div class='row'>
+            <div class='col label'>Background color</div>
+            <div class='col'>
+              <color-picker v-model='backgroundColor' @change='updateBackground'></color-picker>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class='preview-actions' v-if='!settingsOpen && shouldDraw && showPrintMessage && !hidePrintMessageForSession'>
+      <div class='preview-actions' v-if='!settingsOpen && showPrintMessage && !hidePrintMessageForSession'>
           <div v-if='!zazzleLink'>
             <span>Like what you see?</span>
             <a href='#' @click.prevent='previewOrOpen' class='action' :class='{"has-link": zazzleLink}'>
@@ -95,11 +125,13 @@
 
     </div>
 
+    <elevation></elevation>
     <div class='about-line'>
-      <a href='#' @click.prevent='aboutVisible = true'>about website</a>
+      <a href='#' @click.prevent='aboutVisible = true' class='map-text'>about website</a>
     </div>
 
     <about v-if='aboutVisible' @close='aboutVisible = false'></about>
+
   </div>
 </template>
 
@@ -108,7 +140,9 @@ import appState from './appState';
 import ColorPicker from './components/ColorPicker';
 import Loading from './components/Loading';
 import About from './components/About';
+import Elevation from './components/Elevation';
 import generateZazzleLink from './lib/getZazzleLink';
+import themes from './lib/themes';
 
 export default {
   name: 'App',
@@ -118,15 +152,17 @@ export default {
   components: {
     Loading,
     About,
-    ColorPicker
+    ColorPicker,
+    Elevation
   },
   mounted() {
     updateSizes(this.$refs);
     this.init();
     this.onResize = () => {
-      this.width = window.innerWidth;
-      this.height = window.innerHeight;
+      updateSizes(this.$refs);
+      this.redraw();
     }
+
     window.addEventListener('resize', this.onResize, true);
   },
 
@@ -135,20 +171,21 @@ export default {
   },
 
   computed: {
+    computedThemes() {
+      return Object.keys(themes);
+    },
     mainActionText() {
       if (!this.shouldDraw) {
         return 'Draw the height map'
       }
-
-      if (this.settingsOpen) {
-        return 'Close settings'
-      }
-
       return 'Show the original map';
     }
   },
 
   watch: {
+    lineWidth() {
+      this.redraw();
+    },
     lineDensity() {
       this.redraw();
     },
@@ -169,7 +206,6 @@ export default {
     },
     shouldDraw(newValue) {
       if (!newValue) {
-        this.settingsOpen = false;
         this.zazzleLink = null;
         this.error = null;
       }
@@ -177,9 +213,11 @@ export default {
     },
     settingsOpen(newValue) {
       if (newValue) {
-        this.shouldDraw = true;
         this.redraw();
       }
+    }, 
+    showLabels(newValue) {
+      this.setLabelsVisible(newValue);
     }
   },
   methods: {
@@ -192,14 +230,8 @@ export default {
       }
     },
     onMainActionClick() {
-      if (this.settingsOpen) {
-        this.settingsOpen = false;
-        return;
-      }
-
       this.shouldDraw = !this.shouldDraw;
     },
-
 
     updateBackground(x) {
       this.redraw();
@@ -216,10 +248,7 @@ export default {
         return;
       }
 
-      let canvas = this.$refs.heightMap;
-      if (!canvas) {
-        return;
-      }
+      let heightMapCanvas = this.$refs.heightMap;
       appState.generatingPreview = true;
 
       let context = map.painter.context;
@@ -232,13 +261,13 @@ export default {
       blended.height = height;
       const globalAlpha = Number.parseFloat(appState.mapOpacity)/100;
 
-      if (globalAlpha < 1) {
+      if (globalAlpha < 1 || !this.shouldDraw) {
         map._render();
         blendedCtx.drawImage(map.getCanvas(), 0, 0)
       }
-      if (globalAlpha > 0) {
+      if (globalAlpha > 0 && this.shouldDraw) {
         blendedCtx.globalAlpha = globalAlpha;
-        blendedCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, width, height);
+        blendedCtx.drawImage(heightMapCanvas, 0, 0, heightMapCanvas.width, heightMapCanvas.height, 0, 0, width, height);
       }
 
       generateZazzleLink(blended).then(link => {
@@ -283,8 +312,8 @@ function px(x) {
 function getCanvasDimensions() {
 
   return {
-    width: appState.width,
-    height: appState.height,
+    width: window.innerWidth,
+    height: window.innerHeight,
     left: 0,
     top: 0,
     trueWidth: window.innerWidth,
@@ -320,6 +349,8 @@ small-screen = 700px;
   background: white;
   z-index: 4;
   box-shadow: 0 0 20px rgba(0,0,0,.3);
+  max-height: 100vh;
+  overflow: hidden;
 }
 h3 {
   margin: 12px 0;
@@ -337,13 +368,15 @@ h3 {
 }
 
 .col {
-    align-items: center;
-    display: flex;
-    flex: 1;
-    select {
-      margin-left: 14px;
-    }
+  align-items: center;
+  display: flex;
+  flex: 1;
+
+  select {
+    width: 100%;
   }
+}
+
 .row {
   margin-top: 4px;
   display: flex;
@@ -375,6 +408,11 @@ h3 {
 }
 .settings-form {
   padding: 0 16px;
+  overflow-y: auto;
+  max-height: calc(100vh - 52px);
+  h3 {
+    margin: 8px 0 0 0;
+  }
 }
 
 .preview-actions {
@@ -431,6 +469,11 @@ a {
   input[type='number'] {
     width: 50px;
   }
+  input[type='checkbox'] {
+    width: 100%;
+    cursor: pointer;
+  }
+
 }
 
 .loading-container {
@@ -447,29 +490,38 @@ a {
 .script-presets {
   display: inline-block;
 }
-.ctx2d {
-  z-index: 3;
-  pointer-events: none;
-}
 .nodisplay {
   display: none;
 }
+
 .browse-btn {
   color: primary-action-color;
   cursor: pointer;
 }
+
+.elevation {
+  display: block;
+  position: fixed;
+  bottom: 42px;
+  right: 10px;
+  text-align: right;
+  cursor: pointer;
+}
+
 .about-line {
   position: fixed
 
   bottom: 8px;
-  left: 50%;
-  transform: translateX(-50%);
+  right: 10px;
   font-size: 14px;
   a {
     color: white;
     font-size: 16px;
     padding: 0 4px;
   }
+}
+.map-text {
+  text-shadow: -1px 0 #333, 0 1px #333, 1px 0 #333, 0 -1px #333;
 }
 .title {
   font-size: 18px;
@@ -518,6 +570,12 @@ a {
 
   .title {
     font-size: 16px;
+  }
+}
+
+@media (max-height: 360px) {
+  .elevation {
+    display: none;
   }
 }
 </style>

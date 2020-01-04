@@ -2,16 +2,26 @@
   <div class='about'>
     <div class='background absolute' @click.prevent='close'></div>
     <div class='content'>
-      <h3>Peak map <a class='close bold' href='#' @click.prevent='close'>close</a></h3>
+      <h3>Peaks on Mars <a class='close bold' href='#' @click.prevent='close'>close</a></h3>
       <p>
-        This website is allows you to pick any region of the world and print its high points in artistic, joyful manner.
+        This website allows you to pick any region on Mars and print its high points in artistic, joyful manner.
       </p>
+      <p>
+        I have created this map from <a target='_blank' href='https://astrogeology.usgs.gov/search/map/Mars/Topography/HRSC_MOLA_Blend/Mars_HRSC_MOLA_BlendDEM_Global_200mp_v2'>
+        NASA's digital elevation model</a>. Then I generated the labels from <a href='https://planetarynames.wr.usgs.gov/Page/MARS/target' target="_blank">Gazetteer of Planetary Nomenclature</a>.
+      </p>
+      <p>By no means I'm an expert in Mars. Please <a href='https://twitter.com/anvaka'>let me know</a> if you find any errors on the map, and I'd be happy
+      to fix it.</p>
 
-      <p>After the map is generated you can print it on a mug with Zazzle. This would not only delight a happy 
-        recipient of the unique gift, but would also support yours humble author of this website :).</p>
+      <h3>Bonus</h3>
+      <p>After the map is generated you can print it on a mug to create a memorable gift.
+         This would would also support yours humble author of this website :).</p>
       <ul>
         <li>
           Stay tuned for updates on <a href='https://twitter.com/anvaka' class='highlighted'>Twitter.</a>
+        </li>
+        <li>
+          Explore <a href='https://anvaka.github.io/peak-map/'>Peaks on Earth.</a>
         </li>
       </ul>
       <p>With passion,<br/> Anvaka</p>

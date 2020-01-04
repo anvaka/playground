@@ -12,10 +12,10 @@ export function loadImage(url) {
   });
 }
 
-export function getRegion(ne, sw, zoom, progress) {
+export function getRegionElevation(ne, sw, zoom, progress, heightScale = 0) {
   if (!progress) progress = {};
 
-  const renderHD = true;
+  const renderHD = false;
 
   const tileSize = renderHD ? 512 : 256;
   const hdSuffix = renderHD ? '@2x' : '';
@@ -59,7 +59,7 @@ export function getRegion(ne, sw, zoom, progress) {
   canvas.height = height * tileSize;
   let work = [];
 
-  const apiURL = `https://api.mapbox.com/v4/mapbox.terrain-rgb/zoom/tLong/tLat${hdSuffix}.pngraw?access_token=${MAPBOX_TOKEN}`;
+  const apiURL = `https://api.mapbox.com/v4/anvaka.8ctdbgc9/zoom/tLong/tLat${hdSuffix}.pngraw?access_token=${MAPBOX_TOKEN}`;
   for (let x = 0; x < width; x++) {
     let _tLong = startTileLng + x;
 
@@ -110,7 +110,7 @@ export function getRegion(ne, sw, zoom, progress) {
       left: startXOffset,
       top: startYOffset, 
       right: canvas.width - endXOffset,
-      bottom: canvas.height - endYOffset
+      bottom: Math.min(canvas.height, canvas.height - endYOffset)
     };
   });
 
