@@ -19,7 +19,6 @@ export default function request(url, options) {
 
     if (typeof options.progress === 'function') {
       req.addEventListener('progress', updateProgress, false);
-      // req.upload.addEventListener('progress', updateProgress, false);
     }
 
     req.addEventListener('load', transferComplete, false);
@@ -60,7 +59,10 @@ export default function request(url, options) {
 
     function transferComplete() {
       if (req.status !== 200) {
-        reject(`Unexpected status code ${req.status} when calling ${url}`);
+        reject({
+          statusError: req.status,
+          message: `Unexpected status code ${req.status} when calling ${url}`
+        });
         return;
       }
       var response = req.response;

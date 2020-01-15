@@ -1,10 +1,13 @@
 import request from './request';
 
-const overpassUrl = 'https://overpass.kumi.systems/api/interpreter';
-const backupUrl = 'https://overpass-api.de/api/interpreter' ;
+let backends = [
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.openstreetmap.ru/cgi/interpreter'
+]
 
-export default function postData(data, progress, useBackup) {
-  return request(useBackup ? backupUrl : overpassUrl, {
+export default function postData(data, progress) {
+  const postData = {
     method: 'POST',
     responseType: 'json',
     progress,
@@ -12,12 +15,30 @@ export default function postData(data, progress, useBackup) {
       'Content-type': 'application/x-www-form-urlencoded; charset=UTF-8'
     },
     body: 'data=' + encodeURIComponent(data),
-  }, 'POST').catch(err => {
-    if (useBackup) {
+  };
+
+  let serverIndex = 0;
+
+  return fetchFrom(backends[serverIndex]);
+
+  function fetchFrom(overpassUrl) {
+    return request(overpassUrl, postData, 'POST')
+      .catch(handleError);
+  }
+
+  function handleError(err) {
+    if (serverIndex >= backends.length - 1) {
       // we can't do much anymore
       throw err;
+    } 
+
+    if (err.statusError) {
+      progress({
+        loaded: -1
+      });
     }
 
-    return postData(data, progress, /* useBackup = */ true);
-  });
+    serverIndex += 1;
+    return fetchFrom(backends[serverIndex])
+  }
 }
