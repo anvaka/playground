@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "ngraph.graph": "^19.0.4",
+    "ngraph.random": "^1.0.0",
+    "ngraph.todot": "^3.0.1"
+  }
+}
