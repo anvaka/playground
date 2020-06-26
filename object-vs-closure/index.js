@@ -16,6 +16,23 @@ AverageCounterObject.prototype = {
   get: function() { return this.sum / this.numbersCount; }
 };
 
+// class
+class ClassCounter {
+  constructor() {
+    this.sum = 0;
+    this.numbersCount = 0;
+  }
+
+  get() {
+    return this.sum / this.numbersCount;
+  }
+
+  add(number) {
+    this.sum += number;
+    this.numbersCount += 1;
+  }
+}
+
 // closure
 function averageCounterFunction() {
   var sum = 0;
@@ -73,6 +90,14 @@ suite.add('average counter Object', function() {
   if (counter.get() !== expectedAverage) throw new Error('Math is wrong');
 }).add('average counter Object with private symbols', function() {
   var counter = new AverageCounterObjectSymbol();
+
+  for (var i = 0; i <= testCount; ++i) {
+    counter.add(i);
+  }
+
+  if (counter.get() !== expectedAverage) throw new Error('Math is wrong');
+}).add('average counter class Object', function() {
+  var counter = new ClassCounter();
 
   for (var i = 0; i <= testCount; ++i) {
     counter.add(i);
