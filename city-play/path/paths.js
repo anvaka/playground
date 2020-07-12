@@ -1,43 +1,59 @@
+/**
+ * This module renders shortest paths on a city roads graph.
+ * 
+ * Usage example:
+ * 
+ * ``` js
+ * let paths = (await requireModule('http://127.0.0.1:8081/dist/city-play.js')).paths;
+ * paths(scene, {
+ *   from: { lat: 47.8167059, lon: -122.3293886 }
+ * })
+ * ```
+ */
 let createRandom = require('ngraph.random')
 let toGraph = require('./toGraph');
 let npath = require('ngraph.path');
 
 let distances = {
   manhattan,
-  lonLat,
+  euclid,
   projected,
   canberra
 }
 
 module.exports = function setup(scene, options) {
   options = options || {};
-  const random = createRandom(42);
+
+
+  // We will be using seed random number generator, so that results are predictable.
+  const random = createRandom(options.seed || 42);
+
+  // How many shortest paths do we want?
   let count = options.pathCount || 2000;
-  let distanceFunction = projected;
-  if (typeof options.distance === 'function') {
-    distanceFunction = options.distance;
-  } else if (distances[options.distance]) {
-    distanceFunction = distances[options.distance];
-  }
 
-  let firstLayer = scene.queryLayer();
-  let projector = firstLayer.grid.getProjector();
+  // How exactly should we measure a distance between two nodes?
+  let distanceFunction = getDistanceFunction(options.distance);
 
-  let keys = Array.from(firstLayer.grid.nodes.keys());
+  // Helper data structures to perform graph algorithms.
+  let {graph, nodes, nodeIds, projector} = getGraphFromScene(scene);
 
-  //let fromId = keys[Math.floor(random.nextDouble() * keys.length)];
-  let graph = toGraph(firstLayer)
+  // Should we search single source shortest paths, or just randomly sample graph?
+  let foundFromId = getSourceNodeId(options.from);
+
+  // Sometimes they want to keep the original city. Otherwise let's clear it
+  if (!options.keepScene) scene.clear();
+
   let linksCount = graph.getLinksCount();
   let wgl = scene.getWGL();
-  let c = firstLayer.color.toRgb();
 
-  // scene.clear();
+  const wglRenderer = scene.getRenderer()
+
   const pathLimit = linksCount * 10;
   let betweenLines = new wgl.WireCollection(pathLimit);
-  if (options.name) betweenLines.name = options.name;
-  betweenLines.color = {r: c.r/255, g: c.g/255, b: c.b/255, a: 0.05}
-  let wglRenderer = scene.getRenderer()
+  updateLinesColorFromScene();
   wglRenderer.appendChild(betweenLines);
+
+  listenToEvents(scene);
 
   let totalAdded = 0;
   let explored = 0;
@@ -47,7 +63,12 @@ module.exports = function setup(scene, options) {
       heuristic: distance
   });
 
+  // Timeout is better than animation frame, as this could be done even when
+  // tab is closed.
   let handle = setTimeout(compute, 0);
+
+  // This is console API. Allows clients to dispose, or get access to the 
+  // wire collection.
   return {
     dispose,
     lines: betweenLines
@@ -55,32 +76,118 @@ module.exports = function setup(scene, options) {
 
   function dispose() {
     clearTimeout(handle);
+    scene.off('line-color', updateLinesColorFromScene);
   }
 
   function compute() {
-    let fromId = keys[Math.floor(random.nextDouble() * keys.length)];
-    let toId = keys[Math.floor(random.nextDouble() * keys.length)];
+    let elapsedTime = 0;
+    let startTime = window.performance.now();
+    let timeLimit = 20;
 
-    let found = pathFinder.find(fromId, toId).map(l => l.data);
+    while (elapsedTime < timeLimit && totalAdded < pathLimit && explored < count) {
+      let fromId = foundFromId || nodeIds[Math.floor(random.nextDouble() * nodeIds.length)];
+      let toId = nodeIds[Math.floor(random.nextDouble() * nodeIds.length)];
 
-    for (let i = 1; i < found.length; ++i) {
-      betweenLines.add({from: projector(found[i - 1]), to: projector(found[i])});
+      let found = pathFinder.find(fromId, toId).map(l => l.data);
+
+      for (let i = 1; i < found.length; ++i) {
+        betweenLines.add({from: projector(found[i - 1]), to: projector(found[i])});
+      }
+
+      totalAdded += found.length;
+      explored += 1;
+      if (explored % 50 === 0) {
+        console.info('Explored ' + explored + ' shortest paths.');
+      }
+      elapsedTime = (window.performance.now() - startTime);
     }
 
-    totalAdded += found.length;
-    explored += 1;
     if (totalAdded < pathLimit && explored < count) {
       handle = setTimeout(compute, 0);
     }
-    if (explored % 50 === 0) {
-      console.info('Explored ' + explored + ' shortest paths.');
-    }
-    scene.render();
+    wglRenderer.renderFrame();
   }
 
   function distance(n1, n2) {
     return distanceFunction(n1.data, n2.data);
   }
+
+  function updateLinesColorFromScene() {
+    let color = scene.lineColor.toRgb()
+    betweenLines.color = {
+      r: color.r/255,
+      g: color.g/255,
+      b: color.b/255,
+      a: options.alpha || color.a //  0.05?
+    }
+    if (wglRenderer) wglRenderer.renderFrame();
+  }
+
+  function listenToEvents() {
+    scene.on('line-color', updateLinesColorFromScene);
+  }
+
+  function getSourceNodeId(nearOption) {
+    if (!nearOption) return; // they don't care. The algorithm runs for random pairs.
+    let lonLat = nearOption;
+    if(typeof lonLat === 'string') {
+      let parts = nearOption.split(',').map(x => parseFloat(x)).filter(x => Number.isFinite(x));
+      if (parts.length !== 2) {
+        throw new Error('Expected "lat,lon" format. Try {near: \'47.6689054,-122.3867575\'}');
+      }
+      lonLat = {
+        lat: parts[0],
+        lon: parts[1]
+      }
+    }
+
+    let nodeId = findIdNear(lonLat)
+    if (nodeId === undefined) {
+      throw new Error('Cannot find the node near ' + nearOption);
+    }
+
+    return nodeId;
+  }
+
+  function findIdNear(targetNode) {
+    if (!(Number.isFinite(targetNode.lon) && Number.isFinite(targetNode.lat))) {
+      return; // Something isn't right.
+    }
+
+    let minDistance = Infinity;
+    let minId = undefined;
+    nodes.forEach(node => {
+      let dist = euclid(node, targetNode);
+      if (dist < minDistance) {
+        minDistance = dist;
+        minId = node.id;
+      }
+    });
+    return minId;
+  }
+}
+
+function getDistanceFunction(optionsFunction) {
+  let distanceFunction = projected;
+  if (typeof optionsFunction === 'function') {
+    distanceFunction = optionsFunction;
+  } else if (distances[optionsFunction]) {
+    distanceFunction = distances[optionsFunction];
+  }
+
+  return distanceFunction;
+}
+
+function getGraphFromScene(scene) {
+  let firstLayer = scene.queryLayer();
+  let projector = firstLayer.grid.getProjector();
+
+  let nodes = firstLayer.grid.nodes;
+  let nodeIds = Array.from(nodes.keys());
+
+  let graph = toGraph(firstLayer)
+
+  return {projector, graph, nodes, nodeIds};
 }
 
 function canberra(node1, node2) {
@@ -92,7 +199,7 @@ function manhattan(node1, node2) {
   return Math.abs(node1.lat - node2.lat) + Math.abs(node1.lon - node2.lon);
 }
 
-function lonLat(node1, node2) {
+function euclid(node1, node2) {
   return Math.hypot(node1.lat - node2.lat, node1.lon - node2.lon);
 }
 
