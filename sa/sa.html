@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2020 by anvaka (https://github.com/anvaka)
+
+Playing with simulated annealing
+
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Simulated annealig</title>
+  <script src='https://cdn.jsdelivr.net/npm/ngraph.graph@19.1.0/dist/ngraph.graph.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/simplesvg@0.1.1/dist/simplesvg.js'></script>
+  <script src='https://cdn.jsdelivr.net/npm/panzoom@9.2.5/dist/panzoom.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/ngraph.fromdot/dist/ngraph.fromDot.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/ngraph.random/dist/ngraph.random.js'></script>  
+  <script src='https://cdn.jsdelivr.net/npm/ngraph.generators@19.0.2/dist/ngraph.generators.min.js'></script>
+
+<style id="jsbin-css">
+body, svg {
+  position: absolute;
+  overflow: hidden;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+#score {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+</style>
+</head>
+<body>
+<svg>
+  <g id='scene'></g>
+</svg>
+  <div id=score></div>
+<script id="jsbin-javascript">
+const scoreEl = document.getElementById('score');
+let scene = document.getElementById('scene');
+let pz = panzoom(scene);
+let size = 100;
+  pz.showRectangle({
+    left: -size,
+    right: size,
+    top: -size,
+    bottom: size
+  })
+
+let graph = generators.balancedBinTree(4);
+graph.forEachNode(node => { 
+  node.data = {size: 3}
+});
+graph.forEachLink(link => {
+  link.data = {count: 1}
+})
+run(graph)
+  
+
+function run(graph) {
+  let links = [];
+  let layout;
+  layout = createAnnealingLayout(graph);
+  let renderer = createRenderer(graph, layout, scene);
+  doStep();
+
+  return;
+  
+  function doStep() {
+    if (layout.step()) {
+      setTimeout(doStep, 0);
+    } else console.log('Done. Energy is: ' + layout.getEnergy())
+    
+    renderer.update()
+    scoreEl.innerText = layout.getEnergy();
+  }
+}
+
+function createRenderer(graph, layout, scene) {
+  let nodes = new Map();
+  let links = []
+  let durationInFrames = 10;
+  
+  graph.forEachNode(node => {
+    nodes.set(node.id, createNodeRenderer(node));
+  });
+  graph.forEachLink(link => {
+    links.push(createLinkRenderer(link));
+  });
+  
+  return {
+    update: update
+  };
+  
+  function easing3(t) {
+    return t * t * t;
+  }
+  function easing(x) {
+    return x * x * x;
+  }
+  
+  function update() {
+    let model = layout.getModel();
+    model.forEach(v => {
+      let handle = nodes.get(v.id);
+      if (handle.targetX === v.pos[0] && handle.targetY === v.pos[1]) return;
+      handle.targetX = v.pos[0];
+      handle.targetY = v.pos[1];
+      handle.x = Number.parseFloat(handle.ui.attr('cx'));
+      handle.y = Number.parseFloat(handle.ui.attr('cy'));
+      handle.dx = handle.targetX - handle.x;
+      handle.dy = handle.targetY - handle.y;
+      handle.startX = handle.x;
+      handle.startY = handle.y;
+      handle.step = 0;
+    });
+    
+    nodes.forEach(handle => {
+      if (handle.targetX === handle.x && handle.targetY === handle.y) return;
+      var t = easing(handle.step/durationInFrames)
+      handle.step += 1;
+      handle.x = handle.startX + t * handle.dx;
+      handle.y = handle.startY + t * handle.dy;
+      handle.ui.attr({
+        cx: handle.x,
+        cy: handle.y
+      });
+    });
+    links.forEach(link => {
+      let from = link.from;
+      let to = link.to;
+      link.ui.attr({
+        x1: from.x, y1: from.y,
+        x2: to.x, y2: to.y,
+      })
+    })
+  }
+  
+  function createNodeRenderer(node) {
+    let v = layout.getModel().get(node.id);
+    let [x, y] = v.pos;
+    let ui = sivg('circle', {
+      fill: 'orange',
+      opacity: 0.2,
+      stroke: 'black',
+      'stroke-width': 1,
+      r: v.size,
+      cx: x,
+      cy: y
+    })
+
+    scene.appendChild(ui); 
+    
+    return {
+      ui: ui,
+      x: x, y: y,
+      targetX: x, targetY: y,
+      dx: 0, dy: 0,
+      startX: 0, startY: 0,
+      step: 0
+    }
+  }
+  function createLinkRenderer(link) {
+    let from = nodes.get(link.fromId);
+    let to = nodes.get(link.toId);
+    let ui = sivg('line', {
+      stroke: 'black',
+      'stroke-width': 4 * link.data.count / 400,
+      x1: from.x, y1: from.y,
+      x2: to.x, y2: to.y,
+    });
+    scene.appendChild(ui);    
+    return {
+      ui: ui, from: from, to: to
+    }
+  }
+      
+}
+
+function createAnnealingLayout(graph, options = {}) {
+  let random = ngraphRandom(options.seed || 42);
+  let startTemperature = 10;
+  let finalTemperature = 1e-8;
+  let alpha = 0.9999; // cooling: temperature *= alpha
+  let temperature = startTemperature;
+  
+  let maxSteps = options.steps || 400000;
+  let graphSpread = 100;
+  let timeStep = 0;
+
+  let nodes = [];
+  graph.forEachNode(node => {
+    if (node.canMove === false) return;
+    nodes.push(node);
+  });
+  
+  let movableLength = nodes.length;
+
+  let overlapImportance = options.overlap || 4;
+  let touchImportance = options.touch || 3;
+  let repelImportance = options.repel || 10;
+
+  let model = randomStart(graph, 100)
+  let energy = getEnergy(model);
+  let globalMin = energy;
+
+  return {
+    step: step,
+    getNodePosition(nodeId) {
+      let pos = model.get(nodeId);
+      return {
+        x: pos[0],
+        y: pos[1]
+      }
+    },
+    getGraphRect() {
+      let x1 = Infinity, x2 = -Infinity;
+      let y1 = Infinity, y2 = -Infinity;
+      model.forEach((node) => {
+        let [x, y] = node.pos;
+        if (x < x1) x1 = x; if (x > x2) x2 = x;
+        if (y < y1) y1 = y; if (y > y2) y2 = y;
+      })
+      return {
+        x1, y1, x2, y2
+      }
+    },
+    getModel() {
+      return model;
+    },
+    getEnergy() { return getEnergy(model); }
+  };
+  
+  function step() {
+    for (let i = 0; i < 20; ++i) {
+      if (makeStep()) return false; // we are done
+    }
+    return true;
+  }
+  
+  function getEnergy(model) {
+    let energy = 0;
+    model.forEach((v, k) => {
+      energy += getNodeEnergy(v, model);
+    });
+    return energy/model.size;
+  }
+  
+  function getNodeEnergy(v, model) {
+    let otherLinks = [];
+    let touchingEnergy = 0;
+    let touchCount = 0;
+
+    let overlapCount = 0;
+    let overlapEnergy = 0;
+    let neighborCount = 0;
+    
+    graph.forEachLinkedNode(v.id, (other, link) => {
+      let otherNode = model.get(other.id);
+      let dist = getDistance(v, otherNode);
+      let r = otherNode.size + v.size;
+      if (dist > r) {
+        touchingEnergy += (dist - r) * link.data.count;
+        touchCount += 1;
+      }
+      neighborCount += 1;
+    });
+    
+    let notNeighborsCount = 0;
+    let notNeighborsDistance = 0;
+    
+    model.forEach(otherNode => {
+      if (otherNode.id === v.id) return;
+      let r = otherNode.size + v.size;
+      let dist = getDistance(v, otherNode);
+      if (dist < r) {
+        overlapCount += 1;
+        overlapEnergy += r - dist;
+      }  
+      let isNeighbor = graph.hasLink(v.id, otherNode.id) ||
+          graph.hasLink(otherNode.id, v.id);
+      //if (!isNeighbor) {
+        notNeighborsCount += 1;
+        notNeighborsDistance += r/(dist * dist * dist);
+      //}
+    });
+
+    if (neighborCount === 0) touchingEnergy = 0;
+    else touchingEnergy *= touchCount / neighborCount;
+    
+    overlapEnergy *= overlapCount / (model.size - 1);
+    let neighborsEnergy = notNeighborsCount === 0 ? 0 : notNeighborsDistance;
+    return overlapEnergy * overlapImportance + touchingEnergy * touchImportance + neighborsEnergy;
+  }
+  
+  function makeStep() {
+    let shouldContinue = temperature > finalTemperature && timeStep < maxSteps;
+    if (!shouldContinue) return true; // we are done!
+    
+    let undo = move(model);
+    let currentEnergy = getEnergy(model);
+    let change = currentEnergy - energy;
+    if (change <= 0) {
+      // the solution is better, accept it:
+      energy = currentEnergy;
+      if (currentEnergy <= 0) return true; // we've got to the minimum (at least in this problem)
+    } else if (Math.exp(-change / temperature) > randomFloat()) {
+      // the solution has not improved, but we still going to accept it if 
+      // system is hot
+      energy = currentEnergy;
+    } else {
+      undo();
+    }
+    if (currentEnergy < globalMin) {
+      globalMin = currentEnergy;
+    }
+    
+    timeStep += 1;
+    temperature *= alpha;
+  }
+  
+  function randomStart(graph, attemptCount = 100) {
+    let bestModel = assignRandomPositions(graph);
+    let bestEnergy = getEnergy(bestModel);
+    for (let i = 0; i < attemptCount; ++i) {
+      let someModel = assignRandomPositions(graph, graphSpread);
+      let newEnergy = getEnergy(someModel);
+      if (newEnergy < bestEnergy) {
+        bestEnergy = newEnergy;
+        bestModel = someModel;
+      }
+    }
+    return bestModel;
+  }
+  
+  function move(model) {
+    let scores = [];
+    let totalScore = 0;
+
+    model.forEach(node => {
+      let score = getNodeEnergy(node, model);
+      totalScore += score;
+      scores.push({id: node.id, score: score})
+    });
+    let nodeEnergy = scores[randomInt(Math.floor(scores.length))]
+    let aData = model.get(nodeEnergy.id);
+
+    let dx = aData.size * random.gaussian();
+    let dy = aData.size * random.gaussian();
+    aData.pos[0] += dx;
+    aData.pos[1] += dy;
+
+    return () => {
+      aData.pos[0] -= dx;
+      aData.pos[1] -= dy;
+    }
+  }
+    
+  function intersect(s1, s2) {
+    let [x0, y0] = s1.from;
+    let [x1,  y1] = s1.to;
+    let [x2, y2] = s2.from;
+    let [x3,  y3] = s2.to;
+    let p1 = x1 - x0;
+    let q1 = y1 - y0;
+    let p2 = x3 - x2;
+    let q2 = y3 - y2;
+    let det = p1 * q2 - p2 * q1;
+    if (det === 0) return 0;
+    let s = (p1 * (y0 - y2) - q1 * (x0 - x2)) / det;
+    let t = (p2 * (y0 - y2) - q2 * (x0 - x2)) / det;
+    return s > 0 && s < 1 && t > 0 && t < 1;
+  }
+
+  function getDistance(a, b) {
+    return Math.hypot(a.pos[0] - b.pos[0], a.pos[1] - b.pos[1]);
+  }
+
+  function assignRandomPositions(graph, spread = 1) {
+    let model = new Map();
+    
+    graph.forEachNode(node => {
+      let pos;
+      if (node.pos) {
+        pos = node.pos
+      } else {
+        let maxStregthWithPos = -1;
+        let maxNode = null;
+        graph.forEachLinkedNode(node.id, (other, link) => {
+          if (other.pos && link.data.count > maxStregthWithPos) {
+            maxStregthWithPos = link.data.count;
+            maxNode = other;
+          }
+        });
+        if (maxNode) {
+          let angle = randomFloat();
+          let r = maxNode.data.size + node.data.size;
+          pos = [
+            maxNode.pos[0] + r * Math.cos(angle),
+            maxNode.pos[1] + r * Math.sin(angle)
+          ]
+        } else {
+          pos = [
+            (randomFloat() - 0.5) * spread, 
+            (randomFloat() - 0.5) * spread, 
+          ];
+        }
+      }
+      if (node.canMove === false && node.pos === undefined) throw new Error('Cannot move and has no position');
+      model.set(node.id, {
+        id: node.id,
+        size: node.data.size,
+        pos: pos
+      })
+    });
+    return model;
+  }
+  
+  
+  function randomInt(max) {
+    return random.next(max);
+  }
+
+  function randomFloat() {
+    return random.nextDouble();
+  }
+  
+  function getStats(array) {
+    if (array.length === 0) {
+      return {
+        min: undefined,
+        max: undefined, 
+        avg: undefined,
+        sigma: undefined,
+        mod: undefined, 
+        count: 0
+      }
+    }
+    let min = Infinity;
+    let max = -Infinity;
+    let sum = 0;
+    let counts = new Map();
+    array.forEach(x => {
+      if (x < min) min = x;
+      if (x > max) max = x;
+      sum += x;
+      counts.set(x, (counts.get(x) || 0) + 1)
+    });
+    let mod = Array.from(counts).sort((a, b) => b[1] - a[1])[0][0]
+
+    let avg = sum /= array.length;
+    let sigma = 0;
+    array.forEach(x => {
+      sigma += (x - avg) * (x - avg);
+    });
+    sigma = Math.sqrt(sigma / (array.length + 1));
+    let count = array.length;
+    return {min, max, avg, sigma, mod, count};
+  }
+}
+</script>
+</body>
+</html>
