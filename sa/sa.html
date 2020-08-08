@@ -67,7 +67,7 @@ let size = 100;
     bottom: size
   })
 
-let graph = generators.balancedBinTree(4);
+let graph = generators.balancedBinTree(6);
 graph.forEachNode(node => { 
   node.data = {size: 3}
 });
@@ -81,30 +81,57 @@ function findBestOptions(graph) {
   let bestResult = Infinity;
   let bestOptions;
   let random = ngraphRandom(42);
-  for (let i = 0; i < 100; ++i) {
-    let options = {
-      overlap: random.next(1000),
-      touch: random.next(1000),
-      repel: 0,
+  let startPoint = [1, 1, 0.99, 1000];//, random.next(1000)];
+  let res = minimize(memoEnergy, startPoint, 100, (i, start) => {
+    switch (i) {
+      case 0: return [3, 1, 0.99, 1000];
+      case 1: return [1, 3, 0.99, 1000];
+      case 2: return [1, 1, 0.999, 1000];
+      case 3: return [1, 1, 0.99, 10000];
     }
-    let layout = createAnnealingLayout(graph, options);
-    while(layout.step());
-    let e = layout.getEnergy();
-    console.log(options, e);
-    if (e < bestResult)  {
-      bestResult = e;
-      bestOptions = options;
+    throw new Error('fck.')
+  });
+  console.log(res);
+    // if (e < bestResult)  {
+    //   bestResult = e;
+    //   bestOptions = options;
+    // }
+
+  return getOptionsFromX(res); // {overlap: res[0], touch: res[1], repel: 1};
+  return bestOptions;
+
+  function memoEnergy(x) {
+    if (x.__val) return x.__val;
+    x.__val = getLayoutEnergy(x);
+    return x.__val;
+  }
+  function getOptionsFromX(x) {
+    return {
+      overlap: x[0],
+      touch: x[1],
+      alpha: x[2],
+      startTemp: x[3],
+      repel: 1,
     }
   }
-  return bestOptions;
+
+  function getLayoutEnergy(x) {
+    let options = getOptionsFromX(x);
+    let layout = createAnnealingLayout(graph, options);
+    while(layout.step());
+    return layout.getEnergy();
+  }
 }
 
 function run(graph) {
   let links = [];
   let layout;
-  //let options = { overlap: 91, touch: 491, repel: 0}
-  let options = { overlap: 7e+8, touch: 289, repel: 0}
-  //let options = findBestOptions(graph);
+  // let options = { overlap: 91, touch: 491, repel: 0}
+  //let options = { overlap: 7e+8, touch: 289, repel: 0}
+  let options = {"overlap":1.9374496262009948,"touch":0.3072930583977702,"alpha":0.9998103733225518,"startTemp":4709.910310376014,"repel":1,
+  steps: 100000};
+  // options = findBestOptions(graph);
+  debugger;
   layout = createAnnealingLayout(graph, options);
   let renderer = createRenderer(graph, layout, scene);
   doStep();
@@ -220,13 +247,17 @@ function createRenderer(graph, layout, scene) {
 
 function createAnnealingLayout(graph, options = {}) {
   let random = ngraphRandom(options.seed || 42);
-  let startTemperature = 1000;
+  let startTemperature = options.startTemp || 1000;
   let finalTemperature = 1e-8;
-  let alpha = 0.999; // cooling: temperature *= alpha
+  let alpha = options.alpha || 0.999; // cooling: temperature *= alpha
   let temperature = startTemperature;
   
-  let maxSteps = options.steps || 400000;
-  let graphSpread = 500000;
+  let maxSteps = options.steps || 10000;
+  let maxNodeSize = 0;
+  graph.forEachNode(node => {
+    if (node.data.size > maxNodeSize) maxNodeSize = node.data.size;
+  })
+  let graphSpread = maxNodeSize * graph.getNodeCount();
   let timeStep = 0;
 
   let nodes = [];
@@ -329,12 +360,12 @@ function createAnnealingLayout(graph, options = {}) {
         overlapCount += 1;
         overlapEnergy += (r - dist);
       }  
-      let isNeighbor = graph.hasLink(v.id, otherNode.id) ||
-          graph.hasLink(otherNode.id, v.id);
-      if (isNeighbor) {
+      // let isNeighbor = graph.hasLink(v.id, otherNode.id) ||
+      //     graph.hasLink(otherNode.id, v.id);
+      // if (isNeighbor) {
         notNeighborsCount += 1;
         notNeighborsDistance += r/(dist);
-      }
+      //}
     });
 
     if (neighborCount === 0) touchingEnergy = 0;
@@ -515,6 +546,118 @@ function createAnnealingLayout(graph, options = {}) {
     let count = array.length;
     return {min, max, avg, sigma, mod, count};
   }
+}
+
+function minimize(f, start, iterationCount, getNext) {
+  let alpha = 1;
+  let gamma = 2;
+  let ro = 0.5;
+  let sigma = 0.5;
+  let step = 1;
+  let dimensions = start.length;
+  let iteration = 0;
+  let points = [start];
+
+  for (let i = 0; i < dimensions; ++i) {
+    if (getNext) {
+      points.push(getNext(i, start));
+    } else {
+      let next = start.map(x => x);
+      next[i] += step;
+      points.push(next);
+    }
+  }
+  console.log('starting minimization with ', start)
+//   let values = points.map(xn => f(xn)); 
+  for (let j = 0; j < iterationCount; ++j) {
+    points.sort((a, b) => f(a) - f(b));
+    let diff = f(points[points.length - 1]) - f(points[0]);
+    if (diff < 1e-4) break;
+    console.log('best so far ',  f(points[0]));
+    let centroid = getCentroid(points);
+    // Reflection
+    let reflection = getReflection(centroid, points[points.length - 1]);
+    if (
+        f(points[0]) <= f(reflection) && 
+        f(reflection) < f(points[points.length - 2])
+    ) {
+      //  reflected point is better than the second  worst but not better the
+      // the best:
+      points[points.length - 1] = reflection;
+      continue;
+    }
+    
+    // expansion
+    if (f(reflection) < f(points[0])) {
+      let expanded = getExpanded(centroid, reflection);
+      if (f(expanded) < f(reflection)) {
+        // replace the worst with expanded:
+        points[points.length - 1] = expanded;
+      } else {
+        points[points.length - 1] = reflection;
+      }
+      continue;
+    }
+    // contraction
+    let contracted = getContracted(centroid, points[points.length - 1]);
+    if (f(contracted) < f(points[points.length - 1])) {
+      points[points.length - 1] = contracted;
+      continue;
+    }
+    
+    // shrink
+    for (let i = 1; i < points.length; ++i) {
+      points[i] = getShrink(points[0], points[i]);
+    }
+  } 
+
+  
+  return points[0];
+  
+  function getCentroid(points) {
+    let center = (new Array(dimensions)).fill(0);
+    for (let i = 0; i < points.length - 1; ++i) {
+      let p = points[i];
+      p.forEach((x, i) => {center[i] += x;})
+    }
+    for (let i = 0; i < dimensions; ++i) {
+      center[i] /= (points.length - 1);
+    }
+    return center;
+  }
+  function getShrink(best, other) {
+    let srunk = (new Array(dimensions));
+    for (let i = 0; i < dimensions; ++i) {
+        srunk[i] = best[i] + sigma * (other[i] - best[i]);
+    }
+    return srunk;
+  }
+  
+  function getReflection(centroid, worst_point) {
+    let reflection = (new Array(dimensions));
+    for (let i = 0; i < dimensions; ++i) {
+        reflection[i] = centroid[i] + alpha * (centroid[i] - worst_point[i]);
+    }
+    return reflection;
+  }
+
+  function getContracted(centroid, worst_point) {
+    let contracted = (new Array(dimensions));
+    for (let i = 0; i < dimensions; ++i) {
+        contracted[i] = centroid[i] + ro * (worst_point[i] - centroid[i]);
+    }
+    return contracted;
+  }
+
+  
+  function getExpanded(centroid, reflection) {
+    let expanded = (new Array(dimensions));
+    for (let i = 0; i < dimensions; ++i) {
+        expanded[i] = centroid[i] + gamma * (reflection[i] - centroid[i]);
+    }
+    return expanded;
+  }
+
 }
 </script>
 </body>
