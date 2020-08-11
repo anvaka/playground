@@ -11,4 +11,5 @@ like, I eventually release as standalone projects. Some graduates from this plac
 * [common-words](https://github.com/anvaka/common-words)
 * [e-sum](https://github.com/anvaka/e-sum)
 * [peak map](https://github.com/anvaka/peak-map)
+* [vs](https://github.com/anvaka/vs)
 
