@@ -92,13 +92,8 @@ function findBestOptions(graph) {
     throw new Error('fck.')
   });
   console.log(res);
-    // if (e < bestResult)  {
-    //   bestResult = e;
-    //   bestOptions = options;
-    // }
 
-  return getOptionsFromX(res); // {overlap: res[0], touch: res[1], repel: 1};
-  return bestOptions;
+  return getOptionsFromX(res);
 
   function memoEnergy(x) {
     if (x.__val) return x.__val;
@@ -555,7 +550,6 @@ function minimize(f, start, iterationCount, getNext) {
   let sigma = 0.5;
   let step = 1;
   let dimensions = start.length;
-  let iteration = 0;
   let points = [start];
 
   for (let i = 0; i < dimensions; ++i) {
@@ -568,7 +562,6 @@ function minimize(f, start, iterationCount, getNext) {
     }
   }
   console.log('starting minimization with ', start)
-//   let values = points.map(xn => f(xn)); 
   for (let j = 0; j < iterationCount; ++j) {
     points.sort((a, b) => f(a) - f(b));
     let diff = f(points[points.length - 1]) - f(points[0]);
