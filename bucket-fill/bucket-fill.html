@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<meta name="robots" content="noindex" />
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Bucket fill</title>
+    <script src="https://bundle.run/concaveman@1.2.0"></script>
+    <style id="jsbin-css">
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: serif;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="scene"></canvas>
+    <script id="jsbin-javascript">
+      let canvas = document.querySelector("#scene");
+      let ctx = canvas.getContext("2d");
+      let width = (canvas.width = 480);
+      let height = (canvas.height = 480);
+
+      const polygons = [
+        //   {
+        //     points: [[-1, -1], [-1, 1], [1, 0]],
+        //     color: 'orange'
+        //   },
+        //   {
+        //     points: [[2, -1], [2, 1], [3, 1], [3, -1]],
+        //     color: 'blue'
+        //   },
+        //   {
+        //     points: drawCircle(0, 3, 1),
+        //     color: 'deepskyblue'
+        //   },
+        {
+          points: randomArea({
+            minX: -2,
+            maxX: -1,
+            minY: -2,
+            maxY: -1,
+          }),
+          color: "red",
+        },
+        {
+          points: randomArea({
+            minX: -1,
+            maxX: 1,
+            minY: -1,
+            maxY: 1,
+          }),
+          color: "orange",
+        },
+        {
+          points: randomArea({
+            minX: -2,
+            maxX: -1,
+            minY: 1,
+            maxY: 2,
+          }),
+          color: "magenta",
+        },
+        {
+          points: randomArea({
+            minX: -1,
+            maxX: 1,
+            minY: -2,
+            maxY: -1,
+          }),
+          color: "wheat",
+        },
+        {
+          points: randomArea({
+            minX: -2,
+            maxX: -1,
+            minY: -1,
+            maxY: 1,
+          }),
+          color: "wheat",
+        },
+      ];
+
+      function drawCircle(x, y, r) {
+        let circle = [];
+        let circlePoint = 16;
+        for (let i = 0; i < circlePoint; ++i) {
+          let angle = (2 * Math.PI * i) / circlePoint;
+          circle.push([x + r * Math.cos(angle), y + r * Math.sin(angle)]);
+        }
+
+        return circle;
+      }
+
+      function randomArea(box) {
+        let count = 20;
+        let points = [];
+        let w = box.maxX - box.minX;
+        let h = box.maxY - box.minY;
+
+        for (let i = 0; i < count; ++i) {
+          points.push([
+            Math.random() * w + box.minX,
+            Math.random() * h + box.minY,
+          ]);
+        }
+        return concaveman(points);
+      }
+
+      let board = createBoardFromPolygons(polygons);
+      board.makeSeedPoints();
+      frame();
+
+      function frame() {
+        if (board.step()) {
+          requestAnimationFrame(frame);
+        }
+        draw();
+      }
+
+      function draw() {
+        clearRect();
+        drawPolygons(polygons);
+        visualizeBoard(board);
+      }
+
+      function clearRect() {
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, width, height);
+      }
+
+      function visualizeBoard(board) {
+        board.forEachMatrixPoint((matrixPoint) => {
+          const polygon = polygons[matrixPoint.polygonIndex];
+          let color = (polygon && polygon.color) || "#999";
+          const isBorder = matrixPoint.polygonIndex == -2;
+          let pt = toCanvasCoordinates(matrixPoint.point);
+          let w = 1,
+            h = 1;
+          if (isBorder) {
+            color = "#fff";
+            w = 3;
+            h = 3;
+          }
+          ctx.fillStyle = color;
+          ctx.fillRect(pt[0], pt[1], w, h);
+        });
+      }
+
+      function drawPolygons(polygons) {
+        polygons.forEach(drawSinglePolygon);
+      }
+
+      function drawSinglePolygon(polygon) {
+        ctx.beginPath();
+        ctx.strokeStyle = polygon.color;
+        polygon.points.forEach((scenePoint, index) => {
+          let point = toCanvasCoordinates(scenePoint);
+          ctx[index === 0 ? "moveTo" : "lineTo"](point[0], point[1]);
+        });
+
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      function toCanvasCoordinates(pt) {
+        return [
+          (width * (pt[0] - board.size.minX)) / board.size.width,
+          height - (height * (pt[1] - board.size.minY)) / board.size.height,
+        ];
+      }
+
+      function createBoardFromPolygons(polygons) {
+        const FREE = -1;
+        const BORDER = -2;
+        let size = measureScene(polygons);
+        let samplePoints = 400;
+        let matrix = [];
+        let queue = [];
+        let pointsPerStep = 4000;
+
+        for (let i = 0; i < samplePoints; ++i) {
+          matrix[i] = [];
+          for (let j = 0; j < samplePoints; ++j) {
+            let point = toSceneCoordinate(i, j);
+            matrix[i][j] = getPolygonIdForPoint(point);
+          }
+        }
+
+        return {
+          size,
+          matrix,
+          forEachMatrixPoint,
+          makeSeedPoints,
+          step,
+        };
+
+        function makeSeedPoints() {
+          polygons.forEach((polygon, id) => {
+            // TODO: can sample more points along each edge.
+            polygon.points.forEach((point, idx, arr) => {
+              let prev = arr[idx === 0 ? arr.length - 1 : idx - 1];
+              sampleRay(prev, point, 20, (other) => {
+                queue.push({
+                  point: toGridCoordinate(other),
+                  id: id,
+                });
+              });
+            });
+          });
+        }
+
+        function sampleRay(from, to, count, cb) {
+          let dx = to[0] - from[0];
+          let dy = to[1] - from[1];
+          let l = Math.sqrt(dx * dx + dy * dy);
+          if (l === 0) {
+            cb(from);
+            return;
+          }
+          let nx = dx / l;
+          let ny = dy / l;
+          for (let i = 0; i < count; ++i) {
+            let x = from[0] + (nx * l * i) / count;
+            let y = from[1] + (ny * l * i) / count;
+            cb([x, y]);
+          }
+        }
+
+        function step() {
+          let processed = 0;
+          if (queue.length === 0) return false;
+
+          while (processed < pointsPerStep && queue.length > 0) {
+            processed += 1;
+            let candidate = queue.shift();
+            enqueueIfNeeded(getNeighbor(candidate, -1, -1));
+            enqueueIfNeeded(getNeighbor(candidate, -1, 1));
+            enqueueIfNeeded(getNeighbor(candidate, 1, -1));
+            enqueueIfNeeded(getNeighbor(candidate, 1, 1));
+
+            enqueueIfNeeded(getNeighbor(candidate, -1, 0)); // west
+            enqueueIfNeeded(getNeighbor(candidate, 1, 0)); // east
+            enqueueIfNeeded(getNeighbor(candidate, 0, -1)); // north
+            enqueueIfNeeded(getNeighbor(candidate, 0, 1)); // south
+          }
+          return true;
+        }
+
+        function enqueueIfNeeded(candidate) {
+          let cellOccupant = matrix[candidate.row][candidate.col];
+          if (candidate.from.id === cellOccupant) return;
+          if (cellOccupant === FREE) {
+            // claim this cell to ourselves.
+            matrix[candidate.row][candidate.col] = candidate.from.id;
+            queue.push({
+              point: [candidate.col, candidate.row],
+              id: candidate.from.id,
+            });
+          } else {
+            matrix[candidate.row][candidate.col] = BORDER;
+          }
+        }
+
+        function getNeighbor(queueElement, dx, dy) {
+          let p = queueElement.point;
+          let col = clamp(p[0] + dx, 0, samplePoints - 1);
+          let row = clamp(p[1] + dy, 0, samplePoints - 1);
+          return {
+            col,
+            row,
+            from: queueElement,
+          };
+        }
+
+        function forEachMatrixPoint(cb) {
+          for (let i = 0; i < samplePoints; ++i) {
+            for (let j = 0; j < samplePoints; ++j) {
+              let point = toSceneCoordinate(i, j);
+              cb({
+                polygonIndex: matrix[i][j],
+                point,
+              });
+            }
+          }
+        }
+
+        function toSceneCoordinate(row, col) {
+          return [
+            size.minX + (size.width * col) / samplePoints,
+            size.minY + (size.height * row) / samplePoints,
+          ];
+        }
+
+        function toGridCoordinate(point) {
+          return [
+            clamp(
+              Math.round((samplePoints * (point[0] - size.minX)) / size.width),
+              0,
+              samplePoints - 1
+            ),
+            clamp(
+              Math.round((samplePoints * (point[1] - size.minY)) / size.height),
+              0,
+              samplePoints - 1
+            ),
+          ];
+        }
+
+        function getPolygonIdForPoint(point) {
+          let polygonId = FREE;
+
+          polygons.forEach((polygon, idx) => {
+            if (pointInsidePolygon(point, polygon.points)) {
+              if (polygonId !== -1)
+                throw new Error("Multiple polygons at the same spot!");
+              polygonId = idx;
+            }
+          });
+
+          return polygonId;
+        }
+
+        function measureScene(polygons) {
+          let minX = Infinity;
+          let maxX = -Infinity;
+          let minY = Infinity;
+          let maxY = -Infinity;
+          polygons.forEach(measurePolygon);
+
+          let width = maxX - minX;
+          let height = maxY - minY;
+          let dw = width * 0.2;
+          let dh = height * 0.2;
+          width += 2 * dw;
+          height += 2 * dh;
+          minX -= dw;
+          maxX += dw;
+          minY -= dh;
+          maxY += dh;
+
+          return {
+            minX,
+            minY,
+            maxX,
+            maxY,
+            width,
+            height,
+          };
+
+          function measurePolygon(polygon) {
+            polygon.points.forEach(([x, y]) => {
+              if (x < minX) minX = x;
+              if (y < minY) minY = y;
+              if (x > maxX) maxX = x;
+              if (y > maxY) maxY = y;
+            });
+          }
+        }
+
+        function clamp(x, min, max) {
+          if (x < min) return min;
+          if (x > max) return max;
+          return x;
+        }
+
+        function pointInsidePolygon(point, vs) {
+          // ray-casting algorithm based on
+          // http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+
+          var x = point[0],
+            y = point[1];
+
+          var inside = false;
+          for (var i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+            var xi = vs[i][0],
+              yi = vs[i][1];
+            var xj = vs[j][0],
+              yj = vs[j][1];
+
+            var intersect =
+              yi > y != yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+            if (intersect) inside = !inside;
+          }
+
+          return inside;
+        }
+      }
+    </script>
+  </body>
+</html>
