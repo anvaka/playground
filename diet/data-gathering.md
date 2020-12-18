@@ -20,3 +20,11 @@ jq '.objects| .[].date'
 // all calories
 jq '.objects| .[].diet.meals | .[].foods | .[].food.serving_calories'
 ```
+
+### Garmin running
+
+This will get running activities, haven't figured out yet how to translate avgSpeed to minutes per mile:
+
+```
+https://connect.garmin.com/modern/proxy/fitnessstats-service/activity?aggregation=daily&userFirstDay=sunday&startDate=2020-01-22&endDate=2020-12-17&groupByActivityType=false&activityType=running&metric=avgSpeed&metric=distance&metric=duration&_=1608255027190
+```
