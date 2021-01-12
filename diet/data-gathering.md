@@ -21,6 +21,91 @@ jq '.objects| .[].date'
 jq '.objects| .[].diet.meals | .[].foods | .[].food.serving_calories'
 ```
 
+## JS Method from the website
+
+This would fetch all the calories and ingriedients when executed on
+eatthismuch console.
+
+```
+var dates = [];
+// Use your own dates here:
+var startFrom = new Date('2020-09-20');
+var today = new Date();
+while (startFrom < today) {
+  dates.push(startFrom.toISOString().substr(0, 10));
+  startFrom.setDate(startFrom.getDate() + 1);
+}
+
+function addUp(prev, current, multiplier = 1) {
+  Object.keys(current).forEach(key => {
+    if (prev[key] === undefined) prev[key] = 0;
+    if (current[key]) prev[key] += current[key] * multiplier;
+  })
+  return prev;
+}
+
+var requests = [];
+while (dates.length) {
+  requests.push(dates.splice(0, 40));
+}
+var all = [];
+Promise.all([requests[0]]
+  .map(
+    (x) =>
+      'https://www.eatthismuch.com/api/v1/calendar/?date__in=' +
+      encodeURIComponent(x.join(','))
+  )
+  .map((url) => {
+    return fetch(url, { mode: 'cors' })
+      .then((x) => x.json())
+      .then((response) => {
+        return response.objects.map((x) => ({
+          date: x.date,
+          meals: x.diet.meals
+            .filter((m) => m.eaten)
+            .map((f) => {
+              let stats = {};
+              f.foods.forEach(f => {
+                let scaleFactor = f.amount * f.food.weights[f.units].grams / f.food.weights[0].grams;
+                if (!Number.isFinite(scaleFactor)) {
+                  console.error('Too much weights: ', f, x);
+                  return;
+                }
+                addUp(stats, f.food.nutrition, scaleFactor);
+              })
+              return stats;
+              // f.foods.reduce(
+              //   (prev, current) => addUp(prev, current.food.nutrition, current.amount), {});
+            })
+            .reduce((prev, current) => addUp(prev, current), {}),
+        }));
+      })
+      .then((results) => {
+        results.forEach((result) => {
+          all.push(result)
+        });
+      });
+  })
+).then(x => {
+  let headers = new Set();
+  all.forEach(x => Object.keys(x.meals).forEach(key => headers.add(key)))
+  headers = Array.from(headers);
+  headers.unshift('date');
+  let lines = [headers.join(',')];
+
+  all.sort((a, b) => new Date(a.date) - new Date(b.date));
+  all.forEach(x => {
+    let line = [x.date];
+    headers.forEach(header => {
+      if (header === 'date') return;
+      line.push(x.meals[header]);
+    });
+    lines.push(line.join(','))
+  })
+  console.log(lines.join('\n'));
+})
+```
+
 ### Garmin running
 
 This will get running activities, haven't figured out yet how to translate avgSpeed to minutes per mile:
