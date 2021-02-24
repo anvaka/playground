@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src='https://cdn.jsdelivr.net/npm/simplesvg@0.1.1/dist/simplesvg.min.js'></script>
+  <script src='https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js'></script>
+ <title>Delaunator play</title>
+ <style>
+   body, svg {
+     width: 100%;
+     height: 100%;
+     position: absolute;
+     margin: 0;
+     padding: 0;
+     left: 0;
+     top: 0;
+   }
+ </style>
+</head>
+<body>
+  <svg>
+    <g id='scene'></g>
+  </svg>
+  
+  <script src="./main.js" type='module'></script>
+</body>
+</html>
