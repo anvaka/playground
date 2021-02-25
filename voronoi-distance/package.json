@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "mnemonist": "^0.38.1",
+    "vptree": "^1.0.0"
+  },
+  "devDependencies": {
+    "browserify": "^17.0.0"
+  }
+}

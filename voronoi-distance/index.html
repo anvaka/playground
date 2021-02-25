@@ -3,15 +3,69 @@
 <head>
   <meta charset="utf-8">
   <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="vptree.bundle.js"></script>
   <meta name="viewport" content="width=device-width">
   <title>Various distance functions and voronoi diagram</title>
 </head>
 <body>
   <canvas width=1200 height=600>
 
-<script id="jsbin-javascript">
+<script>
 // This is based on https://gist.github.com/Fil/a7495ca3d5b322a6697530feb62fceef (MIT licensed, Fil)
+//var distance = euclideandistance;
 var distance = chebushev;
+distance = (a, b) => {
+ var ii = a.length;
+  var up = 0;
+  var down = 0;
+  for (var i = 0; i < ii; i++) {
+    up += Math.min(a[i], b[i]);
+    down += a[i] + b[i];
+  }
+  return 1 - up / down;
+}
+console.log(distance);
+
+//testDistance(distance)
+
+function testDistance() {
+  let a = [42, 42];
+  assert(distance(a, a) === 0, 'Distance to the same point is zero');
+  assert(distance([-1, 4], a) >= 0, 'Distance is positive 1')
+  assert(distance([1, -4], a) >= 0, 'Distance is positive 2')
+  assert(distance([-2, -4], a) >= 0, 'Distance is positive 3')
+}
+
+function assert(statement, comment) {
+  if (!statement) {
+    console.error(comment);
+    throw new Error(comment);
+  }
+}
+
+function czekanowskiSimilarity(a, b) {
+  var up = 0;
+  var down = 0;
+  for (var i = 0; i < a.length; i++) {
+    up += Math.min(a[i], b[i]);
+    down += a[i] + b[i];
+  }
+  return (2 * up) / down;
+}
+function avg(a, b) {
+  var ii = a.length;
+  var max = 0;
+  var ans = 0;
+  var aux = 0;
+  for (var i = 0; i < ii; i++) {
+    aux = Math.abs(a[i] - b[i]);
+    ans += aux;
+    if (max < aux) {
+      max = aux;
+    }
+  }
+  return (max + ans) / 2;
+}
 
 function manhattandistance(a, b) {
   var dx = b[0] - a[0],
@@ -45,62 +99,67 @@ function pnorm(a, b, p) {
   return Math.pow(Math.pow(dx, p) + Math.pow(dy, p), 1/p)
 }
 
-var canvas = d3.select('canvas').node(),
-    context = canvas.getContext("2d"),
+var canvas = document.querySelector('canvas'),
+    context = canvas.getContext('2d'),
     width = canvas.width,
     height = canvas.height;
 
-var sites = getPoints().map(p => [24 + p.x * 2, 24+p.y * 2])
+var sites = getPoints().map((p, idx) => {
+  let scale = 2;
+  let r = [24 + p.x * scale, 24+p.y * scale];
+  r.index = idx;
+  return r;
+})
 
+let tree = VPTree.build(sites, distance)
 var color = d3.scaleOrdinal(d3.schemeCategory20b);
 
 function drawsites() {
   sites.forEach(function (d, i) {
-    context.lineWidth = 10;
     context.beginPath();
-    context.strokeStyle = color(i);
+    context.fillStyle = color(i);
     var x = d[0],
         y = d[1];
-    context.moveTo(x - 5, y);
-    context.lineTo(x + 5, y);
-    context.stroke();
-    context.lineWidth = 4;
-    context.beginPath();
-    context.strokeStyle = '#fff';
-    var x = d[0],
-        y = d[1];
-    context.moveTo(x - 2, y);
-    context.lineTo(x + 2, y);
-    context.stroke();
+    context.strokeRect(x - 2.5, y - 2.5, 5, 5)
+    context.fillRect(x - 2.5, y - 2.5, 5, 5);
+    // context.lineWidth = 4;
+    // context.beginPath();
+    // context.strokeStyle = '#fff';
+    // var x = d[0],
+    //     y = d[1];
+    // context.moveTo(x - 2, y);
+    // context.lineTo(x + 2, y);
+    // context.stroke();
   });
 }
 
 drawsites()
 
 var p = 0;
-var interval = d3.interval(function (elapsed) {
+var interval = setInterval(function (elapsed) {
   var n = 1000;
+  console.time('while');
   while (n-- > 0) {
-
-    var x = p % width,
-        y = ((p - x) / width) % height;
+    var x = p % width;
+    var y = Math.floor(p / width); 
     p++;
     if (p > width * height) {
-      interval.stop();
+      clearInterval(interval);
       console.log('finished!');
       break;
     } else {
-      var i = d3.scan(sites.map(function (d) {
-        return distance(d, [x, y]);
-      }));
+      var shortestDistanceIndex = tree.search([x, y])[0].i;
+      // var shortestDistanceIndex = d3.scan(sites.map(function (d) {
+      //   return distance(d, [x, y]);
+      // }));
       context.beginPath();
-      context.fillStyle = color(i);
+      context.fillStyle = color(shortestDistanceIndex);
       context.rect(x, y, 1, height);
       context.fill();
     }
   }
+  console.timeEnd('while');
   drawsites();
-//   if (elapsed > 30000) interval.stop();
 });
 
 function getPoints(){
