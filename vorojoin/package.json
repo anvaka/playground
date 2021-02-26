@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "ngraph.graph": "^19.1.0",
+    "ngraph.random": "^1.1.0",
+    "vptree": "^1.0.0"
+  },
+  "devDependencies": {
+    "tap": "^14.11.0"
+  }
+}
