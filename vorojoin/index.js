@@ -10,6 +10,7 @@ const createCornerManipulator = require('./lib/createCornerManipulator');
 function vorojoin(sites, options = {}) {
   if (!options) options = {};
   if (!options.getPoint) options.getPoint = getPointFromArray;
+  // if (!options.distance) options.distance = distances.euclid;
   if (!options.distance) options.distance = distances.chebushev;
   if (!options.getClusterId) options.getClusterId = getClusterId;
 
@@ -35,11 +36,14 @@ function vorojoin(sites, options = {}) {
   if (shortestDistance === 0) throw new Error('You have duplicate points?');
 
   let gridStep = shortestDistance * 0.15;
+  console.log('Shortest distance is ' + shortestDistance)
   let width = maxX - minX;
   let height = maxY - minY;
+  const gridSize = 1000;
+  gridStep = width / gridSize;
 
-  let cols = Math.ceil(width / gridStep);
-  let rows = Math.ceil(height / gridStep);
+  let cols = gridSize; // Math.ceil(width / gridStep);
+  let rows = gridSize; // Math.ceil(height / gridStep);
   console.log(`Cols: ${cols}; Rows: ${rows}`)
   run();
   dumpMatrix();

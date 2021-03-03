@@ -1,17 +1,32 @@
 let test = require('tap').test;
 let vorojoin = require('../');
 let createRandom = require('ngraph.random');
+// let pos = require('./positions.json');
 
 test('it can get svg', t => {
   let arr = [];
   let random = createRandom(42);
-  for (let i = 0; i < 100; ++i) {
+  let count = 3;
+  for (let i = 0; i < count; ++i) {
     arr.push(
-      [(random.nextDouble() - 0.5) * 100, (random.nextDouble() - 0.5) * 100]
+      [
+        100 * Math.cos(2 * Math.PI * i / count),
+        100 * Math.sin(2 * Math.PI * i / count)
+      ]
+      // [(random.nextDouble() - 0.5) * 100, (random.nextDouble() - 0.5) * 100]
     )
   }
-  // let joiner = vorojoin([[-100, -100], [0, 100], [-40, 40], [100, -100]])
-  let joiner = vorojoin(arr)
+  let joiner = vorojoin([[-100, -100], [0, 100], [-40, 40], [100, -100]])
+  // let indexToCluster = []
+  // pos.forEach(x => {
+  //   arr.push(x.pos);
+  //   indexToCluster.push(x.cluster)
+  // });
+  // let joiner = vorojoin(arr, {
+  //   getClusterId(index) {
+  //     return indexToCluster[index];
+  //   }
+  // });
   console.log(joiner.getSVG());
   t.end();
 })
