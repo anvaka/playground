@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "benchmark": "^2.1.4",
+    "d-path-parser": "^1.0.0",
+    "svg-path-parser": "^1.1.0"
+  }
+}
