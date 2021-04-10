@@ -1,0 +1,138 @@
+
+<!DOCTYPE html>
+<!--
+Created using JS Bin
+http://jsbin.com
+
+Copyright (c) 2021 by anvaka (http://jsbin.com/gadebil/1/edit)
+
+Released under the MIT license: http://jsbin.mit-license.org
+-->
+<meta name="robots" content="noindex">
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>JS Bin</title>
+</head>
+<body>
+<canvas id='cnv'></canvas>
+<script id="jsbin-javascript">
+let width = 400;
+let height = 400;
+// cnv.style.width = width + 'px';
+// cnv.style.height = height + 'px';
+cnv.width = width;
+cnv.height = height;
+let ctx = cnv.getContext('2d');
+// ctx.fillRect(0, 0, width, height);
+
+let rowCount = 30;
+let colCount = 30;
+let maze = generateMaze(rowCount, colCount);
+
+ctx.beginPath();
+maze.forEach(row => {
+  row.forEach(cell => {
+    if (!cell.north) {
+      drawLine(cell.x, cell.y, cell.x + 1, cell.y);
+    }
+    if (!cell.south) {
+      drawLine(cell.x, cell.y + 1, cell.x + 1, cell.y + 1);
+    }
+    if (!cell.east) {
+      drawLine(cell.x + 1, cell.y, cell.x + 1, cell.y + 1)
+    }
+    if (!cell.west) {
+      drawLine(cell.x, cell.y, cell.x, cell.y + 1)
+    }
+  })
+});
+ctx.stroke();
+
+function drawLine(x0, y0, x1, y1) {
+  let from = transform(x0, y0);
+  let to = transform(x1, y1);
+  ctx.moveTo(from[0], from[1]);
+  ctx.lineTo(to[0], to[1]);
+}
+
+function transform(x, y) {
+  return [width *x / (colCount + 1), height * y / (rowCount + 1)];
+}
+
+function generateMaze(rowCount, colCount) {
+  let maze = [];
+  for (let rowNumber = 0; rowNumber < rowCount; ++rowNumber) {
+    let row = [];
+    maze.push(row);
+    for (let colNumber = 0; colNumber < colCount; ++colNumber) {
+      row.push(createCell(maze, rowNumber, colNumber));
+    }
+  }
+
+  for (let rowNumber = 0; rowNumber < rowCount; ++rowNumber) {
+    for (let colNumber = 0; colNumber < colCount; ++colNumber) {
+      let dx = 0, dy = 0;
+      if (Math.random() < 0.5) {
+        dx += 1
+      } else {
+        dy += 1;
+      }
+      maze[rowNumber][colNumber].connect(rowNumber + dy, colNumber + dx);
+    }
+  }
+
+  return maze;
+}
+
+function createCell(maze, row, col) {
+  let cell = {
+    x: col,
+    y: row,
+    east: false,
+    north: false,
+    south: false,
+    west: false,
+    
+    connect: connect
+  };
+  
+  return cell;
+  
+  function connect(otherRow, otherCol) {
+    if (otherRow === row - 1) {
+      cell.north = true;
+      if (otherRow > -1) {
+        maze[otherRow][otherCol].south = true;
+      }      
+    } else if (otherRow === row + 1) {
+      cell.south = true;
+      if (otherRow < maze.length) {
+        maze[otherRow][otherCol].north = true;
+      }      
+    } else if (otherCol === col - 1) {
+      cell.west = true;
+      if (otherCol > -1) {
+        maze[otherRow][otherCol].east = true;
+      }
+
+    } else if (otherCol === col + 1) {
+      cell.east = true;
+      if (otherCol < maze[0].length) {
+        maze[otherRow][otherCol].west = true;
+      }
+
+    } else throw new Error('Cannot connect non-adjacent cells');
+//     return maze[otherRow][otherCol];
+  }
+}
+
+
+
+
+
+
+</script>
+</body>
+</html>
