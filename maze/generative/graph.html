@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<!--
+Created using JS Bin
+http://jsbin.com
+
+Copyright (c) 2021 by anvaka (http://jsbin.com/vaponir/5/edit)
+
+Released under the MIT license: http://jsbin.mit-license.org
+-->
+<meta name="robots" content="noindex">
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>JS Bin</title>
+  <script src='https://unpkg.com/ngraph.graph@19.0.0/dist/ngraph.graph.min.js'></script>
+  <script src='https://cdn.jsdelivr.net/npm/simplesvg@0.1.1/dist/simplesvg.min.js'></script>
+  <script src='https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js'></script>
+<style id="jsbin-css">
+body, svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+</style>
+</head>
+<body>
+<svg id='scene'>
+  <g id='container'></g>
+</svg>
+<script id="jsbin-javascript">
+let rows = 42, columns = 42;
+let graph = buildMazeGraph(rows, columns);
+carveOutMaze(graph, rows, columns);
+
+drawGraph(graph);
+
+function carveOutMaze(graph, rows, columns) {
+  for (let row = 0; row < rows; ++row) {
+    for (let column = 0; column < columns; ++column) {
+      let isLeft = Math.random() < 0.5;
+      let nRow = isLeft ? row : row - 1; // carve up
+      let nCol = isLeft ? column - 1 : column; // carve left
+      if (!inside(nRow, nCol)) continue;
+      let link = getLink(
+        graph,
+        getNodeId(row, column),
+        getNodeId(nRow, nCol)
+      );
+      if (link) link.data.canPass = true;
+    }
+  }
+          
+  function inside(row, col) {
+    return (-1 < row && row < rows) && (-1 < col && col < columns);
+  }
+}
+
+function drawGraph() {
+  let container = document.querySelector('#container');
+
+  graph.forEachNode(node => {
+    let x = node.data.col, y = node.data.row;
+    if (!canPass(x, y, x - 1, y)) drawLine(x, y, x - 1, y);
+    if (!canPass(x, y, x + 1, y)) drawLine(x, y, x + 1, y)
+    if (!canPass(x, y, x, y + 1)) drawLine(x, y, x, y + 1);
+    if (!canPass(x, y, x, y - 1)) drawLine(x, y, x, y - 1);
+  });
+  
+  panzoom(container, {autocenter: true});
+  function canPass(fx, fy, tx, ty) {
+    let link = getLink(graph, getNodeId(fy, fx), getNodeId(ty, tx));
+    return (link && link.data.canPass); 
+  }
+  
+  function drawLine(fx, fy, tx, ty) {
+    fx += .5; fy += .5; tx += .5; ty += .5;
+    let line = sivg('line', {
+      x1: fx, y1: fy, x2: tx, y2: ty,
+      'stroke-width': 0.1,
+      'stroke': 'black'
+    });
+    container.appendChild(line);
+  }
+}
+
+function buildMazeGraph(rows, columns) {
+  let graph = createGraph();
+  // build grid as a graph
+  for (let row = 0; row < rows; ++row) {
+    for (let col = 0; col < columns; ++col) {
+      let nodeId = getNodeId(row, col);
+      graph.addNode(nodeId, {
+        row: row, col: col
+      });
+      connectToNeighbors(nodeId, row, col);
+    }
+  }
+  return graph;
+
+
+  function connectToNeighbors(nodeId, row, col) {
+    [
+           [row - 1, col], 
+     [row, col - 1], [row, col + 1],
+           [row + 1, col], 
+    ].forEach(([nRow, nCol]) => {
+      if (!inside(nRow, nCol)) return;
+      
+      let neighborId = getNodeId(nRow, nCol);
+      if (neighborId !== nodeId) {
+        addLink(graph, nodeId, neighborId, {canPass: false});
+      }
+    });
+  }
+
+  function inside(row, col) {
+    return (-1 < row && row < rows) && (-1 < col && col < columns);
+  }
+}
+
+function addLink(graph, fromId, toId, data) {
+  if (fromId < toId) {
+    let t = fromId;
+    fromId = toId;
+    toId = t;
+  }
+  graph.addLink(fromId, toId, data);
+}
+
+function getLink(graph, fromId, toId) {
+  if (fromId < toId) {
+    let t = fromId;
+    fromId = toId;
+    toId = t;
+  }
+  return graph.getLink(fromId, toId);
+}
+
+function getNodeId(row, col) {
+  return `${row},${col}`;
+}
+
+  
+</script>
+</body>
+</html>
