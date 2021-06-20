@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<!--
+Created using JS Bin
+http://jsbin.com
+
+Copyright (c) 2021 by anvaka (http://jsbin.com/wuzuvex/2/edit)
+
+Released under the MIT license: http://jsbin.mit-license.org
+-->
+<meta name="robots" content="noindex">
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>JS Bin</title>
+  <script src='https://cdn.jsdelivr.net/npm/simplesvg@0.1.1/dist/simplesvg.min.js'></script>
+  <script src='https://cdn.jsdelivr.net/npm/ngraph.random/dist/ngraph.random.js'></script>
+  <script src='https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js'></script>
+  <script src='https://unpkg.com/ngraph.graph@19.0.0/dist/ngraph.graph.js'></script>
+  <script src='https://cdn.jsdelivr.net/npm/ngraph.generators@19.2.0/dist/ngraph.generators.js'></script>
+<style id="jsbin-css">
+svg, body {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+</style>
+</head>
+<body>
+<svg viewBox='-40 -40 80 80'>
+  <g id='scene'></g>
+</svg>
+  <span id='log'></span>
+<script id="jsbin-javascript">
+let scene = document.querySelector('#scene');
+let out = document.querySelector('#out')
+let random =ngraphRandom(42);
+// let graph = createGraph();
+let pz = panzoom(scene);
+// console.log(generators)
+let desiredLength = 10;
+
+let graph = generators.grid(5, 5);
+// graph = generators.balancedBinTree(8);
+// graph = generators.complete(10);
+let speed = 0;
+// graph.addLink(1, 2);
+// graph.addLink(2, 3);
+// graph.addLink(3, 4);
+// graph.getNode(0).fixed = true
+let lastMove = 0.1;
+
+let computeEdges = true;
+let nodes = [];
+
+graph.forEachNode(node => {
+  node.pos = [random.nextDouble() * 10, random.nextDouble() * 10];
+  nodes.push(node);
+});
+let nodeIterator = ngraphRandom.randomIterator(nodes);
+
+let edges = [];
+
+graph.forEachLink(link => {
+  let from = graph.getNode(link.fromId).pos;
+  let to = graph.getNode(link.toId).pos;
+  edges.push({
+    from,
+    to,
+    ui: null
+  });
+});
+
+// let guide = sivg('line', {
+//     x1: 0,
+//     y1: 0,
+//     x2: 0 + desiredLength * Math.cos(-Math.PI / 2),
+//     y2: 0 + desiredLength * Math.sin(-Math.PI / 2),
+//     'stroke-width': 0.5,
+//     stroke: 'orange'
+//   });
+// scene.appendChild(guide)
+
+edges.forEach(e => {
+  let ui = sivg('line', {
+    x1: e.from[0],
+    y1: e.from[1],
+    x2: e.to[0],
+    y2: e.to[1],
+    'stroke-width': 0.1,
+    stroke: 'black'
+  });
+  e.ui = ui;
+  scene.appendChild(ui);
+})
+
+function getLoss() {
+  let loss = 0;
+  if (computeEdges) {
+    edges.forEach(e => {
+      let d = sqLength(e.from, e.to);
+      loss += Math.abs(d - desiredLength*desiredLength);    
+      //Math.sqrt((d - desiredLength*desiredLength)*(d - desiredLength*desiredLength))
+    });
+    loss = loss / edges.length;
+  }
+  graph.forEachNode(node => {
+    let d = 0;
+    graph.forEachNode(other => {
+      if (other === node) return;
+      
+      let dx = node.pos[0] - other.pos[0];
+      let dy = node.pos[1] - other.pos[1];
+      
+      d += Math.sqrt(dx * dx + dy * dy);
+    });
+    loss += 1/d;
+  })
+  return loss;
+}
+
+let stepNumber = 0;
+drawFrame();
+function drawFrame() {
+  step();
+  redraw();
+  stepNumber += 1;
+  setTimeout(drawFrame, speed);
+  log.innerText = getLoss();
+  console.log(log.innerText)
+}
+
+function redraw() {
+  edges.forEach(e => {
+    let x1 = Number.parseFloat(e.ui.attr('x1'));
+    let x2 = Number.parseFloat(e.ui.attr('x2'));
+    let y1 = Number.parseFloat(e.ui.attr('y1'));
+    let y2 = Number.parseFloat(e.ui.attr('y2'));
+    
+    e.ui.attr({
+      x1: lerp(x1, e.from[0], 0.1),
+      y1: lerp(y1, e.from[1], 0.1),
+      x2: lerp(x2, e.to[0],0.1),
+      y2: lerp(y2, e.to[1],0.1)
+    })
+  })
+}
+
+function lerp(from, to, t) {
+  return from * (1 - t) + to * (t)
+}
+function step() {
+  let lr = 0.01;
+  let eps = 0.01;
+  
+//   nodeIterator.shuffle();
+  lr = 5;//lastMove /(nodes.length * edges.length);
+  lastMove = 0.01;
+  nodeIterator.forEach(node => {
+    let from = node.pos;
+    if (node.fixed) return;
+    let tx = 0, ty = 0, count = 0;
+
+    graph.forEachNode(other => {
+      if (other === node) return;
+
+      let to = other.pos;
+      let dx = from[0] - to[0];
+      let dy = from[1] - to[1];
+      let dw0 = 0;
+      let dw1 = 0;
+      if (Math.abs(dx) > 1e-0) {
+        dw0 = -2 / (dx * dx* dx);
+//         dw0 = -dx/(Math.abs(dx) ** 3)
+      }
+      if (Math.abs(dy) > 1e-0) {
+        dw1 = -2 / (dy * dy* dy);
+//         dw1 = -dy/(Math.abs(dy) ** 3)
+      }
+
+
+      tx += lr * dw0;
+      ty += lr * dw1;
+  
+      count += 1;
+    });
+    
+    lastMove += Math.abs(tx) + Math.abs(ty);
+    if (from.vx === undefined) from.vx = 0;
+    if (from.vy === undefined) from.vy = 0;
+    let mu = 0.3;
+    from.vx = mu * from.vx - 0.2 *tx;
+    from.vy = mu * from.vy - 0.2 *ty;
+    from[0] += from.vx;
+    from[1] += from.vy;
+  });
+  
+  lr = 0.06;
+  graph.forEachLink(link => {
+    let fromNode = graph.getNode(link.fromId);
+    let from = fromNode.pos;
+
+    let toNode = graph.getNode(link.toId);
+    let to = toNode.pos;
+//     let w0x = from[0];
+//     let w0y = from[1];
+//     let w1x = to[0];
+//     let w1y = to[1];
+    
+    
+//     from[0] -= lr * 2 * (w0x - w1x - desiredLength/Math.sqrt(2));
+//     from[1] -= lr * 2 * (w0y - w1y - desiredLength/Math.sqrt(2));
+
+
+    // numerical:
+//     from[0] += eps;
+//     let l0 = getLoss();
+//     from[0] -= 2 * eps;
+//     let l1 = getLoss();
+//     from[0] = w0x;
+//     let dw0 = (l0 - l1)/(2 * eps);
+    
+//     from[1] += eps;
+//     l0 = getLoss();
+//     from[1] -= 2 * eps;
+//     l1 = getLoss();
+    
+//     let dw1 = (l0 - l1) / ( 2 * eps);
+
+    // formula:
+    let dx = from[0] - to[0];
+    let dy = from[1] - to[1];
+    let d = (dx * dx + dy * dy - desiredLength*desiredLength);
+    let dw0 = 2 * dx * Math.sign(d); // d / Math.abs(d);
+    let dw1 = 2 * dy * Math.sign(d); // d / Math.abs(d);
+
+    if (computeEdges) {
+      if (!fromNode.fixed) {
+        from[0] -= lr * dw0;
+        from[1] -= lr * dw1;
+      }
+      if (!toNode.fixed) {
+        to[0] += lr * dw0;
+        to[1] += lr * dw1;
+      }
+      lastMove += Math.abs(dw0) + Math.abs(dw1);
+    }
+  });
+  
+}
+
+function sqLength(a, b) {
+  return (a[0] - b[0]) * (a[0] - b[0]) + (a[1] - b[1]) * (a[1] - b[1])
+}
+
+
+
+
+
+
+
+
+</script>
+</body>
+</html>
