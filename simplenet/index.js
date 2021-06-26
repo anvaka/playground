@@ -37,7 +37,7 @@ export default function createNetwork(layers, derivativeCost, eta = 0.01) {
     for (let l = 0; l < weights.length; ++l) {
       let w = weights[l];
       let b = biases[l];
-      let zn = w.addAandB(w.timesVec(a), b);
+      let zn = addVectors(w.timesVec(a), b);
       zs.push(zn);
       a = zn.map(x => activationFunction[l].f(x))
       activations.push(a);
@@ -48,12 +48,12 @@ export default function createNetwork(layers, derivativeCost, eta = 0.01) {
     // δx,L = ∇aCx ⊙ σ′(zx,L).
     let delta = vecMul(derivativeCost(a, input), funcApply(df, zs[zs.length - 1]));
 
-    let nablaB = new Array(biases.length);  // biases.map(b => Array(b.length).fill(0));
-    let nablaW = new Array(weights.length); // weights.map(w => new Matrix(w.rows, w.cols, x => 0))
+    let nablaB = new Array(biases.length); 
+    let nablaW = new Array(weights.length);
 
     // The gradient of the cost function is given by
     nablaB[nablaB.length - 1] = delta;
-    nablaW[nablaW.length - 1] = Matrix.fromDotTransposed(delta, activations[activations.length - 2]);
+    nablaW[nablaW.length - 1] = Matrix.createForm_A_dot_B_transposed(delta, activations[activations.length - 2]);
     
     for (let l = 2; l < layers.length; ++l) {
       let z = zs[zs.length - l];
@@ -64,10 +64,9 @@ export default function createNetwork(layers, derivativeCost, eta = 0.01) {
       delta = delta.map((x, idx) => x * sp[idx]);
       
       nablaB[nablaB.length - l] = delta;
-      nablaW[nablaW.length - l] = Matrix.fromDotTransposed(delta, activations[activations.length - l - 1]);
+      nablaW[nablaW.length - l] = Matrix.createForm_A_dot_B_transposed(delta, activations[activations.length - l - 1]);
     }
     
-//     console.log(nablaB, nablaW);
     updateWeights(nablaW, eta);
     updateBiases(nablaB, eta);
   }
@@ -120,7 +119,7 @@ export default function createNetwork(layers, derivativeCost, eta = 0.01) {
     for (let l = 0; l < weights.length; ++l) {
       let w = weights[l];
       let b = biases[l];
-      let zn = w.addAandB(w.timesVec(a), b);
+      let zn = addVectors(w.timesVec(a), b);
       a = zn.map(x => activationFunction[l].f(x))
     }
     
@@ -155,4 +154,10 @@ export default function createNetwork(layers, derivativeCost, eta = 0.01) {
     }
     return weights;
   }
+}
+
+function addVectors(a, b) {
+  if (a.length !== b.length) throw new Error('Vector dimensions mismatch in addVectors()');
+  a.forEach((x, idx) => a[idx] += b[idx]);
+  return a;
 }

@@ -27,7 +27,7 @@ export default class Matrix {
    *     [2] * [4, 5]
    *     [3]
    */
-  static fromDotTransposed(a, b) {
+  static createForm_A_dot_B_transposed(a, b) {
     let rows = a.length;
     let cols = b.length;
     
@@ -89,14 +89,6 @@ export default class Matrix {
     if (index < 0 || index >= this.storage.length) throw new Error('Index out of range');
     
     this.storage[index] = v;
-  }
-  
-  
-  addAandB(a, b) {
-    a.forEach((x, idx) => {
-      a[idx] += b[idx]
-    });
-    return a;
   }
   
   sub(other, eta = 1) {
