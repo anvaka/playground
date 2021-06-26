@@ -9,20 +9,29 @@ export default function createNetwork(layers, derivativeCost, eta = 0.01) {
   let activationFunction = initActivationFunction();
 
   if (!derivativeCost) {
-    derivativeCost = defaultDerivativeCost;
+    throw new Error('Please provide a function that returns derivative of the loss function')
+    // derivativeCost = defaultDerivativeCost;
   }
   
   return {
     biases: biases,
     weights: weights,
-    predict: predict,
-    learnWeights: learnWeights,
+    predict,
+    setLearningRate,
+    getLearningRate,
+    learnWeights,
   };
-  
-  function learnWeights(input, newEta) {
-    if (newEta !== undefined) {
-      eta = newEta;
+
+  function setLearningRate(newEta) {
+    if (newEta === undefined) {
+      throw new Error('Learning rate cannot be undefined');
     }
+    eta = newEta;
+  }
+  
+  function getLearningRate() { return eta; }
+  
+  function learnWeights(input, inputContext) {
     let a = input;
     if (input.length != layers[0].size) {
       throw new Error("Input size does not match the first layer size");
@@ -37,53 +46,58 @@ export default function createNetwork(layers, derivativeCost, eta = 0.01) {
     for (let l = 0; l < weights.length; ++l) {
       let w = weights[l];
       let b = biases[l];
-      let zn = addVectors(w.timesVec(a), b);
+      let zn = addVectorsInPlace(w.timesVec(a), b);
       zs.push(zn);
       a = zn.map(x => activationFunction[l].f(x))
       activations.push(a);
     }
 
+    // last `a` is our network's output:
+    let outputCost = derivativeCost(a, input, inputContext)
+
     // back propagation:
     let df = activationFunction[activationFunction.length - 1].df
     // δx,L = ∇aCx ⊙ σ′(zx,L).
-    let delta = vecMul(derivativeCost(a, input), funcApply(df, zs[zs.length - 1]));
+    let delta = multiplyVectorsInPlace(outputCost, applyFunctionToVector(df, zs[zs.length - 1]));
 
-    let nablaB = new Array(biases.length); 
-    let nablaW = new Array(weights.length);
+    // Store errors layer by layer
+    let biasError = new Array(biases.length); 
+    let weightError = new Array(weights.length); 
 
     // The gradient of the cost function is given by
-    nablaB[nablaB.length - 1] = delta;
-    nablaW[nablaW.length - 1] = Matrix.createForm_A_dot_B_transposed(delta, activations[activations.length - 2]);
+    biasError[biasError.length - 1] = delta;
+    weightError[weightError.length - 1] = Matrix.createForm_A_dot_B_transposed(delta, activations[activations.length - 2]);
     
     for (let l = 2; l < layers.length; ++l) {
       let z = zs[zs.length - l];
       let w = weights[weights.length - l + 1];
-      let df = activationFunction[activationFunction.length - l].df
-      let sp = z.map(x => df(x))
       delta = w.transposeTimesVec(delta);
-      delta = delta.map((x, idx) => x * sp[idx]);
+      let df = activationFunction[activationFunction.length - l].df;
+      // let sp = z.map(x => df(x))
+      // delta = delta.map((x, idx) => x * sp[idx]);
+      delta.forEach((x, idx) => delta[idx] = x * df(z[idx]));
       
-      nablaB[nablaB.length - l] = delta;
-      nablaW[nablaW.length - l] = Matrix.createForm_A_dot_B_transposed(delta, activations[activations.length - l - 1]);
+      biasError[biasError.length - l] = delta;
+      weightError[weightError.length - l] = Matrix.createForm_A_dot_B_transposed(delta, activations[activations.length - l - 1]);
     }
     
-    updateWeights(nablaW, eta);
-    updateBiases(nablaB, eta);
+    updateWeights(weightError, eta);
+    updateBiases(biasError, eta);
   }
   
-  function updateWeights(nablaW, eta) {
-    if (nablaW.length !== weights.length) throw new Error('Weight updates are wrong');
-    for (let i = 0; i < nablaW.length; ++i) {
-      weights[i].sub(nablaW[i], eta);
+  function updateWeights(weightError, eta) {
+    if (weightError.length !== weights.length) throw new Error('Weight updates are wrong');
+
+    for (let i = 0; i < weightError.length; ++i) {
+      weights[i].sub(weightError[i], eta);
     }
   }
   
-  function updateBiases(nablaB, eta) {
- 
-    if (nablaB.length !== biases.length) throw new Error('Biases dimensions mismatch');
-    for (let i = 0; i < nablaB.length; ++i) {
+  function updateBiases(biasError, eta) {
+    if (biasError.length !== biases.length) throw new Error('Biases dimensions mismatch');
+    for (let i = 0; i < biasError.length; ++i) {
       let our = biases[i];
-      let their = nablaB[i];
+      let their = biasError[i];
       if (our.length !== their.length) throw new Error('Wrong bias dimension');
       
       for (let j = 0; j < our.length; ++j) {
@@ -91,24 +105,15 @@ export default function createNetwork(layers, derivativeCost, eta = 0.01) {
       }
     }
   }
-    
-  function defaultDerivativeCost(output, input) {
-    if (input.length !== output.length) throw new Error('meh, something is wrong for this err function');
-    return output.map((yPred, idx) => {
-      // let's pretend we learn x:
-      let y = input[idx] * input[idx];
-      return (yPred - y)
-    })
-  }
-  
-  function vecMul(a, b) {
-    if (a.length !== b.length) throw new Error('cardinality mismatch');
-    return a.map((x, i) => x * b[i]);
-  }
-  
-  function funcApply(func, vec) {
-    return vec.map(x => func(x));
-  }
+
+  // function defaultDerivativeCost(output, input) {
+  //   if (input.length !== output.length) throw new Error('meh, something is wrong for this err function');
+  //   return output.map((yPred, idx) => {
+  //     // let's pretend we learn x:
+  //     let y = input[idx] * input[idx];
+  //     return (yPred - y)
+  //   })
+  // }
   
   function predict(input) {
     let a = input;
@@ -119,7 +124,7 @@ export default function createNetwork(layers, derivativeCost, eta = 0.01) {
     for (let l = 0; l < weights.length; ++l) {
       let w = weights[l];
       let b = biases[l];
-      let zn = addVectors(w.timesVec(a), b);
+      let zn = addVectorsInPlace(w.timesVec(a), b);
       a = zn.map(x => activationFunction[l].f(x))
     }
     
@@ -156,8 +161,18 @@ export default function createNetwork(layers, derivativeCost, eta = 0.01) {
   }
 }
 
-function addVectors(a, b) {
-  if (a.length !== b.length) throw new Error('Vector dimensions mismatch in addVectors()');
+function addVectorsInPlace(a, b) {
+  if (a.length !== b.length) throw new Error('Vector dimensions mismatch in addVectorsInPlace()');
   a.forEach((x, idx) => a[idx] += b[idx]);
   return a;
+}
+
+function multiplyVectorsInPlace(a, b) {
+  if (a.length !== b.length) throw new Error('Vector dimensions mismatch in multiplyVectorsInPlace()');
+  a.forEach((x, idx) => a[idx] *= b[idx]);
+  return a;
+}
+
+function applyFunctionToVector(func, vec) {
+  return vec.map(x => func(x));
 }
