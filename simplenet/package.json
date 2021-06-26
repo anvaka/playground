@@ -1,0 +1,9 @@
+{
+  "type": "module",
+  "dependencies": {
+    "ngraph.random": "^1.1.0"
+  },
+  "devDependencies": {
+    "tap": "^15.0.9"
+  }
+}
