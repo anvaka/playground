@@ -1,7 +1,7 @@
 import tap from 'tap';
 import createNetwork from '../index.js';
 import { LINEAR, SIGMOID } from '../lib/Activations.js';
-import ngraphRandom from 'ngraph.random';
+import Random from '../lib/random.js';
 
 const test = tap.test;
 
@@ -60,14 +60,14 @@ test('it can perform binary classification', (t) => {
     /* learning rate = */ 0.01
   );
 
-  let rnd = ngraphRandom(42);
+  let rnd = new Random(42);
   // let's create two functions:
   let trainingSet = [];
   let classes = [[1, 0], [0, 1]];
   for (let i = 0; i < 100; ++i) {
     // In the first class points are inside circle with radius 4
-    let r = rnd.nextDouble() * 4;
-    let a = rnd.nextDouble() * 2 * Math.PI;
+    let r = rnd.next() * 4;
+    let a = rnd.next() * 2 * Math.PI;
     trainingSet.push({
       x: r * Math.cos(a),
       y: r * Math.sin(a),
@@ -77,8 +77,8 @@ test('it can perform binary classification', (t) => {
     // In the second class points are on the strip of radius [5, 6];
     let min = 5;
     let max = 6;
-    r = min + rnd.nextDouble() * (max - min);
-    a = rnd.nextDouble() * 2 * Math.PI;
+    r = min + rnd.next() * (max - min);
+    a = rnd.next() * 2 * Math.PI;
     let x = r * Math.cos(a);
     let y = r * Math.sin(a);
     trainingSet.push({
@@ -86,10 +86,9 @@ test('it can perform binary classification', (t) => {
       expectedOutput: classes[1]
     });
   }
-  let shuffler = ngraphRandom.randomIterator(trainingSet, rnd);
 
   for (let i = 0; i < 1000; ++i) {
-    shuffler.forEach(sample => {
+    rnd.forEach(trainingSet, sample => {
       n.learnWeights([sample.x, sample.y], sample.expectedOutput)
     });
   }

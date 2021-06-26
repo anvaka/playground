@@ -1,9 +1,9 @@
-import ngraphRandom from 'ngraph.random';
 import Matrix from './lib/Matrix.js';
+import Random from './lib/random.js';
 
 export default function createNetwork(layers, derivativeCost, eta = 0.01) {
   let layersCount = layers.length;
-  let random = ngraphRandom(42);
+  let random = new Random(42);
   let biases = initBiases();   // each layer gets array of biases (one bias per node)
   let weights = initWeights(); // each layer get a matrix of weights
   let activationFunction = initActivationFunction();
