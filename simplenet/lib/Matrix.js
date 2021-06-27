@@ -91,12 +91,12 @@ export default class Matrix {
     this.storage[index] = v;
   }
   
-  sub(other, eta = 1) {
+  subScaled(other, scaler = 1) {
     if (other.rows !== this.rows || other.cols !== this.cols) {
       throw new Error('Matrix dimensions mismatch in sub()');
     }
     for (let i = 0; i < this.storage.length; ++i) {
-      this.storage[i] -= other.storage[i] * eta;
+      this.storage[i] -= other.storage[i] * scaler;
     }
   }
 

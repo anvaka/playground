@@ -20,14 +20,20 @@ test('it can learn squares of x from [0 to 10]', (t) => {
       }
     ], 
 
-    (output, input) => output.map((x, idx) => 2 * (x - (10 * input[idx])**2)),
+    (output, input, ctx) => output.map((x, idx) => 2 * (x - ctx[idx])),
 
     /* learning rate = */ 0.01
   );
 
+  let trainingSet = [];
+  for (let i = 0; i < 10; ++i) {
+    // Normalized input (`i/10`) makes learning easier here
+    trainingSet.push({input: [i/10], output: [i * i]})
+  }
+
   for (let i = 0; i < 4000; ++i) {
-    // We use `i/10` to avoid gradient explosion
-    n.learnWeights([(i%10)/10])
+    let sample = trainingSet[i % 10];
+    n.learnWeights(sample.input, sample.output)
   }
   for (let i = 0; i < 10; ++i) {
     console.log(`Predicted ${i} * ${i} is ${Math.round(n.predict([i/10]))}`);

@@ -64,7 +64,6 @@ export default function createNetwork(layers, derivativeCost, eta = 0.01) {
     let biasError = new Array(biases.length); 
     let weightError = new Array(weights.length); 
 
-    // The gradient of the cost function is given by
     biasError[biasError.length - 1] = delta;
     weightError[weightError.length - 1] = Matrix.createForm_A_dot_B_transposed(delta, activations[activations.length - 2]);
     
@@ -89,7 +88,7 @@ export default function createNetwork(layers, derivativeCost, eta = 0.01) {
     if (weightError.length !== weights.length) throw new Error('Weight updates are wrong');
 
     for (let i = 0; i < weightError.length; ++i) {
-      weights[i].sub(weightError[i], eta);
+      weights[i].subScaled(weightError[i], eta);
     }
   }
   
@@ -106,15 +105,6 @@ export default function createNetwork(layers, derivativeCost, eta = 0.01) {
     }
   }
 
-  // function defaultDerivativeCost(output, input) {
-  //   if (input.length !== output.length) throw new Error('meh, something is wrong for this err function');
-  //   return output.map((yPred, idx) => {
-  //     // let's pretend we learn x:
-  //     let y = input[idx] * input[idx];
-  //     return (yPred - y)
-  //   })
-  // }
-  
   function predict(input) {
     let a = input;
     if (input.length != layers[0].size) {
