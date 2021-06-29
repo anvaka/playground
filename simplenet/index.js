@@ -1,18 +1,47 @@
 import Matrix from './lib/Matrix.js';
 import Random from './lib/random.js';
 
-export default function createNetwork(layers, derivativeCost, eta = 0.01) {
-  let layersCount = layers.length;
-  let random = new Random(42);
-  let biases = initBiases();   // each layer gets array of biases (one bias per node)
-  let weights = initWeights(); // each layer get a matrix of weights
-  let activationFunction = initActivationFunction();
+/**
+ * A single layer in the neural network
+ * 
+ * @typedef {Object} Layer
+ * @property {number} size - number of neurons in the layer
+ * @property {ActivationFunction} activation activation function object
+ */
 
+/**
+ * @typedef {Object} ActivationFunction
+ * @property {function(number):number} f activation function that is used during forward pass
+ * @property {function(number):number} df derivative of the activation function
+ */
+
+/**
+ * @callback DerivativeCostFunction
+ * @param {number[]} output - network's last layer output
+ * @param {number[]} input - network's input to `learnWeights(input, context)`
+ * @param {Object} context - optional argument that was passed to `learnWeights(input, context)`
+ * 
+ * @returns {number[]} loss function's gradient.
+ */
+
+/**
+ * Creates a new neural network. See the ./test/index.js for examples.
+ * 
+ * @param {Layer[]} layers that create the network.
+ * @param {DerivativeCostFunction} derivativeCost 
+ * @param {number} eta learning rate.
+ */
+export default function createNetwork(layers, derivativeCost, eta = 0.01) {
   if (!derivativeCost) {
     throw new Error('Please provide a function that returns derivative of the loss function')
-    // derivativeCost = defaultDerivativeCost;
   }
   
+  const layersCount = layers.length;
+  const random = new Random(42);
+  const biases = initBiases();   // each layer gets array of biases (one bias per node)
+  const weights = initWeights(); // each layer get a matrix of weights
+  const activationFunction = initActivationFunction();
+
   return {
     biases: biases,
     weights: weights,
