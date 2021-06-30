@@ -45,6 +45,7 @@ export default function createNetwork(layers, derivativeCost, eta = 0.01) {
   return {
     biases: biases,
     weights: weights,
+    getLayers: () => layers,
     predict,
     setLearningRate,
     getLearningRate,
