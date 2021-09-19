@@ -1,5 +1,17 @@
 {
+  "scripts": {
+    "start": "webpack"
+  },
+  "type": "module",
   "devDependencies": {
-    "tap": "^15.0.9"
+    "ngraph.events": "^1.2.1",
+    "tap": "^15.0.9",
+    "webpack": "^5.53.0",
+    "webpack-cli": "^4.8.0"
+  },
+  "dependencies": {
+    "panzoom": "^9.4.2",
+    "query-state": "^4.3.0",
+    "simplesvg": "^0.1.1"
   }
 }

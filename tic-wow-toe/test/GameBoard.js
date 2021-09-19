@@ -1,10 +1,12 @@
-const test = require('tap').test;
-const GameBoard = require('../')
+import {test} from 'tap';
+import GameBoard from '../src/GameBoard.js'
 
 test('it can find winner in 3x3', t => {
   for (let i = 0; i < 3; ++i) {
     let board = new GameBoard(3, 3, 3, []);
-    board.play(i, 0, 'X'); board.play(i, 1, 'X'); board.play(i, 2, 'X');
+    board.play(i, 0, 'X'); 
+    board.play(i, 1, 'X');
+    board.play(i, 2, 'X');
     let winner = board.getWinner();
     
     t.equal(winner.symbol, 'X');

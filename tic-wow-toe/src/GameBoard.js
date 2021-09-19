@@ -1,11 +1,4 @@
-/** 
-const GameState = {
-  width: 10,
-  height: 10,
-  winLength: 5,
-  positions: []
-};
-*/
+import eventify from 'ngraph.events';
 
 class Position {
   constructor(x, y, symbol) {
@@ -26,18 +19,31 @@ class Position {
   }
 }
 
-class GameBoard {
-  constructor(width, height, winLength = 5) {
+export default class GameBoard {
+  constructor(width, height, winLength = 5, playerSymbols = 'XO') {
     this.width = width;
     this.height = height;
     this.winLength = winLength;
     this.positions = [];
     this.lookup = Object.create(null);
+    this.playerSymbols = [...playerSymbols];
+    this.currentPlayer = 0;
+    eventify(this);
   }
 
   play(x, y, symbol) {
     if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
       throw new Error(`Invalid position ${x}, ${y}`);
+    }
+
+    if (this.getPosition(x, y)) {
+      // Position is already taken
+      return false;
+    }
+
+    if (!symbol) {
+      symbol = this.playerSymbols[this.currentPlayer];
+      this.currentPlayer = (this.currentPlayer + 1) % this.playerSymbols.length;
     }
 
     const pos = new Position(x, y, symbol);
@@ -50,6 +56,13 @@ class GameBoard {
     }
     row[x] = pos;
     this.positions.push(pos);
+    this.fire('play');
+
+    return true;
+  }
+
+  nextMoveSymbol() {
+    return this.playerSymbols[this.currentPlayer];
   }
 
   getPosition(x, y) {
@@ -81,8 +94,6 @@ class GameBoard {
     });
   }
 }
-
-module.exports = GameBoard;
 
 function getLongestSequence(pos, board, leftDx, leftDy, rightDx, rightDy, checkName) {
   if (pos[checkName]) return; // already checked
@@ -120,7 +131,7 @@ function filterWinner(boundingBox, consequentSymbolCountToWin) {
   let {minLeft, minTop, maxRight, maxBottom, dx, dy} = boundingBox;
 
   let count = 0;
-  winner = [];
+  let winner = [];
   let ySign = maxBottom > minTop ? 1 : -1;
   let x = minLeft; let y = minTop;
   while (x != maxRight || y != maxBottom) {
