@@ -14,6 +14,10 @@ class GameCursor {
   }
 
   renderAt(cellX, cellY) {
+    cellX = clamp(cellX, 0, this.board.board.width - 1);
+    cellY = clamp(cellY, 0, this.board.board.height - 1);
+    this.lastX = cellX;
+    this.lastY = cellY;
     this.cursor.style.left = (cellX * this.board.cellSize + 1) + 'px';
     this.cursor.style.top =  (cellY * this.board.cellSize + 1) + 'px';
   }
@@ -25,14 +29,35 @@ export default class HTMLBoardInputHandler {
 
     this.onMouseMove = this.onMouseMove.bind(this);
     this.onClick = this.onClick.bind(this);
+    this.onKeyDown = this.onKeyDown.bind(this);
 
-    this.gameBoard.container.addEventListener('mousemove', this.onMouseMove);
-    this.gameBoard.container.addEventListener('click', this.onClick);
+    const {container} =  this.gameBoard;
+    container.focus();
+    container.addEventListener('mousemove', this.onMouseMove);
+    container.addEventListener('click', this.onClick);
+    window.addEventListener('keydown', this.onKeyDown);
+
     this.gameCursor = new GameCursor(gameBoard);
   }
+
   dispose() {
     this.gameBoard.container.removeEventListener('mousemove', this.onMouseMove);
     this.gameBoard.container.removeEventListener('click', this.onClick);
+    window.removeEventListener('keydown', this.onKeyDown);
+  }
+
+  onKeyDown(e) {
+    if (e.keyCode === 32) { // space
+      this.gameBoard.play(this.gameCursor.lastX, this.gameCursor.lastY);
+    } else if (e.keyCode === 37) { // left
+      this.gameCursor.renderAt(this.gameCursor.lastX - 1, this.gameCursor.lastY);
+    } else if (e.keyCode === 38) { // up
+      this.gameCursor.renderAt(this.gameCursor.lastX, this.gameCursor.lastY - 1);
+    } else if (e.keyCode === 39) { // right
+      this.gameCursor.renderAt(this.gameCursor.lastX + 1, this.gameCursor.lastY);
+    } else if (e.keyCode === 40) { // down
+      this.gameCursor.renderAt(this.gameCursor.lastX, this.gameCursor.lastY + 1);
+    }
   }
 
   onMouseMove(e) {

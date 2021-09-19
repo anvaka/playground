@@ -61,6 +61,12 @@ export default class GameBoard {
     return true;
   }
 
+  clear() {
+    this.positions = [];
+    this.lookup = Object.create(null);
+    this.fire('clear');
+  }
+
   nextMoveSymbol() {
     return this.playerSymbols[this.currentPlayer];
   }

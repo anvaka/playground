@@ -11,18 +11,28 @@ export default class HTMLBoardRenderer {
     this.inputHandler = new HTMLBoardInputHandler(this);
     this.renderedPositions = new Map();
     this.renderPositions();
+    board.on('play', this.renderPositions, this);
+    board.on('clear', this.clear, this);
+    let lastMove = document.querySelector('.last-move');
+    if (lastMove) lastMove.scrollIntoView();
   }
 
   play(cellX, cellY) {
-    if (this.board.play(cellX, cellY)) {
-      this.renderPositions();
-    };
+    this.board.play(cellX, cellY);
   }
 
   renderBackground() {
     this.container.style.width =  (1 + this.board.width  * this.cellSize) + 'px';
     this.container.style.height = (1 + this.board.height * this.cellSize) + 'px';
     this.container.style.backgroundSize = this.cellSize + 'px ' + this.cellSize + 'px';
+  }
+
+  clear() {
+    this.renderedPositions.forEach((positionElement) => {
+      positionElement.parentElement.removeChild(positionElement);
+    });
+    this.renderedPositions.clear();
+    this.renderPositions();
   }
 
   renderPositions() {

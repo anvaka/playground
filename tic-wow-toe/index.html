@@ -24,15 +24,15 @@
       background-image:
         linear-gradient(to right, grey 1px, transparent 1px),
         linear-gradient(to bottom, grey 1px, transparent 1px);
-      margin: auto;
       position: relative;
     }
-    #next-move {
+    .stress {
       font-size: 24px;
     }
     .cursor {
       border: 1px solid orangered;
       pointer-events: none;
+      z-index: 1;
     }
     .symbol {
       position: absolute;
@@ -43,13 +43,32 @@
       background-color: aquamarine;
     }
     .last-move {
-      background-color: orange;
+      background-color: deepskyblue;
     }
     .info {
       text-align: center;
+      margin: auto;
+      max-width: 500px;
     }
     h3 {
       font-size:normal;
+    }
+    #board-container {
+      max-width: 100%;
+      max-height: 80vh;
+      position: absolute;
+      overflow: auto;
+      left: 50%;
+      transform: translate(-50%);
+    }
+    .controls {
+      width: fit-content;
+      margin: 12px auto;
+    }
+    .controls a {
+      display: inline-block;
+      margin: 0 12px;
+      text-decoration: none;
     }
   </style>
 </head>
@@ -59,9 +78,17 @@
     <p>Each move is saved as part of the website address. Make a move and send the website's address to
       your friend. Ask them to send the address back to you after they make a move.
     </p>
-    <p>Next move: <span id="next-move"></span></p>
+    <p><span id="in-a-row" class='stress'></span> in a row wins</p>
+    <p>Next move: <span id="next-move" class='stress'></span></p>
   </div>
-  <div id='board'></div>
+  <div class='controls'>
+    <!-- <a href='#' id='undo'>Undo last move</a> -->
+    <a href='#' id='clear'>Clear board</a>
+    <!-- <a href='#' id='redo'>Redo last move</a> -->
+  </div>
+  <div id='board-container'>
+    <div id='board' tab-index='0'></div>
+  </div>
   <script src="dist/main.js"></script>
 </body>
 </html>
