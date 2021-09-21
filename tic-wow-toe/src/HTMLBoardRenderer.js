@@ -4,7 +4,8 @@ export default class HTMLBoardRenderer {
   constructor(container, board) {
     this.container = container;
     this.board = board;
-    this.cellSize = 42;
+    let widthToFit = Math.max(36, (window.innerWidth / board.width));
+    this.cellSize = Math.min(42, widthToFit);
     this.boardColor = '#333';
     this.renderBackground();
 
@@ -12,13 +13,24 @@ export default class HTMLBoardRenderer {
     this.renderedPositions = new Map();
     this.renderPositions();
     board.on('play', this.renderPositions, this);
+    board.on('remove', this.removePosition, this);
     board.on('clear', this.clear, this);
     let lastMove = document.querySelector('.last-move');
     if (lastMove) lastMove.scrollIntoView();
   }
 
+  focus() {
+    this.container.focus();
+  }
+
   play(cellX, cellY) {
-    this.board.play(cellX, cellY);
+    let cellPos = this.board.getPosition(cellX, cellY);
+    if (cellPos && cellPos === this.board.getLast()) {
+      // can only undo the last move:
+      this.board.removeLast();
+    } else {
+      this.board.play(cellX, cellY);
+    }
   }
 
   renderBackground() {
@@ -35,6 +47,16 @@ export default class HTMLBoardRenderer {
     this.renderPositions();
   }
 
+  removePosition(position) {
+    let element = this.renderedPositions.get(position);
+    if (!element) return; // already removed;
+    element.parentElement.removeChild(element);
+    this.renderedPositions.delete(position);
+
+    this.checkWinner();
+    this.highlightLastMove();
+  }
+
   renderPositions() {
     this.board.positions.forEach((position) => {
       if (this.renderedPositions.get(position)) return; // already rendered;
@@ -42,13 +64,26 @@ export default class HTMLBoardRenderer {
       this.renderedPositions.set(position, positionElement);
     });
 
+    this.checkWinner();
+    this.highlightLastMove();
+
+    this.focus();
+  }
+
+  checkWinner() {
     let winner = this.board.getWinner();
+    Array.from(this.container.querySelectorAll('.winner')).forEach(x => {
+      x.classList.remove('winner');
+    });
     if (winner) {
       winner.sequence.forEach(([cellX, cellY]) => {
         const position = this.board.getPosition(cellX, cellY);
         this.renderedPositions.get(position).classList.add('winner');
       })
-    }
+    } 
+  }
+
+  highlightLastMove() {
     Array.from(this.container.querySelectorAll('.last-move')).forEach(x => {
       x.classList.remove('last-move');
     });
@@ -56,7 +91,6 @@ export default class HTMLBoardRenderer {
       let last = this.board.positions[this.board.positions.length - 1];
       this.renderedPositions.get(last).classList.add('last-move');
     }
-
   }
 }
 

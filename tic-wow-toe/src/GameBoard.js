@@ -43,7 +43,6 @@ export default class GameBoard {
 
     if (!symbol) {
       symbol = this.playerSymbols[this.currentPlayer];
-      this.currentPlayer = (this.currentPlayer + 1) % this.playerSymbols.length;
     }
 
     const pos = new Position(x, y, symbol);
@@ -56,9 +55,28 @@ export default class GameBoard {
     }
     row[x] = pos;
     this.positions.push(pos);
+    this.currentPlayer = this.positions.length % this.playerSymbols.length;
     this.fire('play');
 
     return true;
+  }
+
+  getLast() {
+    if (this.positions.length === 0) return null;
+    return this.positions[this.positions.length - 1];
+  }
+
+  removeLast() {
+    let last = this.getLast();
+    if (!last) return;
+
+    let {x, y} = last;
+    let row = this.lookup[y];
+    delete row[x];
+
+    this.positions.pop();
+    this.currentPlayer = this.positions.length % this.playerSymbols.length;
+    this.fire('remove', last);
   }
 
   clear() {

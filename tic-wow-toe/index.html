@@ -11,6 +11,9 @@
       font-family: sans-serif;
       padding: 0;
       margin: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
     .full-screen {
       position: absolute;
@@ -49,17 +52,16 @@
       text-align: center;
       margin: auto;
       max-width: 500px;
+      padding: 8px;
     }
     h3 {
       font-size:normal;
     }
     #board-container {
       max-width: 100%;
-      max-height: 80vh;
-      position: absolute;
       overflow: auto;
-      left: 50%;
-      transform: translate(-50%);
+      flex: 1;
+      align-self: center;
     }
     .controls {
       width: fit-content;
@@ -75,19 +77,19 @@
 <body class='full-screen'>
   <div class='info'>
     <h3>Severless tic-tac-toe</h3>
-    <p>Each move is saved as part of the website address. Make a move and send the website's address to
+    <p>Make a move and send the website's address to
       your friend. Ask them to send the address back to you after they make a move.
     </p>
-    <p><span id="in-a-row" class='stress'></span> in a row wins</p>
-    <p>Next move: <span id="next-move" class='stress'></span></p>
+    <p><span id="in-a-row" class='stress'></span> in a row wins. Next move: <span id="next-move" class='stress'></span></p>
   </div>
   <div class='controls'>
     <!-- <a href='#' id='undo'>Undo last move</a> -->
     <a href='#' id='clear'>Clear board</a>
+    <a href='#' id='copy'>Copy link</a>
     <!-- <a href='#' id='redo'>Redo last move</a> -->
   </div>
   <div id='board-container'>
-    <div id='board' tab-index='0'></div>
+    <div id='board' tabindex='0'></div>
   </div>
   <script src="dist/main.js"></script>
 </body>

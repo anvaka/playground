@@ -2,6 +2,7 @@ import createQueryState from 'query-state';
 
 import GameBoard from './GameBoard.js';
 import HTMLBoardRenderer from './HTMLBoardRenderer.js';
+import copyTextToClipboard from './utils/copyToClipboard.js';
 
 function createPointTransformer(svg) {
   let p = svg.parentElement.createSVGPoint()
@@ -12,7 +13,7 @@ function createPointTransformer(svg) {
     return p.matrixTransform(svg.getScreenCTM().inverse());
   }
 }
-let qs = createQueryState({w: 10, h: 10, s: 'XO', l: 5, m:''}, {useSearch: true});
+let qs = createQueryState({w: 16, h: 16, s: 'XO', l: 5, m:''}, {useSearch: true});
 
 let width = qs.get('w');
 let height = qs.get('h');
@@ -29,16 +30,27 @@ decodeMovesSequence(qs.get('m'), width).forEach(m => {
   }
 });
 board.on('play', onBoardChanged);
+board.on('remove', onBoardChanged);
 board.on('clear', onBoardChanged);
-
-document.querySelector('#clear').addEventListener('click', (e) => {
-  e.preventDefault();
-  board.clear();
-});
 
 renderNextMoveSymbol();
 
 let renderer = new HTMLBoardRenderer(document.getElementById('board'), board);
+
+document.querySelector('#clear').addEventListener('click', (e) => {
+  e.preventDefault();
+  board.clear();
+  renderer.focus();
+});
+document.querySelector('#copy').addEventListener('click', (e) => {
+  e.preventDefault();
+
+  copyTextToClipboard(window.location.href).then(() => {
+    temporaryText(document.querySelector('#copy'), 'Copied!');
+  }).catch(() => {
+    temporaryText(document.querySelector('#copy'), 'Failed to copy');
+  })
+});
 
 function decodeMovesSequence(encodedSequence, w) {
   if (encodedSequence === '') return [];
@@ -69,4 +81,13 @@ function renderNextMoveSymbol() {
 function updateUrl() {
   let moveSequence = board.positions.map(p => (p.x * width + p.y).toString(36)).join('_');
   qs.set('m', moveSequence);
+}
+
+
+function temporaryText(el, text) {
+  let prevText = el.innerText;
+  el.innerText = text;
+  setTimeout(() => {
+    el.innerText = prevText;
+  }, 500);
 }
