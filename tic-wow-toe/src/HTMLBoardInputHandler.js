@@ -32,18 +32,18 @@ export default class HTMLBoardInputHandler {
     this.onKeyDown = this.onKeyDown.bind(this);
 
     const {container} =  this.gameBoard;
-    container.focus();
     container.addEventListener('mousemove', this.onMouseMove);
     container.addEventListener('click', this.onClick);
-    window.addEventListener('keydown', this.onKeyDown);
+    container.addEventListener('keydown', this.onKeyDown);
 
     this.gameCursor = new GameCursor(gameBoard);
   }
 
   dispose() {
-    this.gameBoard.container.removeEventListener('mousemove', this.onMouseMove);
-    this.gameBoard.container.removeEventListener('click', this.onClick);
-    window.removeEventListener('keydown', this.onKeyDown);
+    const {container} =  this.gameBoard;
+    container.removeEventListener('mousemove', this.onMouseMove);
+    container.removeEventListener('click', this.onClick);
+    container.removeEventListener('keydown', this.onKeyDown);
   }
 
   onKeyDown(e) {

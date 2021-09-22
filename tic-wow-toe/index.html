@@ -72,6 +72,26 @@
       margin: 0 12px;
       text-decoration: none;
     }
+    input.stress {
+      border: none;
+      padding: 0; 
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    #board-width {
+      text-align: right;
+    }
+    #in-a-row {
+      text-align: right;
+      width: 2em;
+    }
+    .vs {margin-left: 6px;}
   </style>
 </head>
 <body class='full-screen'>
@@ -80,10 +100,13 @@
     <p>Make a move and send the website's address to
       your friend. Ask them to send the address back to you after they make a move.
     </p>
-    <p><span id="board-size" class='stress'></span> board. <span id="in-a-row" class='stress'></span> in a row wins. Next move: <span id="next-move" class='stress'></span></p>
+    <p>
+    The board is <input id="board-width" class='stress auto-size' min='3' type='number'/><span class='stress vs'>x</span> <input id="board-height" class='stress auto-size' type='number' min='3'/> <br/>
+    You need <input id="in-a-row" class='stress auto-size' type='number'/> in a row to win. Next move is: <span id="next-move" class='stress'></span></p>
   </div>
   <div class='controls'>
     <a href='#' id='clear'>Clear board</a>
+    <a href='#' id='hide-info'>Hide info</a>
     <a href='#' id='copy'>Copy link</a>
   </div>
   <div id='board-container'>

@@ -31,6 +31,17 @@ export default class GameBoard {
     eventify(this);
   }
 
+  resize(width, height) {
+    this.clear();
+    this.width = width;
+    this.height = height;
+  }
+
+  setWinCondition(winLength) {
+    this.winLength = winLength;
+    this.fire('play');
+  }
+
   play(x, y, symbol) {
     if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
       throw new Error(`Invalid position ${x}, ${y}`);
@@ -84,6 +95,7 @@ export default class GameBoard {
   clear() {
     this.positions = [];
     this.lookup = Object.create(null);
+    this.currentPlayer = 0;
     this.fire('clear');
     this.fire('change');
   }

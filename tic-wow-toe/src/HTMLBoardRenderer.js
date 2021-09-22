@@ -20,6 +20,14 @@ export default class HTMLBoardRenderer {
     if (lastMove) lastMove.scrollIntoView();
   }
 
+  dispose() {
+    this.container.innerText = '';
+    this.board.off('play', this.renderPositions);
+    this.board.off('remove', this.removePosition);
+    this.board.off('clear', this.clear);
+    this.inputHandler.dispose();
+  }
+
   focus() {
     this.container.focus();
   }
@@ -67,8 +75,6 @@ export default class HTMLBoardRenderer {
 
     this.checkWinner();
     this.highlightLastMove();
-
-    this.focus();
   }
 
   checkWinner() {
