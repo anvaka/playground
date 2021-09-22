@@ -57,6 +57,7 @@ export default class GameBoard {
     this.positions.push(pos);
     this.currentPlayer = this.positions.length % this.playerSymbols.length;
     this.fire('play');
+    this.fire('change');
 
     return true;
   }
@@ -77,12 +78,14 @@ export default class GameBoard {
     this.positions.pop();
     this.currentPlayer = this.positions.length % this.playerSymbols.length;
     this.fire('remove', last);
+    this.fire('change');
   }
 
   clear() {
     this.positions = [];
     this.lookup = Object.create(null);
     this.fire('clear');
+    this.fire('change');
   }
 
   nextMoveSymbol() {

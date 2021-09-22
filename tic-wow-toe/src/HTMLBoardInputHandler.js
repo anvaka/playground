@@ -51,18 +51,25 @@ export default class HTMLBoardInputHandler {
 
     if (e.keyCode === 32 || e.keyCode === 13) { // space or enter
       this.gameBoard.play(this.gameCursor.lastX, this.gameCursor.lastY);
+      e.preventDefault();
     } else if (e.keyCode === 37 || e.keyCode === 65 || e.keyCode === 72) { // left or A or H
       this.gameCursor.renderAt(this.gameCursor.lastX - 1, this.gameCursor.lastY);
+      e.preventDefault();
     } else if (e.keyCode === 38 || e.keyCode === 87 || e.keyCode === 75) { // up or W or K
       this.gameCursor.renderAt(this.gameCursor.lastX, this.gameCursor.lastY - 1);
+      e.preventDefault();
     } else if (e.keyCode === 39 || e.keyCode === 68 || e.keyCode === 76) { // right or D or L
       this.gameCursor.renderAt(this.gameCursor.lastX + 1, this.gameCursor.lastY);
+      e.preventDefault();
     } else if (e.keyCode === 40 || e.keyCode === 83 || e.keyCode === 74) { // down or S or J
       this.gameCursor.renderAt(this.gameCursor.lastX, this.gameCursor.lastY + 1);
+      e.preventDefault();
     } else if (e.keyCode === 48) { // 0 - vim for the start of line
       this.gameCursor.renderAt(0, this.gameCursor.lastY);
+      e.preventDefault();
     } else if (e.keyCode === 52) { // $ - vim for the end of line
       this.gameCursor.renderAt(this.gameBoard.board.width - 1, this.gameCursor.lastY);
+      e.preventDefault();
     }
   }
 

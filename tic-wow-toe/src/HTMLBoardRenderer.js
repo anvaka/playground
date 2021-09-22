@@ -12,6 +12,7 @@ export default class HTMLBoardRenderer {
     this.inputHandler = new HTMLBoardInputHandler(this);
     this.renderedPositions = new Map();
     this.renderPositions();
+
     board.on('play', this.renderPositions, this);
     board.on('remove', this.removePosition, this);
     board.on('clear', this.clear, this);
