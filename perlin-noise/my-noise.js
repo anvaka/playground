@@ -1,6 +1,6 @@
 export default class Noise {
   constructor(seed) {
-    this.seed = seed || Math.random();
+    this.seed = seed ||42;// Math.random();
   }
 
   get(x, y) {
@@ -19,22 +19,38 @@ export default class Noise {
 } 
 
 function hash(x, y, seed) {
-  let px = x * 123.4 + y * 567.8;
-  let py = x * 234.5 + y * 456.7;
-
-  return ((Math.sin(px + py) * seed * 45678.5432101) % 1) * Math.PI * 2;
+  return ((Math.sin(x * 357.9 + y * 1124.6) * seed * 345678.5432101) % 1);
 }
 
 function dotWithGradientVector(x, y, vx, vy, seed) {
-  let theta = hash(vx, vy, seed);
+  let theta = hash(vx, vy, seed) * Math.PI * 2;
   return (x - vx) * Math.cos(theta) + (y - vy) * Math.sin(theta);
 }
 
 function smootherStep(x){
-  return 6*x**5 - 15*x**4 + 10*x**3;
+  // return generalSmoothStep(10, x);
+  return x * x * x * (x * (x * 6 - 15) + 10);
 }
 
 function interpolate(x, a, b) {
-  return a + smootherStep(x) * (b-a);
+  return a + smootherStep(x) * (b - a);
 }
-  
+
+// general smooth is taken from https://en.wikipedia.org/wiki/Smoothstep
+function generalSmoothStep(N, x) {
+  var result = 0;
+  for (var n = 0; n <= N; ++n)
+    result += pascalTriangle(-N - 1, n) *
+              pascalTriangle(2 * N + 1, N - n) *
+              Math.pow(x, N + n + 1);
+  return result;
+}
+
+// Returns binomial coefficient without explicit use of factorials,
+// which can't be used with negative integers
+function pascalTriangle(a, b) {
+  var result = 1; 
+  for (var i = 0; i < b; ++i)
+    result *= (a - i) / (i + 1);
+  return result;
+}
