@@ -1,5 +1,5 @@
 // I was just playing with https://anvaka.github.io/fieldplay
-// this is not fully working
+// to generate a fieldmap of perlin noise
 float rnd(vec2 co){
   return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
 }
@@ -22,10 +22,8 @@ vec2 get_velocity(vec2 p) {
   float bl = getDir(p, vec2(c.x, c.y+1.));
   float xTop = interp(p.x - c.x, tl, tr);
   float xBot = interp(p.x - c.x, bl, br);
-  float a = interp(p.y - c.y, xTop, xBot);
+  float a = interp(p.y - c.y, xTop, xBot)*2.*PI;
   v.x = cos(a);
   v.y = sin(a);
-  // v.y = -0.2 * cell.y;
-
   return v;
 }
