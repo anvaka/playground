@@ -1,0 +1,6 @@
+{
+  "type": "module",
+  "devDependencies": {
+    "tap": "^15.1.2"
+  }
+}

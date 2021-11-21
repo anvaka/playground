@@ -2,17 +2,17 @@
  * Just playing with various gradient descent methods.
  */
 
-let f = (x) => Math.sin(x * .2);
-let df = (x) => Math.cos(x * .2) * .2;
+let f = (x) => x ** 2; // Math.sin(x * .2);
+let df = (x) => 2 * x; // Math.cos(x * .2) * .2;
 // let f = (x) => x * x;
 // let df = (x) => 2 * x;
 let startingPoint = 1;
 
-// findMinimumWithGradientDescent(startingPoint, f, df, 0.2, 100);
-findMinimumWithAdadelta(startingPoint, f, df, 0.2, 100);
+findMinimumWithGradientDescent(startingPoint, f, df, 0.2, 100);
+//findMinimumWithAdadelta(startingPoint, f, df, 0.2, 100);
 // findMinimumWithMomentum(startingPoint, f, df, 1, 40);
 // findMinimumWithRMSProp(startingPoint, f, df, 0.2, 100);
-findMinimumWithAdam(startingPoint, f, df, 0.2, 100);
+// findMinimumWithAdam(startingPoint, f, df, 0.2, 100);
 // findMinimumWithAdagrad(startingPoint, f, df, 0.2, 100);
 
 function findMinimumWithGradientDescent(startAt, f, df, learningRate = 0.1, iterationCount = 10) {
@@ -20,8 +20,9 @@ function findMinimumWithGradientDescent(startAt, f, df, learningRate = 0.1, iter
     console.log('Regular gradient descent')
     for(let i = 0; i < iterationCount; ++i) {
       let gradient = df(x);
+      let oldX = x;
       x -= gradient * learningRate
-      console.log('Step: ' + i + '; F(x) = ' + f(x) + ', x = ' + x + ', gradient = ' + gradient);
+      console.log('Step: ' + i + '; gradient (' + oldX + ') = ' + df(oldX) + '; newX = ' + x + ' F(oldX) = ' + f(oldX) );
     }
 }
 
@@ -35,7 +36,7 @@ function findMinimumWithMomentum(startAt, f, df, learningRate = 0.1, iterationCo
     let gradient = df(x);
     dX = beta * dX - learningRate * gradient * (1 - beta);
     x += dX;
-    console.log('Step: ' + i + '; F(x) = ' + f(x) + '; x = ' + x + '; gradient = ' + gradient);
+    console.log('Step: ' + i + '; gradient (' + oldX + ') = ' + df(oldX) + '; newX = ' + x + ' F(oldX) = ' + f(oldX) );
   }
 }
 
@@ -51,7 +52,7 @@ function findMinimumWithRMSProp(startAt, f, df, learningRate = 0.1, iterationCou
       sD = beta * sD + (1 - beta) * gradient * gradient;
       x -= learningRate * gradient / Math.sqrt(sD + 1e-8);
 
-      console.log('Step: ' + i + '; F(x) = ' + f(x) + '; x = ' + x + '; gradient = ' + gradient);
+      console.log('Step: ' + i + '; gradient (' + oldX + ') = ' + df(oldX) + '; newX = ' + x + ' F(oldX) = ' + f(oldX) );
     }
 }
 
@@ -79,7 +80,7 @@ function findMinimumWithAdam(startAt, f, df, learningRate = 0.1, iterationCount 
 
       x -= learningRate * vCorrected / (Math.sqrt(sCorrected) + 1e-8);
 
-      console.log('Step: ' + i + '; F(x) = ' + f(x) + '; x = ' + x + '; gradient = ' + gradient);
+      console.log('Step: ' + i + '; gradient (' + oldX + ') = ' + df(oldX) + '; newX = ' + x + ' F(oldX) = ' + f(oldX) );
     }
 }
 
@@ -105,7 +106,7 @@ function findMinimumWithAdadelta(startAt, f, df, learningRate = 0.1, iterationCo
 
       x += dx;
 
-      console.log('Step: ' + i + '; F(x) = ' + f(x) + '; x = ' + x + '; gradient = ' + gradient);
+      console.log('Step: ' + i + '; gradient (' + oldX + ') = ' + df(oldX) + '; newX = ' + x + ' F(oldX) = ' + f(oldX) );
     }
 }
 
@@ -122,6 +123,6 @@ function findMinimumWithAdagrad(startAt, f, df, learningRate = 0.1, iterationCou
       gradientSquaredSum += gradient * gradient;
       x -= learningRate * gradient / Math.sqrt(gradientSquaredSum + 1e-8);
 
-      console.log('Step: ' + i + '; F(x) = ' + f(x) + '; x = ' + x + '; gradient = ' + gradient);
+      console.log('Step: ' + i + '; gradient (' + oldX + ') = ' + df(oldX) + '; newX = ' + x + ' F(oldX) = ' + f(oldX) );
     }
 }
