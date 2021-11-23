@@ -62,6 +62,25 @@ export class ComputationTree {
     return out;
   }
 
+  sub(a, b) {
+    if (a.rows !== b.rows || a.cols !== b.cols) {
+      throw new Error('Matrix dimensions must agree in add()');
+    }
+    let out = new Matrix(a.rows, a.cols);
+
+    for (let i = 0; i < a.data.length; i++) {
+      out.data[i] = a.data[i] - b.data[i];
+    }
+
+    this.computationSequence.push(() => {
+      for (let i = 0; i < a.data.length; i++) {
+        a.gradient[i] += out.gradient[i];
+        b.gradient[i] -= out.gradient[i];
+      }
+    });
+    return out;
+  }
+
   mul(a, b) {
     if (a.cols !== b.rows) {
       throw new Error('Matrix dimensions must agree in mul()');
@@ -85,6 +104,32 @@ export class ComputationTree {
 
             a.gradient[i * a.cols + k] += b.data[k * b.cols + j] * gradient;
             b.gradient[k * b.cols + j] += a.data[i * a.cols + k] * gradient;
+          }
+        }
+      }
+    });
+    return out;
+  }
+  pow2(a) {
+    let out = new Matrix(a.rows, a.cols);
+    for (let i = 0; i < a.rows; i++) {
+      for (let j = 0; j < a.cols; j++) {
+        let sum = 0;
+        for (let k = 0; k < a.cols; k++) {
+          sum += a.data[i * a.cols + k] * a.data[k * a.cols + j];
+        }
+        out.data[i * a.cols + j] = sum;
+      }
+    }
+
+    this.computationSequence.push(() => {
+      for (let i = 0; i < a.rows; i++) {
+        for (let j = 0; j < a.cols; j++) {
+          for (let k = 0; k < a.cols; k++) {
+            let gradient = out.gradient[i * a.cols + j];
+
+            a.gradient[i * a.cols + k] += a.data[k * a.cols + j] * gradient;
+            a.gradient[k * a.cols + j] += a.data[i * a.cols + k] * gradient;
           }
         }
       }
