@@ -155,44 +155,63 @@ test('it can fit simple function', t => {
 })
 
 test('it fits', t => {
-  // y = k * x + b, where k = 2, b = 3
-  let k = new Matrix(1, 1);
-  let b = new Matrix(1, 1);
-  let x = new Matrix(1, 1);
-  let y = new Matrix(1, 1);
+  // y = k * x + b, where k = trueK, b =trueB 
+  let batchSize = 2;
+  let trueK = 1;
+  let trueB = 10;
 
+  let batches = [];
+  const k = new Matrix(1, 1);
+  const b = new Matrix(1, 1);
+  const x = new Matrix(1, 1);
+  const y = new Matrix(1, 1);
   k.data[0] = Math.random(); 
-  b.data[0] = Math.random(0);
+  b.data[0] = Math.random();
 
-  let learningRate = 0.02;
-
-  for (let i = 0; i < 110; i++) {
-    if ( i % 2 === 1) {
-      x.data[0] = 2;
-    } else {
-      x.data[0] = 3;
-    }
-    y.data[0] = 2 * x.data[0] + 3;
-    let G = new ComputationTree();
-    let res = G.pow2(G.sub(G.add(G.mul(k, x), b), y));
-
-    res.gradient[0] = 1;
-    G.backprop();
-
-    console.log(res.data[0]);
-    
-    let p = x.data[0]
-    k.data[0] -= learningRate * k.gradient[0];
-    b.data[0] -= learningRate * b.gradient[0];
-    console.log(k.data[0], b.data[0]);
-
-    k.resetGradient();
-    b.resetGradient();
-    // x.resetGradient();
-    // y.resetGradient();
+  for (let i = 0; i < batchSize; ++i) {
+    let x = i + 1; 
+    let y = trueK * x + trueB;
+    batches.push({x, y});
   }
 
-  x.printDataMatrix();
+  let learningRate = 0.1;
+
+  for (let i = 0; i < 200; i++) {
+    let kSum = 0, bSum = 0;
+    let loss = 0;
+    for (let j = 0; j < batchSize; ++j) {
+      x.data[0] = batches[j].x;
+      y.data[0] = batches[j].y;
+      let G = new ComputationTree();
+
+      // This is full loss. 
+      // let res = G.pow2(G.sub(G.add(G.mul(k, x), b), y));
+      // loss += res.data[0];
+      // res.gradient[0] = 1;
+
+      // Alternatively, we can compute gradient ourselves and backprop it:
+      let res = G.add(G.mul(k, x), b);
+      loss += Math.pow(res.data[0] - batches[j].y, 2);
+      res.gradient[0] = 2 * (res.data[0] - batches[j].y);
+
+      G.backprop();
+      k.data[0] -= learningRate * k.gradient[0];
+      b.data[0] -= learningRate * b.gradient[0];
+
+      // And this is how you could get minibatch
+      // kSum += k.gradient[0];
+      // bSum += b.gradient[0];
+      k.resetGradient();
+      b.resetGradient();
+    }
+    console.log('loss is', loss/batchSize);
+
+    // minibatch
+    // k.data[0] -= learningRate * kSum/batchSize;
+    // b.data[0] -= learningRate * bSum/batchSize;
+  }
+
+  console.log('I am guessing k = ' + k.data[0] + '; b = ' + b.data[0]);
   t.end();
 
 });

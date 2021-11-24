@@ -26,6 +26,10 @@ export class Matrix {
     }
   }
 
+  fillRandom() {
+    for (let i = 0; i < this.data.length; ++i) this.data[i] = Math.random();
+  }
+
   resetGradient() {
     this.gradient.fill(0);
   }
