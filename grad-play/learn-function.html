@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Function approximation</title>
+</head>
+<body>
+  <canvas></canvas>
+
+<script>
+  /**
+   * Given arbitrary function, we are trying to approximate it with
+   * sum of cosines: f(x) = sum(a[i] * cos(2 * Pi * (i + 1)/period * x + p[i]))
+   * 
+   * The paramters `a` and `p` are leared with gradient descent.
+   */
+let octaveCount = 8;
+let learningRate = 0.01;
+let batchSize = 100;
+let periodSize = 3;
+let learningEpochs = 1000;
+
+function factual(x, a, phi) {
+  return Math.sin(0.25 * x * x * x) + Math.cos(x);
+}
+
+function f(x, a, phi, oct) {
+  return a * Math.cos(Math.PI *  oct * 2/periodSize * x + phi);
+}
+
+function df_da(x, a, phi, oct) {
+  return Math.cos(Math.PI *  oct * 2/periodSize * x + phi);
+}
+
+function df_dphi(x, a, phi, oct) {
+  return -a * Math.sin(Math.PI * oct * 2/periodSize * x + phi);
+}
+
+let octaves = [];
+
+
+for (let i = 0; i < octaveCount; ++i) {
+  octaves.push({
+    a: Math.random(),
+    p: Math.random()
+  })
+}
+
+
+
+let step = periodSize / batchSize;
+let bias = Math.random();
+
+let finalLoss = 0;
+for (let i = 0; i < learningEpochs; ++i) {
+  let totalLoss = 0;
+  let currentX = 0;
+  
+  for (let j = 0; j < batchSize; j += 1) {
+    let actual = factual(currentX);
+    
+    let prediction = bias;
+    
+    for (let k = 0; k < octaveCount; ++k) {
+      let {a, p} = octaves[k];
+      prediction += f(currentX, a, p, k + 1);
+    }
+
+    let gradLoss = 2 * (prediction - actual);
+    bias -= learningRate * gradLoss;
+    
+    totalLoss += Math.pow(prediction - actual, 2);
+    for (let k = 0; k < octaveCount; ++k) {
+      let {a, p} = octaves[k];
+      octaves[k].a -= learningRate * df_da(currentX, a, p, k + 1) * gradLoss;
+      octaves[k].p -= learningRate * df_dphi(currentX, a, p, k + 1) * gradLoss;
+    }
+    currentX += step;
+  }
+  finalLoss = totalLoss / batchSize;
+}
+
+let expr = [Math.round(bias*100)/100];
+for (let k = 0; k < octaveCount; ++k) {
+  let {a, p} = octaves[k];
+  expr.push(
+    Math.round(a * 100)/100 + ' * cos(2 * PI * x * ' + (k + 1) + ' / ' + periodSize + ' + ' + Math.round(p*100)/100 + ')'
+  );
+}
+console.log(expr.join(' + '))
+
+console.log('loss is ' + finalLoss);
+
+let cnv = document.querySelector('canvas');
+let width = cnv.width =  300;
+let height = cnv.height = 300;
+let ctx = cnv.getContext('2d');
+
+ctx.fillRect(0, 0, width, height)
+plotChart(factual, [0, periodSize], [-3, 3], 'white')
+plotChart((x) => {
+  let y = bias;
+  for (let k = 0; k < octaveCount; ++k) {
+    let {a, p} = octaves[k];
+    y += a * Math.cos(2 * Math.PI * x * (k + 1) / periodSize + p);
+  }
+  return y;
+}, [0, periodSize], [-3, 3], 'red')
+
+function plotChart(f, xLimits, yLimits, color) {
+
+  ctx.strokeStyle = color;
+  ctx.beginPath();
+   for (let i = 0; i < width; ++i) {
+     let x = (i/width) * (xLimits[1] - xLimits[0]) + xLimits[0];
+     let y = f(x);
+     
+     let canvasY = (1 - (y - yLimits[0])/(yLimits[1] - yLimits[0])) * height;
+     if (i === 0) {
+       ctx.moveTo(i, canvasY);
+     } else {
+       ctx.lineTo(i, canvasY);
+     }
+   }
+  
+  ctx.stroke();
+}
+
+</script>
+</body>
+</html>
