@@ -109,6 +109,16 @@ test('can it fit', (t) => {
   t.end();
 });
 
+test('can multiply self', (t) => {
+  let a = new Parameter(4);
+  let out = a.mul(a);
+  t.equal(out.value, 4 * 4)
+  out.grad = 5;
+  out.computeGradientsBackward();
+  t.equal(a.grad, 8 * 5)
+  t.end();
+});
+
 test('cosine approximation', (t) => {
   let f = (x) => x * x * x * 0.025 + x * x * 0.2;
 

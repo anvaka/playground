@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+ <title>Figure approximation with autograd</title>
+</head>
+<body>
+  <canvas></canvas>
+
+<script type="module">
+  import {Parameter} from './autograd.js';
+  /**
+   * Given arbitrary function, we are trying to approximate it with
+   * sum of cosines: f(x) = sum(a[i] * cos(2 * Pi * (i + 1)/period * x + p[i]))
+   * 
+   * The paramters `a` and `p` are leared with gradient descent.
+   */
+let octaveCount = 4;
+let learningRate = 0.01;
+let periodSize = 13;
+let learningEpochs = 1000;
+
+const figures = {
+  square:[[-1, -1], [-1, 1], [1, 1], [1, -1]],
+  triangle: [[-1, 1], [1, -1], [1, 1]],
+  star: [[0, 1], [-1, -1], [1, 0], [-1, 0], [1, -1]]
+}
+let figure = figures.star;
+
+let modelParameters = [];
+
+// Fourier series, amplitude-phase form
+for (let i = 0; i < octaveCount; ++i) {
+  modelParameters.push({
+    x: new Parameter(Math.random()),
+    y: new Parameter(Math.random()),
+    p: new Parameter(Math.random())
+  })
+}
+
+let batchSize = figure.length * 4;
+let step = periodSize / batchSize;
+let xBias = new Parameter(Math.random()); 
+let yBias = new Parameter(Math.random()); 
+
+let finalLoss = 0;
+for (let i = 0; i < learningEpochs; ++i) {
+  let totalLoss = 0;
+  let currentX = 0;
+  
+  for (let j = 0; j < batchSize; j += 1) {
+    let xPrediction = xBias;
+    let yPrediction = yBias;
+
+    let {x: actualX, y: actualY} = sampleFigure(figure, j/batchSize);
+    
+    for (let k = 0; k < octaveCount; ++k) {
+      let baseAngle = 2 * Math.PI * currentX * (k + 1)/periodSize;
+      let c = (new Parameter(baseAngle)).add(modelParameters[k].p);
+      xPrediction = xPrediction.add(modelParameters[k].x.mul(c.cos()))
+
+      let d = (new Parameter(baseAngle)).add(modelParameters[k].p);
+      yPrediction = yPrediction.add(modelParameters[k].y.mul(d.sin()))
+    }
+
+    xPrediction.grad = 2 * (xPrediction.value - actualX);
+    xPrediction.computeGradientsBackward();
+
+    yPrediction.grad = 2 * (yPrediction.value - actualY);
+    yPrediction.computeGradientsBackward();
+
+    xBias.value -= learningRate * xBias.grad;
+    xBias.grad = 0;
+
+    yBias.value -= learningRate * yBias.grad;
+    yBias.grad = 0;
+    
+    totalLoss += Math.pow(xPrediction.value - actualX, 2) + Math.pow(yPrediction.value - actualY, 2);
+    for (let k = 0; k < octaveCount; ++k) {
+      modelParameters[k].x.value -= learningRate * modelParameters[k].x.grad;
+      modelParameters[k].y.value -= learningRate * modelParameters[k].y.grad;
+      modelParameters[k].p.value -= learningRate * modelParameters[k].p.grad;
+      modelParameters[k].x.grad = modelParameters[k].y.grad = modelParameters[k].p.grad = 0;
+    }
+    currentX += step;
+  }
+  finalLoss = totalLoss / batchSize;
+}
+
+console.log('loss is ' + finalLoss);
+
+let cnv = document.querySelector('canvas');
+let width = cnv.width =  300;
+let height = cnv.height = 300;
+let ctx = cnv.getContext('2d');
+
+ctx.fillRect(0, 0, width, height)
+
+// plotChart(fActual, [0, periodSize], [-3, 3], 'white')
+plotChart((t) => {
+  let x = xBias.value;
+  let y = yBias.value;
+
+  for (let k = 0; k < octaveCount; ++k) {
+    let angle = 2 * Math.PI * t * periodSize * (k + 1) / periodSize + modelParameters[k].p.value;
+    x += modelParameters[k].x.value * Math.cos(angle);
+    y += modelParameters[k].y.value * Math.sin(angle);
+  }
+  return {x, y};
+}, [-2, 2], [-2, 2], 'red')
+
+plotFigure(figure, [-2, 2], [-2, 2], 'white')
+
+
+function plotFigure(figure, xLimits, yLimits, color) {
+  ctx.strokeStyle = color;
+  ctx.beginPath();
+  figure.forEach((point,index) => {
+    let x = (point[0] - xLimits[0]) / (xLimits[1] - xLimits[0]) * width;
+    let y = (1 - (point[1] - yLimits[0]) / (yLimits[1] - yLimits[0])) * height;
+    if (index === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.stroke();
+}
+
+function plotChart(f, xLimits, yLimits, color) {
+  ctx.strokeStyle = color;
+  ctx.beginPath();
+   for (let i = 0; i < width; ++i) {
+     let x = (i/width) * (xLimits[1] - xLimits[0]) + xLimits[0];
+     let pt = f(i/width);
+     
+     let y = pt.y;
+     let canvasY = (1 - (y - yLimits[0])/(yLimits[1] - yLimits[0])) * height;
+     let canvasX = (pt.x - xLimits[0]) / (xLimits[1] - xLimits[0]) * width;
+     if (i === 0) {
+       ctx.moveTo(canvasX, canvasY);
+     } else {
+       ctx.lineTo(canvasX, canvasY);
+     }
+   }
+  
+  ctx.stroke();
+}
+
+function sampleFigure(figure, t) {
+  let totalLength = 0;
+  
+  for (let i = 0; i < figure.length; ++i) {
+    let nextIndex = (i + 1) % figure.length;
+    let dx = figure[nextIndex][0] - figure[i][0];
+    let dy = figure[nextIndex][1] - figure[i][1];
+    totalLength += Math.sqrt(dx * dx + dy * dy);
+  }
+  // now let's return point at t percent of the total length:
+  let currentLength = 0;
+  for(let i = 0; i < figure.length; ++i) {
+    let nextIndex = (i + 1) % figure.length;
+    let dx = figure[nextIndex][0] - figure[i][0];
+    let dy = figure[nextIndex][1] - figure[i][1];
+    let segmentLength = Math.sqrt(dx * dx + dy * dy);
+    if (currentLength + segmentLength > totalLength * t) {
+      let t0 = (totalLength * t - currentLength) / segmentLength;
+      return {
+        x: figure[i][0] + t0 * dx,
+        y: figure[i][1] + t0 * dy
+      }
+    }
+    currentLength += segmentLength;
+  }
+
+}
+
+</script>
+</body>
+</html>
