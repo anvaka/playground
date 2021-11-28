@@ -13,36 +13,43 @@
   import {MLP} from './mlp.js';
   import {Parameter} from './autograd.js';
 
-  let random = ngraphRandom(42);
+  let random = ngraphRandom();
   let testDataSet = (makeDataset(100))
-  let net = new MLP([2, 16, 16, 1]);
-  net.forEachParameter(p => p.value = random.nextDouble());
+  let net = new MLP([2, 8, 4, 1]);
+  // net.forEachParameter(p => p.value = random.nextDouble());
   let count = 0;
   net.forEachParameter(p => count++);
   console.log('Total parameters', count)
 
   let learningRate;
-  for (let i = 0; i < 100; i++) {
-    let totalLoss = new Parameter(0);
+  for (let i = 0; i < 200; i++) {
     let accuracy = 0;
-    // ngraphRandom.randomIterator(testDataSet).shuffle();
+    ngraphRandom.randomIterator(testDataSet).shuffle();
+    let runLoss = 0;
     for (let j = 0; j < testDataSet.length; j++) {
       let output = net.getOutput([testDataSet[j][0], testDataSet[j][1]]);
       let yi = testDataSet[j][2];
-      totalLoss = totalLoss.add((new Parameter(1).sub(output[0].mul(yi)).relu()));
+      let totalLoss = new Parameter(1).sub(output[0].mul(yi)).relu().div(testDataSet.length);
       accuracy += Math.sign(output[0].value) == Math.sign(yi) ? 1 : 0;
+      net.zeroGrad();
+      // let regularizationLoss = new Parameter(0);
+      // net.forEachParameter(p => regularizationLoss = regularizationLoss.add(p.mul(p)));
+      // totalLoss = regularizationLoss.mul(1e-4).add(totalLoss.div(testDataSet.length));
+      runLoss += totalLoss.value;
+      totalLoss.grad = 1;
+      totalLoss.computeGradientsBackward();
+      let l = 1 - yi * output[0].value;
+      let grad = l < 0 ? 0 : -yi/testDataSet.length;
+      if (grad != output[0].grad) {
+        console.log('Gradient error', grad, output[0].grad);
+      }
+      // output[0].computeGradientsBackward();
+      learningRate = Math.max(0.1, 1.0 - 0.9*Math.min(100, i)/100);
+
+      net.forEachParameter(p => p.value -= learningRate * p.grad);
     }
-    net.zeroGrad();
-    let regularizationLoss = new Parameter(0);
-    net.forEachParameter(p => regularizationLoss = regularizationLoss.add(p.mul(p)));
 
-    totalLoss = regularizationLoss.mul(1e-4).add(totalLoss.div(testDataSet.length));
-    totalLoss.grad = 1;
-    totalLoss.computeGradientsBackward();
-    learningRate = Math.max(0.1, 1.0 - 0.9*Math.min(100, i)/100);
-
-    net.forEachParameter(p => p.value -= learningRate * p.grad);
-    console.log('Loss: ' + totalLoss.value, ' Accuracy: ' + accuracy/testDataSet.length);
+    console.log('Loss: ', runLoss, ' Accuracy: ' + accuracy/testDataSet.length);
   }
 
 
@@ -51,8 +58,8 @@ let width = cnv.width =  300;
 let height = cnv.height = 300;
 let ctx = cnv.getContext('2d');
 ctx.fillRect(0, 0, width, height)
-let xRange = [-2, 2];
-let yRange = [-2, 2];
+let xRange = [-4, 4];
+let yRange = [-4, 4];
 plotPixels(net, xRange, yRange);
 plotPointsWithClasses(testDataSet, {
   '-1': 'white', 
@@ -62,10 +69,12 @@ plotPointsWithClasses(testDataSet, {
 function makeDataset(count) {
   let dataset = [];
   for (let i = 0; i < count; i++) {
-    let x = (random.nextDouble() - .5) * 3;
-    let y = (random.nextDouble() - .5) * 3;
+    let angle = random.nextDouble() * 2 * Math.PI;
+    let r = random.nextDouble() * 2;
+    let x = r * Math.cos(angle);
+    let y = r * Math.sin(angle);
 
-    let label = x ** 2 + y ** 2 < 1 ? -1 : 1;
+    let label = r < 1 ? -1 : 1;
     dataset.push([x, y, label]);
   }
   return dataset;
@@ -95,7 +104,7 @@ function plotPixels(net, xLimits, yLimits) {
   for (let x = 0; x < width; ++x) {
     for (let y = 0; y < height; ++y) {
       let dataX = (x / width) * (xLimits[1] - xLimits[0]) + xLimits[0];
-      let dataY = (y / height) * (yLimits[1] - yLimits[0]) + yLimits[0];
+      let dataY = (1 - y / height) * (yLimits[1] - yLimits[0]) + yLimits[0];
       let out = net.getOutput([dataX, dataY]);
       if (out[0].value > 0) {
         ctx.fillStyle = 'green';

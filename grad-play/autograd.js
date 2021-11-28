@@ -135,7 +135,7 @@ export class Parameter {
     return new Parameter(
       Math.max(0, this.value), // Value
       (out) => {                   // backprop gradient
-        this.grad  += out.grad * (this.value > 0);
+        this.grad += out.grad * (this.value > 0);
       }, new Set([this]), 'relu');
   }
 }

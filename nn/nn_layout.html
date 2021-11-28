@@ -325,11 +325,11 @@ let pz = panzoom(scene);
 // console.log(generators)
 let desiredLength = 3;
 
-fetch('http://127.0.0.1:8082/miserables.dot', {mode: 'cors'}).then(x => x.text()).
-then(x => {
-  showGraph(fromDot(x));
-})
-// showGraph(generators.grid3(10, 5,5));
+// fetch('http://127.0.0.1:8082/miserables.dot', {mode: 'cors'}).then(x => x.text()).
+// then(x => {
+//   showGraph(fromDot(x));
+// })
+showGraph(generators.grid3(10, 5,5));
 
 function showGraph(graph) {
   // graph = generators.complete(10)
