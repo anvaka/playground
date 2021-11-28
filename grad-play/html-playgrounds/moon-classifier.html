@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width">
  <title>Classifying points in moon dataset</title>
- <script src='./node_modules/ngraph.random/dist/ngraph.random.js'></script>
+ <script src='../node_modules/ngraph.random/dist/ngraph.random.js'></script>
 </head>
 <body>
   <canvas></canvas>
 
 <script type="module">
-  import {MLP} from './mlp.js';
-  import {Parameter} from './autograd.js';
+  import {MLP} from '../mlp.js';
+  import {Parameter} from '../autograd.js';
 
   let random = ngraphRandom();
   let testDataSet = (makeDataset(100))
