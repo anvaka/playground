@@ -1,6 +1,8 @@
 {
   "type": "module",
   "devDependencies": {
+    "make_moons": "^0.3.5",
+    "ngraph.random": "^1.1.0",
     "tap": "^15.1.2"
   }
 }

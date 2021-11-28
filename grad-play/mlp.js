@@ -19,12 +19,7 @@ class Node {
       sum = sum.add(param.mul(input[i]));
     });
 
-    return sum.relu();
-  }
-
-  zeroGrad() {
-    this.w.forEach(param => param.grad = 0);
-    this.bias.grad = 0;
+    return sum;
   }
 
   forEachParameter(callback) {
@@ -39,14 +34,15 @@ class Layer {
     for (let i = 0; i < outCount; i++) {
       this.nodes.push(new Node(inCount));
     }
+    this.activation = x => x.relu();
+  }
+
+  setActivation(activation) {
+    this.activation = activation;
   }
 
   getOutput(input) {
-    return this.nodes.map(node => node.getOutput(input));
-  }
-
-  zeroGrad() {
-    this.nodes.forEach(node => node.zeroGrad());
+    return this.nodes.map(node => this.activation(node.getOutput(input)));
   }
 
   forEachParameter(callback) {
@@ -60,11 +56,11 @@ export class MLP {
     for (let i = 1; i < layerSizes.length; i++) {
       this.layers.push(new Layer(layerSizes[i - 1], layerSizes[i]));
     }
+    this.layers[this.layers.length - 1].setActivation(x => x);
   }
 
   zeroGrad() { 
     this.forEachParameter(param => param.grad = 0);
-    // this.layers.forEach(layer => layer.zeroGrad()); 
   }
 
   getOutput(input) {

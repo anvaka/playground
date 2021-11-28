@@ -10,21 +10,22 @@
 
 <script type="module">
   import {Parameter} from './autograd.js';
+  // import {OctoCat} from './data/images.js'
   /**
    * Given arbitrary function, we are trying to approximate it with
    * sum of cosines: f(x) = sum(a[i] * cos(2 * Pi * (i + 1)/period * x + p[i]))
    * 
    * The paramters `a` and `p` are leared with gradient descent.
    */
-let octaveCount = 4;
+let octaveCount = 8;
 let learningRate = 0.01;
-let periodSize = 13;
+let periodSize = 1;
 let learningEpochs = 1000;
 
 const figures = {
   square:[[-1, -1], [-1, 1], [1, 1], [1, -1]],
   triangle: [[-1, 1], [1, -1], [1, 1]],
-  star: [[0, 1], [-1, -1], [1, 0], [-1, 0], [1, -1]]
+  star: [[0, 1], [-1, -1], [1, 0], [-1, 0], [1, -1]],
 }
 let figure = figures.star;
 
@@ -48,6 +49,7 @@ let finalLoss = 0;
 for (let i = 0; i < learningEpochs; ++i) {
   let totalLoss = 0;
   let currentX = 0;
+
   
   for (let j = 0; j < batchSize; j += 1) {
     let xPrediction = xBias;
@@ -57,13 +59,18 @@ for (let i = 0; i < learningEpochs; ++i) {
     
     for (let k = 0; k < octaveCount; ++k) {
       let baseAngle = 2 * Math.PI * currentX * (k + 1)/periodSize;
-      let c = (new Parameter(baseAngle)).add(modelParameters[k].p);
-      xPrediction = xPrediction.add(modelParameters[k].x.mul(c.cos()))
-
-      let d = (new Parameter(baseAngle)).add(modelParameters[k].p);
-      yPrediction = yPrediction.add(modelParameters[k].y.mul(d.sin()))
+      // x += a * cos(2 * Pi * (k + 1)/period * x + p)
+      xPrediction = xPrediction.add(modelParameters[k].x.mul(new Parameter(baseAngle).add(modelParameters[k].p).cos()))
+      // y += a * sin(2 * Pi * (k + 1)/period * x + p)
+      yPrediction = yPrediction.add(modelParameters[k].y.mul(new Parameter(baseAngle).add(modelParameters[k].p).sin()))
     }
 
+    let xReg = xBias.value * xBias.value;
+    let yReg = yBias.value * yBias.value;
+    for (let k = 0; k < octaveCount; ++k) {
+      xReg += modelParameters[k].x.value * modelParameters[k].x.value;
+      yReg += modelParameters[k].y.value * modelParameters[k].y.value;
+    }
     xPrediction.grad = 2 * (xPrediction.value - actualX);
     xPrediction.computeGradientsBackward();
 
@@ -86,6 +93,9 @@ for (let i = 0; i < learningEpochs; ++i) {
     currentX += step;
   }
   finalLoss = totalLoss / batchSize;
+  if (i % 100 == 0) {
+    console.log(`Epoch ${i} loss: ${finalLoss}`);
+  }
 }
 
 console.log('loss is ' + finalLoss);
@@ -98,6 +108,8 @@ let ctx = cnv.getContext('2d');
 ctx.fillRect(0, 0, width, height)
 
 // plotChart(fActual, [0, periodSize], [-3, 3], 'white')
+
+plotFigure(figure, [-2, 2], [-2, 2], 'darkred')
 plotChart((t) => {
   let x = xBias.value;
   let y = yBias.value;
@@ -108,9 +120,7 @@ plotChart((t) => {
     y += modelParameters[k].y.value * Math.sin(angle);
   }
   return {x, y};
-}, [-2, 2], [-2, 2], 'red')
-
-plotFigure(figure, [-2, 2], [-2, 2], 'white')
+}, [-2, 2], [-2, 2], 'white')
 
 
 function plotFigure(figure, xLimits, yLimits, color) {

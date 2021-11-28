@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+ <title>Classifying points in moon dataset</title>
+ <script src='./node_modules/ngraph.random/dist/ngraph.random.js'></script>
+</head>
+<body>
+  <canvas></canvas>
+
+<script type="module">
+  import {MLP} from './mlp.js';
+  import {Parameter} from './autograd.js';
+
+  let random = ngraphRandom(42);
+  let testDataSet = (makeDataset(100))
+  let net = new MLP([2, 16, 16, 1]);
+  net.forEachParameter(p => p.value = random.nextDouble());
+  let count = 0;
+  net.forEachParameter(p => count++);
+  console.log('Total parameters', count)
+
+  let learningRate;
+  for (let i = 0; i < 100; i++) {
+    let totalLoss = new Parameter(0);
+    let accuracy = 0;
+    // ngraphRandom.randomIterator(testDataSet).shuffle();
+    for (let j = 0; j < testDataSet.length; j++) {
+      let output = net.getOutput([testDataSet[j][0], testDataSet[j][1]]);
+      let yi = testDataSet[j][2];
+      totalLoss = totalLoss.add((new Parameter(1).sub(output[0].mul(yi)).relu()));
+      accuracy += Math.sign(output[0].value) == Math.sign(yi) ? 1 : 0;
+    }
+    net.zeroGrad();
+    let regularizationLoss = new Parameter(0);
+    net.forEachParameter(p => regularizationLoss = regularizationLoss.add(p.mul(p)));
+
+    totalLoss = regularizationLoss.mul(1e-4).add(totalLoss.div(testDataSet.length));
+    totalLoss.grad = 1;
+    totalLoss.computeGradientsBackward();
+    learningRate = Math.max(0.1, 1.0 - 0.9*Math.min(100, i)/100);
+
+    net.forEachParameter(p => p.value -= learningRate * p.grad);
+    console.log('Loss: ' + totalLoss.value, ' Accuracy: ' + accuracy/testDataSet.length);
+  }
+
+
+let cnv = document.querySelector('canvas');
+let width = cnv.width =  300;
+let height = cnv.height = 300;
+let ctx = cnv.getContext('2d');
+ctx.fillRect(0, 0, width, height)
+let xRange = [-2, 2];
+let yRange = [-2, 2];
+plotPixels(net, xRange, yRange);
+plotPointsWithClasses(testDataSet, {
+  '-1': 'white', 
+  '1': 'black'
+}, xRange, yRange);
+
+function makeDataset(count) {
+  let dataset = [];
+  for (let i = 0; i < count; i++) {
+    let x = (random.nextDouble() - .5) * 3;
+    let y = (random.nextDouble() - .5) * 3;
+
+    let label = x ** 2 + y ** 2 < 1 ? -1 : 1;
+    dataset.push([x, y, label]);
+  }
+  return dataset;
+}
+
+function normalize(data) {
+  let xMin = data[0][0];
+  let xMax = data[0][0];
+  let yMin = data[0][1];
+  let yMax = data[0][1];
+  for (let i = 0; i < data.length; i++) {
+    xMin = Math.min(xMin, data[i][0]);
+    xMax = Math.max(xMax, data[i][0]);
+    yMin = Math.min(yMin, data[i][1]);
+    yMax = Math.max(yMax, data[i][1]);
+  }
+  let xRange = xMax - xMin;
+  let yRange = yMax - yMin;
+  for (let i = 0; i < data.length; i++) {
+    data[i][0] = (data[i][0] - xMin) / xRange;
+    data[i][1] = (data[i][1] - yMin) / yRange;
+  }
+  return data;
+}
+
+function plotPixels(net, xLimits, yLimits) {
+  for (let x = 0; x < width; ++x) {
+    for (let y = 0; y < height; ++y) {
+      let dataX = (x / width) * (xLimits[1] - xLimits[0]) + xLimits[0];
+      let dataY = (y / height) * (yLimits[1] - yLimits[0]) + yLimits[0];
+      let out = net.getOutput([dataX, dataY]);
+      if (out[0].value > 0) {
+        ctx.fillStyle = 'green';
+      } else {
+        ctx.fillStyle = 'red';
+      }
+      ctx.fillRect(x, y, 1, 1);
+    }
+  }
+}
+
+function plotPointsWithClasses(points, colors, xLimits, yLimits) {
+  points.forEach(point => {
+    let canvasXY = getCanvasXY(point[0], point[1], xLimits, yLimits);
+    ctx.fillStyle = colors[point[2]];
+    ctx.fillRect(canvasXY.x - 1, canvasXY.y - 1, 2, 2);
+  });
+}
+
+function getCanvasXY(x, y, xLimits, yLimits) {
+  let canvasX = (x - xLimits[0]) / (xLimits[1] - xLimits[0]) * width;
+  let canvasY = (y - yLimits[0]) / (yLimits[1] - yLimits[0]) * height;
+  return {x: canvasX, y: height - canvasY};
+}
+
+
+</script>
+</body>
+</html>
