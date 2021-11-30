@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+ <title>Classifying points in moon dataset</title>
+ <script src='../node_modules/ngraph.random/dist/ngraph.random.js'></script>
+ <style>
+   canvas {
+     width: 100%;
+   }
+ </style>
+</head>
+<body>
+  <canvas></canvas>
+
+<script type="module">
+  import {MLP} from '../mlp.js';
+  import {Parameter} from '../autograd.js';
+
+  let random = ngraphRandom(2);
+  let testDataSet = makeDataset(100)
+
+  // (x,y) input, 4 classes output
+  let net = new MLP([2, 8, 4]);
+  let count = 0;
+  net.forEachParameter(p => count++);
+  // net.forEachParameter(p => p.value = 0.1);
+  console.log('Total parameters', count)
+
+  let learningRate;
+  for (let i = 0; i < 200; i++) {
+    let accuracy = 0;
+    // ngraphRandom.randomIterator(testDataSet).shuffle();
+    let runLoss = 0;
+    for (let j = 0; j < testDataSet.length; j++) {
+      let output = net.getOutput([testDataSet[j][0], testDataSet[j][1]]);
+
+      let correctClassIndex = (testDataSet[j][2] - 1);
+      let predictedClassIndex = indexMax(getNormalizedProbabilityDistribution(output));
+      accuracy += (predictedClassIndex === correctClassIndex) ? 1 : 0;
+
+      net.zeroGrad();
+
+      // output.forEach((o, i) => {
+      //   o.name = 'output_' + i;
+      //   if (i === correctClassIndex) o.name += '_correct'
+      // });
+      let paramSum = output.map(x => x.exp()).reduce((a, b) => b.add(a), 0);
+      paramSum = paramSum.log().sub(output[correctClassIndex]).div(testDataSet.length);
+      runLoss += paramSum.value;
+
+      paramSum.grad = 1;
+      paramSum.computeGradientsBackward();
+
+      // let expValues = output.map(x => Math.exp(x.value));
+      // let expSum = expValues.reduce((a, b) => a + b, 0);
+      // output.forEach((o, i) => {
+      //   o.grad = (expValues[i] / expSum - ((i === correctClassIndex) ? 1: 0))/testDataSet.length;
+      //   // o.computeGradientsBackward();
+      // });
+      // let aggParam = new Parameter(0, out => {
+      //   return 1;
+      // }, new Set(output), 'agg');
+      // aggParam.grad = 1;
+      // aggParam.computeGradientsBackward();
+
+      learningRate = Math.max(0.1, 1.0 - 0.9*Math.min(100, i)/100);
+      net.forEachParameter(p => p.value -= learningRate * p.grad);
+    }
+
+    console.log('Loss: ', runLoss, ' Accuracy: ' + accuracy/testDataSet.length);
+  }
+
+
+let cnv = document.querySelector('canvas');
+let width = cnv.width =  300;
+let height = cnv.height = 300;
+let ctx = cnv.getContext('2d');
+ctx.fillRect(0, 0, width, height)
+let xRange = [-4, 4];
+let yRange = [-4, 4];
+const colorSchema = {
+  '1': '#FF0000', 
+  '2': '#00FF00',
+  '3': '#0000ff',
+  '4': '#00FFff'
+}
+const backgroundColorSchema = {
+  '1': '#900000', 
+  '2': '#009000',
+  '3': '#000090',
+  '4': '#009090'
+}
+plotPixels(net, backgroundColorSchema, xRange, yRange);
+plotPointsWithClasses(testDataSet, colorSchema, xRange, yRange);
+
+function makeDataset(count) {
+  let dataset = [];
+  for (let i = 0; i < count; i++) {
+    let angle = random.nextDouble() * 2 * Math.PI;
+    let r = random.nextDouble() * 4;
+    let x = r * Math.cos(angle);
+    let y = r * Math.sin(angle);
+
+    let label = Math.floor(r) + 1;
+    dataset.push([x, y, label]);
+  }
+  return dataset;
+}
+
+function plotPixels(net, colorSchema, xLimits, yLimits) {
+  for (let x = 0; x < width; ++x) {
+    for (let y = 0; y < height; ++y) {
+      let dataX = (x / width) * (xLimits[1] - xLimits[0]) + xLimits[0];
+      let dataY = (1 - y / height) * (yLimits[1] - yLimits[0]) + yLimits[0];
+      let out = net.getOutput([dataX, dataY]);
+      let probabilities = getNormalizedProbabilityDistribution(out);
+      let colorIndex = indexMax(probabilities);
+      ctx.fillStyle = colorSchema[colorIndex + 1];
+      ctx.fillRect(x, y, 1, 1);
+    }
+  }
+}
+
+function getNormalizedProbabilityDistribution(params) {
+  let probabilities = params.map(x => Math.exp(x.value));
+  let sum = probabilities.reduce((a, b) => a + b);
+  return probabilities.map(x => x / sum);
+}
+
+function plotPointsWithClasses(points, colors, xLimits, yLimits) {
+  points.forEach(point => {
+    let canvasXY = getCanvasXY(point[0], point[1], xLimits, yLimits);
+    ctx.fillStyle = colors[point[2]];
+    ctx.fillRect(canvasXY.x - 1, canvasXY.y - 1, 2, 2);
+  });
+}
+
+function getCanvasXY(x, y, xLimits, yLimits) {
+  let canvasX = (x - xLimits[0]) / (xLimits[1] - xLimits[0]) * width;
+  let canvasY = (y - yLimits[0]) / (yLimits[1] - yLimits[0]) * height;
+  return {x: canvasX, y: height - canvasY};
+}
+
+function indexMax(array) {
+  let max = -Infinity;
+  let index = -1;
+  for (let i = 0; i < array.length; i++) {
+    if (array[i] > max) {
+      max = array[i];
+      index = i;
+    }
+  }
+  return index;
+}
+</script>
+</body>
+</html>

@@ -172,3 +172,38 @@ test('cosine approximation', (t) => {
   t.ok(loss < 1e-3, 'Loss is minimal')
   t.end();
 });
+
+test('log can be taken', t => {
+  let x = new Parameter(2);
+  let y = new Parameter(3);
+  let result = x.exp().div(x.exp().add(y)).log().mul(-1/2);
+  result.grad = 1;
+  result.computeGradientsBackward();
+
+  t.equal(result.value, -0.5 * Math.log(Math.exp(2) / (Math.exp(2) + 3)))
+  let expected_dx = (1 - Math.exp(x.value) / (Math.exp(x.value) + y.value)) * (-0.5);
+  t.ok(Math.abs(x.grad - expected_dx) < 1e-6, 'partial derivative by x');
+
+  let expected_dy = -1/(Math.exp(x.value) + y.value) * (-.5);
+  t.ok(Math.abs(y.grad - expected_dy) < 1e-6, 'partial derivative by y');
+
+
+  // alternative form should also be true for log(x/y) <=> log(x) - log(y)
+  let x2 = new Parameter(x.value);
+  let y2 = new Parameter(y.value);
+  let altForm = x2.exp().add(y2).log().sub(x2).div(2);
+  altForm.grad = 1;
+  altForm.computeGradientsBackward();
+  t.ok(Math.abs(x2.grad - expected_dx) < 1e-6, 'form 1: partial derivative by x');
+  t.ok(Math.abs(y2.grad - expected_dy) < 1e-6, 'form 1: partial derivative by y');
+
+  let x3 = new Parameter(x.value);
+  let y3 = new Parameter(y.value);
+  let altForm2 = x3.sub(x3.exp().add(y3).log()).div(-2);
+  altForm2.grad = 1;
+  altForm2.computeGradientsBackward();
+  t.ok(Math.abs(x3.grad - expected_dx) < 1e-6, 'form 2: partial derivative by x');
+  t.ok(Math.abs(y3.grad - expected_dy) < 1e-6, 'form 2: partial derivative by y');
+
+  t.end();
+})

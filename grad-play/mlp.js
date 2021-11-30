@@ -1,12 +1,12 @@
 import {Parameter} from './autograd.js';
 
 class Node {
-  constructor(inCount) {
+  constructor(inCount, name) {
     this.w = [];
     for (let i = 0; i < inCount; i++) {
-      this.w.push(new Parameter(Math.random() * 2 - 1));
+      this.w.push(new Parameter(Math.random() * 2 - 1, null, null, 'w_' + name + '_' + i));
     }
-    this.bias = new Parameter(Math.random() * 2 - 1);
+    this.bias = new Parameter(Math.random() * 2 - 1, null, null, 'b_' + name);
   }
 
   getOutput(input) {
@@ -29,10 +29,11 @@ class Node {
 }
 
 class Layer {
-  constructor(inCount, outCount) {
+  constructor(inCount, outCount, layerName) {
     this.nodes = [];
+    this.name = layerName;
     for (let i = 0; i < outCount; i++) {
-      this.nodes.push(new Node(inCount));
+      this.nodes.push(new Node(inCount, layerName + '_' + i));
     }
     this.activation = x => x.relu();
   }
@@ -54,7 +55,7 @@ export class MLP {
   constructor(layerSizes) {
     this.layers = [];
     for (let i = 1; i < layerSizes.length; i++) {
-      this.layers.push(new Layer(layerSizes[i - 1], layerSizes[i]));
+      this.layers.push(new Layer(layerSizes[i - 1], layerSizes[i], i));
     }
     this.layers[this.layers.length - 1].setActivation(x => x);
   }
