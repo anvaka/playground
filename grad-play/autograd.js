@@ -10,16 +10,43 @@ export class Parameter {
     this.name = name;
     this.children = children || emptySet;
     this.backward = backward || Function.prototype;
+    this.parentCount = 0;
   }
 
   computeGradientsBackward() {
-    const traversalOrder = this.getTraversalOrder();
+    const traversalOrder = this.getAnotherTraversalOrder();
     for (let i = 0; i < traversalOrder.length; i++) {
       traversalOrder[i].backward(traversalOrder[i]);
     }
   }
 
   // TODO: Forward compilation/computation without graph recreation?
+  getAnotherTraversalOrder() {
+    // This is non-recursive version of getTraversalOrder, should work better with huge graphs
+    countParents(this);
+
+    let traversalOrder = [];
+    let visited = new Set();
+    let queue = [this];
+    while (queue.length > 0) {
+      let node = queue.shift();
+      if (visited.has(node)) continue;
+      if (node.parentCount !== 0) {
+        throw new Error('Should have no parents at this point');
+      }
+
+      traversalOrder.push(node);
+      visited.add(node);
+
+      node.children.forEach(child => {
+        child.parentCount -= 1
+        if (child.parentCount === 0) {
+          queue.push(child);
+        }
+      })
+    }
+    return traversalOrder;
+  }
 
   getTraversalOrder() {
     let traversalOrder = [];
@@ -113,7 +140,7 @@ export class Parameter {
       Math.pow(this.value, degree), // Value
       (out) => {                            // backprop gradient
         this.grad  += degree * Math.pow(this.value, degree - 1) * out.grad;
-      }, emptySet, '^' + degree);
+      }, new Set([this]), '^' + degree);
   }
 
   sin() {
@@ -146,6 +173,14 @@ export class Parameter {
       (out) => {                   // backprop gradient
         this.grad  += out.grad / this.value;
       }, new Set([this]), 'log');
+  }
+
+  abs() {
+    return new Parameter(
+      Math.abs(this.value), // Value
+      (out) => {                   // backprop gradient
+        this.grad  += out.grad * Math.sign(this.value);
+      }, new Set([this]), 'abs');
   }
 
   relu() {
@@ -202,5 +237,33 @@ export class Parameter {
     });
     dot.push('}');
     return dot.join('\n');
+  }
+}
+
+function setParentCountToZero(from) {
+  let queue = [from];
+  let visited = new Set();
+  while (queue.length > 0) {
+    let node = queue.pop();
+    if (visited.has(node)) continue;
+    visited.add(node);
+    node.parentCount = 0;
+    node.children.forEach(child => queue.push(child));
+  }
+}
+
+function countParents(from) {
+  setParentCountToZero(from)
+
+  let queue = [from];
+  let visited = new Set();
+  while (queue.length > 0) {
+    let node = queue.pop();
+    if (visited.has(node)) continue;
+    visited.add(node);
+    node.children.forEach(child => {
+      child.parentCount += 1;
+      queue.push(child);
+    });
   }
 }
