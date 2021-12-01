@@ -204,7 +204,6 @@ test('it fits', t => {
       k.resetGradient();
       b.resetGradient();
     }
-    console.log('loss is', loss/batchSize);
 
     // minibatch
     // k.data[0] -= learningRate * kSum/batchSize;

@@ -27,7 +27,6 @@ test('it can feed forward', (t) => {
       sampleCount += 1;
       totalLoss += delta * delta;
     }
-    console.log('loss: ', totalLoss / sampleCount);
   }
 
   console.log('Predicting f(10): ', net.getOutput([10])[0].value);
