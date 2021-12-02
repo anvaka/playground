@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "test": "tap test/*.js"
+  },
   "type": "module",
   "devDependencies": {
     "make_moons": "^0.3.5",
