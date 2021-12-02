@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Minimize layout energy of a graph</title>
+  <script src='https://cdn.jsdelivr.net/npm/simplesvg@0.1.1/dist/simplesvg.min.js'></script>
+  <script src='https://unpkg.com/ngraph.graph@19.0.0/dist/ngraph.graph.js'></script>
+  <script src='https://cdn.jsdelivr.net/npm/ngraph.generators@19.2.0/dist/ngraph.generators.js'></script>
+  <script src='https://cdn.jsdelivr.net/npm/ngraph.random/dist/ngraph.random.js'></script>
+  <script src='https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js'></script>
+  <script src='https://cdn.jsdelivr.net/npm/ngraph.fromdot/dist/ngraph.fromDot.js'></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      padding: 0;
+    }
+    svg, body {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+  </style>
+</head>
+<body>
+  <svg viewBox='-10 -10 20 20'>
+    <g id='scene'></g>
+  </svg>
+
+<script type="module">
+import {Parameter} from '../autograd.js';
+
+let desiredLength = 30;
+let scene = document.querySelector('#scene');
+let random = ngraphRandom(42);
+let pz = panzoom(scene);
+let learningRate = 0.1;
+let graph = createGraph();
+
+// graph.addLink(0, 1);
+// graph.addLink(1, 2);
+// graph.addLink(0, 2);
+showGraph(generators.grid(10,5));
+// fetch('https://raw.githubusercontent.com/anvaka/miserables/master/miserables.dot', {mode: 'cors'}).then(x => x.text()).
+// then(x => {
+//   showGraph(fromDot(x));
+// })
+// showGraph(generators.complete(6));
+
+function showGraph(graph) {
+  let nodes = [], edges= [];
+  graph.forEachNode(node => {
+    node.pos = [
+      new Parameter((random.nextDouble()) * 10), 
+      new Parameter((random.nextDouble()) * 10),
+    ];
+    nodes.push(node);
+  });
+
+  graph.forEachLink(link => {
+    let from = graph.getNode(link.fromId).pos;
+    let to = graph.getNode(link.toId).pos;
+    let edgeData = { 
+      from, to, flex: new Parameter(1),
+      ui: sivg('line', {
+        x1: from[0].value,
+        y1: from[1].value,
+        x2: to[0].value,
+        y2: to[1].value,
+        'stroke-width': 0.1,
+        stroke: 'black'
+      })
+    };
+    edges.push(edgeData);
+    link.data = edgeData;
+  });
+  edges.forEach(e => {
+    scene.appendChild(e.ui);
+  });
+
+  drawFrame();
+
+  function drawFrame() {
+    requestAnimationFrame(drawFrame);
+    console.time('grad parameter');
+    zeroGradient();
+    let loss = getLoss(graph);
+    loss.computeGradientsBackward();
+
+    nodes.forEach(node => {
+      let pos = node.pos;
+      
+      node.pos[0].value -= clip(5, pos[0].grad) * learningRate;
+      node.pos[1].value -= clip(5, pos[1].grad) * learningRate;
+    });
+    console.timeEnd('grad parameter');
+    redraw();
+  }
+
+  function zeroGradient() {
+    nodes.forEach(node => {
+      node.pos[0].grad = 0;
+      node.pos[1].grad = 0;
+    })
+  }
+
+  function redraw() {
+    edges.forEach(e => {
+      let x1 = Number.parseFloat(e.ui.attr('x1'));
+      let x2 = Number.parseFloat(e.ui.attr('x2'));
+      let y1 = Number.parseFloat(e.ui.attr('y1'));
+      let y2 = Number.parseFloat(e.ui.attr('y2'));
+      
+      e.ui.attr({
+        x1: lerp(x1, e.from[0].value, 1),
+        y1: lerp(y1, e.from[1].value, 1),
+        x2: lerp(x2, e.to[0].value, 1),
+        y2: lerp(y2, e.to[1].value, 1)
+      })
+    })
+  }
+
+  function lerp(from, to, t) {
+    return from * (1 - t) + to * (t)
+  }
+}
+
+function getLoss(graph) {
+  let loss = new Parameter(0);
+  if (desiredLength > 1) {
+    desiredLength *= 0.99;
+  }
+  graph.forEachLink(e => {
+    let d = getLength(e.data.from, e.data.to);
+    //loss = loss.add(d.sub(desiredLength).abs());
+    loss = loss.add(d);
+  });
+  // let desiredLinksLength = graph.getLinksCount() * 100;
+  // loss = loss.sub(desiredLinksLength).abs();
+
+  //loss = loss.div(graph.getLinksCount());
+
+  graph.forEachNode(node => {
+    let nodeLoss = new Parameter(0);
+    
+    let count = 0;
+    graph.forEachNode(other => {
+      if (other === node) return;
+      let l = getLength(node.pos, other.pos);
+      if (Math.abs(l.value)< 1e-2) {
+        l.value = 1e-2;
+      }
+      nodeLoss = nodeLoss.add(l.pow(-2));
+      count += 1;
+    });
+    if (count) loss = loss.add(nodeLoss.div(count));
+  });
+
+  loss.grad = 1;
+  return loss;
+}
+
+function getLength(a, b) {
+  let dx = a[0].sub(b[0]).pow(2);
+  let dy = a[1].sub(b[1]).pow(2); 
+  return dx.add(dy).pow(0.5);
+}
+
+function clip(max, x) {
+  if (x > max) return max;
+  if (x < -max) return -max;
+  return x;
+}
+
+
+</script>
+</body>
+</html>

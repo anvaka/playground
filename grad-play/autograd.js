@@ -197,7 +197,7 @@ export class Parameter {
       1 / (1 + Math.exp(-this.value)), // Value
       function(out) {                   // backprop gradient
         // Note that `this` is actual value of the parameter, not parent's value
-        self.grad  += out.grad * (1 - this.value) * this.value;
+        self.grad  += out.grad * (1 - out.value) * out.value;
       }, new Set([this]), 'sigmoid');
   }
 
@@ -215,7 +215,7 @@ export class Parameter {
       Math.tanh(this.value), // Value
       function(out) {                   // backprop gradient
         // Note that `this` is actual value of the parameter, not parent's value
-        self.grad  += out.grad * (1 - this.value * this.value);
+        self.grad  += out.grad * (1 - out.value * out.value);
       }, new Set([this]), 'tanh');
   }
 
