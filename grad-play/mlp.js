@@ -35,7 +35,7 @@ class Layer {
     for (let i = 0; i < outCount; i++) {
       this.nodes.push(new Node(inCount, layerName + '_' + i));
     }
-    this.activation = x => x.relu();
+    this.activation = x => x.ReLU();
   }
 
   setActivation(activation) {

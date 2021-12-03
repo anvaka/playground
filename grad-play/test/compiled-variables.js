@@ -1,10 +1,10 @@
 import {test} from 'tap';
-import {Variable, NS} from '../compile-excercise/Variable.js';
+import {ScalarVariable, NS} from '../compile-excercise/Variable.js';
 
 test('it can multiply stuff', (t) => {
   let ns = new NS();
-  let a = new Variable(ns);
-  let b = new Variable(ns);
+  let a = new ScalarVariable(ns);
+  let b = new ScalarVariable(ns);
   let out = a.add(b).mul(a);
 
   out.compile();
@@ -28,8 +28,8 @@ test('it can multiply stuff', (t) => {
 
 test('it can subtract variable', t => {
   let ns = new NS();
-  let a = new Variable(ns);
-  let b = new Variable(ns);
+  let a = new ScalarVariable(ns);
+  let b = new ScalarVariable(ns);
   let out = a.sub(b);
   out.compile();
   a.setValue(2); b.setValue(3);
@@ -46,7 +46,7 @@ test('it can subtract variable', t => {
 
 test('it can subtract constant', t => {
   let ns = new NS();
-  let a = new Variable(ns);
+  let a = new ScalarVariable(ns);
   let out = a.sub(3);
   out.compile();
   a.setValue(2);
@@ -62,7 +62,7 @@ test('it can subtract constant', t => {
 
 test('it can mul constant', t => {
   let ns = new NS();
-  let a = new Variable(ns);
+  let a = new ScalarVariable(ns);
   let out = a.mul(3);
   out.compile();
   a.setValue(2);
@@ -80,7 +80,7 @@ test('it can mul constant', t => {
 
 test('it can add constant', t => {
   let ns = new NS();
-  let a = new Variable(ns);
+  let a = new ScalarVariable(ns);
   let out = a.add(3);
   out.compile();
   a.setValue(2);
@@ -96,8 +96,8 @@ test('it can add constant', t => {
 
 test('it can pow variable', t => {
   let ns = new NS();
-  let a = new Variable(ns);
-  let b = new Variable(ns);
+  let a = new ScalarVariable(ns);
+  let b = new ScalarVariable(ns);
   let out = a.pow(b);
   out.compile();
   a.setValue(2); b.setValue(3);
@@ -119,8 +119,8 @@ test('it can pow variable', t => {
 
 test('it can pow variable', t => {
   let ns = new NS();
-  let a = new Variable(ns);
-  let b = new Variable(ns);
+  let a = new ScalarVariable(ns);
+  let b = new ScalarVariable(ns);
   let out = a.pow(b);
   out.compile();
   a.setValue(2); b.setValue(3);
@@ -142,7 +142,7 @@ test('it can pow variable', t => {
 
 test('it can pow constant', t => {
   let ns = new NS();
-  let a = new Variable(ns);
+  let a = new ScalarVariable(ns);
   let out = a.pow(3);
   out.compile();
   a.setValue(2);
@@ -160,8 +160,8 @@ test('it can pow constant', t => {
 
 test('it can divide by variable', t => {
   let ns = new NS();
-  let a = new Variable(ns);
-  let b = new Variable(ns);
+  let a = new ScalarVariable(ns);
+  let b = new ScalarVariable(ns);
   let out = a.div(b);
   out.compile();
   a.setValue(2); b.setValue(3);
@@ -183,7 +183,7 @@ test('it can divide by variable', t => {
 
 test('it can divide by constant', t => {
   let ns = new NS();
-  let a = new Variable(ns);
+  let a = new ScalarVariable(ns);
   let out = a.div(3);
   out.compile();
   a.setValue(2);
@@ -202,7 +202,7 @@ test('it can divide by constant', t => {
 
 test('it can get cosine', t => {
   let ns = new NS();
-  let a = new Variable(ns);
+  let a = new ScalarVariable(ns);
   let out = a.cos();
   out.compile();
   a.setValue(Math.PI / 2);
@@ -219,7 +219,7 @@ test('it can get cosine', t => {
 
 test('it can get sine', t => {
   let ns = new NS();
-  let a = new Variable(ns);
+  let a = new ScalarVariable(ns);
   let out = a.sin();
   out.compile();
   a.setValue(Math.PI / 2);
@@ -236,7 +236,7 @@ test('it can get sine', t => {
 
 test('it can get abs', t => {
   let ns = new NS();
-  let a = new Variable(ns);
+  let a = new ScalarVariable(ns);
   let out = a.abs();
   out.compile();
   a.setValue(-2);
@@ -253,7 +253,7 @@ test('it can get abs', t => {
 
 test('it can get exp()', t => {
   let ns = new NS();
-  let a = new Variable(ns);
+  let a = new ScalarVariable(ns);
   let out = a.exp();
   out.compile();
   a.setValue(2);
@@ -270,7 +270,7 @@ test('it can get exp()', t => {
 
 test('it can get ReLU()', t => {
   let ns = new NS();
-  let a = new Variable(ns);
+  let a = new ScalarVariable(ns);
   let out = a.ReLU();
   out.compile();
   a.setValue(-2);
@@ -287,7 +287,7 @@ test('it can get ReLU()', t => {
 
 test('it can get ELU', t => {
   let ns = new NS();
-  let a = new Variable(ns);
+  let a = new ScalarVariable(ns);
   let out = a.ELU();
   out.compile();
   a.setValue(-2);
@@ -304,7 +304,7 @@ test('it can get ELU', t => {
 
 test('it can get sigmoid', t => {
   let ns = new NS();
-  let a = new Variable(ns);
+  let a = new ScalarVariable(ns);
   let out = a.sigmoid();
   out.compile();
   a.setValue(-2);
@@ -323,7 +323,7 @@ test('it can get sigmoid', t => {
 
 test('it can get tanh', t => {
   let ns = new NS();
-  let a = new Variable(ns);
+  let a = new ScalarVariable(ns);
   let out = a.tanh();
   out.compile();
   a.setValue(-2);
@@ -338,4 +338,4 @@ test('it can get tanh', t => {
   t.equal(out.getGradient(), 2);
   t.equal(a.getGradient(), 2 * (1 - expected * expected));
   t.end();
-})
+});

@@ -15,59 +15,67 @@
   <canvas></canvas>
 
 <script type="module">
-  import {MLP} from '../mlp.js';
-  import {Parameter} from '../autograd.js';
+  import {MLP} from '../compile-excercise/mlp-var.js';
+  import {FunctionVariable} from '../compile-excercise/Variable.js';
 
-  let random = ngraphRandom(2);
+  let random = ngraphRandom();
   let testDataSet = makeDataset(100)
 
   // (x,y) input, 4 classes output
-  let net = new MLP([2,8, 4]);
+  let net = new MLP([2, 8, 4]);
   let count = 0;
   net.forEachParameter(p => count++);
-  //net.forEachParameter(p => p.value = 0.1);
-  console.log('Total parameters', count)
+  console.log('Total parameters', count);
 
-  let learningRate;
+  let expectedClassProbability = new FunctionVariable(net.ns);
+  net.setLoss(output => {
+    // negative log-likelihood loss:
+    let loss = output.map(x => x.exp()).reduce((a, b) => b.add(a), 0);
+    return loss.log().sub(expectedClassProbability).div(testDataSet.length);
+  })
+
+  // precompile huge chunk of the "static" network to avoid repetitive tree traversal..
+  net.compile();
+
+  // every input should now be ready to initialized to random value
+  //net.forEachParameter(p => p.value = 0.1);
+  net.forEachParameter(p => p.value = random.nextDouble() * 2 - 1);
+
   console.time('training');
+  let learningRate;
   for (let i = 0; i < 200; i++) {
     let accuracy = 0;
     // ngraphRandom.randomIterator(testDataSet).shuffle();
     let runLoss = 0;
     for (let j = 0; j < testDataSet.length; j++) {
-      let output = net.getOutput([testDataSet[j][0], testDataSet[j][1]]);
-
       let correctClassIndex = (testDataSet[j][2] - 1);
+      expectedClassProbability.setCallback(() => {
+        return net.output[correctClassIndex].value
+      }, (g) => {
+        let y = net.output[correctClassIndex];
+        y.compiled.gv[y.id] += g;
+      });
+
+      let output = net.forward([testDataSet[j][0], testDataSet[j][1]])
+
       let predictedClassIndex = indexMax(getNormalizedProbabilityDistribution(output));
       accuracy += (predictedClassIndex === correctClassIndex) ? 1 : 0;
 
-      net.zeroGrad();
+      let {v, gv} = net.loss.compiled; // `v` is the value, `gv` is the gradient
+      gv.fill(0); // reset gradients from the previous iteration
 
-      // output.forEach((o, i) => {
-      //   o.name = 'output_' + i;
-      //   if (i === correctClassIndex) o.name += '_correct'
-      // });
-      let paramSum = output.map(x => x.exp()).reduce((a, b) => b.add(a), 0);
-      paramSum = paramSum.log().sub(output[correctClassIndex]).div(testDataSet.length);
-      runLoss += paramSum.value;
+      runLoss += net.loss.value;
 
-      paramSum.grad = 1;
-      paramSum.computeGradientsBackward();
+      net.loss.setGradient(1); // And propaget the gradient back to the parameters
+      net.loss.backwardPass();
 
-      // let expValues = output.map(x => Math.exp(x.value));
-      // let expSum = expValues.reduce((a, b) => a + b, 0);
-      // output.forEach((o, i) => {
-      //   o.grad = (expValues[i] / expSum - ((i === correctClassIndex) ? 1: 0))/testDataSet.length;
-      //   // o.computeGradientsBackward();
-      // });
-      // let aggParam = new Parameter(0, out => {
-      //   return 1;
-      // }, new Set(output), 'agg');
-      // aggParam.grad = 1;
-      // aggParam.computeGradientsBackward();
-
+      // This is the same as `net.forEachParameter(p => p.value -= learningRate * p.grad);`
+      // but faster, as we are writing to the direct memory location:
       learningRate = Math.max(0.1, 1.0 - 0.9*Math.min(100, i)/100);
-      net.forEachParameter(p => p.value -= learningRate * p.grad);
+      // for (let k = 0; k < v.length; ++k) {
+      //   v[k] -= learningRate * gv[k];
+      // }
+      net.forEachParameter(p => p.value -= learningRate * p.getGradient());
     }
 
     console.log('Loss: ', runLoss, ' Accuracy: ' + accuracy/testDataSet.length);
@@ -116,7 +124,7 @@ function plotPixels(net, colorSchema, xLimits, yLimits) {
     for (let y = 0; y < height; ++y) {
       let dataX = (x / width) * (xLimits[1] - xLimits[0]) + xLimits[0];
       let dataY = (1 - y / height) * (yLimits[1] - yLimits[0]) + yLimits[0];
-      let out = net.getOutput([dataX, dataY]);
+      let out = net.forward([dataX, dataY]);
       let probabilities = getNormalizedProbabilityDistribution(out);
       let colorIndex = indexMax(probabilities);
       ctx.fillStyle = colorSchema[colorIndex + 1];

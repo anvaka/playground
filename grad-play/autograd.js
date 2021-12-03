@@ -183,7 +183,7 @@ export class Parameter {
       }, new Set([this]), 'abs');
   }
 
-  relu() {
+  ReLU() {
     return new Parameter(
       Math.max(0, this.value), // Value
       (out) => {                   // backprop gradient

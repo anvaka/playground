@@ -29,7 +29,7 @@
     for (let j = 0; j < testDataSet.length; j++) {
       let output = net.getOutput([testDataSet[j][0], testDataSet[j][1]]);
       let yi = testDataSet[j][2];
-      let totalLoss = new Parameter(1).sub(output[0].mul(yi)).relu().div(testDataSet.length);
+      let totalLoss = new Parameter(1).sub(output[0].mul(yi)).ReLU().div(testDataSet.length);
       accuracy += Math.sign(output[0].value) == Math.sign(yi) ? 1 : 0;
       net.zeroGrad();
       // let regularizationLoss = new Parameter(0);
