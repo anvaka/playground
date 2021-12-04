@@ -41,7 +41,7 @@ export class NS {
   }
 }
 
-export class Variable {
+export class BaseVariable {
   constructor(ns, children) {
     this.ns = ns;
     this.children = children || emptySet;
@@ -52,7 +52,6 @@ export class Variable {
     this.name = ns.getVariableNameForId(this.id);
     this.gradName = ns.getGradientNameForId(this.id);
   }
-
 
   forwardPass() {
     if (!this.compiled) throw new Error('Variable not compiled');
@@ -112,25 +111,56 @@ return {
   }
 }
 
-export class FunctionVariable extends Variable {
+export class VariableProxy extends BaseVariable {
   constructor(ns, children) {
     super(ns, children);
 
-    this.funcId = ns.allocateFunctionSpace(() => this.cbGetValue(), (g) => this.cbSetGradient(g));
+    this.funcId = ns.allocateFunctionSpace(this.getValue.bind(this), this.addGradient.bind(this));
     this.forwardCode = `${this.name} = f[${this.funcId}]();`;
     this.backwardCode = `gf[${this.funcId}](${this.gradName}); ${this.gradName} = 0;`;
-    this.returnValue = null;
-    this.cbGetValue = null;
-    this.cbSetGradient = null;
+    this.src = null;
   }
 
-  setCallback(getValue, setGradient) {
-    this.cbGetValue = getValue;
-    this.cbSetGradient = setGradient;
+  setSourceValue(value) {
+    this.src = value;
+  }
+
+  getValue() {
+    return this.src.value;
+  }
+
+  addGradient(g) {
+    this.src.compiled.gv[this.src.id] += g;
   }
 }
 
-export class ScalarVariable extends Variable {
+export class ReferenceVariable extends BaseVariable {
+  constructor(ns, children) {
+    super(ns, children);
+
+    // Instead of storying the value in the variable, we store the id of the variable
+    // in the memory. This changes how the variable is accessed
+    this.name = `v[v[${this.id}]]`;
+    this.gradName = `gv[v[${this.id}]]`;
+  }
+
+  setReference(value) {
+    if (!value.compiled) value.compiled = this.compiled;
+    this.compiled.v[this.id] = value.id;
+  }
+
+  getValue() {
+    let v = this.compiled.v;
+    return v[v[id]];
+  }
+
+  setValue(value) {
+    let v = this.compiled.v;
+    v[v[this.id]] = value;
+  }
+}
+
+export class Variable extends BaseVariable {
   constructor(ns, children, name) {
     super(ns, children);
     this.uiName = name;
@@ -163,11 +193,16 @@ export class ScalarVariable extends Variable {
     if (!this.compiled) throw new Error('Variable not compiled');
     return this.compiled.gv[this.id];
   }
+
+  gradientStep(learningRate) {
+    // todo: need clamping?
+    this.compiled.v[this.id] -= learningRate * this.compiled.gv[this.id];
+  }
   
   // These are mathematical functions, add yours.
   add(other) {
-    if (other instanceof Variable) {
-      let result = new ScalarVariable(this.ns, new Set([this, other]));
+    if (other instanceof BaseVariable) {
+      let result = new Variable(this.ns, new Set([this, other]));
       result.setForwardCode(`${result.name} = ${this.name} + ${other.name};`);
       result.setBackwardCode(
         `${this.gradName} += ${result.gradName}; ${other.gradName} += ${result.gradName}`
@@ -178,7 +213,7 @@ export class ScalarVariable extends Variable {
       throw new Error('Cannot add NaN');
     }
 
-    let result = new ScalarVariable(this.ns, new Set([this]));
+    let result = new Variable(this.ns, new Set([this]));
     let safeValue = Number.parseFloat(other);
 
     result.setForwardCode(`${result.name} = ${this.name} + ${safeValue};`);
@@ -187,8 +222,8 @@ export class ScalarVariable extends Variable {
   }
 
   sub(other) {
-    if (other instanceof Variable) {
-      let result = new ScalarVariable(this.ns, new Set([this, other]));
+    if (other instanceof BaseVariable) {
+      let result = new Variable(this.ns, new Set([this, other]));
       result.setForwardCode(`${result.name} = ${this.name} - ${other.name};`);
       result.setBackwardCode(
         `${this.gradName} += ${result.gradName}; ${other.gradName} -= ${result.gradName}`
@@ -199,7 +234,7 @@ export class ScalarVariable extends Variable {
       throw new Error('Cannot sub NaN');
     }
 
-    let result = new ScalarVariable(this.ns, new Set([this]));
+    let result = new Variable(this.ns, new Set([this]));
     let safeValue = Number.parseFloat(other);
 
     result.setForwardCode(`${result.name} = ${this.name} - ${safeValue};`);
@@ -208,8 +243,8 @@ export class ScalarVariable extends Variable {
   }
 
   mul(other) {
-    if (other instanceof Variable) {
-      let result = new ScalarVariable(this.ns, new Set([this, other]));
+    if (other instanceof BaseVariable) {
+      let result = new Variable(this.ns, new Set([this, other]));
       result.setForwardCode(`${result.name} = ${this.name} * ${other.name};`);
       result.setBackwardCode(
         `${this.gradName} += ${other.name} * ${result.gradName}; ${other.gradName} += ${this.name} * ${result.gradName}`
@@ -220,7 +255,7 @@ export class ScalarVariable extends Variable {
       throw new Error('Cannot multiply by NaN');
     }
 
-    let result = new ScalarVariable(this.ns, new Set([this]));
+    let result = new Variable(this.ns, new Set([this]));
     let safeValue = Number.parseFloat(other);
 
     result.setForwardCode(`${result.name} = ${this.name} * ${safeValue};`);
@@ -229,8 +264,8 @@ export class ScalarVariable extends Variable {
   }
 
   div(other) {
-    if (other instanceof Variable) {
-      let result = new ScalarVariable(this.ns, new Set([this, other]));
+    if (other instanceof BaseVariable) {
+      let result = new Variable(this.ns, new Set([this, other]));
       result.setForwardCode(`${result.name} = ${this.name} / ${other.name};`);
       result.setBackwardCode(
         `${this.gradName} += ${result.gradName} / ${other.name}; ` +
@@ -241,7 +276,7 @@ export class ScalarVariable extends Variable {
     if (Number.isNaN(other)) {
       throw new Error('Cannot divide by NaN');
     }
-    let result = new ScalarVariable(this.ns, new Set([this]));
+    let result = new Variable(this.ns, new Set([this]));
     let safeValue = Number.parseFloat(other);
     result.setForwardCode(`${result.name} = ${this.name} / ${safeValue};`);
     result.setBackwardCode(`${this.gradName} += ${result.gradName} / ${safeValue};`);
@@ -249,8 +284,8 @@ export class ScalarVariable extends Variable {
   }
 
   pow(degree) {
-    if (degree instanceof Variable) {
-      let result = new ScalarVariable(this.ns, new Set([this, degree]));
+     if (degree instanceof BaseVariable) {
+      let result = new Variable(this.ns, new Set([this, degree]));
       result.setForwardCode(`${result.name} = Math.pow(${this.name}, ${degree.name});`);
       // https://www.wolframalpha.com/input/?i=partial+derivative+of+a+%5Eb
       result.setBackwardCode(
@@ -263,7 +298,7 @@ export class ScalarVariable extends Variable {
       throw new Error('Cannot pow NaN');
     }
 
-    let result = new ScalarVariable(this.ns, new Set([this]));
+    let result = new Variable(this.ns, new Set([this]));
     let safeValue = Number.parseFloat(degree);
     result.setForwardCode(`${result.name} = Math.pow(${this.name}, ${safeValue});`);
     result.setBackwardCode(`${this.gradName} += ${safeValue} * Math.pow(${this.name}, ${safeValue} - 1) * ${result.gradName};`);
@@ -271,63 +306,63 @@ export class ScalarVariable extends Variable {
   }
 
   sin() {
-    let result = new ScalarVariable(this.ns, new Set([this]));
+    let result = new Variable(this.ns, new Set([this]));
     result.setForwardCode(`${result.name} = Math.sin(${this.name});`);
     result.setBackwardCode(`${this.gradName} += Math.cos(${this.name}) * ${result.gradName};`);
     return result;
   }
 
   cos() {
-    let result = new ScalarVariable(this.ns, new Set([this]));
+    let result = new Variable(this.ns, new Set([this]));
     result.setForwardCode(`${result.name} = Math.cos(${this.name});`);
     result.setBackwardCode(`${this.gradName} -= Math.sin(${this.name}) * ${result.gradName};`);
     return result;
   }
 
   abs() {
-    let result = new ScalarVariable(this.ns, new Set([this]));
+    let result = new Variable(this.ns, new Set([this]));
     result.setForwardCode(`${result.name} = Math.abs(${this.name});`);
     result.setBackwardCode(`${this.gradName} += Math.sign(${this.name}) * ${result.gradName};`);
     return result;
   }
 
   exp() {
-    let result = new ScalarVariable(this.ns, new Set([this]));
+    let result = new Variable(this.ns, new Set([this]));
     result.setForwardCode(`${result.name} = Math.exp(${this.name});`);
     result.setBackwardCode(`${this.gradName} += ${result.name} * ${result.gradName};`);
     return result;
   }
 
   log() {
-    let result = new ScalarVariable(this.ns, new Set([this]));
+    let result = new Variable(this.ns, new Set([this]));
     result.setForwardCode(`${result.name} = Math.log(${this.name});`);
     result.setBackwardCode(`${this.gradName} += ${result.gradName} / ${this.name};`);
     return result;
   }
 
   ReLU() {
-    let result = new ScalarVariable(this.ns, new Set([this]));
+    let result = new Variable(this.ns, new Set([this]));
     result.setForwardCode(`${result.name} = Math.max(0, ${this.name});`);
     result.setBackwardCode(`${this.gradName} += ${result.gradName} * (${this.name} > 0);`);
     return result;
   }
 
   ELU() {
-    let result = new ScalarVariable(this.ns, new Set([this]));
+    let result = new Variable(this.ns, new Set([this]));
     result.setForwardCode(`${result.name} = ${this.name} > 0 ? ${this.name} : (Math.exp(${this.name}) - 1);`);
     result.setBackwardCode(`${this.gradName} += ${result.gradName} * (${this.name} > 0 ? 1 : Math.exp(${this.name}));`);
     return result;
   }
 
   sigmoid() {
-    let result = new ScalarVariable(this.ns, new Set([this]));
+    let result = new Variable(this.ns, new Set([this]));
     result.setForwardCode(`${result.name} = 1 / (1 + Math.exp(-${this.name}));`);
     result.setBackwardCode(`${this.gradName} += ${result.gradName} * ${result.name} * (1 - ${result.name});`);
     return result;
   }
 
   tanh() {
-    let result = new ScalarVariable(this.ns, new Set([this]));
+    let result = new Variable(this.ns, new Set([this]));
     result.setForwardCode(`${result.name} = Math.tanh(${this.name});`);
     result.setBackwardCode(`${this.gradName} += ${result.gradName} * (1 - ${result.name} * ${result.name});`);
     return result;

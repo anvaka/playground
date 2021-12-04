@@ -22,7 +22,7 @@
   let testDataSet = makeDataset(100)
 
   // (x,y) input, 4 classes output
-  let net = new MLP([2,8, 4]);
+  let net = new MLP([2, 8, 4]);
   let count = 0;
   net.forEachParameter(p => count++);
   //net.forEachParameter(p => p.value = 0.1);

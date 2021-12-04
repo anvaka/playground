@@ -16,7 +16,7 @@
 
 <script type="module">
   import {MLP} from '../compile-excercise/mlp-var.js';
-  import {FunctionVariable} from '../compile-excercise/Variable.js';
+  import {ReferenceVariable, Variable} from '../compile-excercise/Variable.js';
 
   let random = ngraphRandom();
   let testDataSet = makeDataset(100)
@@ -27,38 +27,43 @@
   net.forEachParameter(p => count++);
   console.log('Total parameters', count);
 
-  let expectedClassProbability = new FunctionVariable(net.ns);
+  // We don't know what expected class will be on each sample,
+  // so we allocate a reference to variable and use it to compile
+  // the loss function:
+  let expectedClassProbability = new ReferenceVariable(net.ns);
   net.setLoss(output => {
-    // negative log-likelihood loss:
+    // negative log-likelihood loss is the same as:
+    // let maxVar = getMaxValueVariable(output);
+    // return maxVar.sub(expectedClassProbability).div(testDataSet.length);
+
     let loss = output.map(x => x.exp()).reduce((a, b) => b.add(a), 0);
     return loss.log().sub(expectedClassProbability).div(testDataSet.length);
   })
 
-  // precompile huge chunk of the "static" network to avoid repetitive tree traversal..
+  // Compile the model into static functions, so that we don't have to traverse
+  // computation graph on each learning iteration.
   net.compile();
 
+  // Since we've got parameters compiled and space allocated, we can assign values to them:
   // every input should now be ready to initialized to random value
-  //net.forEachParameter(p => p.value = 0.1);
   net.forEachParameter(p => p.value = random.nextDouble() * 2 - 1);
 
   console.time('training');
-  let learningRate;
   for (let i = 0; i < 200; i++) {
     let accuracy = 0;
     // ngraphRandom.randomIterator(testDataSet).shuffle();
     let runLoss = 0;
+    let learningRate = Math.max(0.1, 1.0 - 0.9*Math.min(100, i)/100);
     for (let j = 0; j < testDataSet.length; j++) {
       let correctClassIndex = (testDataSet[j][2] - 1);
-      expectedClassProbability.setCallback(() => {
-        return net.output[correctClassIndex].value
-      }, (g) => {
-        let y = net.output[correctClassIndex];
-        y.compiled.gv[y.id] += g;
-      });
+
+      // "materialize" reference with valid expected class value
+      expectedClassProbability.setReference(net.output[correctClassIndex]);
 
       let output = net.forward([testDataSet[j][0], testDataSet[j][1]])
 
-      let predictedClassIndex = indexMax(getNormalizedProbabilityDistribution(output));
+      // let predictedClassIndex = indexOfMaxElement(getNormalizedProbabilityDistribution(output));
+      let predictedClassIndex = indexOfMaxVariable(output);
       accuracy += (predictedClassIndex === correctClassIndex) ? 1 : 0;
 
       let {v, gv} = net.loss.compiled; // `v` is the value, `gv` is the gradient
@@ -69,13 +74,7 @@
       net.loss.setGradient(1); // And propaget the gradient back to the parameters
       net.loss.backwardPass();
 
-      // This is the same as `net.forEachParameter(p => p.value -= learningRate * p.grad);`
-      // but faster, as we are writing to the direct memory location:
-      learningRate = Math.max(0.1, 1.0 - 0.9*Math.min(100, i)/100);
-      // for (let k = 0; k < v.length; ++k) {
-      //   v[k] -= learningRate * gv[k];
-      // }
-      net.forEachParameter(p => p.value -= learningRate * p.getGradient());
+      net.forEachParameter(p => p.gradientStep(learningRate));
     }
 
     console.log('Loss: ', runLoss, ' Accuracy: ' + accuracy/testDataSet.length);
@@ -125,8 +124,9 @@ function plotPixels(net, colorSchema, xLimits, yLimits) {
       let dataX = (x / width) * (xLimits[1] - xLimits[0]) + xLimits[0];
       let dataY = (1 - y / height) * (yLimits[1] - yLimits[0]) + yLimits[0];
       let out = net.forward([dataX, dataY]);
-      let probabilities = getNormalizedProbabilityDistribution(out);
-      let colorIndex = indexMax(probabilities);
+      // let probabilities = getNormalizedProbabilityDistribution(out);
+      // let colorIndex = indexOfMaxElement(probabilities);
+      let colorIndex = indexOfMaxVariable(out);
       ctx.fillStyle = colorSchema[colorIndex + 1];
       ctx.fillRect(x, y, 1, 1);
     }
@@ -153,7 +153,19 @@ function getCanvasXY(x, y, xLimits, yLimits) {
   return {x: canvasX, y: height - canvasY};
 }
 
-function indexMax(array) {
+function indexOfMaxVariable(array) {
+  let max = -Infinity;
+  let index = -1;
+  for (let i = 0; i < array.length; i++) {
+    if (array[i].value > max) {
+      max = array[i].value;
+      index = i;
+    }
+  }
+  return index;
+}
+
+function indexOfMaxElement(array) {
   let max = -Infinity;
   let index = -1;
   for (let i = 0; i < array.length; i++) {
@@ -163,6 +175,18 @@ function indexMax(array) {
     }
   }
   return index;
+}
+
+function getMaxValueVariable(arr) {
+  let result = new Variable(arr[0].ns, new Set(arr))
+
+  result.setForwardCode(`${result.name} = Math.max(...[${arr.map(x => x.name)}]);`);
+  result.setBackwardCode(
+    arr.map(v => {
+      return `${v.gradName} += (${result.name} === ${v.name} ? ${result.gradName} : 0);`
+    }).join('\n')
+  )
+  return result;
 }
 </script>
 </body>

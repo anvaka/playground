@@ -32,7 +32,7 @@
   </svg>
 
 <script type="module">
-import {Variable, NS} from '../compile-excercise/Variable.js';
+import {ScalarVariable, NS} from '../compile-excercise/Variable.js';
 
 let desiredLength = 30;
 let scene = document.querySelector('#scene');
@@ -44,7 +44,7 @@ let graph = createGraph();
 // graph.addLink(0, 1);
 // graph.addLink(1, 2);
 // graph.addLink(0, 2);
-showGraph(generators.grid(10,5));
+showGraph(generators.grid(10,2));
 // fetch('https://raw.githubusercontent.com/anvaka/miserables/master/miserables.dot', {mode: 'cors'}).then(x => x.text()).
 // then(x => {
 //   showGraph(fromDot(x));
@@ -55,7 +55,7 @@ function showGraph(graph) {
   let nodes = [], edges= [];
   let ns = new NS();
   graph.forEachNode(node => {
-    node.pos = [new Variable(ns), new Variable(ns)];
+    node.pos = [new ScalarVariable(ns), new ScalarVariable(ns)];
     nodes.push(node);
   });
 
@@ -141,7 +141,7 @@ function showGraph(graph) {
 
 function getLossGraph(graph, ns) {
   // TODO: How do we initialize with a given value?
-  let loss = new Variable(ns);
+  let loss = new ScalarVariable(ns);
   let zeroThis = [loss];
 
   graph.forEachLink(e => {
@@ -155,16 +155,13 @@ function getLossGraph(graph, ns) {
   //loss = loss.div(graph.getLinksCount());
 
   graph.forEachNode(node => {
-    let nodeLoss = new Variable(ns);
+    let nodeLoss = new ScalarVariable(ns);
     zeroThis.push(nodeLoss);
     
     let count = 0;
     graph.forEachNode(other => {
       if (other === node) return;
       let l = getLength(node.pos, other.pos);
-      if (Math.abs(l.value)< 1e-2) {
-        l.value = 1e-2;
-      }
       nodeLoss = nodeLoss.add(l.pow(-2));
       count += 1;
     });
