@@ -1,3 +1,5 @@
+import { getTopologicalOrder } from './getTopologicalOrder.js';
+
 const emptySet = new Set();
 
 export class NS {
@@ -7,6 +9,24 @@ export class NS {
     this.dtype = 'Float64Array'
     this.functionCallbacks = [];
     this.setGradientCallbacks = [];
+
+    // Variable values used in the forward pass. Initialized in `compile()`
+    this.v = null;
+
+    // Variable computed gradients are stored here in backward pass. 
+    // Initialized in `compile()`
+    this.gv = null;
+
+    const notCompiled = () => {throw new Error('Not compiled')};
+    // Executes forward pass using currently stored variables in `this.v`
+    this.forward = notCompiled;
+
+    // Executes backward pass using currently stored variables in `this.gv`
+    this.backward = notCompiled;
+  }
+
+  isCompiled() {
+    return this.v !== null && this.gv !== null;
   }
 
   allocateSpace() {
@@ -15,21 +35,11 @@ export class NS {
     return name;
   }
 
+  // TODO: Don't use this. Likely it will be removed.
   allocateFunctionSpace(functionCallback, setGradientCallback) {
     this.functionCallbacks.push(functionCallback);
     this.setGradientCallbacks.push(setGradientCallback);
     return this.functionCallbacks.length - 1;
-  }
-
-  getVariableDefinitionCode() {
-    return `
-  var v = new ${this.dtype}(${this.lastUsed});
-  var gv = new ${this.dtype}(${this.lastUsed});
-`;
-  }
-
-  getAllNamesReturnCode() {
-    return `v: v, gv: gv`
   }
 
   getVariableNameForId(id) {
@@ -38,6 +48,57 @@ export class NS {
 
   getGradientNameForId(id) {
     return `gv[${id}]`;
+  }
+
+  compile(startNode) {
+    // TODO: Check if compiled and throw?
+    let traversalOrder = getTopologicalOrder(startNode);
+    let forwardCode = [];
+    let backwardCode = [];
+    for (let i = traversalOrder.length - 1; i >= 0; i--) {
+      // for the forward pass we want to visit all leaves first
+      let node = traversalOrder[i];
+      if (node.forwardCode) forwardCode.push(node.forwardCode);
+
+      // backward pass is done in reverse order (parents first)
+      let backNode = traversalOrder[traversalOrder.length - 1 - i];
+      if (backNode.backwardCode) backwardCode.push(backNode.backwardCode);
+    }
+    // this.forwardCode = forwardCode.join('\n');
+    let code = `
+var v = new ${this.dtype}(${this.lastUsed});
+var gv = new ${this.dtype}(${this.lastUsed});
+
+function forward() {
+  ${forwardCode.join('\n  ')}
+}
+
+function backward() {
+  ${backwardCode.join('\n  ')}
+}
+
+return {
+  forward: forward,
+  backward: backward,
+  v: v,
+  gv: gv
+}
+`
+    // TODO: drop `f` and `gf`
+    let result = new Function('f', 'gf', code)(this.functionCallbacks, this.setGradientCallbacks);
+
+    Object.assign(this, result);
+    // `Object.assign()` is the same as:
+    // 
+    // this.v = result.v;
+    // this.gv = result.gv;
+    // this.forward = result.forward;
+    // this.backward = result.backward;
+
+    if (!this.isCompiled()) {
+      // Just a sanity check
+      throw new Error('Failed to compile');
+    }
   }
 }
 
@@ -54,52 +115,16 @@ export class BaseVariable {
   }
 
   forwardPass() {
-    if (!this.compiled) throw new Error('Variable not compiled');
-    this.compiled.forward();
+    this.ns.forward();
   }
 
   backwardPass() {
-    if (!this.compiled) throw new Error('Variable not compiled');
-    this.compiled.backward();
+    this.ns.backward();
   }
 
   compile() {
-    if (this.compiled) {
-      return;
-    }
-    let traversalOrder = getTraversalOrder(this);
-    let forwardCode = [];
-    let backwardCode = [];
-    for (let i = traversalOrder.length - 1; i >= 0; i--) {
-      let node = traversalOrder[i];
-      if (node.forwardCode) forwardCode.push(node.forwardCode);
-
-      let backNode = traversalOrder[traversalOrder.length - 1 - i];
-      if (backNode.backwardCode) backwardCode.push(backNode.backwardCode);
-    }
-    this.forwardCode = forwardCode.join('\n');
-
-    let code = `
-${this.ns.getVariableDefinitionCode()}
-
-function forward() {
-  ${forwardCode.join('\n  ')}
-}
-
-function backward() {
-  ${backwardCode.join('\n  ')}
-}
-
-return {
-  forward: forward,
-  backward: backward,
-  ${this.ns.getAllNamesReturnCode()}
-}
-`
-    let result = new Function('f', 'gf', code)(this.ns.functionCallbacks, this.ns.setGradientCallbacks);
-    for (let i = traversalOrder.length - 1; i >= 0; i--) {
-      traversalOrder[i].compiled = result;
-    }
+    if (this.ns.isCompiled()) return;
+    this.ns.compile(this);
   }
 
   setBackwardCode(code) {
@@ -111,6 +136,9 @@ return {
   }
 }
 
+/**
+ * TODO: Likely want to delete this one.
+ */
 export class VariableProxy extends BaseVariable {
   constructor(ns, children) {
     super(ns, children);
@@ -130,7 +158,7 @@ export class VariableProxy extends BaseVariable {
   }
 
   addGradient(g) {
-    this.src.compiled.gv[this.src.id] += g;
+    this.ns.gv[this.src.id] += g;
   }
 }
 
@@ -138,65 +166,64 @@ export class ReferenceVariable extends BaseVariable {
   constructor(ns, children) {
     super(ns, children);
 
-    // Instead of storying the value in the variable, we store the id of the variable
-    // in the memory. This changes how the variable is accessed
+    // Instead of storying the value in memory, we store the id of the variable
+    // to which we point. This changes how the variable is accessed
     this.name = `v[v[${this.id}]]`;
     this.gradName = `gv[v[${this.id}]]`;
   }
 
   setReference(value) {
-    if (!value.compiled) value.compiled = this.compiled;
-    this.compiled.v[this.id] = value.id;
+    this.ns.v[this.id] = value.id;
   }
 
   getValue() {
-    let v = this.compiled.v;
+    let v = this.ns.v;
     return v[v[id]];
   }
 
   setValue(value) {
-    let v = this.compiled.v;
+    let v = this.ns.v;
     v[v[this.id]] = value;
   }
 }
 
 export class Variable extends BaseVariable {
-  constructor(ns, children, name) {
+  constructor(ns, children, uiName) {
     super(ns, children);
-    this.uiName = name;
+    this.uiName = uiName;
   }
 
   get value() {
-    return this.compiled.v[this.id];
+    return this.ns.v[this.id];
   }
 
   set value(x) {
-    this.compiled.v[this.id] = x;
+    this.ns.v[this.id] = x;
   }
 
   setValue(value) {
-    if (!this.compiled) throw new Error('Variable not compiled');
-    this.compiled.v[this.id] = value;
+    if (!this.ns.isCompiled()) throw new Error('Variable not compiled');
+    this.ns.v[this.id] = value;
   }
 
   getValue() {
-    if (!this.compiled) throw new Error('Variable not compiled');
-    return this.compiled.v[this.id];
+    if (!this.ns.isCompiled()) throw new Error('Variable not compiled');
+    return this.ns.v[this.id];
   }
 
   setGradient(value) {
-    if (!this.compiled) throw new Error('Variable not compiled');
-    return this.compiled.gv[this.id] = value;
+    if (!this.ns.isCompiled()) throw new Error('Variable not compiled');
+    return this.ns.gv[this.id] = value;
   }
 
   getGradient() {
-    if (!this.compiled) throw new Error('Variable not compiled');
-    return this.compiled.gv[this.id];
+    if (!this.ns.isCompiled) throw new Error('Variable not compiled');
+    return this.ns.gv[this.id];
   }
 
   gradientStep(learningRate) {
     // todo: need clamping?
-    this.compiled.v[this.id] -= learningRate * this.compiled.gv[this.id];
+    this.ns.v[this.id] -= learningRate * this.ns.gv[this.id];
   }
   
   // These are mathematical functions, add yours.
@@ -366,59 +393,5 @@ export class Variable extends BaseVariable {
     result.setForwardCode(`${result.name} = Math.tanh(${this.name});`);
     result.setBackwardCode(`${this.gradName} += ${result.gradName} * (1 - ${result.name} * ${result.name});`);
     return result;
-  }
-}
-
-function getTraversalOrder(start) {
-  countParents(start);
-
-  let traversalOrder = [];
-  let visited = new Set();
-  let queue = [start];
-  while (queue.length > 0) {
-    let node = queue.shift();
-    if (visited.has(node)) continue;
-    if (node.parentCount !== 0) {
-      throw new Error('Should have no parents at this point');
-    }
-
-    traversalOrder.push(node);
-    visited.add(node);
-
-    node.children.forEach(child => {
-      child.parentCount -= 1
-      if (child.parentCount === 0) {
-        queue.push(child);
-      }
-    })
-  }
-  return traversalOrder;
-}
-
-function setParentCountToZero(from) {
-  let queue = [from];
-  let visited = new Set();
-  while (queue.length > 0) {
-    let node = queue.pop();
-    if (visited.has(node)) continue;
-    visited.add(node);
-    node.parentCount = 0;
-    node.children.forEach(child => queue.push(child));
-  }
-}
-
-function countParents(from) {
-  setParentCountToZero(from)
-
-  let queue = [from];
-  let visited = new Set();
-  while (queue.length > 0) {
-    let node = queue.pop();
-    if (visited.has(node)) continue;
-    visited.add(node);
-    node.children.forEach(child => {
-      child.parentCount += 1;
-      queue.push(child);
-    });
   }
 }

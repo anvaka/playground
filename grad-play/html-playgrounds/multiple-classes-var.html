@@ -66,7 +66,7 @@
       let predictedClassIndex = indexOfMaxVariable(output);
       accuracy += (predictedClassIndex === correctClassIndex) ? 1 : 0;
 
-      let {v, gv} = net.loss.compiled; // `v` is the value, `gv` is the gradient
+      let {v, gv} = net.loss.ns; // `v` is the value, `gv` is the gradient
       gv.fill(0); // reset gradients from the previous iteration
 
       runLoss += net.loss.value;

@@ -1,13 +1,13 @@
-import {NS, ScalarVariable} from './Variable.js';
+import {NS, Variable} from './Variable.js';
 
 class Node {
   constructor(ns, inCount, name) {
     this.w = [];
     for (let i = 0; i < inCount; i++) {
-      this.w.push(new ScalarVariable(ns, null, 'w_' + name + '_' + i));
+      this.w.push(new Variable(ns, null, 'w_' + name + '_' + i));
       //, Math.random() * 2 - 1, null, null, 'w_' + name + '_' + i));
     }
-    this.bias = new ScalarVariable(ns, null, 'b_' + name);
+    this.bias = new Variable(ns, null, 'b_' + name);
     //Math.random() * 2 - 1, null, null, 'b_' + name);
   }
 
@@ -59,7 +59,7 @@ export class MLP {
     this.ns = ns;
     this.inputs = [];
     for (let i = 0; i < layerSizes[0]; i++) {
-      this.inputs.push(new ScalarVariable(ns));
+      this.inputs.push(new Variable(ns));
     }
 
     this.layers = [];
@@ -69,10 +69,6 @@ export class MLP {
     // last layer is linear activation
     this.layers[this.layers.length - 1].setActivation(x => x);
     this.gv = null;
-  }
-
-  zeroGrad() { 
-    this.loss.compiled.gv.fill(0);
   }
 
   setLoss(cb) {
