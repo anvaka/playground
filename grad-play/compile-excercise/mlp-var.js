@@ -1,3 +1,4 @@
+import { getTopologicalOrder } from './getTopologicalOrder.js';
 import {NS, Variable} from './Variable.js';
 
 class Node {
@@ -5,10 +6,8 @@ class Node {
     this.w = [];
     for (let i = 0; i < inCount; i++) {
       this.w.push(new Variable(ns, null, 'w_' + name + '_' + i));
-      //, Math.random() * 2 - 1, null, null, 'w_' + name + '_' + i));
     }
     this.bias = new Variable(ns, null, 'b_' + name);
-    //Math.random() * 2 - 1, null, null, 'b_' + name);
   }
 
   getOutput(input) {
@@ -95,5 +94,15 @@ export class MLP {
 
   forEachParameter(callback) {
     this.layers.forEach(layer => layer.forEachParameter(callback));
+  }
+}
+
+function printExpressionForVariable(variable) {
+  let order = getTopologicalOrder(variable);
+  order.reverse();
+  let strings = [];
+  for (let i = 0; i < order.length; i++) {
+    let node = order[i];
+    strings.push(node.value)
   }
 }

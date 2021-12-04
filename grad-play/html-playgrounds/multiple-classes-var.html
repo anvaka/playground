@@ -23,6 +23,9 @@
 
   // (x,y) input, 4 classes output
   let net = new MLP([2, 8, 4]);
+  // Just for better dot visualization
+  net.inputs[0].uiName = 'X'; net.inputs[1].uiName = 'Y';
+
   let count = 0;
   net.forEachParameter(p => count++);
   console.log('Total parameters', count);
@@ -36,8 +39,16 @@
     // let maxVar = getMaxValueVariable(output);
     // return maxVar.sub(expectedClassProbability).div(testDataSet.length);
 
+    let regularizationLoss = 0;
+    // net.forEachParameter(p => {
+    //   if (!regularizationLoss)
+    //     regularizationLoss = p.pow(2).mul(0.1);
+    //   else
+    //     regularizationLoss = regularizationLoss.add(p.pow(2)).mul(0.1);
+    // })
+
     let loss = output.map(x => x.exp()).reduce((a, b) => b.add(a), 0);
-    return loss.log().sub(expectedClassProbability).div(testDataSet.length);
+    return loss.log().sub(expectedClassProbability).div(testDataSet.length).add(regularizationLoss);
   })
 
   // Compile the model into static functions, so that we don't have to traverse
@@ -81,7 +92,8 @@
   }
   console.timeEnd('training');
 
-
+window.finalNet = net;
+window.points = testDataSet;
 let cnv = document.querySelector('canvas');
 let width = cnv.width =  300;
 let height = cnv.height = 300;
