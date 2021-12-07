@@ -228,6 +228,14 @@ export class Variable extends BaseVariable {
     this.ns.v[this.id] = x;
   }
 
+  get gradient() {
+    return this.ns.gv[this.id];
+  }
+
+  set gradient(x) {
+    this.ns.gv[this.id] = x;
+  }
+
   setValue(value) {
     if (!this.ns.isCompiled()) throw new Error('Variable not compiled');
     this.ns.v[this.id] = value;
@@ -410,6 +418,40 @@ export class Variable extends BaseVariable {
     return result;
   }
 
+  sign() {
+    let result = new Variable(this.ns, new Set([this]), 'sign()');
+    result.setForwardCode(`${result.name} = Math.sign(${this.name});`);
+    result.setBackwardCode(`${this.gradName} += ${result.gradName} * ${result.name};`);
+    return result;
+  }
+
+  ParametricReLU(min = 0, scale = 1, shift = 0) {
+    let safeMin = Number.parseFloat(min);
+    let safeScale = Number.parseFloat(scale);
+    let safeShift = Number.parseFloat(shift);
+
+    let result = new Variable(this.ns, new Set([this]), 'ParametricReLU()');
+    result.setForwardCode(`${result.name} = Math.max(${safeMin}, ${safeScale} * ${this.name} + ${safeShift});`);
+    result.setBackwardCode(
+      `${this.gradName} += ${result.gradName} * (${this.name} > ${safeMin} ? ${safeScale} : 0);`
+    );
+    return result;
+  }
+
+  atan() {
+    let result = new Variable(this.ns, new Set([this]), 'atan()');
+    result.setForwardCode(`${result.name} = Math.atan(${this.name});`);
+    result.setBackwardCode(`${this.gradName} += ${result.gradName} / (1 + ${this.name} * ${this.name}) ;`);
+    return result;
+  }
+
+  acos() {
+    let result = new Variable(this.ns, new Set([this]), 'acos()');
+    result.setForwardCode(`${result.name} = Math.acos(${this.name});`);
+    result.setBackwardCode(`${this.gradName} += - ${result.gradName} / (Math.sqrt(1 - ${this.name} * ${this.name})) ;`);
+    return result;
+  }
+
   sigmoid() {
     let result = new Variable(this.ns, new Set([this]), 'sigmoid()');
     result.setForwardCode(`${result.name} = 1 / (1 + Math.exp(-${this.name}));`);
@@ -421,6 +463,13 @@ export class Variable extends BaseVariable {
     let result = new Variable(this.ns, new Set([this]), 'tanh()');
     result.setForwardCode(`${result.name} = Math.tanh(${this.name});`);
     result.setBackwardCode(`${this.gradName} += ${result.gradName} * (1 - ${result.name} * ${result.name});`);
+    return result;
+  }
+
+  cosh() {
+    let result = new Variable(this.ns, new Set([this]), 'chos()');
+    result.setForwardCode(`${result.name} = Math.cosh(${this.name});`);
+    result.setBackwardCode(`${this.gradName} += ${result.gradName} * Math.sinh(${this.name});`);
     return result;
   }
 }

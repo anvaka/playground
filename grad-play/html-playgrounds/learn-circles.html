@@ -3,14 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width">
-  <title>Minimize layout energy of a graph</title>
+  <title>Maximize angular resolution</title>
   <script src='https://cdn.jsdelivr.net/npm/simplesvg@0.1.1/dist/simplesvg.min.js'></script>
-  <script src='https://unpkg.com/ngraph.graph@19.0.0/dist/ngraph.graph.js'></script>
+  <script src='https://unpkg.com/ngraph.graph@19.1.0/dist/ngraph.graph.js'></script>
   <script src='https://cdn.jsdelivr.net/npm/ngraph.generators@19.2.0/dist/ngraph.generators.js'></script>
   <script src='https://cdn.jsdelivr.net/npm/ngraph.random/dist/ngraph.random.js'></script>
   <script src='https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js'></script>
   <script src='https://cdn.jsdelivr.net/npm/ngraph.fromdot/dist/ngraph.fromDot.js'></script>
-  <script src='https://cdn.jsdelivr.net/gh/anvaka/ngraph.pagerank/dist/ngraph.pagerank.js'></script>
   <style>
     * {
       box-sizing: border-box;
@@ -33,32 +32,30 @@
   </svg>
 
 <script type="module">
-import {Variable, NS} from '../compile-excercise/Variable.js';
+import {Variable, ReferenceVariable, NS} from '../compile-excercise/Variable.js';
 
-let desiredLength = 30;
+let desiredLength = 1;
 let scene = document.querySelector('#scene');
 let random = ngraphRandom(42);
 let pz = panzoom(scene);
-let learningRate = 0.01;
+let learningRate = 0.95;
 let graph = createGraph();
 
-// graph.addLink(0, 1);
-// graph.addLink(1, 2);
-// graph.addLink(0, 2);
-// showGraph(generators.grid(10,2));
+for (let i = 0; i < 10; ++i) {
+  graph.addLink(0, i + 1);
+}
+//showGraph(graph);
 fetch('https://raw.githubusercontent.com/anvaka/miserables/master/miserables.dot', {mode: 'cors'}).then(x => x.text()).
 then(x => {
   showGraph(fromDot(x));
 })
-// showGraph(generators.complete(6));
+// showGraph(generators.grid3(2, 5, 5));
 
 function showGraph(graph) {
   let nodes = [], edges= [];
   let ns = new NS();
-  let rank = pageRank(graph, 0.85, 0.0001);
   graph.forEachNode(node => {
     node.pos = [new Variable(ns), new Variable(ns)];
-    node.rank = rank[node.id];
     nodes.push(node);
   });
 
@@ -68,8 +65,14 @@ function showGraph(graph) {
     link.data = {from, to};
   });
       
+  let angularLossImportance = new Variable(ns);
+  let angularLossImportanceRef = new ReferenceVariable(ns);
   let {loss, zeroThis} = getLossGraph(graph, ns);
   loss.compile();
+  let gvSum = new Float64Array(ns.gv.length);
+
+  angularLossImportanceRef.setReference(angularLossImportance);
+  angularLossImportance.value = 0.001
   let gradBuffer = new Float64Array(loss.ns.gv.length);
 
   graph.forEachNode(node => {
@@ -87,7 +90,7 @@ function showGraph(graph) {
       y2: to[1].getValue(),
       'stroke-width': 0.01,
       stroke: 'black'
-    })
+    });
     edges.push(link.data);
   });
   edges.forEach(e => {
@@ -102,31 +105,41 @@ function showGraph(graph) {
 
     let {v, gv} = loss.ns;
     gradBuffer.set(gv);
+    if (angularLossImportance.value < 1) {
+      angularLossImportance.value += 0.005
+    }
+
 
     gv.fill(0);
     loss.forwardPass();
+    console.log({loss: loss.value, angularLossImportance: angularLossImportance.value});
     loss.setGradient(1);
     loss.backwardPass();
 
-    // let maxGV = -Infinity;
     // graph.forEachNode(node => {
-    //   node.pos[0].value -= learningRate * node.pos[0].gradient;
-    //   node.pos[1].value -= learningRate * node.pos[1].gradient;
+    //   node.pos[0].gradient = clip(5, node.pos[0].gradient);
+    //   node.pos[1].gradient = clip(5, node.pos[1].gradient);
     // });
-    for (let i = 0; i < v.length; ++i) {
-      // if (Math.abs(gv[i]) > maxGV) {
-      //   maxGV = Math.abs(gv[i]);
-      // }
-      // if (gv[i] === -4752.59911004928) debugger;
-      // v[i] -= clip(5, gv[i]) * learningRate;
-      v[i] -= gv[i] * learningRate;
-      // v[i] -= lerp(gradBuffer[i], clip(5, gv[i]), .0) * learningRate;
+    for (let i = 0; i < gv.length; ++i) {
+      gv[i] = clip(5, gv[i]);
+      gvSum[i] += gv[i] * gv[i];
     }
-    //console.log(maxGV);
+    graph.forEachNode(node => {
+      // node.pos[0].value -= clip(5, node.pos[0].gradient) * learningRate
+      // node.pos[1].value -= clip(5, node.pos[1].gradient) * learningRate
+
+      // node.pos[0].value -= node.pos[0].gradient * learningRate
+      // node.pos[1].value -= node.pos[1].gradient * learningRate
+
+      node.pos[0].value -= gv[node.pos[0].id] * learningRate / Math.sqrt(gvSum[node.pos[0].id] + 1e-8);
+      node.pos[1].value -= gv[node.pos[1].id] * learningRate / Math.sqrt(gvSum[node.pos[1].id] + 1e-8);
+    })
+    // for (let i = 0; i < v.length; ++i) {
+    //   v[i] -= clip(5, gv[i]) * learningRate;
+    // }
     for (let i = 0; i < zeroThis.length; ++i) {
       v[zeroThis[i].id] = 0;
     }
-    // console.timeEnd('grad variable');
     redraw();
   }
 
@@ -149,16 +162,26 @@ function showGraph(graph) {
   function lerp(from, to, t) {
     return from * (1 - t) + to * (t)
   }
-}
 
 function getLossGraph(graph, ns) {
-  let loss = new Variable(ns);
-  let zeroThis = [loss];
+  let loss = 0; 
+  let zeroThis = [];
 
+  let angularLoss = 0;
+  graph.forEachNode(node => {
+    let currentAngularLoss = getAngularLoss(node, graph);
+    if (currentAngularLoss) {
+      angularLoss = currentAngularLoss.add(angularLoss).mul(angularLossImportanceRef);
+    }
+  })
+  if (angularLoss) {
+    loss = angularLoss.div(graph.getNodesCount()).add(loss);
+  }
   graph.forEachLink(e => {
     let d = getLength(e.data.from, e.data.to);
     //loss = loss.add(d.sub(desiredLength).abs());
-    loss = loss.add(d);
+    //d = d.sub(desiredLength).abs();
+    loss = d.add(loss);
   });
   // let desiredLinksLength = graph.getLinksCount() * 100;
   // loss = loss.sub(desiredLinksLength).abs();
@@ -182,10 +205,46 @@ function getLossGraph(graph, ns) {
   return {loss, zeroThis};
 }
 
+}
+function getAngularLoss(center, graph) {
+  let loss = 0;
+  let otherNodes = [];
+  graph.forEachLinkedNode(center.id, other => { otherNodes.push(other.pos) });
+
+  for (let i = 0; i < otherNodes.length; ++i) {
+    let from = otherNodes[i];
+    for (let j = 0; j < otherNodes.length; ++j) {
+      if (i === j) continue;
+      let to = otherNodes[j];
+      let angle = getAngle(from, to, center.pos);
+      loss = angle.pow(-1).add(loss);
+    }
+  }
+
+  return loss ? loss.div(10) : 0;
+}
+
+function getAngle(from, to, center) {
+  let xf = from[0].sub(center[0]);
+  let yf = from[1].sub(center[1]);
+
+  let xt = to[0].sub(center[0]);
+  let yt = to[1].sub(center[1]);
+
+  // let fAngle = atan2(yf, xf);
+  // let tAngle = atan2(yt, xt);
+  // return tAngle.sub(fAngle).abs();
+  let e1Length = xf.pow(2).add(yf.pow(2)).pow(0.5);
+  let e2Length = xt.pow(2).add(yt.pow(2)).pow(0.5);
+  let dot = xf.mul(xt).add(yf.mul(yt));
+  let cosAngle = dot.div(e1Length.mul(e2Length));
+  return cosAngle.acos();
+}
+
 function getLength(a, b) {
   let dx = a[0].sub(b[0]).pow(2);
   let dy = a[1].sub(b[1]).pow(2); 
-  return dx.add(dy).pow(0.5);
+  return dx.add(dy).pow(.5);
 }
 
 function clip(max, x) {
@@ -194,6 +253,12 @@ function clip(max, x) {
   return x;
 }
 
+function atan2(y, x) {
+  let result = new Variable(y.ns);
+  let signX = x.sign();
+  let signY = y.sign();
+  return signX.pow(2).mul(y.div(x)).sub((signX.sub(1).div(2)).mul((signY.add(1).sub(signY.pow(2))).mul(Math.PI)))
+}
 
 </script>
 </body>
