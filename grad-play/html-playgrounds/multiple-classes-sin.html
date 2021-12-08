@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+ <title>Classifying points in moon dataset</title>
+ <script src='../node_modules/ngraph.random/dist/ngraph.random.js'></script>
+ <style>
+   canvas {
+     width: 100%;
+   }
+ </style>
+</head>
+<body>
+  <canvas></canvas>
+
+<script type="module">
+  import {ReferenceVariable, Variable, NS} from '../compile-excercise/Variable.js';
+
+  let random = ngraphRandom(42);
+  let testDataSet = makeDataset(100)
+  //let testDataSet = makeSpiralDataset(100)
+
+  let octaveCount = 10;
+  let ns = new NS();
+  let xSum = new Variable(ns), ySum = new Variable(ns);
+  let variables = [xSum, ySum];
+  let xInput = new Variable(ns);
+  let yInput = new Variable(ns);
+  let expectedClass = new Variable(ns);
+  let period = new Variable(ns);
+  variables.push(period);
+
+  for (let i = 1; i <= octaveCount; ++i) {
+    let xAmp = new Variable(ns);
+    let xPhi = new Variable(ns);
+    xSum = xAmp.mul(xInput.mul(Math.PI * 2 * i).div(period).add(xPhi).cos()).add(xSum);
+
+    let yAmp = new Variable(ns);
+    let yPhi = new Variable(ns);
+    ySum = yAmp.mul(yInput.mul(Math.PI * 2 * i).div(period).add(yPhi).cos()).add(ySum);
+
+    variables.push(xAmp, xPhi, yAmp, yPhi);
+  }
+  let regularization = 0;
+  // variables.forEach(v => regularization = v.pow(2).add(regularization));
+  // regularization = regularization.div(100);
+  let predictedClass = xSum.add(ySum);
+  let loss = predictedClass.sub(expectedClass).pow(2).add(regularization);
+
+
+  // Compile the model into static functions, so that we don't have to traverse
+  // computation graph on each learning iteration.
+  loss.compile();
+
+  // Since we've got parameters compiled and space allocated, we can assign values to them:
+  // every input should now be ready to initialized to random value
+  variables.forEach(p => p.value = random.gaussian() * 2);
+
+  console.time('training');
+  for (let i = 0; i < 2000; i++) {
+    let accuracy = 0;
+    // ngraphRandom.randomIterator(testDataSet).shuffle();
+    let runLoss = 0;
+    let learningRate = 0.001;//Math.max(0.1, 1.0 - 0.9*Math.min(100, i)/100);
+    for (let j = 0; j < testDataSet.length; j++) {
+      expectedClass.value = testDataSet[j][2];
+      xInput.value = testDataSet[j][0];
+      yInput.value = testDataSet[j][1];
+
+      loss.forwardPass()
+
+      // let predictedClassIndex = indexOfMaxElement(getNormalizedProbabilityDistribution(output));
+      accuracy += (Math.round(predictedClass.value) === expectedClass.value) ? 1 : 0;
+
+      let {v, gv} = ns; // `v` is the value, `gv` is the gradient
+      gv.fill(0); // reset gradients from the previous iteration
+
+      runLoss += loss.value;
+
+      loss.setGradient(1); // And propaget the gradient back to the parameters
+      loss.backwardPass();
+
+      variables.forEach(p => p.gradientStep(learningRate));
+    }
+
+    console.log('Loss: ', runLoss, ' Accuracy: ' + accuracy/testDataSet.length);
+  }
+  console.timeEnd('training');
+
+window.points = testDataSet;
+let cnv = document.querySelector('canvas');
+let width = cnv.width =  300;
+let height = cnv.height = 300;
+let ctx = cnv.getContext('2d');
+ctx.fillRect(0, 0, width, height)
+let xRange = [-4, 4];
+let yRange = [-4, 4];
+const colorSchema = {
+  '1': '#FF0000', 
+  '2': '#00FF00',
+  '3': '#0000ff',
+  '4': '#00FFff'
+}
+const backgroundColorSchema = {
+  '1': '#900000', 
+  '2': '#009000',
+  '3': '#000090',
+  '4': '#009090'
+}
+plotPixels(backgroundColorSchema, xRange, yRange);
+plotPointsWithClasses(testDataSet, colorSchema, xRange, yRange);
+
+function makeDataset(count) {
+  let dataset = [];
+  for (let i = 0; i < count; i++) {
+    let angle = random.nextDouble() * 2 * Math.PI;
+    let r = random.nextDouble() * 4;
+    let x = r * Math.cos(angle);
+    let y = r * Math.sin(angle);
+
+    let label = Math.floor(r) + 1;
+    dataset.push([x, y, label]);
+  }
+  return dataset;
+}
+
+function makeSpiralDataset(count, classCount = 4) {
+  let dataset = [];
+  let dr = 4/count;
+  let dA = 8*Math.PI/count;
+  for (let i = 0; i < count; i++) {
+    let angle = dA * i
+    let r = dr * i;
+    let x = r * Math.cos(angle);
+    let y = r * Math.sin(angle);
+
+    let label = Math.round(classCount * i / count)
+    dataset.push([x, y, label]);
+  }
+  return dataset;
+}
+
+function plotPixels(colorSchema, xLimits, yLimits) {
+  for (let x = 0; x < width; ++x) {
+    for (let y = 0; y < height; ++y) {
+      let dataX = (x / width) * (xLimits[1] - xLimits[0]) + xLimits[0];
+      let dataY = (1 - y / height) * (yLimits[1] - yLimits[0]) + yLimits[0];
+      xInput.value = dataX;
+      yInput.value = dataY;
+      loss.forwardPass();
+      // let probabilities = getNormalizedProbabilityDistribution(out);
+      // let colorIndex = indexOfMaxElement(probabilities);
+      let colorIndex = Math.round(predictedClass.value); 
+      ctx.fillStyle = colorSchema[colorIndex] || '#000';
+      ctx.fillRect(x, y, 1, 1);
+    }
+  }
+}
+
+function getNormalizedProbabilityDistribution(params) {
+  let probabilities = params.map(x => Math.exp(x.value));
+  let sum = probabilities.reduce((a, b) => a + b);
+  return probabilities.map(x => x / sum);
+}
+
+function plotPointsWithClasses(points, colors, xLimits, yLimits) {
+  points.forEach(point => {
+    let canvasXY = getCanvasXY(point[0], point[1], xLimits, yLimits);
+    ctx.fillStyle = colors[point[2]];
+    ctx.fillRect(canvasXY.x - 1, canvasXY.y - 1, 2, 2);
+  });
+}
+
+function getCanvasXY(x, y, xLimits, yLimits) {
+  let canvasX = (x - xLimits[0]) / (xLimits[1] - xLimits[0]) * width;
+  let canvasY = (y - yLimits[0]) / (yLimits[1] - yLimits[0]) * height;
+  return {x: canvasX, y: height - canvasY};
+}
+
+function indexOfMaxVariable(array) {
+  let max = -Infinity;
+  let index = -1;
+  for (let i = 0; i < array.length; i++) {
+    if (array[i].value > max) {
+      max = array[i].value;
+      index = i;
+    }
+  }
+  return index;
+}
+
+function indexOfMaxElement(array) {
+  let max = -Infinity;
+  let index = -1;
+  for (let i = 0; i < array.length; i++) {
+    if (array[i] > max) {
+      max = array[i];
+      index = i;
+    }
+  }
+  return index;
+}
+
+function getMaxValueVariable(arr) {
+  let result = new Variable(arr[0].ns, new Set(arr))
+
+  result.setForwardCode(`${result.name} = Math.max(...[${arr.map(x => x.name)}]);`);
+  result.setBackwardCode(
+    arr.map(v => {
+      return `${v.gradName} += (${result.name} === ${v.name} ? ${result.gradName} : 0);`
+    }).join('\n')
+  )
+  return result;
+}
+</script>
+</body>
+</html>
