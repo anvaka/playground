@@ -38,13 +38,13 @@ let desiredLength = 1;
 let scene = document.querySelector('#scene');
 let random = ngraphRandom(42);
 let pz = panzoom(scene);
-let learningRate = 0.95;
+let learningRate = 0.02; //0.95;
 let graph = createGraph();
 
 for (let i = 0; i < 10; ++i) {
   graph.addLink(0, i + 1);
 }
-//showGraph(graph);
+// showGraph(graph);
 fetch('https://raw.githubusercontent.com/anvaka/miserables/master/miserables.dot', {mode: 'cors'}).then(x => x.text()).
 then(x => {
   showGraph(fromDot(x));
@@ -70,14 +70,19 @@ function showGraph(graph) {
   let {loss, zeroThis} = getLossGraph(graph, ns);
   loss.compile();
   let gvSum = new Float64Array(ns.gv.length);
+  let sE = new Float64Array(ns.gv.length);
+  let sD = new Float64Array(ns.gv.length);
+
+  let eps = 1e-8;
+  sE.fill(Math.sqrt(0 + eps));
 
   angularLossImportanceRef.setReference(angularLossImportance);
   angularLossImportance.value = 0.001
   let gradBuffer = new Float64Array(loss.ns.gv.length);
 
   graph.forEachNode(node => {
-    node.pos[0].setValue(random.nextDouble() * 10);
-    node.pos[1].setValue(random.nextDouble() * 10);
+    node.pos[0].setValue(random.gaussian());
+    node.pos[1].setValue(random.gaussian());
   });
 
   graph.forEachLink(link => {
@@ -105,8 +110,8 @@ function showGraph(graph) {
 
     let {v, gv} = loss.ns;
     gradBuffer.set(gv);
-    if (angularLossImportance.value < 1) {
-      angularLossImportance.value += 0.005
+    if (angularLossImportance.value < .99) {
+      angularLossImportance.value += 0.0005
     }
 
 
@@ -122,17 +127,78 @@ function showGraph(graph) {
     // });
     for (let i = 0; i < gv.length; ++i) {
       gv[i] = clip(5, gv[i]);
+
+      // this is adagrad
       gvSum[i] += gv[i] * gv[i];
     }
+
+    let beta2 = 0.7;
+    let beta = 0.9;
+    learningRate = 0.7
+
+    let beta1 = 0.9;
+    beta2 = 0.999;
+    let beta1Corrected = beta1;
+    let beta2Corrected = beta2;
+
     graph.forEachNode(node => {
-      // node.pos[0].value -= clip(5, node.pos[0].gradient) * learningRate
-      // node.pos[1].value -= clip(5, node.pos[1].gradient) * learningRate
+      // // momentum
+      let x = node.pos[0].id;
+      let y = node.pos[1].id;
 
-      // node.pos[0].value -= node.pos[0].gradient * learningRate
-      // node.pos[1].value -= node.pos[1].gradient * learningRate
+      // sE[x] = beta * sE[x] - learningRate * gv[x] * (1 - beta);
+      // sE[y] = beta * sE[y] - learningRate * gv[y] * (1 - beta);
+      // node.pos[0].value += sE[x];
+      // node.pos[1].value += sE[y];
 
-      node.pos[0].value -= gv[node.pos[0].id] * learningRate / Math.sqrt(gvSum[node.pos[0].id] + 1e-8);
-      node.pos[1].value -= gv[node.pos[1].id] * learningRate / Math.sqrt(gvSum[node.pos[1].id] + 1e-8);
+      // adagrad
+      // let dx = gv[node.pos[0].id] * learningRate / Math.sqrt(gvSum[node.pos[0].id] + 1e-8)
+      // let dy = gv[node.pos[1].id] * learningRate / Math.sqrt(gvSum[node.pos[1].id] + 1e-8)
+
+      // node.pos[0].value -= dx;
+      // node.pos[1].value -= dy;
+
+      // // regular gradient
+      // let dx = learningRate * gv[node.pos[0].id];
+      // let dy = learningRate * gv[node.pos[1].id];
+      // node.pos[0].value -= dx;
+      // node.pos[1].value -= dy;
+
+      // // adadelta
+      // let x = node.pos[0].id;
+      // let y = node.pos[1].id;
+
+      // sD[x] = beta2 * sD[x] + (1 - beta2) * gv[x] * gv[x];
+      // let dx = -Math.sqrt(sE[x] + eps) / Math.sqrt(sD[x] + eps) * gv[x];
+      // sE[x] = beta2 * sE[x] + (1 - beta2) * dx * dx;
+
+      // sD[y] = beta2 * sD[y] + (1 - beta2) * gv[y] * gv[y];
+      // let dy = -Math.sqrt(sE[y] + eps) / Math.sqrt(sD[y] + eps) * gv[y];
+      // sE[y] = beta2 * sE[y] + (1 - beta2) * dy * dy;
+
+      // node.pos[0].value += dx;
+      // node.pos[1].value += dy;
+
+      // adam
+
+      let gradient = gv[x];
+      sE[x] = beta1 * sE[x] + (1 - beta1) * gradient;            // "momentum" update
+      sD[x] = beta2 * sD[x] + (1 - beta2) * gradient * gradient; // "RMSProp" update
+      let vCorrected = sE[x] / (1 - beta1Corrected);
+      let sCorrected = sD[x] / (1 - beta2Corrected);
+
+      node.pos[0].value -= learningRate * vCorrected / (Math.sqrt(sCorrected) + 1e-8);
+
+      gradient = gv[y];
+      sE[y] = beta1 * sE[y] + (1 - beta1) * gradient;            // "momentum" update
+      sD[y] = beta2 * sD[y] + (1 - beta2) * gradient * gradient; // "RMSProp" update
+      vCorrected = sE[y] / (1 - beta1Corrected);
+      sCorrected = sD[y] / (1 - beta2Corrected);
+      node.pos[1].value -= learningRate * vCorrected / (Math.sqrt(sCorrected) + 1e-8);
+
+      beta1Corrected *= beta1;
+      beta2Corrected *= beta2;
+
     })
     // for (let i = 0; i < v.length; ++i) {
     //   v[i] -= clip(5, gv[i]) * learningRate;
