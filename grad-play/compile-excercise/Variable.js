@@ -84,8 +84,7 @@ return {
   gv: gv
 }
 `
-    // TODO: drop `f` and `gf`
-    let result = new Function('f', 'gf', code)(this.functionCallbacks, this.setGradientCallbacks);
+    let result = new Function(code)();
 
     Object.assign(this, result);
     // `Object.assign()` is the same as:
@@ -159,32 +158,6 @@ export class BaseVariable {
     });
     dot.push('}');
     return dot.join('\n');
-  }
-}
-
-/**
- * TODO: Likely want to delete this one.
- */
-export class VariableProxy extends BaseVariable {
-  constructor(ns, children) {
-    super(ns, children);
-
-    this.funcId = ns.allocateFunctionSpace(this.getValue.bind(this), this.addGradient.bind(this));
-    this.forwardCode = `${this.name} = f[${this.funcId}]();`;
-    this.backwardCode = `gf[${this.funcId}](${this.gradName}); ${this.gradName} = 0;`;
-    this.src = null;
-  }
-
-  setSourceValue(value) {
-    this.src = value;
-  }
-
-  getValue() {
-    return this.src.value;
-  }
-
-  addGradient(g) {
-    this.ns.gv[this.src.id] += g;
   }
 }
 
