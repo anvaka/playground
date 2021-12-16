@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Maximize angular resolution</title>
+  <script src='https://cdn.jsdelivr.net/npm/simplesvg@0.1.1/dist/simplesvg.min.js'></script>
+  <script src='https://unpkg.com/ngraph.graph@19.1.0/dist/ngraph.graph.js'></script>
+  <script src='https://cdn.jsdelivr.net/npm/ngraph.generators@19.2.0/dist/ngraph.generators.js'></script>
+  <script src='https://cdn.jsdelivr.net/npm/ngraph.random/dist/ngraph.random.js'></script>
+  <script src='https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js'></script>
+  <script src='https://cdn.jsdelivr.net/npm/ngraph.fromdot/dist/ngraph.fromDot.js'></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      padding: 0;
+    }
+    svg, body {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+  </style>
+</head>
+<body>
+  <svg viewBox='-10 -10 20 20'>
+    <g id='scene'></g>
+  </svg>
+
+<script type="module">
+import {Variable, ReferenceVariable, NS} from '../compile-excercise/Variable.js';
+
+Variable.prototype.dropout = function(p) {
+  let result = new Variable(this.ns, new Set([this]));
+  result.setForwardCode(`${result.name} = Math.random() < ${p} ? 0 : ${this.name}`);
+  result.setBackwardCode(`${this.gradName} += ${result.gradName} * ${result.name};`);
+  return result;
+};
+
+let desiredLength = 1;
+let scene = document.querySelector('#scene');
+let random = ngraphRandom(42);
+let pz = panzoom(scene);
+let learningRate = 0.02; //0.95;
+let graph = createGraph();
+
+for (let i = 0; i < 2; ++i) {
+  graph.addLink(0, i + 1);
+}
+// showGraph(graph);
+// fetch('https://raw.githubusercontent.com/anvaka/miserables/master/miserables.dot', {mode: 'cors'}).then(x => x.text()).
+// then(x => {
+//   showGraph(fromDot(x));
+// })
+showGraph(generators.balancedBinTree(6));
+
+function showGraph(graph) {
+  let nodes = [], edges= [];
+  let ns = new NS();
+  graph.forEachNode(node => {
+    node.pos = [
+      getNodePosInit(ns), 
+      getNodePosInit(ns)
+    ];
+    nodes.push(node);
+  });
+
+  graph.forEachLink(link => {
+    let from = graph.getNode(link.fromId).pos;
+    let to = graph.getNode(link.toId).pos;
+    link.data = {from, to};
+  });
+      
+  let angularLossImportance = new Variable(ns);
+  let angularLossImportanceRef = new ReferenceVariable(ns);
+
+  let {loss, zeroThis} = getLossGraph(graph, ns);
+  loss.compile();
+  let gvSum = new Float64Array(ns.gv.length);
+  let sE = new Float64Array(ns.gv.length);
+  let sD = new Float64Array(ns.gv.length);
+
+  let eps = 1e-8;
+  sE.fill(Math.sqrt(0 + eps));
+
+  angularLossImportanceRef.setReference(angularLossImportance);
+  angularLossImportance.value = 0.001
+  let gradBuffer = new Float64Array(loss.ns.gv.length);
+
+  // graph.forEachNode(node => {
+  //   node.pos[0].setValue(random.gaussian());
+  //   node.pos[1].setValue(random.gaussian());
+  // });
+
+  
+  let v = loss.ns.v;
+  for (let i = 0; i < v.length; ++i) {
+    if (i !== angularLossImportanceRef.id) v[i] = random.gaussian();
+  }
+
+  graph.forEachLink(link => {
+    let from = graph.getNode(link.fromId).pos;
+    let to = graph.getNode(link.toId).pos;
+    link.data.ui = sivg('line', {
+      x1: from[0].getValue(),
+      y1: from[1].getValue(),
+      x2: to[0].getValue(),
+      y2: to[1].getValue(),
+      'stroke-width': 0.01,
+      stroke: 'black'
+    });
+    edges.push(link.data);
+  });
+  edges.forEach(e => {
+    scene.appendChild(e.ui);
+  });
+
+  drawFrame();
+
+  function drawFrame() {
+    requestAnimationFrame(drawFrame);
+    // console.time('grad variable');
+
+    let {v, gv} = loss.ns;
+    gradBuffer.set(gv);
+    let av = angularLossImportance.value;
+    if (av < .99) {
+      angularLossImportance.value = Math.max(0, av + 0.0005);
+    }
+
+
+    gv.fill(0);
+    loss.forwardPass();
+    console.log({loss: loss.value, angularLossImportance: angularLossImportance.value});
+    loss.setGradient(1);
+    loss.backwardPass();
+
+    // graph.forEachNode(node => {
+    //   node.pos[0].gradient = clip(5, node.pos[0].gradient);
+    //   node.pos[1].gradient = clip(5, node.pos[1].gradient);
+    // });
+    for (let i = 0; i < gv.length; ++i) {
+      gv[i] = clip(5, gv[i]);
+
+      // this is adagrad
+      gvSum[i] += gv[i] * gv[i];
+    }
+
+    let beta2 = 0.7;
+    let beta = 0.9;
+    learningRate = 0.051
+
+    let beta1 = 0.9;
+    beta2 = 0.999;
+    let beta1Corrected = beta1;
+    let beta2Corrected = beta2;
+
+    // graph.forEachNode(node => {
+    //   // // momentum
+    //   let x = node.pos[0].id;
+    //   let y = node.pos[1].id;
+
+    //   // sE[x] = beta * sE[x] - learningRate * gv[x] * (1 - beta);
+    //   // sE[y] = beta * sE[y] - learningRate * gv[y] * (1 - beta);
+    //   // node.pos[0].value += sE[x];
+    //   // node.pos[1].value += sE[y];
+
+    //   // adagrad
+    //   // let dx = gv[node.pos[0].id] * learningRate / Math.sqrt(gvSum[node.pos[0].id] + 1e-8)
+    //   // let dy = gv[node.pos[1].id] * learningRate / Math.sqrt(gvSum[node.pos[1].id] + 1e-8)
+
+    //   // node.pos[0].value -= dx;
+    //   // node.pos[1].value -= dy;
+
+    //   // // regular gradient
+    //   let dx = learningRate * gv[node.pos[0].id];
+    //   let dy = learningRate * gv[node.pos[1].id];
+    //   node.pos[0].value -= dx;
+    //   node.pos[1].value -= dy;
+
+    //   // // adadelta
+    //   // let x = node.pos[0].id;
+    //   // let y = node.pos[1].id;
+
+    //   // sD[x] = beta2 * sD[x] + (1 - beta2) * gv[x] * gv[x];
+    //   // let dx = -Math.sqrt(sE[x] + eps) / Math.sqrt(sD[x] + eps) * gv[x];
+    //   // sE[x] = beta2 * sE[x] + (1 - beta2) * dx * dx;
+
+    //   // sD[y] = beta2 * sD[y] + (1 - beta2) * gv[y] * gv[y];
+    //   // let dy = -Math.sqrt(sE[y] + eps) / Math.sqrt(sD[y] + eps) * gv[y];
+    //   // sE[y] = beta2 * sE[y] + (1 - beta2) * dy * dy;
+
+    //   // node.pos[0].value += dx;
+    //   // node.pos[1].value += dy;
+
+    //   // // adam
+    //   // let gradient = gv[x];
+    //   // sE[x] = beta1 * sE[x] + (1 - beta1) * gradient;            // "momentum" update
+    //   // sD[x] = beta2 * sD[x] + (1 - beta2) * gradient * gradient; // "RMSProp" update
+    //   // let vCorrected = sE[x] / (1 - beta1Corrected);
+    //   // let sCorrected = sD[x] / (1 - beta2Corrected);
+    //   // node.pos[0].value -= learningRate * vCorrected / (Math.sqrt(sCorrected) + 1e-8);
+
+    //   // gradient = gv[y];
+    //   // sE[y] = beta1 * sE[y] + (1 - beta1) * gradient;            // "momentum" update
+    //   // sD[y] = beta2 * sD[y] + (1 - beta2) * gradient * gradient; // "RMSProp" update
+    //   // vCorrected = sE[y] / (1 - beta1Corrected);
+    //   // sCorrected = sD[y] / (1 - beta2Corrected);
+    //   // node.pos[1].value -= learningRate * vCorrected / (Math.sqrt(sCorrected) + 1e-8);
+
+    //   // beta1Corrected *= beta1;
+    //   // beta2Corrected *= beta2;
+    // })
+    for (let i = 0; i < v.length; ++i) {
+      if (i === angularLossImportanceRef.id) continue;
+      if (i === angularLossImportance.id) continue;
+      // v[i] -= gv[i] * learningRate;
+      // adam
+      let gradient = gv[i];
+      sE[i] = beta1 * sE[i] + (1 - beta1) * gradient;            // "momentum" update
+      sD[i] = beta2 * sD[i] + (1 - beta2) * gradient * gradient; // "RMSProp" update
+      let vCorrected = sE[i] / (1 - beta1Corrected);
+      let sCorrected = sD[i] / (1 - beta2Corrected);
+      v[i] -= learningRate * vCorrected / (Math.sqrt(sCorrected) + 1e-8);
+      beta1Corrected *= beta1;
+      beta2Corrected *= beta2;
+    }
+    for (let i = 0; i < zeroThis.length; ++i) {
+      v[zeroThis[i].id] = 0;
+    }
+    redraw();
+  }
+
+  function redraw() {
+    edges.forEach(e => {
+      let x1 = Number.parseFloat(e.ui.attr('x1'));
+      let x2 = Number.parseFloat(e.ui.attr('x2'));
+      let y1 = Number.parseFloat(e.ui.attr('y1'));
+      let y2 = Number.parseFloat(e.ui.attr('y2'));
+      
+      e.ui.attr({
+        x1: lerp(x1, e.from[0].getValue(), 1),
+        y1: lerp(y1, e.from[1].getValue(), 1),
+        x2: lerp(x2, e.to[0].getValue(), 1),
+        y2: lerp(y2, e.to[1].getValue(), 1)
+      })
+    })
+  }
+
+  function lerp(from, to, t) {
+    return from * (1 - t) + to * (t)
+  }
+
+function getLossGraph(graph, ns) {
+  let loss = 0; 
+  let zeroThis = [];
+
+  let angularLoss = 0;
+  graph.forEachNode(node => {
+    let currentAngularLoss = getAngularLoss(node, graph);
+    if (currentAngularLoss) {
+      angularLoss = currentAngularLoss.add(angularLoss).mul(angularLossImportanceRef);
+    }
+  })
+  if (angularLoss) {
+    loss = angularLoss.div(graph.getNodesCount()).add(loss);
+  }
+  graph.forEachLink(e => {
+    let d = getLength(e.data.from, e.data.to);
+    //loss = loss.add(d.sub(desiredLength).abs());
+    //d = d.sub(desiredLength).abs();
+    loss = d.add(loss);
+  });
+  // let desiredLinksLength = graph.getLinksCount() * 100;
+  // loss = loss.sub(desiredLinksLength).abs();
+
+  //loss = loss.div(graph.getLinksCount());
+
+  graph.forEachNode(node => {
+    let nodeLoss = new Variable(ns);
+    zeroThis.push(nodeLoss);
+    
+    let count = 0;
+    // graph.forEachLinkedNode(node.id, other => {
+    //   if (other === node) return;
+    //   let l = getLength(node.pos, other.pos).ParametricReLU(.1);
+    //   nodeLoss = nodeLoss.add(l.pow(-2));
+    //   count += 1;
+    // })
+    graph.forEachNode(other => {
+      if (other === node) return;
+     // if (random.nextDouble() < 0.1) return;
+      let l = getLength(node.pos, other.pos).ParametricReLU(.1);
+      nodeLoss = nodeLoss.add(l.pow(-2));
+      count += 1;
+    });
+    if (count) loss = loss.add(nodeLoss.div(count));
+  });
+
+  return {loss, zeroThis};
+}
+
+}
+function getAngularLoss(center, graph) {
+  let loss = 0;
+  let otherNodes = [];
+  graph.forEachLinkedNode(center.id, other => { otherNodes.push(other.pos) });
+
+  for (let i = 0; i < otherNodes.length; ++i) {
+    let from = otherNodes[i];
+    for (let j = 0; j < otherNodes.length; ++j) {
+      if (i === j) continue;
+      let to = otherNodes[j];
+      let angle = getAngle(from, to, center.pos);
+      loss = angle.pow(-1).add(loss);
+    }
+  }
+
+  return loss ? loss.div(10) : 0;
+}
+
+function getAngle(from, to, center) {
+  let xf = from[0].sub(center[0]);
+  let yf = from[1].sub(center[1]);
+
+  let xt = to[0].sub(center[0]);
+  let yt = to[1].sub(center[1]);
+
+  // let fAngle = atan2(yf, xf);
+  // let tAngle = atan2(yt, xt);
+  // return tAngle.sub(fAngle).abs();
+  let e1Length = xf.pow(2).add(yf.pow(2)).pow(0.5);
+  let e2Length = xt.pow(2).add(yt.pow(2)).pow(0.5);
+  let dot = xf.mul(xt).add(yf.mul(yt));
+  let cosAngle = dot.div(e1Length.mul(e2Length));
+  return cosAngle.acos();
+}
+
+function getLength(a, b) {
+  let dx = a[0].sub(b[0]).pow(2);
+  let dy = a[1].sub(b[1]).pow(2); 
+  return dx.add(dy).pow(.5);
+}
+
+function clip(max, x) {
+  if (x > max) return max;
+  if (x < -max) return -max;
+  return x;
+}
+
+function atan2(y, x) {
+  let result = new Variable(y.ns);
+  let signX = x.sign();
+  let signY = y.sign();
+  return signX.pow(2).mul(y.div(x)).sub((signX.sub(1).div(2)).mul((signY.add(1).sub(signY.pow(2))).mul(Math.PI)))
+}
+
+function getNodePosInit(ns) {
+
+  // let octaveCount = 1;
+  // let periodSize = 10;
+  // let pos = new Variable(ns);
+  // let x = new Variable(ns);
+  // for (let k = 0; k < octaveCount; ++k) {
+  //   let a = new Variable(ns);
+  //   let p = new Variable(ns);
+  //   let c = x.mul(2 * Math.PI * (k + 1)/periodSize).add(p);
+  //   pos = pos.add(a.mul(c.cos()))
+  // }
+  // return pos;
+  // let w1 = new Variable(ns);
+  // let b1 = new Variable(ns);
+  // let x1 = new Variable(ns);
+
+  // let w21 = new Variable(ns);
+  // let b21 = new Variable(ns);
+  // let w22 = new Variable(ns);
+  // let b22 = new Variable(ns);
+
+  // let l0Out = w1.mul(x1).add(b1).ELU();
+  // let n1 = l0Out.mul(w21).add(b21).ELU();
+  // let n2 = l0Out.mul(w22).add(b22).ELU();
+
+  // let w3 = new Variable(ns);
+  // let w4 = new Variable(ns);
+  // let b3 = new Variable(ns);
+  // return n1.mul(w3).add(n2.mul(w4)).add(b3)
+
+  return new Variable(ns);
+}
+
+</script>
+</body>
+</html>
