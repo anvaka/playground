@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Maximize angular resolution</title>
+  <script src='https://cdn.jsdelivr.net/npm/simplesvg@0.1.1/dist/simplesvg.min.js'></script>
+  <script src='https://unpkg.com/ngraph.graph@19.1.0/dist/ngraph.graph.js'></script>
+  <script src='https://cdn.jsdelivr.net/npm/ngraph.generators@19.2.0/dist/ngraph.generators.js'></script>
+  <script src='https://cdn.jsdelivr.net/npm/ngraph.random/dist/ngraph.random.js'></script>
+  <script src='https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js'></script>
+  <script src='https://cdn.jsdelivr.net/npm/ngraph.fromdot/dist/ngraph.fromDot.js'></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      padding: 0;
+    }
+    svg, body {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+  </style>
+</head>
+<body>
+  <svg viewBox='-10 -10 20 20'>
+    <g id='scene'></g>
+  </svg>
+
+<script type="module">
+import {aggregateLayout} from './layout.js';
+
+let desiredLength = 1;
+let scene = document.querySelector('#scene');
+let random = ngraphRandom(42);
+let pz = panzoom(scene);
+let learningRate = 0.08; //0.95;
+let graph = createGraph();
+
+for (let i = 0; i < 2; ++i) {
+  graph.addLink(0, i + 1);
+}
+// showGraph(graph);
+// fetch('https://raw.githubusercontent.com/anvaka/miserables/master/miserables.dot', {mode: 'cors'}).then(x => x.text()).
+// then(x => {
+//   showGraph(fromDot(x));
+// })
+showGraph(generators.grid(10, 5));
+
+function showGraph(graph) {
+  let nodes = [], edges= [];
+  let layout = aggregateLayout(graph, random, 50, 0.2, 0.2);
+
+  graph.forEachNode(node => {
+    node.pos = layout.getNodePosition(node.id);
+    nodes.push(node);
+  });
+
+  graph.forEachLink(link => {
+    let from = graph.getNode(link.fromId).pos;
+    let to = graph.getNode(link.toId).pos;
+    link.data = {from, to};
+  });
+
+  graph.forEachLink(link => {
+    let from = graph.getNode(link.fromId).pos;
+    let to = graph.getNode(link.toId).pos;
+    link.data.ui = sivg('line', {
+      x1: from[0],
+      y1: from[1],
+      x2: to[0],
+      y2: to[1],
+      'stroke-width': 0.01,
+      stroke: 'black'
+    });
+    edges.push(link.data);
+  });
+  edges.forEach(e => {
+    scene.appendChild(e.ui);
+  });
+
+  drawFrame();
+
+  function drawFrame() {
+    requestAnimationFrame(drawFrame);
+    layout.step(learningRate);
+
+    redraw();
+  }
+
+  function redraw() {
+    edges.forEach(e => {
+      let x1 = Number.parseFloat(e.ui.attr('x1'));
+      let x2 = Number.parseFloat(e.ui.attr('x2'));
+      let y1 = Number.parseFloat(e.ui.attr('y1'));
+      let y2 = Number.parseFloat(e.ui.attr('y2'));
+      
+      e.ui.attr({
+        x1: lerp(x1, e.from[0], 1),
+        y1: lerp(y1, e.from[1], 1),
+        x2: lerp(x2, e.to[0], 1),
+        y2: lerp(y2, e.to[1], 1)
+      })
+    })
+  }
+
+  function lerp(from, to, t) {
+    return from * (1 - t) + to * (t)
+  }
+}
+</script>
+</body>
+</html>

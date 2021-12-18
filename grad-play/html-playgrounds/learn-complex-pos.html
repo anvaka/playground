@@ -56,7 +56,7 @@ for (let i = 0; i < 2; ++i) {
 // then(x => {
 //   showGraph(fromDot(x));
 // })
-showGraph(generators.balancedBinTree(6));
+showGraph(generators.binTree(5));
 
 function showGraph(graph) {
   let nodes = [], edges= [];
@@ -81,15 +81,15 @@ function showGraph(graph) {
   let {loss, zeroThis} = getLossGraph(graph, ns);
   loss.compile();
   let gvSum = new Float64Array(ns.gv.length);
-  let sE = new Float64Array(ns.gv.length);
-  let sD = new Float64Array(ns.gv.length);
+  let adamSE = new Float64Array(ns.gv.length);
+  let adamSD = new Float64Array(ns.gv.length);
+  let momentum = new Float64Array(ns.gv.length);
 
   let eps = 1e-8;
-  sE.fill(Math.sqrt(0 + eps));
+  adamSE.fill(Math.sqrt(0 + eps));
 
   angularLossImportanceRef.setReference(angularLossImportance);
   angularLossImportance.value = 0.001
-  let gradBuffer = new Float64Array(loss.ns.gv.length);
 
   // graph.forEachNode(node => {
   //   node.pos[0].setValue(random.gaussian());
@@ -126,7 +126,6 @@ function showGraph(graph) {
     // console.time('grad variable');
 
     let {v, gv} = loss.ns;
-    gradBuffer.set(gv);
     let av = angularLossImportance.value;
     if (av < .99) {
       angularLossImportance.value = Math.max(0, av + 0.0005);
@@ -150,84 +149,33 @@ function showGraph(graph) {
       gvSum[i] += gv[i] * gv[i];
     }
 
-    let beta2 = 0.7;
-    let beta = 0.9;
-    learningRate = 0.051
+    let adamBeta1 = 0.9;
+    let adamBeta2 = 0.999;
+    let momentumBeta = 0.9;
+    let beta1Corrected = adamBeta1;
+    let beta2Corrected = adamBeta2;
 
-    let beta1 = 0.9;
-    beta2 = 0.999;
-    let beta1Corrected = beta1;
-    let beta2Corrected = beta2;
-
-    // graph.forEachNode(node => {
-    //   // // momentum
-    //   let x = node.pos[0].id;
-    //   let y = node.pos[1].id;
-
-    //   // sE[x] = beta * sE[x] - learningRate * gv[x] * (1 - beta);
-    //   // sE[y] = beta * sE[y] - learningRate * gv[y] * (1 - beta);
-    //   // node.pos[0].value += sE[x];
-    //   // node.pos[1].value += sE[y];
-
-    //   // adagrad
-    //   // let dx = gv[node.pos[0].id] * learningRate / Math.sqrt(gvSum[node.pos[0].id] + 1e-8)
-    //   // let dy = gv[node.pos[1].id] * learningRate / Math.sqrt(gvSum[node.pos[1].id] + 1e-8)
-
-    //   // node.pos[0].value -= dx;
-    //   // node.pos[1].value -= dy;
-
-    //   // // regular gradient
-    //   let dx = learningRate * gv[node.pos[0].id];
-    //   let dy = learningRate * gv[node.pos[1].id];
-    //   node.pos[0].value -= dx;
-    //   node.pos[1].value -= dy;
-
-    //   // // adadelta
-    //   // let x = node.pos[0].id;
-    //   // let y = node.pos[1].id;
-
-    //   // sD[x] = beta2 * sD[x] + (1 - beta2) * gv[x] * gv[x];
-    //   // let dx = -Math.sqrt(sE[x] + eps) / Math.sqrt(sD[x] + eps) * gv[x];
-    //   // sE[x] = beta2 * sE[x] + (1 - beta2) * dx * dx;
-
-    //   // sD[y] = beta2 * sD[y] + (1 - beta2) * gv[y] * gv[y];
-    //   // let dy = -Math.sqrt(sE[y] + eps) / Math.sqrt(sD[y] + eps) * gv[y];
-    //   // sE[y] = beta2 * sE[y] + (1 - beta2) * dy * dy;
-
-    //   // node.pos[0].value += dx;
-    //   // node.pos[1].value += dy;
-
-    //   // // adam
-    //   // let gradient = gv[x];
-    //   // sE[x] = beta1 * sE[x] + (1 - beta1) * gradient;            // "momentum" update
-    //   // sD[x] = beta2 * sD[x] + (1 - beta2) * gradient * gradient; // "RMSProp" update
-    //   // let vCorrected = sE[x] / (1 - beta1Corrected);
-    //   // let sCorrected = sD[x] / (1 - beta2Corrected);
-    //   // node.pos[0].value -= learningRate * vCorrected / (Math.sqrt(sCorrected) + 1e-8);
-
-    //   // gradient = gv[y];
-    //   // sE[y] = beta1 * sE[y] + (1 - beta1) * gradient;            // "momentum" update
-    //   // sD[y] = beta2 * sD[y] + (1 - beta2) * gradient * gradient; // "RMSProp" update
-    //   // vCorrected = sE[y] / (1 - beta1Corrected);
-    //   // sCorrected = sD[y] / (1 - beta2Corrected);
-    //   // node.pos[1].value -= learningRate * vCorrected / (Math.sqrt(sCorrected) + 1e-8);
-
-    //   // beta1Corrected *= beta1;
-    //   // beta2Corrected *= beta2;
-    // })
     for (let i = 0; i < v.length; ++i) {
       if (i === angularLossImportanceRef.id) continue;
       if (i === angularLossImportance.id) continue;
       // v[i] -= gv[i] * learningRate;
+      let gradientUpdate = gv[i] * learningRate;
       // adam
       let gradient = gv[i];
-      sE[i] = beta1 * sE[i] + (1 - beta1) * gradient;            // "momentum" update
-      sD[i] = beta2 * sD[i] + (1 - beta2) * gradient * gradient; // "RMSProp" update
-      let vCorrected = sE[i] / (1 - beta1Corrected);
-      let sCorrected = sD[i] / (1 - beta2Corrected);
-      v[i] -= learningRate * vCorrected / (Math.sqrt(sCorrected) + 1e-8);
-      beta1Corrected *= beta1;
-      beta2Corrected *= beta2;
+      adamSE[i] = adamBeta1 * adamSE[i] + (1 - adamBeta1) * gradient;            // "momentum" update
+      adamSD[i] = adamBeta2 * adamSD[i] + (1 - adamBeta2) * gradient * gradient; // "RMSProp" update
+      let vCorrected = adamSE[i] / (1 - beta1Corrected);
+      let sCorrected = adamSD[i] / (1 - beta2Corrected);
+      beta1Corrected *= adamBeta1;
+      beta2Corrected *= adamBeta2;
+
+      let adamUpdate = learningRate * vCorrected / (Math.sqrt(sCorrected) + 1e-8);
+
+      // momentum
+      let momentumUpdate = learningRate * gradient * (1 - momentumBeta) - momentumBeta * momentum[i]
+      momentum[i] = momentumUpdate;
+
+      v[i] -= (adamUpdate + gradientUpdate);
     }
     for (let i = 0; i < zeroThis.length; ++i) {
       v[zeroThis[i].id] = 0;
@@ -372,6 +320,31 @@ function getNodePosInit(ns) {
   //   pos = pos.add(a.mul(c.cos()))
   // }
   // return pos;
+  return new Variable(ns);
+  let layersConfig = [1];
+  let input = [];
+  for (let i = 0; i < layersConfig[0]; ++i) {
+    input.push(new Variable(ns));
+  }
+  let layers = [input];
+  for (let i = 1; i < layersConfig.length; ++i) {
+    let layer = [];
+    for (let j = 0; j < layersConfig[i]; ++j) {
+      // create 5 variables, each connected to the previous layer:
+      let sum = 0;
+      layers[i - 1].forEach(e => {
+        sum = e.mul(new Variable(ns)).add(sum);
+      });
+      sum = sum.add(new Variable(ns));
+      if (i === layersConfig.length - 1) {
+        layer.push(sum);
+      } else {
+        layer.push(sum.ELU());
+      }
+    }
+    layers.push(layer);
+  }
+  return layers[layers.length - 1][0];
   // let w1 = new Variable(ns);
   // let b1 = new Variable(ns);
   // let x1 = new Variable(ns);
