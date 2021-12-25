@@ -3,7 +3,8 @@ import {Lexer, TokenKind} from './Lexer.js'
 
 // Working through http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/
 let lexer = new Lexer();
-let tokens = lexer.tokenize("a - (b - c)");
+const expression = "a - (b * b - c)";
+let tokens = lexer.tokenize(expression);
 console.log(tokens);
 
 
@@ -23,4 +24,8 @@ parser.registerInfixParselet(TokenKind.MULTIPLY, binaryOperatorParselet, 3);
 parser.registerInfixParselet(TokenKind.DIVIDE, binaryOperatorParselet, 4);
 
 let result = parser.parseExpression()
-console.log(result)
+const scope = new Map([["a", 1], ["b", 2], ["c", 3]]);
+
+console.log(expression + " = " + result.evaluate(scope));
+console.log("Where: ")
+console.log(scope);

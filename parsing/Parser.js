@@ -1,4 +1,5 @@
 import {TokenKind} from './Lexer.js';
+import { NameExpression, BinaryExpression, PrefixExpression } from './expressions.js';
 
 export class Parser {
   constructor(tokens) {
@@ -68,25 +69,6 @@ export class Parser {
   }
 }
 
-export class NameExpression {
-  constructor(value) { this.value = value; }
-}
-
-export class BinaryExpression {
-  constructor(left, operator, right) {
-    this.left = left;
-    this.operator = operator;
-    this.right = right;
-  }
-}
-
-export class PrefixExpression {
-  constructor(operator, right) {
-    this.operator = operator;
-    this.right = right;
-  }
-}
-
 // Prefix parsing
 export function nameParselet(parser, token) { 
   return new NameExpression(token.value);
@@ -105,5 +87,5 @@ export function prefixParselet(parser, token) {
 
 // Infix parsing
 export function binaryOperatorParselet(parser, token, left) {
-  return new BinaryExpression(left, token.value, parser.parseExpression(this));
+  return new BinaryExpression(left, token.value, parser.parseExpression(binaryOperatorParselet));
 }
