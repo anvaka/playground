@@ -19,11 +19,11 @@ const Operators = new Map([
 
 const tokensRegex = new RegExp(
   "(" +
-    "[1-9][0-9]*|" + // Numbers
-    "[\(\)]|"    +   // Parenthesis
-    "[+\\-*/]|"    + // operators
-     "[ \\t\\r\\n]|"   + // Whitespace
-     "[A-Za-z_][A-Z-a-z_0-9_]*" + // Identifiers
+    "[1-9][0-9]*|"    + // Numbers
+    "[\(\)]|"         + // Parenthesis
+    "[+\\-*/]|"       + // operators
+    "[ \\t\\r\\n]|"   + // Whitespace
+    "[A-Za-z_][A-Z-a-z_0-9_]*" + // Identifiers
   ")")
 
 export class Lexer {
@@ -32,8 +32,7 @@ export class Lexer {
     text.split(tokensRegex).forEach((value, index) => {
       if (index % 2 === 0 && value !== "") {
         throw new Error(`Invalid input ${text}`);
-      }
-      if (index % 2 != 0) {
+      } else if (index % 2 != 0) {
         let c = value[0];
         if (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c == '_') {
           // identifier
