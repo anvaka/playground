@@ -37,9 +37,8 @@ export class Parser {
   }
 
   consume(expectedKind) {
-    if (this.current >= this.tokens.length) {
-      throw new Error("Unexpected end of input");
-    }
+    if (this.isDone()) { throw new Error("Unexpected end of input"); }
+
     let currentToken = this.tokens[this.current++];
     if (expectedKind !== undefined && currentToken.kind !== expectedKind){
       throw new Error(`Expected token kind ${expectedKind}, got ${currentToken.kind}`);
@@ -48,9 +47,8 @@ export class Parser {
     return currentToken;
   }
 
-  peek() {
-    return this.tokens[this.current] || null;
-  }
+  peek() { return this.tokens[this.current] || null; }
+  isDone() { return this.current >= this.tokens.length; }
 
   registerPrefixParselet(tokenKind, prefixParselet) {
     if (this.prefixParselets.has(tokenKind)) {
