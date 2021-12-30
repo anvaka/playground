@@ -1,5 +1,5 @@
 import {TokenKind} from './Lexer.js';
-import { NameExpression, BinaryExpression, PrefixExpression } from './expressions.js';
+import { NameExpression, BinaryExpression, PrefixExpression, FunctionCallExpression} from './expressions.js';
 
 export class Parser {
   constructor(tokens) {
@@ -7,8 +7,18 @@ export class Parser {
     this.infixParselets = new Map();
     this.precedenceMap = new Map();
 
+    this.tokens = tokens || [];
+    this.current = 0;
+  }
+
+  parse(tokens) {
     this.tokens = tokens;
     this.current = 0;
+    const result = this.parseExpression()
+    if (!this.isDone()) {
+      throw new Error('UNEXPECTED TOKEN: ' + this.peek().value);
+    }
+    return result;
   }
 
   parseExpression(parselet) {
@@ -86,4 +96,10 @@ export function prefixParselet(parser, token) {
 // Infix parsing
 export function binaryOperatorParselet(parser, token, left) {
   return new BinaryExpression(left, token.value, parser.parseExpression(binaryOperatorParselet));
+}
+
+export function functionParselet(parser, token, left) {
+  let args = parser.parseExpression(functionParselet);
+  parser.consume(TokenKind.RPAREN);
+  return new FunctionCallExpression(left, args);
 }

@@ -20,6 +20,7 @@ const Operators = new Map([
 const tokensRegex = new RegExp(
   "(" +
     "[1-9][0-9]*|"    + // Numbers
+    "(?:sin|cos)|" + // keywords
     "[\(\)]|"         + // Parenthesis
     "[+\\-*/]|"       + // operators
     "[ \\t\\r\\n]|"   + // Whitespace

@@ -33,3 +33,16 @@ export class PrefixExpression {
     return (this.operator === '-' ? -1 : 1) * this.right.evaluate(scope);
   }
 }
+
+export class FunctionCallExpression {
+  constructor(name, args) {
+    this.name = name;
+    this.args = args;
+  }
+  evaluate(scope) {
+    if (this.name.value === 'sin') {
+      return Math.sin(this.args.evaluate(scope));
+    }
+    throw new Error('Not implemented')
+  }
+}

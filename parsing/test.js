@@ -1,12 +1,13 @@
-import {binaryOperatorParselet, nameParselet, Parser, prefixParselet, parenthesisParselet} from './Parser.js'
+import {
+  binaryOperatorParselet, nameParselet, Parser, prefixParselet, parenthesisParselet,
+  functionParselet} from './Parser.js'
 import {Lexer, TokenKind} from './Lexer.js'
 
 // Working through http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/
 let lexer = new Lexer();
-const expression = "a+(b)";
+const expression = "sin(a)+(b)";
 let tokens = lexer.tokenize(expression);
 console.log(tokens);
-
 
 const parser = new Parser(tokens);
 
@@ -22,6 +23,7 @@ parser.registerInfixParselet(TokenKind.MINUS, binaryOperatorParselet, 1);
 parser.registerInfixParselet(TokenKind.PLUS, binaryOperatorParselet, 2);
 parser.registerInfixParselet(TokenKind.MULTIPLY, binaryOperatorParselet, 3);
 parser.registerInfixParselet(TokenKind.DIVIDE, binaryOperatorParselet, 4);
+parser.registerInfixParselet(TokenKind.LPAREN, functionParselet, 5);
 
 let result = parser.parseExpression()
 if (!parser.isDone()) {
