@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<!--
+Created using JS Bin
+http://jsbin.com
+
+Copyright (c) 2022 by anvaka (http://jsbin.com/fexinaf/2/edit)
+
+Released under the MIT license: http://jsbin.mit-license.org
+-->
+<meta name="robots" content="noindex">
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Sudoku</title>
+<style id="jsbin-css">
+* {
+  box-sizing: border-box;
+  font-family: sans-serif;
+}
+
+.container {
+  position: absolute;
+  border-right: 1px solid black;
+  border-bottom: 1px solid black;
+}
+.cell {
+  position: absolute;
+  text-align: center;
+  border-top: 1px solid black;
+  border-left: 1px solid black;
+}
+
+.cell.x-3, .cell.x-6 {
+  border-left: 2px solid black;
+}
+
+.cell.y-3, .cell.y-6 {
+  border-top: 2px solid black;
+}
+
+#next {
+  position: absolute;
+  top: 299px;
+}
+</style>
+</head>
+<body>
+ <div class='container'></div>
+<script id="jsbin-javascript">
+// noprotect
+let grid = [
+  0, 0, 0,  0, 0, 0,  0, 0, 0,
+  0, 0, 0,  0, 0, 0,  0, 0, 0,
+  0, 0, 0,  0, 0, 0,  0, 0, 0,
+  
+  0, 0, 0,  0, 0, 7,  0, 0, 0,
+  0, 0, 4,  0, 0, 0,  0, 0, 0,
+  0, 0, 0,  0, 0, 0,  0, 0, 0,
+  
+  0, 0, 0,  0, 0, 0,  0, 0, 0,
+  0, 0, 0,  0, 0, 0,  0, 0, 0,
+  0, 0, 0,  0, 0, 0,  0, 0, 0  
+];
+
+function solve(grid) {
+  let emptyCellIndex = grid.findIndex(v => v === 0);
+  if (emptyCellIndex < 0) return true;
+  let x = emptyCellIndex % 9, y = Math.floor(emptyCellIndex / 9);
+
+  for (let candidate = 1; candidate < 10; ++candidate) {
+    if (isTaken(grid, candidate, x ,y)) continue;
+    grid[x + y * 9] = candidate;
+    if (solve(grid)) return true;
+    grid[x + y * 9] = 0;
+  }
+}
+
+function isTaken(grid, value, x, y) {
+  let cellTaken = other => other === value;
+  return verticalIsTaken(grid, x, cellTaken) ||
+    horizontalIsTaken(grid, y, cellTaken) ||
+    blockIsTaken(grid, x, y, cellTaken)
+}
+
+function verticalIsTaken(grid, x, cellTaken) {
+  for (let y = 0; y < 9; ++y) if (cellTaken(grid[y * 9 + x])) return true;
+}
+
+function horizontalIsTaken(grid, y, cellTaken) {
+  for (let x = 0; x < 9; ++x) if (cellTaken(grid[y * 9 + x])) return true;
+}
+
+function blockIsTaken(grid, x, y, cellTaken) {
+  let bx = Math.floor(x/3) * 3, by = Math.floor(y / 3) * 3;
+  for (let i = 0; i < 9; ++i) 
+    if (cellTaken(grid[(by + Math.floor(i / 3)) * 9 + (bx + i % 3)])) return true;   
+}
+
+
+function renderGrid(grid) {
+  let el = document.querySelector('.container');
+  el.innerHTML = '';
+  let w = 24; 
+  let h = 24;
+  el.style.width = (w * 9) + 'px';
+  el.style.height = (h * 9) + 'px';
+  grid.forEach((value, idx) => {
+    let x = idx % 9, y = Math.floor(idx / 9);
+    let bx = Math.floor(x/3) * 3, by = Math.floor(y / 3) * 3;
+    let div = document.createElement('div');
+    div.classList.add('cell');
+    div.classList.add('x-' + x);
+    div.classList.add('y-' + y);
+    if ((bx ^ by) & 1) div.classList.add('alt-background');
+    
+    div.style.left = x * w + 'px';
+    div.style.top = y * h + 'px';
+    div.style.width = w + 'px';
+    div.style.height = h + 'px';
+    div.innerText = value === 0 ? '' : value;
+    el.appendChild(div);
+  });
+}
+
+solve(grid); renderGrid(grid)
+</script>
+</body>
+</html>
