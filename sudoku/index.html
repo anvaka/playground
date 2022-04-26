@@ -1,23 +1,23 @@
 <!DOCTYPE html>
 <!--
-Created using JS Bin
-http://jsbin.com
-
 Copyright (c) 2022 by anvaka (http://jsbin.com/fexinaf/2/edit)
 
 Released under the MIT license: http://jsbin.mit-license.org
 -->
-<meta name="robots" content="noindex">
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width">
   <title>Sudoku</title>
 <style id="jsbin-css">
-* {
+  * {
   box-sizing: border-box;
   font-family: sans-serif;
 }
+.alt-background {
+  background-color: lightgray;
+}
+
 
 .container {
   position: absolute;
@@ -31,14 +31,13 @@ Released under the MIT license: http://jsbin.mit-license.org
   border-left: 1px solid black;
 }
 
-.cell.x-3, .cell.x-6 {
+.cell.x-border {
   border-left: 2px solid black;
 }
 
-.cell.y-3, .cell.y-6 {
+.cell.y-border {
   border-top: 2px solid black;
 }
-
 #next {
   position: absolute;
   top: 299px;
@@ -48,31 +47,28 @@ Released under the MIT license: http://jsbin.mit-license.org
 <body>
  <div class='container'></div>
 <script id="jsbin-javascript">
-// noprotect
-let grid = [
-  0, 0, 0,  0, 0, 0,  0, 0, 0,
-  0, 0, 0,  0, 0, 0,  0, 0, 0,
-  0, 0, 0,  0, 0, 0,  0, 0, 0,
-  
-  0, 0, 0,  0, 0, 7,  0, 0, 0,
-  0, 0, 4,  0, 0, 0,  0, 0, 0,
-  0, 0, 0,  0, 0, 0,  0, 0, 0,
-  
-  0, 0, 0,  0, 0, 0,  0, 0, 0,
-  0, 0, 0,  0, 0, 0,  0, 0, 0,
-  0, 0, 0,  0, 0, 0,  0, 0, 0  
-];
+// Simple sudoku solver, written by anvaka (https://twitter.com/anvaka)
+let blockSize = 3;
+let sideLength = blockSize * blockSize;
+let elementCount = sideLength * sideLength;
+
+let grid = makeGrid();
+
+console.time('solve');
+solve(grid); 
+console.timeEnd('solve');
+renderGrid(grid)
 
 function solve(grid) {
   let emptyCellIndex = grid.findIndex(v => v === 0);
   if (emptyCellIndex < 0) return true;
-  let x = emptyCellIndex % 9, y = Math.floor(emptyCellIndex / 9);
+  let x = emptyCellIndex % sideLength, y = Math.floor(emptyCellIndex / sideLength);
 
-  for (let candidate = 1; candidate < 10; ++candidate) {
+  for (let candidate = 1; candidate <= sideLength; ++candidate) {
     if (isTaken(grid, candidate, x ,y)) continue;
-    grid[x + y * 9] = candidate;
+    grid[x + y * sideLength] = candidate;
     if (solve(grid)) return true;
-    grid[x + y * 9] = 0;
+    grid[x + y * sideLength] = 0;
   }
 }
 
@@ -84,34 +80,40 @@ function isTaken(grid, value, x, y) {
 }
 
 function verticalIsTaken(grid, x, cellTaken) {
-  for (let y = 0; y < 9; ++y) if (cellTaken(grid[y * 9 + x])) return true;
+  for (let y = 0; y < sideLength; ++y) if (cellTaken(grid[y * sideLength + x])) return true;
 }
 
 function horizontalIsTaken(grid, y, cellTaken) {
-  for (let x = 0; x < 9; ++x) if (cellTaken(grid[y * 9 + x])) return true;
+  for (let x = 0; x < sideLength; ++x) if (cellTaken(grid[y * sideLength + x])) return true;
 }
 
 function blockIsTaken(grid, x, y, cellTaken) {
-  let bx = Math.floor(x/3) * 3, by = Math.floor(y / 3) * 3;
-  for (let i = 0; i < 9; ++i) 
-    if (cellTaken(grid[(by + Math.floor(i / 3)) * 9 + (bx + i % 3)])) return true;   
+  let bx = Math.floor(x/blockSize) * blockSize, by = Math.floor(y / blockSize) * blockSize;
+  for (let i = 0; i < sideLength; ++i) 
+    if (cellTaken(grid[(by + Math.floor(i / blockSize)) * sideLength + (bx + i % blockSize)])) return true;   
 }
 
+function makeGrid() {
+  return (new Array(elementCount)).fill(0);
+}
+
+// That's it! The code below is just the UI
 
 function renderGrid(grid) {
   let el = document.querySelector('.container');
   el.innerHTML = '';
   let w = 24; 
   let h = 24;
-  el.style.width = (w * 9) + 'px';
-  el.style.height = (h * 9) + 'px';
+  el.style.width = (w * sideLength) + 'px';
+  el.style.height = (h * sideLength) + 'px';
   grid.forEach((value, idx) => {
-    let x = idx % 9, y = Math.floor(idx / 9);
-    let bx = Math.floor(x/3) * 3, by = Math.floor(y / 3) * 3;
+    let x = idx % sideLength, y = Math.floor(idx / sideLength);
+    let bx = Math.floor(x/blockSize), 
+        by = Math.floor(y / blockSize);
     let div = document.createElement('div');
     div.classList.add('cell');
-    div.classList.add('x-' + x);
-    div.classList.add('y-' + y);
+    if (x > 0 && (x % blockSize === 0)) div.classList.add('x-border');
+    if (y > 0 && (y % blockSize === 0)) div.classList.add('y-border');
     if ((bx ^ by) & 1) div.classList.add('alt-background');
     
     div.style.left = x * w + 'px';
@@ -123,7 +125,7 @@ function renderGrid(grid) {
   });
 }
 
-solve(grid); renderGrid(grid)
+
 </script>
 </body>
 </html>
