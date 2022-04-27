@@ -50,8 +50,10 @@ def getTextFromData(data):
       confidence = float(data['conf'][i])
       if confidence > 90.0:        #TODO -1 in conf means multi-word....
         text += (data["text"][i] + ' ')
+      elif confidence > 0:
+        print ("confidence too low: " + str(confidence) + " for " + data["text"][i])
 
-    return str.strip(text)
+    return {'text': str.strip(text), 'conf': data['conf']}
 
 def try_extract(img, save_to, key, extract_fn):
     for min_value in range(127, 40, -5):

@@ -7,7 +7,7 @@ from os import listdir
 from os.path import isfile, join, exists
 
 multiple_cores = True
-input_folder = "process_this"
+input_folder = "done"
 output_file_name = 'output.csv'
 csv_mode = 'a' if exists(output_file_name) else 'w'
 header = ['name', 'price', 'avail', 'time', 'rank', 'time_stamp']

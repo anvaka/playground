@@ -11,6 +11,8 @@ def getTextFromData(data):
       confidence = float(data['conf'][i])
       if confidence > 90.0:        #TODO -1 in conf means multi-word....
         text += (data["text"][i] + ' ')
+      else:
+        print ("confidence too low: " + str(confidence) + " for " + data["text"][i])
 
     return str.strip(text)
 
