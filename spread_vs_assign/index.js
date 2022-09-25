@@ -24,6 +24,14 @@ suite.add('Counting using Object.assign()', function() {
   }
 
   if (counter.from !== testCount + 1) throw new Error('Math is wrong');
+}).add('Simple rewrite', function() {
+  var counter = {from: 0}
+
+  for (var i = 0; i <= testCount; ++i) {
+    counter = {from: counter.from + 1};
+  }
+
+  if (counter.from !== testCount + 1) throw new Error('Math is wrong');
 }).add('Counting using object spread', function() {
   var counter = {from: 0}
 
