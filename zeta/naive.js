@@ -10,10 +10,10 @@ export function zetaReal(s, iterations = 1000) {
 
 export function zetaComplex(s, iterations = 1000) {
   let sum = { re: 0, im: 0 };
-  // c ^ (a + b i) = c ^ a (cos(b ln(c)) + i sin(b ln(c)))
   for (let n = 1; n < iterations; n++) {
-    sum.re += Math.pow(n, -s.re) * Math.cos(s.im * Math.log(n));
-    sum.im += Math.pow(n, -s.re) * Math.sin(s.im * Math.log(n));
+    const c = Math.pow(n, -s.re);
+    sum.re += c * Math.cos(s.im * Math.log(n));
+    sum.im += c * Math.sin(s.im * Math.log(n));
   }
   return sum;
 }
