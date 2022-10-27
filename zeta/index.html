@@ -18,11 +18,25 @@
       overflow: hidden;
       margin: 0;
     }
+    #form {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+    }
   </style>
 </head>
 <body>
   
   <canvas id="canvas"></canvas>
+  <!-- form to input complex number -->
+  <form id="form">
+    <input type="number" step="any" id="iterations" placeholder="iterations" value="1000">
+    <input type="number" step="any" id="iterationsPerFrame" placeholder="iterationsPerFrame" value="100">
+    <input type="number" step="any" id="real" placeholder="real part" value="0">
+    <input type="number" step="any" id="imaginary" placeholder="imaginary part" value="2013">
+    <input type="submit" value="draw it">
+  </form>
+  
   <script type="module" src="drawit.js"></script>
 </body>
 </html>
