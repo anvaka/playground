@@ -1,570 +1,739 @@
 // chat gpt session on emotions.
 // Can you give me a list of 100 most common human emotions as a javascript array?
 
-var emotions = [
-  "anger",
-  "anxiety",
-  "apathy",
-  "disgust",
-  "envy",
-  "excitement",
-  "fear",
-  "frustration",
-  "gratitude",
-  "grief",
-  "guilt",
-  "happiness",
-  "hate",
-  "hope",
-  "humiliation",
-  "hunger",
-  "insecurity",
-  "inspiration",
-  "jealousy",
-  "loneliness",
-  "love",
-  "lust",
-  "melancholy",
-  "nostalgia",
-  "optimism",
-  "outrage",
-  "pain",
-  "passion",
-  "pessimism",
-  "pity",
-  "pleasure",
-  "pride",
-  "rage",
-  "regret",
-  "remorse",
-  "resentment",
-  "sadness",
-  "satisfaction",
-  "shame",
-  "shock",
-  "stress",
-  "surprise",
-  "terror",
-  "trust",
-  "uncertainty",
-  "warmth",
-  "worry",
-  "boredom",
-  "calmness",
-  "contentment",
-  "curiosity",
-  "depression",
-  "desire",
-  "disappointment",
-  "disbelief",
-  "disillusionment",
-  "dread",
-  "eagerness",
-  "ecstasy",
-  "elation",
-  "embarrassment",
-  "empathy",
-  "enthusiasm",
-  "exasperation",
-  "exhilaration",
-  "expectation",
-  "fascination",
-  "fatigue",
-  "fury",
-  "gloom",
-  "gloominess",
-  "horror",
-  "hysteria",
-  "impatience",
-  "indignation",
-  "interest",
-  "irritation",
-  "isolation",
-  "joy",
-  "longing",
-  "madness",
-  "miserable",
-  "misery",
-  "numbness",
-  "overwhelming",
-  "powerlessness",
-  "puzzlement",
-  "relief",
-  "sarcasm",
-  "scorn",
-  "self-pity",
-  "skepticism",
-  "solitude",
-  "spite",
-  "stubbornness",
-  "submissiveness",
-  "suffering",
-  "suspicion",
-  "tenderness",
-  "tension",
-  "terrified",
-  "thankfulness",
-  "thrill",
-  "tiredness",
-  "tolerance",
-  "torment",
-  "triumph",
-  "unhappiness",
-  "unimportant",
-  "vengefulness",
-  "violence",
-  "vitality",
-  "vulnerability",
-  "weariness",
-  "wickedness",
-  "yearning",
-  "zeal"
-];
+var emotions = getEmotions();
+let sortedGrid = getSortedGrid(emotions, 'valence', 'arousal');
+printSortedGrid(sortedGrid);
 
-/* 
-There are several ways to categorize emotions, each with their own strengths and limitations. Some common ways to categorize emotions include:
-
-* Basic emotions: These are emotions that are considered to be universal and innate, 
-such as happiness, fear, anger, sadness, and disgust.
-
-* Action tendencies: This categorization focuses on the behavioral response associated 
-with a particular emotion, such as the fight or flight response associated with fear, 
-or the approach behavior associated with happiness.
-
-* Dimensional model: This categorization focuses on the different dimensions or 
-components of an emotion, such as valence (positive or negative), arousal (high or low), 
-and dominance (high or low).
-
-* Functional perspective: This categorization focuses on the adaptive or functional role of emotions,
-such as how they help individuals navigate social interactions or respond to environmental challenges.
-
-* Cognitive appraisal: This categorization focuses on the cognitive processes that underlie emotions, 
-such as how individuals interpret and make sense of events and situations.
-*/
-
-
-// Positive Emotions:
-const positiveEmotions = new Set(['contentment', 'excitement', 'gratitude', 'happiness', 'hope', 'inspiration', 'love', 'optimism', 'pleasure', 'pride', 'satisfaction', 'trust', 'warmth', 'ecstasy', 'elation', 'enthusiasm', 'eagerness', 'interest', 'joy', 'tenderness', 'thrill', 'vitality', 'triumph', 'thankfulness', 'excitement', 'inspiration', 'pleasure', 'ecstasy', 'elation', 'enthusiasm', 'eagerness', 'interest', 'joy', 'tenderness', 'thrill', 'vitality', 'triumph', 'thankfulness', 'curiosity', 'exhilaration', 'expectation', 'fascination', 'longing', 'zeal', 'empathy', 'tolerance']);
-
-// negative emotions:
-const negativeEmotions = new Set(['anger', 'anxiety', 'apathy', 'disgust', 'envy', 'fear', 'frustration', 'grief', 'guilt', 'hate', 'humiliation', 'hunger', 'insecurity', 'jealousy', 'loneliness', 'lust', 'melancholy', 'nostalgia', 'outrage', 'pain', 'passion', 'pessimism', 'pity', 'rage', 'regret', 'remorse', 'resentment', 'sadness', 'shame', 'shock', 'stress', 'surprise', 'terror', 'uncertainty', 'worry', 'boredom', 'calmness', 'depression', 'desire', 'disappointment', 'disbelief', 'disillusionment', 'dread', 'fatigue', 'fury', 'gloom', 'gloominess', 'horror', 'hysteria', 'impatience', 'indignation', 'irritation', 'isolation', 'madness', 'miserable', 'misery', 'numbness', 'overwhelming', 'powerlessness', 'puzzlement', 'relief', 'sarcasm', 'scorn', 'self-pity', 'skepticism', 'solitude', 'spite', 'stubbornness', 'submissiveness', 'suffering', 'suspicion', 'torment', 'unhappiness', 'unimportant', 'vengefulness', 'violence', 'vulnerability', 'weariness', 'wickedness', 'embarrassment', 'exasperation', 'guilt', 'shame', 'remorse', 'regret', 'tension', 'terrified', 'tiredness', 'isolation', 'yearning']);
-
-const sharedSet = combineSets(positiveEmotions, negativeEmotions);
-const valence = [
-  {emotion: "anger", valence: -0.8},
-  {emotion: "anxiety", valence: -0.7},
-  {emotion: "apathy", valence: -0.5},
-  {emotion: "disgust", valence: -0.7},
-  {emotion: "envy", valence: -0.6},
-  {emotion: "excitement", valence: 0.9},
-  {emotion: "fear", valence: -0.8},
-  {emotion: "frustration", valence: -0.7},
-  {emotion: "gratitude", valence: 0.8},
-  {emotion: "grief", valence: -0.9},
-  {emotion: "guilt", valence: -0.7},
-  {emotion: "happiness", valence: 0.9},
-  {emotion: "hate", valence: -0.9},
-  {emotion: "hope", valence: 0.8},
-  {emotion: "humiliation", valence: -0.8},
-  {emotion: "hunger", valence: -0.5},
-  {emotion: "insecurity", valence: -0.6},
-  {emotion: "inspiration", valence: 0.9},
-  {emotion: "jealousy", valence: -0.8},
-  {emotion: "loneliness", valence: -0.7},
-  {emotion: "love", valence: 0.9},
-  {emotion: "lust", valence: 0.7},
-  {emotion: "melancholy", valence: -0.6},
-  {emotion: "nostalgia", valence: -0.5},
-  {emotion: "optimism", valence: 0.8},
-  {emotion: "outrage", valence: -0.9},
-  {emotion: "pain", valence: -0.9},
-  {emotion: "passion", valence: 0.8},
-  {emotion: "pessimism", valence: -0.8},
-  {emotion: "pity", valence: -0.6},
-  {emotion: "pleasure", valence: 0.9},
-  {emotion: "pride", valence: 0.8},
-  {emotion: "rage", valence: -0.9},
-  {emotion: "regret", valence: -0.7},
-  {emotion: "remorse", valence: -0.7},
-  {emotion: "resentment", valence: -0.8},
-  {emotion: "sadness", valence: -0.8},
-  {emotion: "satisfaction", valence: 0.8},
-  {emotion: "shame", valence: -0.9},
-  {emotion: "shock", valence: -0.9},
-  {emotion: "stress", valence: -0.7},
-  {emotion: "surprise", valence: 0.5},
-  {emotion: "terror", valence: -1.0},
-  {emotion: "trust", valence: 0.7},
-  {emotion: "uncertainty", valence: -0.6},
-  {emotion: "warmth", valence: 0.8},
-  {emotion: "worry", valence: -0.7},
-  {emotion: "boredom", valence: -0.5},
-  {emotion: "calmness", valence: 0.6},
-  {emotion: "contentment", valence: 0.8},
-  {emotion: "curiosity", valence: 0.7},
-  {emotion: "depression", valence: -0.9},
-  {emotion: "desire", valence: 0.7},
-  {emotion: "disappointment", valence: -0.7},
-  {emotion: "disbelief", valence: -0.6},
-  {emotion: "disillusionment", valence: -0.8},
-  {emotion: "dread", valence: -0.9},
-  {emotion: "eagerness", valence: 0.7},
-  {emotion: "ecstasy", valence: 1.0},
-  {emotion: "elation", valence: 0.9},
-  {emotion: "embarrassment", valence: -0.8},
-  {emotion: "empathy", valence: 0.8},
-  {emotion: "enthusiasm", valence: 0.9},
-  {emotion: "exasperation", valence: -0.7},
-  {emotion: "exhilaration", valence: 1.0},
-  {emotion: "expectation", valence: 0.7},
-  {emotion: "fascination", valence: 0.8},
-  {emotion: "fatigue", valence: -0.6},
-  {emotion: "fury", valence: -0.9},
-  {emotion: "gloom", valence: -0.8},
-  {emotion: "gloominess", valence: -0.8},
-  {emotion: "horror", valence: -1.0},
-  {emotion: "hysteria", valence: -0.9},
-  {emotion: "impatience", valence: -0.7},
-  {emotion: "indignation", valence: -0.8},
-  {emotion: "interest", valence: 0.7},
-  {emotion: "irritation", valence: -0.6},
-  {emotion: "isolation", valence: -0.7},
-  {emotion: "joy", valence: 1.0},
-  {emotion: "longing", valence: -0.7},
-  {emotion: "madness", valence: -1.0},
-  {emotion: "miserable", valence: -0.9},
-  {emotion: "misery", valence: -0.9},
-  {emotion: "numbness", valence: -0.6},
-  {emotion: "overwhelming", valence: -0.9},
-  {emotion: "powerlessness", valence: -0.9},
-  {emotion: "puzzlement", valence: -0.5},
-  {emotion: "relief", valence: 0.8},
-  {emotion: "sarcasm", valence: -0.5},
-  {emotion: "scorn", valence: -0.8},
-  {emotion: "self-pity", valence: -0.7},
-  {emotion: "skepticism", valence: -0.6},
-  {emotion: "solitude", valence: -0.6},
-  {emotion: "spite", valence: -0.9},
-  {emotion: "stubbornness", valence: -0.7},
-  {emotion: "submissiveness", valence: -0.5},
-  {emotion: "suffering", valence: -1.0},
-  {emotion: "suspicion", valence: -0.7},
-  {emotion: "tenderness", valence: 0.8},
-  {emotion: "tension", valence: -0.7},
-  {emotion: "terrified", valence: -1.0},
-  {emotion: "thankfulness", valence: 0.8},
-  {emotion: "thrill", valence: 0.9},
-  {emotion: "tiredness", valence: -0.6},
-  {emotion: "tolerance", valence: 0.5},
-  {emotion: "torment", valence: -1.0},
-  {emotion: "triumph", valence: 1.0},
-  {emotion: "unhappiness", valence: -0.9},
-  {emotion: "unimportant", valence: -0.5},
-  {emotion: "vengefulness", valence: -0.9},
-  {emotion: "violence", valence: -1.0},
-  {emotion: "vitality", valence: 0.9},
-  {emotion: "vulnerability", valence: -0.6},
-  {emotion: "weariness", valence: -0.7},
-  {emotion: "wickedness", valence: -1.0},
-  {emotion: "yearning", valence: -0.7},
-  {emotion: "zeal", valence: 0.8}
-];
-
-const arousal = [
-    {emotion: "anger", arousal: 1.0},
-    {emotion: "anxiety", arousal: 0.9},
-    {emotion: "apathy", arousal: -0.5},
-    {emotion: "disgust", arousal: -0.2},
-    {emotion: "envy", arousal: 0.8},
-    {emotion: "excitement", arousal: 1.0},
-    {emotion: "fear", arousal: 1.0},
-    {emotion: "frustration", arousal: 0.9},
-    {emotion: "gratitude", arousal: 0.6},
-    {emotion: "grief", arousal: -0.3},
-    {emotion: "guilt", arousal: 0.7},
-    {emotion: "happiness", arousal: 0.9},
-    {emotion: "hate", arousal: 1.0},
-    {emotion: "hope", arousal: 0.7},
-    {emotion: "humiliation", arousal: 0.8},
-    {emotion: "hunger", arousal: 0.5},
-    {emotion: "insecurity", arousal: 0.7},
-    {emotion: "inspiration", arousal: 1.0},
-    {emotion: "jealousy", arousal: 0.9},
-    {emotion: "loneliness", arousal: -0.7},
-    {emotion: "love", arousal: 1.0},
-    {emotion: "lust", arousal: 1.0},
-    {emotion: "melancholy", arousal: -0.5},
-    {emotion: "nostalgia", arousal: 0.3},
-    {emotion: "optimism", arousal: 0.8},
-    {emotion: "outrage", arousal: 1.0},
-  {emotion: "pain", arousal: 0.9},
-  {emotion: "passion", arousal: 1.0},
-  {emotion: "pessimism", arousal: -0.7},
-  {emotion: "pity", arousal: -0.3},
-  {emotion: "pleasure", arousal: 1.0},
-  {emotion: "pride", arousal: 0.9},
-  {emotion: "rage", arousal: 1.0},
-  {emotion: "regret", arousal: 0.8},
-  {emotion: "remorse", arousal: 0.9},
-  {emotion: "resentment", arousal: 0.9},
-  {emotion: "sadness", arousal: -0.9},
-  {emotion: "satisfaction", arousal: 0.7},
-  {emotion: "shame", arousal: 0.9},
-  {emotion: "shock", arousal: 1.0},
-  {emotion: "stress", arousal: 0.9},
-  {emotion: "surprise", arousal: 0.9},
-  {emotion: "terror", arousal: 1.0},
-  {emotion: "trust", arousal: 0.5},
-  {emotion: "uncertainty", arousal: 0.8},
-  {emotion: "warmth", arousal: 0.6},
-  {emotion: "worry", arousal: 0.9},
-  {emotion: "boredom", arousal: -0.9},
-  {emotion: "calmness", arousal: -0.5},
-  {emotion: "contentment", arousal: 0.2},
-  {emotion: "curiosity", arousal: 0.8},
-  {emotion: "depression", arousal: -1.0},
-  {emotion: "desire", arousal: 0.9},
-  {emotion: "disappointment", arousal: -0.8},
-  {emotion: "disbelief", arousal: 0.8},
-  {emotion: "disillusionment", arousal: -0.7},
-  {emotion: "dread", arousal: 1.0},
-  {emotion: "eagerness", arousal: 0.9},
-  {emotion: "ecstasy", arousal: 1.0},
-  {emotion: "elation", arousal: 1.0},
-  {emotion: "embarrassment", arousal: 0.9},
-  {emotion: "empathy", arousal: 0.6},
-  {emotion: "enthusiasm", arousal: 1.0},
-  {emotion: "exasperation", arousal: 0.9},
-  {emotion: "exhilaration", arousal: 1.0},
-  {emotion: "expectation", arousal: 0.8},
-  {emotion: "fascination", arousal: 0.9},
-  {emotion: "fatigue", arousal: -0.9},
-  {emotion: "fury", arousal: 1.0},
-  {emotion: "gloom", arousal: -0.9},
-  {emotion: "gloominess", arousal: -0.9},
-  {emotion: "horror", arousal: 1.0},
-  {emotion: "hysteria", arousal: 1.0},
-  {emotion: "impatience", arousal: 0.9},
-  {emotion: "indignation", arousal: 0.9},
-  {emotion: "interest", arousal: 0.8},
-  {emotion: "irritation", arousal: 0.8},
-  {emotion: "isolation", arousal: -0.9},
-  {emotion: "joy", arousal: 1.0},
-  {emotion: "longing", arousal: 0.8},
-  {emotion: "madness", arousal: 1.0},
-  {emotion: "miserable", arousal: -1.0},
-  {emotion: "misery", arousal: -1.0},
-  {emotion: "numbness", arousal: -0.9},
-  {emotion: "overwhelming", arousal: 1.0},
-  {emotion: "powerlessness", arousal: -1.0},
-  {emotion: "puzzlement", arousal: 0.7},
-  {emotion: "relief", arousal: -0.5},
-  {emotion: "sarcasm", arousal: 0.8},
-  {emotion: "scorn", arousal: 0.9},
-  {emotion: "self-pity", arousal: -0.9},
-  {emotion: "skepticism", arousal: 0.7},
-  {emotion: "solitude", arousal: -0.8},
-  {emotion: "spite", arousal: 0.9},
-  {emotion: "stubbornness", arousal: 0.8},
-  {emotion: "submissiveness", arousal: -0.9},
-  {emotion: "suffering", arousal: -1.0},
-  {emotion: "suspicion", arousal: 0.9},
-  {emotion: "tenderness", arousal: 0.5},
-  {emotion: "tension", arousal: 0.9},
-  {emotion: "terrified", arousal: 1.0},
-  {emotion: "thankfulness", arousal: 0.6},
-  {emotion: "thrill", arousal: 1.0},
-  {emotion: "tiredness", arousal: -0.9},
-  {emotion: "tolerance", arousal: 0.5},
-  {emotion: "torment", arousal: 1.0},
-  {emotion: "triumph", arousal: 1.0},
-  {emotion: "unhappiness", arousal: -1.0},
-  {emotion: "unimportant", arousal: -0.9},
-  {emotion: "vengefulness", arousal: 1.0},
-  {emotion: "violence", arousal: 1.0},
-  {emotion: "vitality", arousal: 1.0},
-  {emotion: "vulnerability", arousal: 0.9},
-  {emotion: "weariness", arousal: -0.9},
-  {emotion: "wickedness", arousal: 0.9},
-  {emotion: "yearning", arousal: 0.8},
-  {emotion: "zeal", arousal: 1.0}
-]
-
-const dominance = [
-  {emotion: "anger", dominance: 1.0},
-  {emotion: "anxiety", dominance: 0.9},
-  {emotion: "apathy", dominance: -0.9},
-  {emotion: "disgust", dominance: 0.8},
-  {emotion: "envy", dominance: 0.9},
-  {emotion: "excitement", dominance: 0.8},
-  {emotion: "fear", dominance: 1.0},
-  {emotion: "frustration", dominance: 0.9},
-  {emotion: "gratitude", dominance: 0.5},
-  {emotion: "grief", dominance: -0.9},
-  {emotion: "guilt", dominance: 0.9},
-  {emotion: "happiness", dominance: 0.5},
-  {emotion: "hate", dominance: 1.0},
-  {emotion: "hope", dominance: 0.8},
-  {emotion: "humiliation", dominance: 1.0},
-  {emotion: "hunger", dominance: 0.8},
-  {emotion: "insecurity", dominance: 0.9},
-  {emotion: "inspiration", dominance: 0.8},
-  {emotion: "jealousy", dominance: 0.9},
-  {emotion: "loneliness", dominance: -0.9},
-  {emotion: "love", dominance: 0.5},
-  {emotion: "lust", dominance: 0.9},
-  {emotion: "melancholy", dominance: -0.9},
-  {emotion: "nostalgia", dominance: -0.9},
-  {emotion: "optimism", dominance: 0.8},
-  {emotion: "outrage", dominance: 1.0},
-  {emotion: "pain", dominance: 1.0},
-  {emotion: "passion", dominance: 0.9},
-  {emotion: "pessimism", dominance: -0.9},
-  {emotion: "pity", dominance: -0.9},
-  {emotion: "pleasure", dominance: 0.5},
-  {emotion: "pride", dominance: 0.9},
-  {emotion: "rage", dominance: 1.0},
-  {emotion: "regret", dominance: 0.9},
-  {emotion: "remorse", dominance: 0.9},
-  {emotion: "resentment", dominance: 0.9},
-  {emotion: "sadness", dominance: -0.9},
-  {emotion: "satisfaction", dominance: 0.5},
-  {emotion: "shame", dominance: 0.9},
-  {emotion: "shock", dominance: 1.0},
-  {emotion: "stress", dominance: 0.9},
-  {emotion: "surprise", dominance: 0.9},
-  {emotion: "terror", dominance: 1.0},
-  {emotion: "trust", dominance: 0.5},
-  {emotion: "uncertainty", dominance: 0.9},
-  {emotion: "warmth", dominance: 0.5},
-  {emotion: "worry", dominance: 0.9},
-  {emotion: "boredom", dominance: -0.9},
-  {emotion: "calmness", dominance: 0.5},
-  {emotion: "contentment", dominance: 0.5},
-  {emotion: "curiosity", dominance: 0.8},
-  {emotion: "depression", dominance: -1.0},
-  {emotion: "desire", dominance: 0.9},
-  {emotion: "disappointment", dominance: -0.9},
-  {emotion: "disbelief", dominance: 0.9},
-  {emotion: "disillusionment", dominance: -0.9},
-  {emotion: "dread", dominance: 1.0},
-  {emotion: "eagerness", dominance: 0.8},
-  {emotion: "ecstasy", dominance: 1.0},
-  {emotion: "elation", dominance: 1.0},
-  {emotion: "embarrassment", dominance: 0.9},
-  {emotion: "empathy", dominance: 0.5},
-  {emotion: "enthusiasm", dominance: 0.8},
-  {emotion: "exasperation", dominance: 0.9},
-  {emotion: "exhilaration", dominance: 1.0},
-  {emotion: "expectation", dominance: 0.8},
-  {emotion: "fascination", dominance: 0.8},
-  {emotion: "fatigue", dominance: -0.9},
-  {emotion: "fury", dominance: 1.0},
-  {emotion: "gloom", dominance: -0.9},
-  {emotion: "gloominess", dominance: -0.9},
-  {emotion: "horror", dominance: 1.0},
-  {emotion: "hysteria", dominance: 1.0},
-  {emotion: "impatience", dominance: 0.9},
-  {emotion: "indignation", dominance: 0.9},
-  {emotion: "interest", dominance: 0.8},
-  {emotion: "irritation", dominance: 0.9},
-  {emotion: "isolation", dominance: -0.9},
-  {emotion: "joy", dominance: 0.8},
-  {emotion: "longing", dominance: 0.9},
-  {emotion: "madness", dominance: 1.0},
-  {emotion: "miserable", dominance: -1.0},
-  {emotion: "misery", dominance: -1.0},
-  {emotion: "numbness", dominance: -0.9},
-  {emotion: "overwhelming", dominance: 1.0},
-  {emotion: "powerlessness", dominance: -1.0},
-  {emotion: "puzzlement", dominance: 0.9},
-  {emotion: "relief", dominance: 0.5},
-  {emotion: "sarcasm", dominance: 0.9},
-  {emotion: "scorn", dominance: 0.9},
-  {emotion: "self-pity", dominance: -0.9},
-  {emotion: "skepticism", dominance: 0.9},
-  {emotion: "solitude", dominance: -0.9},
-  {emotion: "spite", dominance: 0.9},
-  {emotion: "stubbornness", dominance: 0.9},
-  {emotion: "submissiveness", dominance: -0.9},
-  {emotion: "suffering", dominance: -1.0},
-  {emotion: "suspicion", dominance: 0.9},
-  {emotion: "tenderness", dominance: 0.5},
-  {emotion: "tension", dominance: 0.9},
-  {emotion: "terrified", dominance: 1.0},
-  {emotion: "thankfulness", dominance: 0.5},
-  {emotion: "thrill", dominance: 0.8},
-  {emotion: "tiredness", dominance: -0.9},
-  {emotion: "tolerance", dominance: 0.5},
-  {emotion: "torment", dominance: 1.0},
-  {emotion: "triumph", dominance: 1.0},
-  {emotion: "unhappiness", dominance: -1.0},
-  {emotion: "unimportant", dominance: -0.9},
-  {emotion: "vengefulness", dominance: 0.9},
-  {emotion: "violence", dominance: 1.0},
-  {emotion: "vitality", dominance: 1.0},
-  {emotion: "vulnerability", dominance: -0.9},
-  {emotion: "weariness", dominance: -0.9},
-  {emotion: "wickedness", dominance: 0.9},
-  {emotion: "yearning", dominance: 0.9},
-  {emotion: "zeal", dominance: 0.8}
-]
-
-
-
-// instead of having three separate lists with emotion, valence, arousal, and dominance
-// let's have just one list with emotion, valence, arousal, and dominance:
-const allAttributes = uniteEmotions(valence, arousal, dominance);
-printToCsv(allAttributes)
-
-function printToCsv(attributes) {
-  console.log("emotion,valence,arousal,dominance")
-  attributes.forEach(x => {
-    console.log(`${x.emotion},${x.valence},${x.arousal},${x.dominance}`)
-  })
+function printSortedGrid(grid) {
+  grid.forEach(row => console.log(row.join(' ')));
 }
 
-function uniteEmotions(valence, arousal, dominance) {
-  const unitedEmotions = new Map();
-  valence.forEach(x => {
-    if (!unitedEmotions.has(x.emotion)) unitedEmotions.set(x.emotion, {emotion: x.emotion, valence: x.valence})
-    else unitedEmotions.get(x.emotion).valence = x.valence
-  })
-  arousal.forEach(x => {
-    if (!unitedEmotions.has(x.emotion)) {
-      console.warn("arousal has emotion that valence doesn't have: " + x.emotion)
-      unitedEmotions.set(x.emotion, {emotion: x.emotion, arousal: x.arousal})
-    } else unitedEmotions.get(x.emotion).arousal = x.arousal
-  })
-  dominance.forEach(x => {
-    if (!unitedEmotions.has(x.emotion)) {
-      console.warn("dominance has emotion that valence doesn't have: " + x.emotion)
-      unitedEmotions.set(x.emotion, {emotion: x.emotion, dominance: x.dominance})
-    } else unitedEmotions.get(x.emotion).dominance = x.dominance
-  })
-  const list = [];
-  unitedEmotions.forEach(x => list.push(x))
-  return list;
-}
+function getSortedGrid(emotions, rowSort, columnSort) {
+  let grid = [];
+  const rowCount = Math.ceil(Math.sqrt(emotions.length));
+  const columnCount = Math.ceil(emotions.length / rowCount);
 
-
-function difference(arr1, arr2) {
-  const setA = new Set(arr1);
-  const setB = new Set(arr2);
-  const difference = new Set(arr1);
-  for (const elem of combineSets(setA, setB)) {
-    if (setA.has(elem) && setB.has(elem)) {
-      difference.delete(elem);
+  for (let i = 0; i < rowCount; i++) {
+    grid.push([]);
+    for (let j = 0; j < columnCount; j++) {
+      grid[i].push('');
     }
   }
-  return difference;
+
+  emotions.forEach((emotion, index) => {
+    const row = Math.floor(index / columnCount);
+    const column = index % columnCount;
+    grid[row][column] = emotion.emotion;
+  });
+
+  return grid;
 }
 
-
-function combineSets(setA, setB) {
-  const _union = new Set(setA);
-  for (const elem of setB) {
-    _union.add(elem);
-  }
-  return _union;
+function getEmotions() {
+  return [
+    {
+      "emotion": "anger",
+      "valence": -0.8,
+      "arousal": 1,
+      "dominance": 1
+    },
+    {
+      "emotion": "anxiety",
+      "valence": -0.7,
+      "arousal": 0.9,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "apathy",
+      "valence": -0.5,
+      "arousal": -0.5,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "disgust",
+      "valence": -0.7,
+      "arousal": -0.2,
+      "dominance": 0.8
+    },
+    {
+      "emotion": "envy",
+      "valence": -0.6,
+      "arousal": 0.8,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "excitement",
+      "valence": 0.9,
+      "arousal": 1,
+      "dominance": 0.8
+    },
+    {
+      "emotion": "fear",
+      "valence": -0.8,
+      "arousal": 1,
+      "dominance": 1
+    },
+    {
+      "emotion": "frustration",
+      "valence": -0.7,
+      "arousal": 0.9,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "gratitude",
+      "valence": 0.8,
+      "arousal": 0.6,
+      "dominance": 0.5
+    },
+    {
+      "emotion": "grief",
+      "valence": -0.9,
+      "arousal": -0.3,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "guilt",
+      "valence": -0.7,
+      "arousal": 0.7,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "happiness",
+      "valence": 0.9,
+      "arousal": 0.9,
+      "dominance": 0.5
+    },
+    {
+      "emotion": "hate",
+      "valence": -0.9,
+      "arousal": 1,
+      "dominance": 1
+    },
+    {
+      "emotion": "hope",
+      "valence": 0.8,
+      "arousal": 0.7,
+      "dominance": 0.8
+    },
+    {
+      "emotion": "humiliation",
+      "valence": -0.8,
+      "arousal": 0.8,
+      "dominance": 1
+    },
+    {
+      "emotion": "hunger",
+      "valence": -0.5,
+      "arousal": 0.5,
+      "dominance": 0.8
+    },
+    {
+      "emotion": "insecurity",
+      "valence": -0.6,
+      "arousal": 0.7,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "inspiration",
+      "valence": 0.9,
+      "arousal": 1,
+      "dominance": 0.8
+    },
+    {
+      "emotion": "jealousy",
+      "valence": -0.8,
+      "arousal": 0.9,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "loneliness",
+      "valence": -0.7,
+      "arousal": -0.7,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "love",
+      "valence": 0.9,
+      "arousal": 1,
+      "dominance": 0.5
+    },
+    {
+      "emotion": "lust",
+      "valence": 0.7,
+      "arousal": 1,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "melancholy",
+      "valence": -0.6,
+      "arousal": -0.5,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "nostalgia",
+      "valence": -0.5,
+      "arousal": 0.3,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "optimism",
+      "valence": 0.8,
+      "arousal": 0.8,
+      "dominance": 0.8
+    },
+    {
+      "emotion": "outrage",
+      "valence": -0.9,
+      "arousal": 1,
+      "dominance": 1
+    },
+    {
+      "emotion": "pain",
+      "valence": -0.9,
+      "arousal": 0.9,
+      "dominance": 1
+    },
+    {
+      "emotion": "passion",
+      "valence": 0.8,
+      "arousal": 1,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "pessimism",
+      "valence": -0.8,
+      "arousal": -0.7,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "pity",
+      "valence": -0.6,
+      "arousal": -0.3,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "pleasure",
+      "valence": 0.9,
+      "arousal": 1,
+      "dominance": 0.5
+    },
+    {
+      "emotion": "pride",
+      "valence": 0.8,
+      "arousal": 0.9,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "rage",
+      "valence": -0.9,
+      "arousal": 1,
+      "dominance": 1
+    },
+    {
+      "emotion": "regret",
+      "valence": -0.7,
+      "arousal": 0.8,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "remorse",
+      "valence": -0.7,
+      "arousal": 0.9,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "resentment",
+      "valence": -0.8,
+      "arousal": 0.9,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "sadness",
+      "valence": -0.8,
+      "arousal": -0.9,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "satisfaction",
+      "valence": 0.8,
+      "arousal": 0.7,
+      "dominance": 0.5
+    },
+    {
+      "emotion": "shame",
+      "valence": -0.9,
+      "arousal": 0.9,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "shock",
+      "valence": -0.9,
+      "arousal": 1,
+      "dominance": 1
+    },
+    {
+      "emotion": "stress",
+      "valence": -0.7,
+      "arousal": 0.9,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "surprise",
+      "valence": 0.5,
+      "arousal": 0.9,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "terror",
+      "valence": -1,
+      "arousal": 1,
+      "dominance": 1
+    },
+    {
+      "emotion": "trust",
+      "valence": 0.7,
+      "arousal": 0.5,
+      "dominance": 0.5
+    },
+    {
+      "emotion": "uncertainty",
+      "valence": -0.6,
+      "arousal": 0.8,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "warmth",
+      "valence": 0.8,
+      "arousal": 0.6,
+      "dominance": 0.5
+    },
+    {
+      "emotion": "worry",
+      "valence": -0.7,
+      "arousal": 0.9,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "boredom",
+      "valence": -0.5,
+      "arousal": -0.9,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "calmness",
+      "valence": 0.6,
+      "arousal": -0.5,
+      "dominance": 0.5
+    },
+    {
+      "emotion": "contentment",
+      "valence": 0.8,
+      "arousal": 0.2,
+      "dominance": 0.5
+    },
+    {
+      "emotion": "curiosity",
+      "valence": 0.7,
+      "arousal": 0.8,
+      "dominance": 0.8
+    },
+    {
+      "emotion": "depression",
+      "valence": -0.9,
+      "arousal": -1,
+      "dominance": -1
+    },
+    {
+      "emotion": "desire",
+      "valence": 0.7,
+      "arousal": 0.9,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "disappointment",
+      "valence": -0.7,
+      "arousal": -0.8,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "disbelief",
+      "valence": -0.6,
+      "arousal": 0.8,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "disillusionment",
+      "valence": -0.8,
+      "arousal": -0.7,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "dread",
+      "valence": -0.9,
+      "arousal": 1,
+      "dominance": 1
+    },
+    {
+      "emotion": "eagerness",
+      "valence": 0.7,
+      "arousal": 0.9,
+      "dominance": 0.8
+    },
+    {
+      "emotion": "ecstasy",
+      "valence": 1,
+      "arousal": 1,
+      "dominance": 1
+    },
+    {
+      "emotion": "elation",
+      "valence": 0.9,
+      "arousal": 1,
+      "dominance": 1
+    },
+    {
+      "emotion": "embarrassment",
+      "valence": -0.8,
+      "arousal": 0.9,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "empathy",
+      "valence": 0.8,
+      "arousal": 0.6,
+      "dominance": 0.5
+    },
+    {
+      "emotion": "enthusiasm",
+      "valence": 0.9,
+      "arousal": 1,
+      "dominance": 0.8
+    },
+    {
+      "emotion": "exasperation",
+      "valence": -0.7,
+      "arousal": 0.9,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "exhilaration",
+      "valence": 1,
+      "arousal": 1,
+      "dominance": 1
+    },
+    {
+      "emotion": "expectation",
+      "valence": 0.7,
+      "arousal": 0.8,
+      "dominance": 0.8
+    },
+    {
+      "emotion": "fascination",
+      "valence": 0.8,
+      "arousal": 0.9,
+      "dominance": 0.8
+    },
+    {
+      "emotion": "fatigue",
+      "valence": -0.6,
+      "arousal": -0.9,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "fury",
+      "valence": -0.9,
+      "arousal": 1,
+      "dominance": 1
+    },
+    {
+      "emotion": "gloom",
+      "valence": -0.8,
+      "arousal": -0.9,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "gloominess",
+      "valence": -0.8,
+      "arousal": -0.9,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "horror",
+      "valence": -1,
+      "arousal": 1,
+      "dominance": 1
+    },
+    {
+      "emotion": "hysteria",
+      "valence": -0.9,
+      "arousal": 1,
+      "dominance": 1
+    },
+    {
+      "emotion": "impatience",
+      "valence": -0.7,
+      "arousal": 0.9,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "indignation",
+      "valence": -0.8,
+      "arousal": 0.9,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "interest",
+      "valence": 0.7,
+      "arousal": 0.8,
+      "dominance": 0.8
+    },
+    {
+      "emotion": "irritation",
+      "valence": -0.6,
+      "arousal": 0.8,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "isolation",
+      "valence": -0.7,
+      "arousal": -0.9,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "joy",
+      "valence": 1,
+      "arousal": 1,
+      "dominance": 0.8
+    },
+    {
+      "emotion": "longing",
+      "valence": -0.7,
+      "arousal": 0.8,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "madness",
+      "valence": -1,
+      "arousal": 1,
+      "dominance": 1
+    },
+    {
+      "emotion": "miserable",
+      "valence": -0.9,
+      "arousal": -1,
+      "dominance": -1
+    },
+    {
+      "emotion": "misery",
+      "valence": -0.9,
+      "arousal": -1,
+      "dominance": -1
+    },
+    {
+      "emotion": "numbness",
+      "valence": -0.6,
+      "arousal": -0.9,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "overwhelming",
+      "valence": -0.9,
+      "arousal": 1,
+      "dominance": 1
+    },
+    {
+      "emotion": "powerlessness",
+      "valence": -0.9,
+      "arousal": -1,
+      "dominance": -1
+    },
+    {
+      "emotion": "puzzlement",
+      "valence": -0.5,
+      "arousal": 0.7,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "relief",
+      "valence": 0.8,
+      "arousal": -0.5,
+      "dominance": 0.5
+    },
+    {
+      "emotion": "sarcasm",
+      "valence": -0.5,
+      "arousal": 0.8,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "scorn",
+      "valence": -0.8,
+      "arousal": 0.9,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "self-pity",
+      "valence": -0.7,
+      "arousal": -0.9,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "skepticism",
+      "valence": -0.6,
+      "arousal": 0.7,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "solitude",
+      "valence": -0.6,
+      "arousal": -0.8,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "spite",
+      "valence": -0.9,
+      "arousal": 0.9,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "stubbornness",
+      "valence": -0.7,
+      "arousal": 0.8,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "submissiveness",
+      "valence": -0.5,
+      "arousal": -0.9,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "suffering",
+      "valence": -1,
+      "arousal": -1,
+      "dominance": -1
+    },
+    {
+      "emotion": "suspicion",
+      "valence": -0.7,
+      "arousal": 0.9,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "tenderness",
+      "valence": 0.8,
+      "arousal": 0.5,
+      "dominance": 0.5
+    },
+    {
+      "emotion": "tension",
+      "valence": -0.7,
+      "arousal": 0.9,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "terrified",
+      "valence": -1,
+      "arousal": 1,
+      "dominance": 1
+    },
+    {
+      "emotion": "thankfulness",
+      "valence": 0.8,
+      "arousal": 0.6,
+      "dominance": 0.5
+    },
+    {
+      "emotion": "thrill",
+      "valence": 0.9,
+      "arousal": 1,
+      "dominance": 0.8
+    },
+    {
+      "emotion": "tiredness",
+      "valence": -0.6,
+      "arousal": -0.9,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "tolerance",
+      "valence": 0.5,
+      "arousal": 0.5,
+      "dominance": 0.5
+    },
+    {
+      "emotion": "torment",
+      "valence": -1,
+      "arousal": 1,
+      "dominance": 1
+    },
+    {
+      "emotion": "triumph",
+      "valence": 1,
+      "arousal": 1,
+      "dominance": 1
+    },
+    {
+      "emotion": "unhappiness",
+      "valence": -0.9,
+      "arousal": -1,
+      "dominance": -1
+    },
+    {
+      "emotion": "unimportant",
+      "valence": -0.5,
+      "arousal": -0.9,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "vengefulness",
+      "valence": -0.9,
+      "arousal": 1,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "violence",
+      "valence": -1,
+      "arousal": 1,
+      "dominance": 1
+    },
+    {
+      "emotion": "vitality",
+      "valence": 0.9,
+      "arousal": 1,
+      "dominance": 1
+    },
+    {
+      "emotion": "vulnerability",
+      "valence": -0.6,
+      "arousal": 0.9,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "weariness",
+      "valence": -0.7,
+      "arousal": -0.9,
+      "dominance": -0.9
+    },
+    {
+      "emotion": "wickedness",
+      "valence": -1,
+      "arousal": 0.9,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "yearning",
+      "valence": -0.7,
+      "arousal": 0.8,
+      "dominance": 0.9
+    },
+    {
+      "emotion": "zeal",
+      "valence": 0.8,
+      "arousal": 1,
+      "dominance": 0.8
+    }
+  ];
 }
+
