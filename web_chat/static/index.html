@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Helpful robot</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        .prompt {
+            background-color: #eee;
+            padding: 8px;
+        }
+        html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+body {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+}
+
+header, footer {
+    position: sticky;
+    z-index: 1;
+    background-color: #f2f2f2;
+    padding: 20px;
+}
+
+header {
+    top: 0;
+}
+header h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 400;
+    text-align: center;
+}
+
+footer {
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+form {
+    width: 80%;
+    max-width: 800px;
+}
+
+main {
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #ddd;
+    padding: 20px;
+    background-repeat: repeat;
+    background-size: 200px;
+}
+
+#content {
+    width: 80%;
+    max-width: 800px;
+    background-color: white;
+    border-radius: 5px;
+    padding: 20px;
+    overflow-y: scroll;
+    height: 100%;
+    border: 4px solid;
+}
+
+.loading {
+    font-size: 12px;
+    color: #444;
+}
+.love {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    top: 8px;
+    font-size: 12px;
+}    
+.error {
+    color: orangered;
+    font: 12px monospace;
+}
+    </style>
+
+    <script>
+        const history = [];
+        let disabled = false;
+        $(document).ready(function() {
+            let totalImagesCount = 9;
+            let imageIndex = Math.floor(Math.random() * totalImagesCount) + 1;
+            $('#prompt').focus()
+            $('main').css('background-image', `url(static/cat_${imageIndex}.png)`);
+            $('form').submit(function(event) {
+                event.preventDefault();
+                if (disabled) { return; }
+                disabled = true;
+                let prompt = $('#prompt').val();
+                history.push({prompt});
+                $('#prompt').prop('disabled', true);
+
+                let p = $('<p></p>');
+                p.text(prompt);
+                p.addClass('prompt');
+                $('#content').append(p);
+                let loading = $('<p class="loading">...</p>');
+                $('#content').append(loading);
+                $('#content').scrollTop($('#content').prop('scrollHeight'));
+
+                loader = setInterval(function() {
+                    let text = loading.text();
+                    loading.text(text + '.');
+                }, 100);
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/suggest_command',
+                    contentType: 'application/json',
+                    data: JSON.stringify(history),
+                    success: function(response) {
+                        disabled = false;
+                        history[history.length - 1]['response'] = response.response;
+                        $('.loading').remove();
+                        $('#content').append(marked.marked(response.response));
+                        $('#prompt').prop('disabled', false).val('').focus()
+                        $('#content').scrollTop($('#content').prop('scrollHeight'));
+                        clearInterval(loader);
+                    },
+                    error: function(xhr, status, error) {
+                        disabled = false;
+                        console.error(xhr.responseText);
+                        $('.loading').remove();
+                        $('#prompt').prop('disabled', false).val('').focus()
+                        clearInterval(loader);
+                        let err = $('<p class="error">Oops, something went wrong 😢. Please ping your dad or try reloading this page.<p>');
+                        $('#content').append(err);
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Hi Kiddo. What would you want me to do?</h1>
+        <div class="love">Made with ❤️ by dad</div>
+    </header>
+    <main>
+        <div id="content">
+        </div>
+    </main>
+    <footer>
+        <form style="display: flex; width: 100%;">
+            <input type="text" id="prompt" name="prompt" required placeholder="Enter your prompt here" style="flex-grow: 1;height: 32px">
+            <button type="submit" style="margin-left: 10px;">Send</button>
+        </form>
+    </footer>
+
+</body>
+</html>
