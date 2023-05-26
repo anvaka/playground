@@ -3,8 +3,8 @@ const size = Math.min(window.innerWidth, window.innerHeight)
 canvas.width = size;
 canvas.height = size;
 const LINE_COUNT = 2;
-const POINT_DIMENSIONS = 2;
-const SEGMENTS_PER_LINE = 3;
+const POINT_DIMENSIONS = 3;
+const SEGMENTS_PER_LINE = 30;
 const TOTAL_LINES = LINE_COUNT * SEGMENTS_PER_LINE;
 const POINTS_PER_LINE = POINT_DIMENSIONS * (SEGMENTS_PER_LINE + 1);
 
@@ -92,7 +92,7 @@ const projectionMatrix = mat4.create();
 glMatrix.mat4.perspective(projectionMatrix, 45 * Math.PI / 180, 1, 0.1, 100);
 
 // Set up the camera parameters
-let eye = [0, 0, 10];    // Camera position
+let eye = [0, 2.5, 2.5];    // Camera position
 let target = [0, 0, 0]; // Target position
 let up = [0, 1, 0];     // Up vector
 
@@ -162,18 +162,18 @@ fn vertexMain(input: VertexInput) -> VertexOutput {
     i = i % ${SEGMENTS_PER_LINE };
     var start = (head - length + i + ${SEGMENTS_PER_LINE + 1}) % (${SEGMENTS_PER_LINE + 1});
 
-    var width = .05;
+    var width = .05 * f32(i) / ${SEGMENTS_PER_LINE };
     var startIndex = lineStart + (start * ${POINT_DIMENSIONS});
     var endIndex = lineStart + ((start + 1) * ${POINT_DIMENSIONS}) % (${POINTS_PER_LINE});
-    var startPos = vec2(lineCoordinates[startIndex + 0], lineCoordinates[startIndex + 1]);
-    var endPos = vec2(lineCoordinates[(endIndex + 0)], lineCoordinates[endIndex + 1]);
+    var startPos = vec3(lineCoordinates[startIndex + 0], lineCoordinates[startIndex + 1], lineCoordinates[startIndex + 2]);
+    var endPos = vec3(lineCoordinates[(endIndex + 0)], lineCoordinates[endIndex + 1], lineCoordinates[endIndex + 2]);
     let xDir = normalize(endPos - startPos);
     let yDir = vec2(-xDir.y, xDir.x);
-    let clip0 = modelViewProjection * vec4(startPos + width * yDir * input.pos.x, 0, 1);
-    let clip1 = modelViewProjection * vec4(endPos + width * yDir * input.pos.x, 0, 1);
+    let clip0 = modelViewProjection * vec4(startPos.xy + width * yDir * input.pos.x, startPos.z, 1);
+    let clip1 = modelViewProjection * vec4(endPos.xy + width * yDir * input.pos.x, endPos.z, 1);
     output.pos = mix(clip0, clip1, input.pos.y);
     // output.instance = lineIndex;
-    output.instance = i % 3;
+    output.instance = 1;
     return output;
 }
 // @location(0) indicates which colorAttachment (specified in 
@@ -238,12 +238,14 @@ function updateGrid() {
     lineLifeCycleArray[1] = Math.min(1 + lineLifeCycleArray[1], SEGMENTS_PER_LINE);
     lineStateArray[lineLifeCycleArray[0] * POINT_DIMENSIONS + 0] = x;
     lineStateArray[lineLifeCycleArray[0] * POINT_DIMENSIONS + 1] = y;
+    lineStateArray[lineLifeCycleArray[0] * POINT_DIMENSIONS + 2] = 0;
 
     lineLifeCycleArray[2] = (lineLifeCycleArray[2] + 1) % (SEGMENTS_PER_LINE+ 1);
     lineLifeCycleArray[3] = Math.min(1 + lineLifeCycleArray[3], SEGMENTS_PER_LINE);
 
     lineStateArray[(lineLifeCycleArray[2] * POINT_DIMENSIONS + 0)+POINTS_PER_LINE] = x + 1.5;
-    lineStateArray[(lineLifeCycleArray[2] * POINT_DIMENSIONS + 1)+POINTS_PER_LINE] = y;
+    lineStateArray[(lineLifeCycleArray[2] * POINT_DIMENSIONS + 1)+POINTS_PER_LINE] = 0;
+    lineStateArray[(lineLifeCycleArray[2] * POINT_DIMENSIONS + 2)+POINTS_PER_LINE] = y;
 
     device.queue.writeBuffer(lineLifeCycleStorage, 0, lineLifeCycleArray);
     device.queue.writeBuffer(lineStateStorage, 0, lineStateArray);
@@ -264,7 +266,7 @@ function updateGrid() {
     // vertexBufferLayout.attributes in the pipeline.
     pass.setVertexBuffer(0, vertexBuffer);
     pass.setBindGroup(0, bindGroup);
-    pass.draw(vertices.length / POINT_DIMENSIONS, LINE_COUNT * (SEGMENTS_PER_LINE));
+    pass.draw(vertices.length / 2, LINE_COUNT * (SEGMENTS_PER_LINE));
     pass.end();
     device.queue.submit([encoder.finish()]);
 
