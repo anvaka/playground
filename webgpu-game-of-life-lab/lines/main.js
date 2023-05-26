@@ -162,16 +162,26 @@ fn vertexMain(input: VertexInput) -> VertexOutput {
     i = i % ${SEGMENTS_PER_LINE };
     var start = (head - length + i + ${SEGMENTS_PER_LINE + 1}) % (${SEGMENTS_PER_LINE + 1});
 
-    var width = .05 * f32(i) / ${SEGMENTS_PER_LINE };
+    var width = 4. * (f32(i) / f32(${SEGMENTS_PER_LINE}));
     var startIndex = lineStart + (start * ${POINT_DIMENSIONS});
     var endIndex = lineStart + ((start + 1) * ${POINT_DIMENSIONS}) % (${POINTS_PER_LINE});
     var startPos = vec3(lineCoordinates[startIndex + 0], lineCoordinates[startIndex + 1], lineCoordinates[startIndex + 2]);
     var endPos = vec3(lineCoordinates[(endIndex + 0)], lineCoordinates[endIndex + 1], lineCoordinates[endIndex + 2]);
-    let xDir = normalize(endPos - startPos);
-    let yDir = vec2(-xDir.y, xDir.x);
-    let clip0 = modelViewProjection * vec4(startPos.xy + width * yDir * input.pos.x, startPos.z, 1);
-    let clip1 = modelViewProjection * vec4(endPos.xy + width * yDir * input.pos.x, endPos.z, 1);
-    output.pos = mix(clip0, clip1, input.pos.y);
+
+    let clip0 = modelViewProjection * vec4(startPos, 1);
+    let clip1 = modelViewProjection * vec4(endPos, 1);
+    let resolution = vec2f(${size});
+    let screen0 = resolution * (0.5 * clip0.xy/clip0.w + 0.5);
+    let screen1 = resolution * (0.5 * clip1.xy/clip1.w + 0.5);
+    let xBasis = normalize(screen1 - screen0);
+    let yBasis = vec2(-xBasis.y, xBasis.x);
+
+    let pt0 = screen0 + width * input.pos.x * yBasis;
+    let pt1 = screen1 + width * input.pos.x * yBasis;
+    let pt = mix(pt0, pt1, input.pos.y);
+    let clip = mix(clip0, clip1, input.pos.y);
+    
+    output.pos = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
     // output.instance = lineIndex;
     output.instance = 1;
     return output;
@@ -231,6 +241,16 @@ let step = 0;
 function updateGrid() {
     step += 1;
 
+
+    let viewMatrix = mat4.create();
+
+    eye[0] = 20 * Math.sin(step/100);
+    eye[2] = 14 * Math.cos(step/100);
+    // Use the lookAt() method to construct the view matrix
+    mat4.lookAt(viewMatrix, eye, target, up);
+    mat4.multiply(mvpTypedArray, projectionMatrix, viewMatrix);
+    // mvpTypedArray = new Float32Array(modelViewProjectionMatrix);
+    device.queue.writeBuffer(uniformBuffer, 0, mvpTypedArray);
 
     let x = Math.sin( step / 20);
     let y = Math.cos( step / 20);
