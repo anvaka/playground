@@ -4,7 +4,7 @@ canvas.width = size;
 canvas.height = size;
 const LINE_COUNT = 2;
 const POINT_DIMENSIONS = 3;
-const SEGMENTS_PER_LINE = 30;
+const SEGMENTS_PER_LINE = 3;
 const TOTAL_LINES = LINE_COUNT * SEGMENTS_PER_LINE;
 const POINTS_PER_LINE = POINT_DIMENSIONS * (SEGMENTS_PER_LINE + 1);
 
@@ -31,37 +31,6 @@ const lineStateStorage = device.createBuffer({
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 });
 
-for (let i = 0; i < lineStateArray.length; i += 2) {
-    lineStateArray[i] =  0;//Math.sin(i*2);
-    lineStateArray[i + 1] = 0;//Math.cos(i*2);
-}
-
-lineStateArray[0*POINTS_PER_LINE + 0*0 + 0] = 0;
-lineStateArray[0*POINTS_PER_LINE + 0*0 + 1] = 0;
-lineStateArray[0*POINTS_PER_LINE + 1*2 + 0] = 1;
-lineStateArray[0*POINTS_PER_LINE + 1*2 + 1] = 0;
-lineStateArray[0*POINTS_PER_LINE + 2*2 + 0] = 1;
-lineStateArray[0*POINTS_PER_LINE + 2*2 + 1] = 1;
-lineStateArray[0*POINTS_PER_LINE + 3*2 + 0] = 0;
-lineStateArray[0*POINTS_PER_LINE + 3*2 + 1] = 1;
-
-lineStateArray[1 * POINTS_PER_LINE + 0*0 + 0] = 1.1 + 0;
-lineStateArray[1 * POINTS_PER_LINE + 0*0 + 1] = 0 + 0;
-lineStateArray[1 * POINTS_PER_LINE + 1*2 + 0] = 1.1 + 1;
-lineStateArray[1 * POINTS_PER_LINE + 1*2 + 1] = 0 + 0;
-lineStateArray[1 * POINTS_PER_LINE + 2*2 + 0] = 1.1 + 1;
-lineStateArray[1 * POINTS_PER_LINE + 2*2 + 1] = 0 + 1;
-lineStateArray[1 * POINTS_PER_LINE + 3*2 + 0] = 1.1 + 0;
-lineStateArray[1 * POINTS_PER_LINE + 3*2 + 1] = 0 + 1;
-
-lineStateArray[2 * POINTS_PER_LINE + 0*0 + 0] = 0;
-lineStateArray[2 * POINTS_PER_LINE + 0*0 + 1] = 0 + 1.1;
-lineStateArray[2 * POINTS_PER_LINE + 1*2 + 0] = 1;
-lineStateArray[2 * POINTS_PER_LINE + 1*2 + 1] = 0 + 1.1;
-lineStateArray[2 * POINTS_PER_LINE + 2*2 + 0] = 1;
-lineStateArray[2 * POINTS_PER_LINE + 2*2 + 1] = 1 + 1.1;
-lineStateArray[2 * POINTS_PER_LINE + 3*2 + 0] = 0;
-lineStateArray[2 * POINTS_PER_LINE + 3*2 + 1] = 1 + 1.1;
 console.log(lineStateArray, LINE_COUNT * POINT_DIMENSIONS * (SEGMENTS_PER_LINE + 1));
 device.queue.writeBuffer(lineStateStorage, 0, lineStateArray);
 
@@ -71,20 +40,7 @@ const lineLifeCycleStorage = device.createBuffer({
     size: lineLifeCycleArray.byteLength,
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 });
-for (let i = 0; i < lineLifeCycleArray.length; i += 2) {
-    lineLifeCycleArray[i] = 0; // head of the segment.
-    lineLifeCycleArray[i + 1] = 0; // how many vertices already rendered.
-}
 
-let h = 3;
-lineLifeCycleArray[0] = h; // Last vertex number rendered.
-lineLifeCycleArray[0 + 1] = 3; // how many segments already rendered.
-
-lineLifeCycleArray[2] = h; // Last vertex number rendered.
-lineLifeCycleArray[2 + 1] = 3; // how many segments already rendered.
-
-lineLifeCycleArray[4] = h; // Last vertex number rendered.
-lineLifeCycleArray[4 + 1] = 3; // how many segments already rendered.
 device.queue.writeBuffer(lineLifeCycleStorage, 0, lineLifeCycleArray);
 
 let mat4 = glMatrix.mat4;
