@@ -1,11 +1,28 @@
+import ViewMatrix from './viewMatrix.js';
+import createMapInputController from './input.js';
 const canvas = document.querySelector('canvas');
 const size = Math.min(window.innerWidth, window.innerHeight)
-canvas.width = size;
-canvas.height = size;
+
+// canvas.width = size;
+// canvas.height = size;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+const drawContext = {
+    canvas,
+    width: canvas.width,
+    height: canvas.height,
+    fov: 45 * Math.PI / 180,
+    pixelRatio: window.devicePixelRatio || 1,
+};
+
+drawContext.view = new ViewMatrix(drawContext);
+createMapInputController(drawContext);
+
 const globalGridSize = 8;
-const LINE_COUNT = globalGridSize * globalGridSize;
+const dt = 0.01;
+const LINE_COUNT = globalGridSize * globalGridSize * 20;
 const POINT_DIMENSIONS = 3;
-const SEGMENTS_PER_LINE = 3;
+const SEGMENTS_PER_LINE = 30;
 const TOTAL_LINES = LINE_COUNT * SEGMENTS_PER_LINE;
 const POINTS_PER_LINE = POINT_DIMENSIONS * (SEGMENTS_PER_LINE + 1);
 
@@ -26,66 +43,55 @@ context.configure({
 });
 
 const lineCoordinatesArray = new Float32Array(LINE_COUNT * POINT_DIMENSIONS * (SEGMENTS_PER_LINE + 1));
-const lineCoordinates = [
-    device.createBuffer({
-        label: "Line state A",
-        size: lineCoordinatesArray.byteLength,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-    }),
-    device.createBuffer({
-        label: "Line state B",
-        size: lineCoordinatesArray.byteLength,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-    }),
-]
+const lineCoordinates = device.createBuffer({
+    label: "Line state A",
+    size: lineCoordinatesArray.byteLength,
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+});
+
 for (let i = 0; i < LINE_COUNT; i ++) {
     let lineStart = i * POINTS_PER_LINE;
     for (let j = 0; j < POINTS_PER_LINE; j += POINT_DIMENSIONS) {
-        lineCoordinatesArray[lineStart + j] = i;
-        lineCoordinatesArray[lineStart + j + 1] = j/3;
-        lineCoordinatesArray[lineStart + j + 2] = 0;
+        lineCoordinatesArray[lineStart + j] = Math.random()*2 - 1;
+        lineCoordinatesArray[lineStart + j + 1] = Math.random()*2 - 1;
+        lineCoordinatesArray[lineStart + j + 2] = Math.random();
     }
 }
 
-device.queue.writeBuffer(lineCoordinates[0], 0, lineCoordinatesArray);
+// lineCoordinatesArray[0 + 0] = 2;
+// lineCoordinatesArray[0 + 0 + 1] = 2;
+// lineCoordinatesArray[0 + 0 + 2] = 0.1;
+device.queue.writeBuffer(lineCoordinates, 0, lineCoordinatesArray);
 
 const lineLifeCycleArray = new Uint32Array(LINE_COUNT * 2);
-const lineLifeCycleStorage = [
-    device.createBuffer({
+const lineLifeCycleStorage = device.createBuffer({
         label: 'Line life cycle A',
         size: lineLifeCycleArray.byteLength,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-    }),
-    device.createBuffer({
-        label: "Line life cycle B",
-        size: lineLifeCycleArray.byteLength,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-    })
-];
+    });
+
 for (let i = 0; i < lineLifeCycleArray.length; i += 2) {
     lineLifeCycleArray[i] = 0;
-    lineLifeCycleArray[i + 1] = 3;
+    lineLifeCycleArray[i + 1] = 0;
 }
 
 // device.queue.writeBuffer(lineLifeCycleStorage[0], 0, lineLifeCycleArray);
 
-let mat4 = glMatrix.mat4;
-const projectionMatrix = mat4.create();
-glMatrix.mat4.perspective(projectionMatrix, 45 * Math.PI / 180, 1, 0.1, 100);
+// let mat4 = glMatrix.mat4;
 
-// Set up the camera parameters
-let eye = [0, 0, 15];    // Camera position
-let target = [0, 0, 0]; // Target position
-let up = [0, 1, 0];     // Up vector
+// // Set up the camera parameters
+// let eye = [0, 0, 14];    // Camera position
+// let target = [0, 0, 0]; // Target position
+// let up = [0, 1, 0];     // Up vector
 
-// Create an identity matrix to store the view matrix
-let viewMatrix = mat4.create();
+// // Create an identity matrix to store the view matrix
+// let viewMatrix = mat4.create();
 
-// Use the lookAt() method to construct the view matrix
-mat4.lookAt(viewMatrix, eye, target, up);
-const modelViewProjectionMatrix = mat4.create();
-mat4.multiply(modelViewProjectionMatrix, projectionMatrix, viewMatrix);
-const mvpTypedArray = new Float32Array(modelViewProjectionMatrix);
+// // Use the lookAt() method to construct the view matrix
+// mat4.lookAt(viewMatrix, eye, target, up);
+// const modelViewProjectionMatrix = mat4.create();
+// mat4.multiply(modelViewProjectionMatrix, projectionMatrix, viewMatrix);
+const mvpTypedArray = drawContext.view.modelViewProjection;
 
 const uniformBuffer = device.createBuffer({
     label: "mvp matrix",
@@ -120,7 +126,7 @@ const lineShaderModule = device.createShaderModule({
     code: `
 @group(0) @binding(0) var<uniform> modelViewProjection: mat4x4<f32>;
 @group(0) @binding(1) var<storage> lineCoordinates: array<f32>;
-@group(0) @binding(2) var<storage> lineLife: array<u32>;
+@group(0) @binding(2) var<storage> lineLifeCycle: array<u32>;
 
 struct VertexInput {
     @location(0) pos: vec2<f32>,
@@ -129,9 +135,13 @@ struct VertexInput {
 
 struct VertexOutput {
     @builtin(position) pos: vec4<f32>,
-    @location(0) @interpolate(flat) instance: u32,
+    @location(0) color: vec4<f32>,
 };
 
+fn rand(co: f32) -> f32 {
+    let t = dot(vec3f(12.9898, 78.233, 4375.85453), vec3f(co));
+    return fract(sin(t) * (4375.85453 + t));
+}
 @vertex
 fn vertexMain(input: VertexInput) -> VertexOutput {
     var i = input.instance;
@@ -139,12 +149,17 @@ fn vertexMain(input: VertexInput) -> VertexOutput {
 
     var lineIndex = u32(floor(f32(i) / f32(${SEGMENTS_PER_LINE})));
     var lineStart = lineIndex * ${POINTS_PER_LINE };
-    var head = lineLife[lineIndex * 2 + 0];
-    var length = lineLife[lineIndex * 2 + 1];
+    var head = lineLifeCycle[lineIndex * 2 + 0];
+    var length = lineLifeCycle[lineIndex * 2 + 1];
     i = i % ${SEGMENTS_PER_LINE };
+    if (i >= length) {
+        output.pos = vec4<f32>(0, 0, 0, 1);
+        output.color = vec4<f32>(0, 0, 0, 0);
+        return output;
+    }
     var start = (head - length + i + ${SEGMENTS_PER_LINE + 1}) % (${SEGMENTS_PER_LINE + 1});
 
-    var width = 4. * (f32(i) / f32(${SEGMENTS_PER_LINE}));
+    var width = 4.0 * (f32(i) / f32(${SEGMENTS_PER_LINE}));
     var startIndex = lineStart + (start * ${POINT_DIMENSIONS});
     var endIndex = lineStart + ((start + 1) * ${POINT_DIMENSIONS}) % (${POINTS_PER_LINE});
     var startPos = vec3(lineCoordinates[startIndex + 0], lineCoordinates[startIndex + 1], lineCoordinates[startIndex + 2]);
@@ -165,36 +180,35 @@ fn vertexMain(input: VertexInput) -> VertexOutput {
     
     output.pos = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
     // output.instance = lineIndex;
-    output.instance = 1;
+    output.color = vec4(0.2, 0.4, .8, 0.7);
     return output;
 }
 // @location(0) indicates which colorAttachment (specified in 
 // beginRenderPass) to output to.
 @fragment
 fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
-    var color = vec4f(0, 0, 0, 1);
-    color[input.instance] = 1;
-    return color;
+    return input.color;
+    // var color = vec4f(0, 0, 0, .8);
+    // color[input.instance] = 1;
+    // return color;
 }`});
 
-const dt = 0.01;
 const WORKGROUP_SIZE = 8;
 const simulationShaderModule = device.createShaderModule({
     label: 'Flow simulation shader',
     code: `
-    @group(0) @binding(0) var<storage> lineCoordinates: array<f32>;
-    @group(0) @binding(1) var<storage> lineLife: array<u32>;
-    @group(0) @binding(2) var<storage, read_write> lineCoordinatesOut: array<f32>;
-    @group(0) @binding(3) var<storage, read_write> lineLifeOut: array<u32>;
+    @group(0) @binding(0) var<storage, read_write> lineCoordinates: array<f32>;
+    @group(0) @binding(1) var<storage, read_write> lineLifeCycle: array<u32>;
 
     fn getVelocityAtPoint(pos: vec3f) -> vec3f {
         let x = pos.x;
         let y = pos.y;
         let z = pos.z;
-        return vec3f(-pos.y, pos.x, 0);
+        return vec3f(-cos(y), sin(z), cos(x) );
+        // return vec3f(-y, cos(z), sin(x + y));
     }
 
-    fn rk4(pos: vec3f, vel: vec3f, dt: f32) -> vec3f {
+    fn rk4(pos: vec3f, dt: f32) -> vec3f {
         let k1 = getVelocityAtPoint(pos);
         let k2 = getVelocityAtPoint(pos + 0.5 * dt * k1);
         let k3 = getVelocityAtPoint(pos + 0.5 * dt * k2);
@@ -202,26 +216,30 @@ const simulationShaderModule = device.createShaderModule({
         return pos + dt * (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0;
     }
 
+    fn rand(co: vec3f) -> f32 {
+        let t = dot(vec3f(12.9898, 78.233, 4375.85453), co);
+        return fract(sin(t) * (4375.85453 + t));
+    }
+
     @compute
     @workgroup_size(${WORKGROUP_SIZE}, ${WORKGROUP_SIZE})
     fn computeMain(@builtin(global_invocation_id) cell: vec3u) {
         let lineIndex = cell.x + cell.y * ${globalGridSize};
         // first we get the last point in the line:
-        let lineHead = lineLife[lineIndex * 2 + 0];
-        let lineLength = lineLife[lineIndex * 2 + 1];
+        let lineHead = lineLifeCycle[lineIndex * 2 + 0];
+        let lineLength = lineLifeCycle[lineIndex * 2 + 1];
         let lastPointIndex = lineIndex * ${POINTS_PER_LINE} + lineHead * ${POINT_DIMENSIONS};
         let lastPoint = vec3f(lineCoordinates[lastPointIndex + 0], lineCoordinates[lastPointIndex + 1], lineCoordinates[lastPointIndex + 2]);
         // now advance it:
-        let newPos = vec3(lastPoint.x + 0.1, lastPoint.y, lastPoint.z);
+        let newPos = rk4(lastPoint, ${dt});
         // now we need to update the line:
-        let newHead = (lineHead + 1) % (${SEGMENTS_PER_LINE + 1});
-        let newLength = u32(3);
-        let newPointIndex = lineIndex * ${POINTS_PER_LINE} + newHead * ${POINT_DIMENSIONS};
-        lineCoordinatesOut[newPointIndex + 0] = newPos.x;
-        // lineCoordinatesOut[newPointIndex + 1] = newPos.y;
-        // lineCoordinatesOut[newPointIndex + 2] = newPos.z;
-        lineLifeOut[lineIndex * 2 + 0] = newHead;
-        lineLifeOut[lineIndex * 2 + 1] = newLength;
+        let newLength = min(1 + lineLength, ${SEGMENTS_PER_LINE});
+        let newPointIndex = lineIndex * ${POINTS_PER_LINE} + ((lineHead + 1) * ${POINT_DIMENSIONS}) % (${POINTS_PER_LINE});
+        lineCoordinates[newPointIndex + 0] = newPos.x;
+        lineCoordinates[newPointIndex + 1] = newPos.y;
+        lineCoordinates[newPointIndex + 2] = newPos.z;
+        lineLifeCycle[lineIndex * 2 + 0] = (lineHead + 1) % (${SEGMENTS_PER_LINE + 1});
+        lineLifeCycle[lineIndex * 2 + 1] = newLength;
     }
     `
 });
@@ -233,22 +251,10 @@ const computeBindGroupLayout = device.createBindGroupLayout({
         binding: 0,
         visibility: GPUShaderStage.COMPUTE ,
         buffer: {
-            type: 'read-only-storage'
-        }
-    }, {
-        binding: 1,
-        visibility: GPUShaderStage.COMPUTE,
-        buffer: {
-            type: 'read-only-storage'
-        }
-    }, {
-        binding: 2,
-        visibility: GPUShaderStage.COMPUTE,
-        buffer: {
             type: 'storage'
         }
     }, {
-        binding: 3,
+        binding: 1,
         visibility: GPUShaderStage.COMPUTE,
         buffer: {
             type: 'storage'
@@ -270,43 +276,17 @@ const simulationPipeline = device.createComputePipeline({
     }
 });
 
-const computeBindGroup = [
-    device.createBindGroup({
-        label: 'Line render compute bind group A',
-        layout: computeBindGroupLayout,
-        entries: [{
-            binding: 0,
-            resource: { buffer: lineCoordinates[0], } 
-        }, {
-            binding: 1,
-            resource: { buffer: lineLifeCycleStorage[0], } 
-        }, {
-            binding: 2,
-            resource: { buffer: lineCoordinates[1], } 
-        }, {
-            binding: 3,
-            resource: { buffer: lineLifeCycleStorage[1], } 
-        }]
-    }), 
-
-    device.createBindGroup({
-        label: 'Line render compute bind group B',
-        layout: computeBindGroupLayout,
-        entries: [{
-            binding: 0,
-            resource: { buffer: lineCoordinates[1], } 
-        }, {
-            binding: 1,
-            resource: { buffer: lineLifeCycleStorage[1], } 
-        }, {
-            binding: 2,
-            resource: { buffer: lineCoordinates[0], } 
-        }, {
-            binding: 3,
-            resource: { buffer: lineLifeCycleStorage[0], } 
-        }]
-    }), 
-];
+const computeBindGroup = device.createBindGroup({
+    label: 'Line render compute bind group A',
+    layout: computeBindGroupLayout,
+    entries: [{
+        binding: 0,
+        resource: { buffer: lineCoordinates, } 
+    }, {
+        binding: 1,
+        resource: { buffer: lineLifeCycleStorage, } 
+    }, 
+]});
 
 const renderBindGroupLayout = device.createBindGroupLayout({
     label: 'Flow simulation render bind group layout',
@@ -342,27 +322,24 @@ const renderPipeline = device.createRenderPipeline({
         module: lineShaderModule,
         entryPoint: "fragmentMain",
         targets: [{
-            format: cnvasFormat
+            format: cnvasFormat,
+            blend: {
+                color: {
+                    srcFactor: "src-alpha",
+                    dstFactor: "one-minus-src-alpha",
+                    operation: "add",
+                },
+                alpha: {
+                    srcFactor: "src-alpha",
+                    dstFactor: "one-minus-src-alpha",
+                    operation: "add",
+                },
+            },
         }]
     },
 });
 
-const renderBindGroup = [
-    device.createBindGroup({
-        label: 'Line render bind group A',
-        layout: renderBindGroupLayout,
-        entries: [{
-            binding: 0,
-            resource: { buffer: uniformBuffer, }
-        }, {
-            binding: 1,
-            resource: { buffer: lineCoordinates[1], } 
-        }, {
-            binding: 2,
-            resource: { buffer: lineLifeCycleStorage[1], } 
-        }]
-    }),
-    device.createBindGroup({
+const renderBindGroup = device.createBindGroup({
         label: 'Line render bind group B',
         layout: renderBindGroupLayout,
         entries: [{
@@ -370,13 +347,12 @@ const renderBindGroup = [
             resource: { buffer: uniformBuffer, }
         }, {
             binding: 1,
-            resource: { buffer: lineCoordinates[0], } 
+            resource: { buffer: lineCoordinates, } 
         }, {
             binding: 2,
-            resource: { buffer: lineLifeCycleStorage[0], } 
+            resource: { buffer: lineLifeCycleStorage, } 
         }]
     })
-];
 
 
 const UPDATE_INTERVAL = 200;
@@ -384,7 +360,7 @@ let step = 0;
 
 function updateGrid() {
     step += 1;
-    console.log(step);
+    // console.log(step);
     // let viewMatrix = mat4.create();
 
     // eye[0] = 20 * Math.sin(step/100);
@@ -397,27 +373,27 @@ function updateGrid() {
 
     // let x = Math.sin( step / 20);
     // let y = Math.cos( step / 20);
+    // let prevPos = getPrevPos(lineLifeCycleArray[0], lineCoordinatesArray);
+    // let newPos = rk4(prevPos, dt);
     // lineLifeCycleArray[0] = (lineLifeCycleArray[0] + 1) % (SEGMENTS_PER_LINE+ 1);
     // lineLifeCycleArray[1] = Math.min(1 + lineLifeCycleArray[1], SEGMENTS_PER_LINE);
-    // lineCoordinatesArray[lineLifeCycleArray[0] * POINT_DIMENSIONS + 0] = x;
-    // lineCoordinatesArray[lineLifeCycleArray[0] * POINT_DIMENSIONS + 1] = y;
-    // lineCoordinatesArray[lineLifeCycleArray[0] * POINT_DIMENSIONS + 2] = 0;
-
-    // lineLifeCycleArray[2] = (lineLifeCycleArray[2] + 1) % (SEGMENTS_PER_LINE+ 1);
-    // lineLifeCycleArray[3] = Math.min(1 + lineLifeCycleArray[3], SEGMENTS_PER_LINE);
-
-    // lineCoordinatesArray[(lineLifeCycleArray[2] * POINT_DIMENSIONS + 0)+POINTS_PER_LINE] = x + 1.5;
-    // lineCoordinatesArray[(lineLifeCycleArray[2] * POINT_DIMENSIONS + 1)+POINTS_PER_LINE] = 0;
-    // lineCoordinatesArray[(lineLifeCycleArray[2] * POINT_DIMENSIONS + 2)+POINTS_PER_LINE] = y;
+    // lineCoordinatesArray[lineLifeCycleArray[0] * POINT_DIMENSIONS + 0] = newPos.x;
+    // lineCoordinatesArray[lineLifeCycleArray[0] * POINT_DIMENSIONS + 1] = newPos.y;
+    // lineCoordinatesArray[lineLifeCycleArray[0] * POINT_DIMENSIONS + 2] = newPos.z;
 
     // device.queue.writeBuffer(lineLifeCycleStorage, 0, lineLifeCycleArray);
     // device.queue.writeBuffer(lineCoordinates, 0, lineCoordinatesArray);
+    if (drawContext.view.updated) {
+        // console.log(drawContext.view);
+        device.queue.writeBuffer(uniformBuffer, 0, mvpTypedArray);
+        drawContext.view.updated = false;
+    }
 
     const encoder = device.createCommandEncoder();
 
     const computePass = encoder.beginComputePass();
     computePass.setPipeline(simulationPipeline);
-    computePass.setBindGroup(0, computeBindGroup[step % 2]);
+    computePass.setBindGroup(0, computeBindGroup);
     const workgroupCount = Math.ceil(LINE_COUNT / WORKGROUP_SIZE);
     computePass.dispatchWorkgroups(workgroupCount, workgroupCount, 1);
     computePass.end();
@@ -426,7 +402,8 @@ function updateGrid() {
         colorAttachments: [{
             view: context.getCurrentTexture().createView(),
             loadOp: 'clear',
-            clearValue: [0, 0.4, 1, 1],
+            // clearValue: [0, 0.4, 1, 1],
+            clearValue: [0., 0., 0, 1],
             storeOp: 'store',
         }]
     });
@@ -435,14 +412,51 @@ function updateGrid() {
     // 0 because this vertexBuffer corresponds to the first
     // vertexBufferLayout.attributes in the pipeline.
     pass.setVertexBuffer(0, vertexBuffer);
-    pass.setBindGroup(0, renderBindGroup[1]);
+    pass.setBindGroup(0, renderBindGroup);
     pass.draw(vertices.length / 2, LINE_COUNT * (SEGMENTS_PER_LINE));
+    // pass.draw(vertices.length / 2, 1 * (SEGMENTS_PER_LINE));
     pass.end();
     device.queue.submit([encoder.finish()]);
 
-
-    //requestAnimationFrame(updateGrid);
+    requestAnimationFrame(updateGrid);
 }
 
-// requestAnimationFrame(updateGrid);
-setInterval(updateGrid, UPDATE_INTERVAL);
+function getPrevPos(lineHead, lineCoordinatesArray) {
+    if (lineHead < 0) {
+        lineHead = SEGMENTS_PER_LINE;
+    }
+    return {
+        x: lineCoordinatesArray[lineHead * POINT_DIMENSIONS + 0],
+        y: lineCoordinatesArray[lineHead * POINT_DIMENSIONS + 1],
+        z: lineCoordinatesArray[lineHead * POINT_DIMENSIONS + 2],
+    }
+}
+function getVelocityAtPoint(pos) {
+    let x = pos.x;
+    let y = pos.y;
+    let z = pos.z;
+    return {
+        x: -y, 
+        y: x,
+        z: 0
+     } // , sin(x * z) * 15 );
+}
+
+function rk4(pos, dt) {
+    let v1 = getVelocityAtPoint(pos);
+    let v2 = getVelocityAtPoint(vec3f(pos.x + v1.x * dt / 2, pos.y + v1.y * dt / 2, pos.z + v1.z * dt / 2));
+    let v3 = getVelocityAtPoint(vec3f(pos.x + v2.x * dt / 2, pos.y + v2.y * dt / 2, pos.z + v2.z * dt / 2));
+    let v4 = getVelocityAtPoint(vec3f(pos.x + v3.x * dt, pos.y + v3.y * dt, pos.z + v3.z * dt));
+    return {
+        x: pos.x + (v1.x + 2 * v2.x + 2 * v3.x + v4.x) * dt / 6, 
+        y: pos.y + (v1.y + 2 * v2.y + 2 * v3.y + v4.y) * dt / 6, 
+        z: pos.z + (v1.z + 2 * v2.z + 2 * v3.z + v4.z) * dt / 6
+    };
+}
+
+function vec3f(x, y, z) {
+    return {x: x, y: y, z: z};
+}
+
+requestAnimationFrame(updateGrid);
+// setInterval(updateGrid, UPDATE_INTERVAL);
