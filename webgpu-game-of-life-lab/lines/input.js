@@ -264,7 +264,7 @@ function createFPSControls(drawContext) {
   function onMouseMove(e) {
     let dy = e.clientY - mouseY;
     let dx = e.clientX - mouseX;
-    updateLookAtByOffset(-dx, dy);
+    updateLookAtByOffset(-dx, -dy);
     mouseX = e.clientX;
     mouseY = e.clientY;
     e.preventDefault();
@@ -288,7 +288,7 @@ function createFPSControls(drawContext) {
 
   function handleMousePositionChange(e) {
     // This handler only called when pointer is locked.
-    updateLookAtByOffset(e.movementX, -e.movementY)
+    updateLookAtByOffset(-e.movementX, -e.movementY)
   }
 
   function updateLookAtByOffset(dx, dy) {
@@ -324,9 +324,9 @@ function createFPSControls(drawContext) {
       case INPUT_COMMANDS.MOVE_RIGHT:
         vx = -value; break;
       case INPUT_COMMANDS.MOVE_UP:
-        vz = value; break;
-      case INPUT_COMMANDS.MOVE_DOWN:
         vz = -value; break;
+      case INPUT_COMMANDS.MOVE_DOWN:
+        vz = value; break;
 
       case INPUT_COMMANDS.TURN_LEFT:
         vPhi = -value; break;
@@ -414,9 +414,9 @@ function createFPSControls(drawContext) {
   }
 
   function commitMatrixChanges() {
-    // view.update();
-    vec3.transformMat4(centerPosition, FRONT_VECTOR, view.cameraWorld);
     view.update();
+    vec3.transformMat4(centerPosition, FRONT_VECTOR, view.cameraWorld);
+    // view.update();
   }
 
   function rotateBy(yaw, pitch) {

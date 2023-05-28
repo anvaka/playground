@@ -2,6 +2,11 @@ import ViewMatrix from './viewMatrix.js';
 import createMapInputController from './input.js';
 const canvas = document.querySelector('canvas');
 const size = Math.min(window.innerWidth, window.innerHeight)
+const seededRandom = ngraphRandom(42);
+
+function random() {
+    return seededRandom.nextDouble();
+}
 
 // canvas.width = size;
 // canvas.height = size;
@@ -19,10 +24,10 @@ drawContext.view = new ViewMatrix(drawContext);
 createMapInputController(drawContext);
 
 const globalGridSize = 8;
-const dt = 0.01;
-const LINE_COUNT = globalGridSize * globalGridSize * 20;
+const dt = 0.05;
+const LINE_COUNT = 200;
 const POINT_DIMENSIONS = 3;
-const SEGMENTS_PER_LINE = 30;
+const SEGMENTS_PER_LINE = 10;
 const TOTAL_LINES = LINE_COUNT * SEGMENTS_PER_LINE;
 const POINTS_PER_LINE = POINT_DIMENSIONS * (SEGMENTS_PER_LINE + 1);
 
@@ -42,9 +47,9 @@ context.configure({
     format: cnvasFormat
 });
 
-const lineCoordinatesArray = new Float32Array(LINE_COUNT * POINT_DIMENSIONS * (SEGMENTS_PER_LINE + 1));
+const lineCoordinatesArray = new Float32Array(LINE_COUNT * POINTS_PER_LINE);
 const lineCoordinates = device.createBuffer({
-    label: "Line state A",
+    label: "Line coordinates",
     size: lineCoordinatesArray.byteLength,
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 });
@@ -52,9 +57,9 @@ const lineCoordinates = device.createBuffer({
 for (let i = 0; i < LINE_COUNT; i ++) {
     let lineStart = i * POINTS_PER_LINE;
     for (let j = 0; j < POINTS_PER_LINE; j += POINT_DIMENSIONS) {
-        lineCoordinatesArray[lineStart + j] = Math.random()*2 - 1;
-        lineCoordinatesArray[lineStart + j + 1] = Math.random()*2 - 1;
-        lineCoordinatesArray[lineStart + j + 2] = Math.random();
+        lineCoordinatesArray[lineStart + j] = random()*2 - 1;
+        lineCoordinatesArray[lineStart + j + 1] = random()*2 - 1;
+        lineCoordinatesArray[lineStart + j + 2] = random();
     }
 }
 
@@ -204,8 +209,9 @@ const simulationShaderModule = device.createShaderModule({
         let x = pos.x;
         let y = pos.y;
         let z = pos.z;
-        return vec3f(-cos(y), sin(z), cos(x) );
-        // return vec3f(-y, cos(z), sin(x + y));
+        //return vec3f(-cos(y), sin(z), cos(x) );
+        //return vec3f(y, x, sin(x) * cos(y));
+        return vec3f(-y, x,0);
     }
 
     fn rk4(pos: vec3f, dt: f32) -> vec3f {
@@ -222,24 +228,40 @@ const simulationShaderModule = device.createShaderModule({
     }
 
     @compute
-    @workgroup_size(${WORKGROUP_SIZE}, ${WORKGROUP_SIZE})
+    @workgroup_size(${WORKGROUP_SIZE}) // , ${WORKGROUP_SIZE}, 1)
     fn computeMain(@builtin(global_invocation_id) cell: vec3u) {
-        let lineIndex = cell.x + cell.y * ${globalGridSize};
+        let lineIndex = cell.x;// + cell.y * ${globalGridSize};
+        if (lineIndex >= ${LINE_COUNT}) {
+            return;
+        }
         // first we get the last point in the line:
-        let lineHead = lineLifeCycle[lineIndex * 2 + 0];
-        let lineLength = lineLifeCycle[lineIndex * 2 + 1];
-        let lastPointIndex = lineIndex * ${POINTS_PER_LINE} + lineHead * ${POINT_DIMENSIONS};
-        let lastPoint = vec3f(lineCoordinates[lastPointIndex + 0], lineCoordinates[lastPointIndex + 1], lineCoordinates[lastPointIndex + 2]);
+        var lineHead = lineLifeCycle[lineIndex * 2 + 0];
+        var lineLength = lineLifeCycle[lineIndex * 2 + 1];
+        var lastPosIndex = lineIndex * ${POINTS_PER_LINE} + lineHead * ${POINT_DIMENSIONS};
+        var lastPos = vec3f(lineCoordinates[lastPosIndex + 0], lineCoordinates[lastPosIndex + 1], lineCoordinates[lastPosIndex + 2]);
+
+        if (rand(lastPos * f32(lineIndex)) > 0.99) {
+            lastPos = vec3f(rand(lastPos), rand(lastPos - 1), rand(lastPos + 1)) * 2.0 - 1.0;
+
+            lastPosIndex = lineIndex * ${POINTS_PER_LINE} + (${SEGMENTS_PER_LINE} * ${POINT_DIMENSIONS});
+            lineCoordinates[lastPosIndex + 0] = lastPos.x;
+            lineCoordinates[lastPosIndex + 1] = lastPos.y;
+            lineCoordinates[lastPosIndex + 2] = lastPos.z;
+            lineLength = 0;
+            lineHead = ${SEGMENTS_PER_LINE};
+        }
         // now advance it:
-        let newPos = rk4(lastPoint, ${dt});
+        let newPos = rk4(lastPos, ${dt});
         // now we need to update the line:
-        let newLength = min(1 + lineLength, ${SEGMENTS_PER_LINE});
-        let newPointIndex = lineIndex * ${POINTS_PER_LINE} + ((lineHead + 1) * ${POINT_DIMENSIONS}) % (${POINTS_PER_LINE});
-        lineCoordinates[newPointIndex + 0] = newPos.x;
-        lineCoordinates[newPointIndex + 1] = newPos.y;
-        lineCoordinates[newPointIndex + 2] = newPos.z;
+        let newLength = clamp(1 + lineLength, 0, ${SEGMENTS_PER_LINE});
+        let newPosIndex = lineIndex * ${POINTS_PER_LINE} + ((lineHead + 1) * ${POINT_DIMENSIONS}) % (${POINTS_PER_LINE});
+        lineCoordinates[newPosIndex + 0] = newPos.x;
+        lineCoordinates[newPosIndex + 1] = newPos.y;
+        lineCoordinates[newPosIndex + 2] = newPos.z;
+
         lineLifeCycle[lineIndex * 2 + 0] = (lineHead + 1) % (${SEGMENTS_PER_LINE + 1});
         lineLifeCycle[lineIndex * 2 + 1] = newLength;
+
     }
     `
 });
@@ -354,8 +376,6 @@ const renderBindGroup = device.createBindGroup({
         }]
     })
 
-
-const UPDATE_INTERVAL = 200;
 let step = 0;
 
 function updateGrid() {
@@ -371,18 +391,6 @@ function updateGrid() {
     // // mvpTypedArray = new Float32Array(modelViewProjectionMatrix);
     // device.queue.writeBuffer(uniformBuffer, 0, mvpTypedArray);
 
-    // let x = Math.sin( step / 20);
-    // let y = Math.cos( step / 20);
-    // let prevPos = getPrevPos(lineLifeCycleArray[0], lineCoordinatesArray);
-    // let newPos = rk4(prevPos, dt);
-    // lineLifeCycleArray[0] = (lineLifeCycleArray[0] + 1) % (SEGMENTS_PER_LINE+ 1);
-    // lineLifeCycleArray[1] = Math.min(1 + lineLifeCycleArray[1], SEGMENTS_PER_LINE);
-    // lineCoordinatesArray[lineLifeCycleArray[0] * POINT_DIMENSIONS + 0] = newPos.x;
-    // lineCoordinatesArray[lineLifeCycleArray[0] * POINT_DIMENSIONS + 1] = newPos.y;
-    // lineCoordinatesArray[lineLifeCycleArray[0] * POINT_DIMENSIONS + 2] = newPos.z;
-
-    // device.queue.writeBuffer(lineLifeCycleStorage, 0, lineLifeCycleArray);
-    // device.queue.writeBuffer(lineCoordinates, 0, lineCoordinatesArray);
     if (drawContext.view.updated) {
         // console.log(drawContext.view);
         device.queue.writeBuffer(uniformBuffer, 0, mvpTypedArray);
@@ -395,7 +403,7 @@ function updateGrid() {
     computePass.setPipeline(simulationPipeline);
     computePass.setBindGroup(0, computeBindGroup);
     const workgroupCount = Math.ceil(LINE_COUNT / WORKGROUP_SIZE);
-    computePass.dispatchWorkgroups(workgroupCount, workgroupCount, 1);
+    computePass.dispatchWorkgroups(workgroupCount);//, workgroupCount, 1);
     computePass.end();
 
     const pass = encoder.beginRenderPass({
@@ -413,50 +421,11 @@ function updateGrid() {
     // vertexBufferLayout.attributes in the pipeline.
     pass.setVertexBuffer(0, vertexBuffer);
     pass.setBindGroup(0, renderBindGroup);
-    pass.draw(vertices.length / 2, LINE_COUNT * (SEGMENTS_PER_LINE));
-    // pass.draw(vertices.length / 2, 1 * (SEGMENTS_PER_LINE));
+    pass.draw(vertices.length / 2, LINE_COUNT * SEGMENTS_PER_LINE);
     pass.end();
     device.queue.submit([encoder.finish()]);
 
     requestAnimationFrame(updateGrid);
 }
 
-function getPrevPos(lineHead, lineCoordinatesArray) {
-    if (lineHead < 0) {
-        lineHead = SEGMENTS_PER_LINE;
-    }
-    return {
-        x: lineCoordinatesArray[lineHead * POINT_DIMENSIONS + 0],
-        y: lineCoordinatesArray[lineHead * POINT_DIMENSIONS + 1],
-        z: lineCoordinatesArray[lineHead * POINT_DIMENSIONS + 2],
-    }
-}
-function getVelocityAtPoint(pos) {
-    let x = pos.x;
-    let y = pos.y;
-    let z = pos.z;
-    return {
-        x: -y, 
-        y: x,
-        z: 0
-     } // , sin(x * z) * 15 );
-}
-
-function rk4(pos, dt) {
-    let v1 = getVelocityAtPoint(pos);
-    let v2 = getVelocityAtPoint(vec3f(pos.x + v1.x * dt / 2, pos.y + v1.y * dt / 2, pos.z + v1.z * dt / 2));
-    let v3 = getVelocityAtPoint(vec3f(pos.x + v2.x * dt / 2, pos.y + v2.y * dt / 2, pos.z + v2.z * dt / 2));
-    let v4 = getVelocityAtPoint(vec3f(pos.x + v3.x * dt, pos.y + v3.y * dt, pos.z + v3.z * dt));
-    return {
-        x: pos.x + (v1.x + 2 * v2.x + 2 * v3.x + v4.x) * dt / 6, 
-        y: pos.y + (v1.y + 2 * v2.y + 2 * v3.y + v4.y) * dt / 6, 
-        z: pos.z + (v1.z + 2 * v2.z + 2 * v3.z + v4.z) * dt / 6
-    };
-}
-
-function vec3f(x, y, z) {
-    return {x: x, y: y, z: z};
-}
-
 requestAnimationFrame(updateGrid);
-// setInterval(updateGrid, UPDATE_INTERVAL);
