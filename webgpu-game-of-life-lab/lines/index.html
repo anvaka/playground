@@ -4,12 +4,28 @@
         <meta charset="utf-8">
         <title>Lines</title>
         <style>
+            * {
+                box-sizing: border-box;
+            }
             body {
                 margin: 0;
                 padding: 0;
                 display: grid;
                 place-items: center;
                 background-color: #0066FF;
+            }
+            .side-panel {
+                position: absolute;
+    left: 0;
+    top: 0;
+    background: #001223;
+    height: 100%;
+    width: 400px;
+            }
+            textarea {
+                width: 100%;
+                background-color: #121212;
+                color: #fff;
             }
         </style>
         <script src='ngraph.random.js'></script>
@@ -18,6 +34,13 @@
     </head> 
     <body>
         <canvas></canvas>
+        <div class="side-panel">
+            <div class="editor">
+                <textarea name="field"  rows="20"></textarea>
+            </div>
+            <button id="updateButton">update field</button>
+            <div id="error"></div>
+        </div>
         <script type="module" src="main.js"></script>
     </body>
 </html>

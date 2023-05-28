@@ -54,6 +54,10 @@ fn rand(co: f32) -> f32 {
     return fract(sin(t) * (4375.85453 + t));
 }
 
+fn getColor(i: u32, start: vec3f, end: vec3f) -> vec4<f32> {
+    return vec4f(${lineColor.join(',')});
+}
+
 @vertex
 fn vertexMain(input: VertexInput) -> VertexOutput {
     var i = input.instance;
@@ -91,8 +95,7 @@ fn vertexMain(input: VertexInput) -> VertexOutput {
     let clip = mix(clip0, clip1, input.pos.y);
     
     output.pos = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
-    // output.instance = lineIndex;
-    output.color = vec4(${lineColor.join(',')});
+    output.color = getColor(i, startPos, endPos);
     return output;
 }
 // @location(0) indicates which colorAttachment (specified in 

@@ -9,6 +9,30 @@ function random() {
     return seededRandom.nextDouble();
 }
 
+const field = `
+fn getVelocityAtPoint(pos: vec3f) -> vec3f {
+    let x = pos.x;
+    let y = pos.y;
+    let z = pos.z;
+    // return vec3f(-cos(y), sin(x), cos(x) );
+    let sigma = 10.0;
+    return vec3f(sigma*(y-x), x*(28.0-z)-y, x*y-8.0/3.0*z);
+    // return vec3f(-y, x,0);
+}`
+document.querySelector('textarea').value = field;
+document.querySelector('#updateButton').addEventListener('click', (e) => {
+    const field = document.querySelector('textarea').value;
+    document.querySelector('#error').textContent = '';
+    try {
+        vectorFieldCalculator.setNewField(field);
+        // when alt key is pressed, also reset the lines:
+        if (e.altKey) {
+            device.queue.writeBuffer(movingLinesCollection.lineCoordinates, 0, lineCoordinatesArray);
+        }
+    } catch (e) {
+        document.querySelector('#error').textContent = e.message;
+    }
+});
 // canvas.width = size;
 // canvas.height = size;
 canvas.width = window.innerWidth;
@@ -76,16 +100,7 @@ let vectorFieldCalculator = createVectorFieldCalculator(drawContext,
     movingLinesCollection.lineLifeCycle,
     {
         dt: 0.01, 
-        field: `
-    fn getVelocityAtPoint(pos: vec3f) -> vec3f {
-        let x = pos.x;
-        let y = pos.y;
-        let z = pos.z;
-        // return vec3f(-cos(y), sin(x), cos(x) );
-        let sigma = 10.0;
-        return vec3f(sigma*(y-x), x*(28.0-z)-y, x*y-8.0/3.0*z);
-        // return vec3f(-y, x,0);
-    }`
+        field
     });
 
 let gridLines = createGridLines(-10, -10, 10, 10 )
