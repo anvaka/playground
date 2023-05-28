@@ -15,14 +15,7 @@ export default function createVectorFieldComputeShader(drawContext, LINE_COUNT, 
     @group(0) @binding(0) var<storage, read_write> lineCoordinates: array<f32>;
     @group(0) @binding(1) var<storage, read_write> lineLifeCycle: array<u32>;
 
-    fn getVelocityAtPoint(pos: vec3f) -> vec3f {
-        let x = pos.x;
-        let y = pos.y;
-        let z = pos.z;
-        //return vec3f(-cos(y), sin(z), cos(x) );
-        //return vec3f(y, x, sin(x) * cos(y));
-        return vec3f(-y, x,0);
-    }
+    ${fieldConfig.field}
 
     fn rk4(pos: vec3f, dt: f32) -> vec3f {
         let k1 = getVelocityAtPoint(pos);

@@ -1,5 +1,8 @@
 let instanceCounter = 0;
-export default function createMovingLinesCollection(drawContext, LINE_COUNT, SEGMENTS_PER_LINE, mvpUniformBuffer, lineCoordinatesArray) {
+export default function createMovingLinesCollection(
+    drawContext, LINE_COUNT, SEGMENTS_PER_LINE, mvpUniformBuffer, lineCoordinatesArray,
+    lineColor = [0.2, 0.4, .8, 0.7]
+    ) {
     instanceCounter++;
 
     const { width, height, device, cnvasFormat } = drawContext;
@@ -50,6 +53,7 @@ fn rand(co: f32) -> f32 {
     let t = dot(vec3f(12.9898, 78.233, 4375.85453), vec3f(co));
     return fract(sin(t) * (4375.85453 + t));
 }
+
 @vertex
 fn vertexMain(input: VertexInput) -> VertexOutput {
     var i = input.instance;
@@ -88,7 +92,7 @@ fn vertexMain(input: VertexInput) -> VertexOutput {
     
     output.pos = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
     // output.instance = lineIndex;
-    output.color = vec4(0.2, 0.4, .8, 0.7);
+    output.color = vec4(${lineColor.join(',')});
     return output;
 }
 // @location(0) indicates which colorAttachment (specified in 

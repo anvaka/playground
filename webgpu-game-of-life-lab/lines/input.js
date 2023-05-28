@@ -122,8 +122,7 @@ function createFPSControls(drawContext) {
   };
   let moveSpeed = .01; // TODO: Might wanna make this computed based on distance to surface
   let scrollSpeed = 3;
-  // let flySpeed = 1e-2;
-  let flySpeed = 0.1;
+  let flySpeed = 1e-2;
 
   const api = {
     dispose,
@@ -288,7 +287,7 @@ function createFPSControls(drawContext) {
 
   function handleMousePositionChange(e) {
     // This handler only called when pointer is locked.
-    updateLookAtByOffset(-e.movementX, -e.movementY)
+    updateLookAtByOffset(e.movementX, -e.movementY)
   }
 
   function updateLookAtByOffset(dx, dy) {

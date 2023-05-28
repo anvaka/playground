@@ -26,7 +26,7 @@ createMapInputController(drawContext);
 
 const LINE_COUNT = 1000;
 const POINT_DIMENSIONS = 3;
-const SEGMENTS_PER_LINE = 10;
+const SEGMENTS_PER_LINE = 100;
 const POINTS_PER_LINE = POINT_DIMENSIONS * (SEGMENTS_PER_LINE + 1);
 
 if (!navigator.gpu) {
@@ -75,8 +75,20 @@ let vectorFieldCalculator = createVectorFieldCalculator(drawContext,
     movingLinesCollection.lineCoordinates,
     movingLinesCollection.lineLifeCycle,
     {
-        dt: 0.01
+        dt: 0.01, 
+        field: `
+    fn getVelocityAtPoint(pos: vec3f) -> vec3f {
+        let x = pos.x;
+        let y = pos.y;
+        let z = pos.z;
+        // return vec3f(-cos(y), sin(x), cos(x) );
+        let sigma = 10.0;
+        return vec3f(sigma*(y-x), x*(28.0-z)-y, x*y-8.0/3.0*z);
+        // return vec3f(-y, x,0);
+    }`
     });
+
+let gridLines = createGridLines(-10, -10, 10, 10 )
 
 let step = 0;
 
@@ -113,6 +125,7 @@ function updateGrid() {
         }]
     });
 
+    gridLines.draw(pass);
     movingLinesCollection.draw(pass);
 
     pass.end();
@@ -122,3 +135,34 @@ function updateGrid() {
 }
 
 requestAnimationFrame(updateGrid);
+
+
+function createGridLines(left, bottom, right, top) {
+    let gridLines = [];
+    let x = left;
+    let lineCount = 0;
+    while (x <= right) {
+        gridLines.push(x, bottom, 0, x, bottom, 0, x, top, 0);
+        x += 1;
+        lineCount += 1;
+    }
+    let y = bottom;
+    while (y <= top) {
+        gridLines.push(left, y,0, left, y, 0, right, y, 0);
+        y += 1;
+        lineCount += 1;
+    }
+    let typedArray = new Float32Array(gridLines);
+    let collection = createMovingLinesCollection(drawContext, 
+        lineCount, 2,
+        mvpUniform,
+        typedArray,
+        [.1, 0.15, .3, 1]);   
+    let lifeCycle = new Float32Array(lineCount * 2);
+    for (let i = 0; i < lineCount; i ++) {
+        lifeCycle[i*2] = 0;
+        lifeCycle[i*2+1] = 2;
+    }
+    device.queue.writeBuffer(collection.lineLifeCycle, 0, lifeCycle);
+    return collection;
+}
