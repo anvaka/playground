@@ -1,7 +1,7 @@
 let instanceCounter = 0;
 export default function createMovingLinesCollection(
     drawContext, LINE_COUNT, SEGMENTS_PER_LINE, mvpUniformBuffer, lineCoordinatesArray,
-    lineColor = [0.2, 0.4, .8, 0.7]
+    lineColor = [0.1, 0.5, .9, 0.8]
     ) {
     instanceCounter++;
 
@@ -95,7 +95,7 @@ fn vertexMain(input: VertexInput) -> VertexOutput {
     let clip = mix(clip0, clip1, input.pos.y);
     
     output.pos = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
-    output.color = getColor(i, startPos, endPos);
+    output.color = getColor(lineIndex, startPos, endPos);
     return output;
 }
 // @location(0) indicates which colorAttachment (specified in 

@@ -81,7 +81,8 @@ export default function createVectorFieldComputeShader(drawContext, LINE_COUNT, 
     
         fn rand(co: vec3f) -> f32 {
             let t = dot(vec3f(12.9898, 78.233, 4375.85453), co);
-            return fract(sin(t) * (4375.85453 + t));
+            let x = sin(t) * (4375.85453 + t);
+            return fract(x);
         }
     
         @compute
@@ -97,7 +98,7 @@ export default function createVectorFieldComputeShader(drawContext, LINE_COUNT, 
             var lastPosIndex = lineIndex * ${POINTS_PER_LINE} + lineHead * ${POINT_DIMENSIONS};
             var lastPos = vec3f(lineCoordinates[lastPosIndex + 0], lineCoordinates[lastPosIndex + 1], lineCoordinates[lastPosIndex + 2]);
     
-            if (rand(lastPos * f32(lineIndex)) > 0.99) {
+            if (rand(lastPos * f32(lineIndex)) > 1) {
                 lastPos = vec3f(rand(lastPos), rand(lastPos - 1), rand(lastPos + 1)) * 2.0 - 1.0;
     
                 lastPosIndex = lineIndex * ${POINTS_PER_LINE} + (${SEGMENTS_PER_LINE} * ${POINT_DIMENSIONS});

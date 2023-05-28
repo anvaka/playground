@@ -9,6 +9,7 @@ function random() {
     return seededRandom.nextDouble();
 }
 
+const dt = 0.01;
 const field = `
 fn getVelocityAtPoint(pos: vec3f) -> vec3f {
     let x = pos.x;
@@ -84,9 +85,9 @@ const lineCoordinatesArray = new Float32Array(LINE_COUNT * POINTS_PER_LINE);
 for (let i = 0; i < LINE_COUNT; i ++) {
     let lineStart = i * POINTS_PER_LINE;
     for (let j = 0; j < POINTS_PER_LINE; j += POINT_DIMENSIONS) {
-        lineCoordinatesArray[lineStart + j] = random()*2 - 1;
-        lineCoordinatesArray[lineStart + j + 1] = random()*2 - 1;
-        lineCoordinatesArray[lineStart + j + 2] = random();
+        lineCoordinatesArray[lineStart + j]     = (random() - 0.5) * 2;
+        lineCoordinatesArray[lineStart + j + 1] = (random() - 0.5) * 2;
+        lineCoordinatesArray[lineStart + j + 2] = (random() - 0.5) * 2;
     }
 }
 
@@ -99,26 +100,21 @@ let vectorFieldCalculator = createVectorFieldCalculator(drawContext,
     movingLinesCollection.lineCoordinates,
     movingLinesCollection.lineLifeCycle,
     {
-        dt: 0.01, 
+        dt, 
         field
     });
 
 let gridLines = createGridLines(-10, -10, 10, 10 )
 
 let step = 0;
+let hitchTheRide = false;
+// drawContext.view.position = [1, 1, 1.0];
 
 function updateGrid() {
     step += 1;
-    // console.log(step);
-    // let viewMatrix = mat4.create();
-
-    // eye[0] = 20 * Math.sin(step/100);
-    // eye[2] = 14 * Math.cos(step/100);
-    // // Use the lookAt() method to construct the view matrix
-    // mat4.lookAt(viewMatrix, eye, target, up);
-    // mat4.multiply(mvpTypedArray, projectionMatrix, viewMatrix);
-    // // mvpTypedArray = new Float32Array(modelViewProjectionMatrix);
-    // device.queue.writeBuffer(mvpUniform, 0, mvpTypedArray);
+    if (hitchTheRide) {
+        updateCameraPositionAccordingToTheField();
+    }
 
     if (drawContext.view.updated) {
         // console.log(drawContext.view);
@@ -180,4 +176,35 @@ function createGridLines(left, bottom, right, top) {
     }
     device.queue.writeBuffer(collection.lineLifeCycle, 0, lifeCycle);
     return collection;
+}
+
+function updateCameraPositionAccordingToTheField() {
+    let pos = drawContext.view.position;
+    let nextPos = rk4(vec3f(pos[0], pos[1], pos[2]), dt);
+    drawContext.view.position = [nextPos.x, nextPos.y, nextPos.z];
+    drawContext.view.update();
+}
+
+function rk4(x, dt) {
+    let k1 = getVelocityAtPoint(x);
+    let k2 = getVelocityAtPoint(vec3f(x.x + k1.x * dt / 2, x.y + k1.y * dt / 2, x.z + k1.z * dt / 2));
+    let k3 = getVelocityAtPoint(vec3f(x.x + k2.x * dt / 2, x.y + k2.y * dt / 2, x.z + k2.z * dt / 2));
+    let k4 = getVelocityAtPoint(vec3f(x.x + k3.x * dt, x.y + k3.y * dt, x.z + k3.z * dt));
+    return vec3f(x.x + (k1.x + 2*k2.x + 2*k3.x + k4.x) * dt / 6,
+        x.y + (k1.y + 2*k2.y + 2*k3.y + k4.y) * dt / 6,
+        x.z + (k1.z + 2*k2.z + 2*k3.z + k4.z) * dt / 6
+    );
+}
+
+function getVelocityAtPoint(pos) {
+    let x = pos.x;
+    let y = pos.y;
+    let z = pos.z;
+    let sigma = 10.0;
+    return vec3f(-y, x, 0);
+    return vec3f(sigma*(y-x), x*(28.0-z)-y, x*y-8.0/3.0*z);
+}
+
+function vec3f(x, y, z) {
+    return {x, y, z};
 }
