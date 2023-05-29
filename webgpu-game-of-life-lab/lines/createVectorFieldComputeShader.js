@@ -5,7 +5,7 @@ export default function createVectorFieldComputeShader(drawContext, LINE_COUNT, 
 
     const WORKGROUP_SIZE = 8;
 
-    const POINT_DIMENSIONS = 3;
+    const POINT_DIMENSIONS = 4;
     const POINTS_PER_LINE = POINT_DIMENSIONS * (SEGMENTS_PER_LINE + 1);
 
     const { device } = drawContext;
@@ -71,7 +71,7 @@ export default function createVectorFieldComputeShader(drawContext, LINE_COUNT, 
     
         ${field}
     
-        fn rk4(pos: vec3f, dt: f32) -> vec3f {
+        fn rk4(pos: vec4f, dt: f32) -> vec4f {
             let k1 = getVelocityAtPoint(pos);
             let k2 = getVelocityAtPoint(pos + 0.5 * dt * k1);
             let k3 = getVelocityAtPoint(pos + 0.5 * dt * k2);
@@ -79,8 +79,8 @@ export default function createVectorFieldComputeShader(drawContext, LINE_COUNT, 
             return pos + dt * (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0;
         }
     
-        fn rand(co: vec3f) -> f32 {
-            let t = dot(vec3f(12.9898, 78.233, 4375.85453), co);
+        fn rand(co: vec4f) -> f32 {
+            let t = dot(vec4f(12.9898, 78.233, 53.12, 4375.85453), co);
             let x = sin(t) * (4375.85453 + t);
             return fract(x);
         }
@@ -96,15 +96,19 @@ export default function createVectorFieldComputeShader(drawContext, LINE_COUNT, 
             var lineHead = lineLifeCycle[lineIndex * 2 + 0];
             var lineLength = lineLifeCycle[lineIndex * 2 + 1];
             var lastPosIndex = lineIndex * ${POINTS_PER_LINE} + lineHead * ${POINT_DIMENSIONS};
-            var lastPos = vec3f(lineCoordinates[lastPosIndex + 0], lineCoordinates[lastPosIndex + 1], lineCoordinates[lastPosIndex + 2]);
+            var lastPos = vec4f(
+                lineCoordinates[lastPosIndex + 0], lineCoordinates[lastPosIndex + 1], 
+                lineCoordinates[lastPosIndex + 2], lineCoordinates[lastPosIndex + 3]
+                );
     
-            if (rand(lastPos * f32(lineIndex)) > 1) {
-                lastPos = vec3f(rand(lastPos), rand(lastPos - 1), rand(lastPos + 1)) * 2.0 - 1.0;
+            if (rand(lastPos * f32(lineIndex)) > 10) {
+                lastPos = vec4f(rand(lastPos), rand(lastPos - 1), rand(lastPos + 1), rand(lastPos + 2)) * 2.0 - 1.0;
     
                 lastPosIndex = lineIndex * ${POINTS_PER_LINE} + (${SEGMENTS_PER_LINE} * ${POINT_DIMENSIONS});
                 lineCoordinates[lastPosIndex + 0] = lastPos.x;
                 lineCoordinates[lastPosIndex + 1] = lastPos.y;
                 lineCoordinates[lastPosIndex + 2] = lastPos.z;
+                lineCoordinates[lastPosIndex + 3] = lastPos.w;
                 lineLength = 0;
                 lineHead = ${SEGMENTS_PER_LINE};
             }
@@ -116,6 +120,7 @@ export default function createVectorFieldComputeShader(drawContext, LINE_COUNT, 
             lineCoordinates[newPosIndex + 0] = newPos.x;
             lineCoordinates[newPosIndex + 1] = newPos.y;
             lineCoordinates[newPosIndex + 2] = newPos.z;
+            lineCoordinates[newPosIndex + 3] = newPos.w;
     
             lineLifeCycle[lineIndex * 2 + 0] = (lineHead + 1) % (${SEGMENTS_PER_LINE + 1});
             lineLifeCycle[lineIndex * 2 + 1] = newLength;

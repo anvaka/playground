@@ -23,7 +23,7 @@ export default class ViewMatrix {
     /**
      * Camera position in the world
      */
-    this.position = [0, -4, 4];
+    this.position = [0, -50, 10];
     /**
      * Camera orientation in the world
      */

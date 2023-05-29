@@ -11,14 +11,12 @@ function random() {
 
 const dt = 0.01;
 const field = `
-fn getVelocityAtPoint(pos: vec3f) -> vec3f {
+fn getVelocityAtPoint(pos: vec4f) -> vec4f {
     let x = pos.x;
     let y = pos.y;
     let z = pos.z;
-    // return vec3f(-cos(y), sin(x), cos(x) );
-    let sigma = 10.0;
-    return vec3f(sigma*(y-x), x*(28.0-z)-y, x*y-8.0/3.0*z);
-    // return vec3f(-y, x,0);
+    let w = pos.w;
+    return vec4f(10 * (y - x), x * (28 - z) - y, x * y - 1.5*w, (x-y)+z);
 }`
 document.querySelector('textarea').value = field;
 document.querySelector('#updateButton').addEventListener('click', (e) => {
@@ -49,8 +47,8 @@ const drawContext = {
 drawContext.view = new ViewMatrix(drawContext);
 createMapInputController(drawContext);
 
-const LINE_COUNT = 1000;
-const POINT_DIMENSIONS = 3;
+const LINE_COUNT = 2000;
+const POINT_DIMENSIONS = 4;
 const SEGMENTS_PER_LINE = 100;
 const POINTS_PER_LINE = POINT_DIMENSIONS * (SEGMENTS_PER_LINE + 1);
 
@@ -84,11 +82,17 @@ device.queue.writeBuffer(mvpUniform, 0, mvpTypedArray);
 const lineCoordinatesArray = new Float32Array(LINE_COUNT * POINTS_PER_LINE);
 for (let i = 0; i < LINE_COUNT; i ++) {
     let lineStart = i * POINTS_PER_LINE;
-    for (let j = 0; j < POINTS_PER_LINE; j += POINT_DIMENSIONS) {
-        lineCoordinatesArray[lineStart + j]     = (random() - 0.5) * 2;
-        lineCoordinatesArray[lineStart + j + 1] = (random() - 0.5) * 2;
-        lineCoordinatesArray[lineStart + j + 2] = (random() - 0.5) * 2;
-    }
+
+    lineCoordinatesArray[lineStart]     = Math.cos(i / LINE_COUNT * Math.PI);
+    lineCoordinatesArray[lineStart + 1] = Math.sin(i / LINE_COUNT * Math.PI);
+    lineCoordinatesArray[lineStart + 2] = 0.1;
+    lineCoordinatesArray[lineStart + 3] = .1;
+    // for (let j = 0; j < POINTS_PER_LINE; j += POINT_DIMENSIONS) {
+    //     lineCoordinatesArray[lineStart + j]     = (random() - 0.5) * 2;
+    //     lineCoordinatesArray[lineStart + j + 1] = (random() - 0.5) * 2;
+    //     lineCoordinatesArray[lineStart + j + 2] = (random() - 0.5) * 2;
+    //     lineCoordinatesArray[lineStart + j + 3] = (random() - 0.5) * 2;
+    // }
 }
 
 let movingLinesCollection = createMovingLinesCollection(drawContext, 
@@ -145,21 +149,35 @@ function updateGrid() {
     requestAnimationFrame(updateGrid);
 }
 
-requestAnimationFrame(updateGrid);
 
+// for (let i = 0; i < 1000; i ++) {
+//     const encoder = device.createCommandEncoder();
+//     vectorFieldCalculator.updatePositions(encoder);
+//     device.queue.submit([encoder.finish()]);
+// }
+
+requestAnimationFrame(updateGrid);
 
 function createGridLines(left, bottom, right, top) {
     let gridLines = [];
     let x = left;
     let lineCount = 0;
     while (x <= right) {
-        gridLines.push(x, bottom, 0, x, bottom, 0, x, top, 0);
+        gridLines.push(
+            x, bottom, 0, 0,
+            x, bottom, 0, 0,
+            x, top, 0, 0
+        );
         x += 1;
         lineCount += 1;
     }
     let y = bottom;
     while (y <= top) {
-        gridLines.push(left, y,0, left, y, 0, right, y, 0);
+        gridLines.push(
+            left, y,  0, 0,
+            left, y,  0, 0,
+            right, y, 0, 0
+        );
         y += 1;
         lineCount += 1;
     }

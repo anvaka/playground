@@ -1,12 +1,11 @@
 let instanceCounter = 0;
 export default function createMovingLinesCollection(
-    drawContext, LINE_COUNT, SEGMENTS_PER_LINE, mvpUniformBuffer, lineCoordinatesArray,
-    lineColor = [0.1, 0.5, .9, 0.8]
+    drawContext, LINE_COUNT, SEGMENTS_PER_LINE, mvpUniformBuffer, lineCoordinatesArray, lineColor
     ) {
     instanceCounter++;
 
     const { width, height, device, cnvasFormat } = drawContext;
-    const POINT_DIMENSIONS = 3;
+    const POINT_DIMENSIONS = 4;
     const POINTS_PER_LINE = POINT_DIMENSIONS * (SEGMENTS_PER_LINE + 1);
     const lineLifeCycleArrayByteLength = LINE_COUNT * 2 * Uint32Array.BYTES_PER_ELEMENT; // first is the segment head, second is segment length
 
@@ -54,8 +53,34 @@ fn rand(co: f32) -> f32 {
     return fract(sin(t) * (4375.85453 + t));
 }
 
+fn hsv2rgb(hsv: vec3<f32>) -> vec3<f32> {
+    let c = hsv.z * hsv.y;
+    let h = fract(hsv.x / 60.0);
+    let x = c * (1.0 - abs((h % 2.0) - 1.0));
+    let m = hsv.z - c;
+    var rgb = vec3f(0.0, 0.0, 0.0);
+    if (h < 1.0) {
+        rgb = vec3f(c, x, 0.0);
+    } else if (h < 2.0) {
+        rgb = vec3f(x, c, 0.0);
+    } else if (h < 3.0) {
+        rgb = vec3f(0.0, c, x);
+    } else if (h < 4.0) {
+        rgb = vec3f(0.0, x, c);
+    } else if (h < 5.0) {
+        rgb = vec3f(x, 0.0, c);
+    } else if (h < 6.0) {
+        rgb = vec3f(c, 0.0, x);
+    }
+    return rgb + m;
+}
+
 fn getColor(i: u32, start: vec3f, end: vec3f) -> vec4<f32> {
-    return vec4f(${lineColor.join(',')});
+    let t = f32(i) / f32(${LINE_COUNT});
+    let hue = t * 20.0 + 200; // 360 degrees in the HSV color wheel
+    let hsv = vec3f(hue, 0.8, .9); // Full saturation and value
+    let rgb = hsv2rgb(hsv); // Function to convert HSV to RGB
+    return vec4f(rgb, 0.3);
 }
 
 @vertex
@@ -95,7 +120,7 @@ fn vertexMain(input: VertexInput) -> VertexOutput {
     let clip = mix(clip0, clip1, input.pos.y);
     
     output.pos = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
-    output.color = getColor(lineIndex, startPos, endPos);
+    output.color = ${ lineColor ? `vec4f(${lineColor.join(',')});` : 'getColor(lineIndex, startPos, endPos);'}
     return output;
 }
 // @location(0) indicates which colorAttachment (specified in 
