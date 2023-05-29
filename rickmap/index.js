@@ -1,20 +1,28 @@
-var map = new maplibregl.Map({
+const map = new maplibregl.Map({
   container: 'map',
   style: 'https://demotiles.maplibre.org/style.json', // stylesheet location
   center: [0, 0],
-  zoom: 5,
+  zoom: 2,
   maxZoom: 6.5,
   minZoom: 1
 });
 
 map.on('load', function() {
-  // Where is the data?
-  map.addSource('my-polygon', {
-    'type': 'geojson',
-    'data': 'polygon.geojson'
-  });
-  // How to style the data?
-  map.addLayer({
+  map.addSource('my-polygon', { 'type': 'geojson', 'data': 'polygon.geojson' });
+  map.addLayer(myLayer());
+});
+
+map.on('click', 'my-layer', function(e) {
+  const videoContainer = document.createElement('div');
+  videoContainer.innerHTML = '<iframe width="560" height="315" src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>';
+  videoContainer.style.position = 'absolute';
+  videoContainer.style.left = (e.point.x - 560/2)+ 'px';
+  videoContainer.style.top =  (e.point.y - 315/2)+ 'px';
+  document.body.appendChild(videoContainer);
+});
+
+function myLayer() {
+  return {
     'id': 'my-layer',
     'type': 'fill',
     'source': 'my-polygon',
@@ -30,14 +38,7 @@ map.on('load', function() {
       ],
       'fill-opacity': 0.8
     }
-  });
-});
+  }
+}
 
 
-// map.addLayer({
-//   "id": "background",
-//   "type": "background",
-//   "paint": {
-//     "background-color": "rgb(189,189,215)"
-//   }
-// });
