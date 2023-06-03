@@ -1,7 +1,7 @@
 let instanceCounter = 0;
 
 export default function createSegmentedLines(
-  drawContext, LINE_COUNT, SEGMENTS_PER_LINE, lineCoordinatesArray, defaultHueOffset = 200
+  drawContext, LINE_COUNT, SEGMENTS_PER_LINE, lineCoordinatesArray, defaultHueOffset = 200, defaultColroValue = 0.9
 ) {
     instanceCounter++;
 
@@ -85,12 +85,12 @@ fn hsv2rgb(hsv: vec3<f32>) -> vec3<f32> {
     return rgb + m;
 }
 
-fn getColor(i: u32, hueOffset: f32, start: vec3f, end: vec3f) -> vec4<f32> {
-    let t = f32(i) / f32(${LINE_COUNT});
-    let hue = t * 20.0 + hueOffset; // 360 degrees in the HSV color wheel
-    let hsv = vec3f(hue, 0.8, .9); // Full saturation and value
-    let rgb = hsv2rgb(hsv); // Function to convert HSV to RGB
-    return vec4f(rgb, 0.3);
+fn getColor(color: u32) -> vec4<f32> {
+    let r = f32((color >> 24) & 0xFF) / 255.0;
+    let g = f32((color >> 16) & 0xFF) / 255.0;
+    let b = f32((color >> 8) & 0xFF) / 255.0;
+    let a = f32((color >> 0) & 0xFF) / 255.0;
+    return vec4f(r, g, b, a);
 }
 
 @vertex
@@ -110,7 +110,7 @@ fn vertexMain(input: VertexInput) -> VertexOutput {
     }
     var start = (head - length + i + ${SEGMENTS_PER_LINE + 1}) % (${SEGMENTS_PER_LINE + 1});
 
-    var width = 4.0 * (f32(i) / f32(${SEGMENTS_PER_LINE}));
+    var width = 2.0;// * (f32(i) / f32(${SEGMENTS_PER_LINE}));
     var startIndex = lineStart + (start * ${POINT_DIMENSIONS});
     var endIndex = lineStart + ((start + 1) * ${POINT_DIMENSIONS}) % (${POINTS_PER_LINE});
     var startPos = vec3(lineCoordinates[startIndex + 0], lineCoordinates[startIndex + 1], lineCoordinates[startIndex + 2]);
@@ -130,8 +130,7 @@ fn vertexMain(input: VertexInput) -> VertexOutput {
     let clip = mix(clip0, clip1, input.pos.y);
     
     output.pos = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
-    // TODO: read from lineLifeCycle?
-    output.color = getColor(lineIndex, f32(lineLifeCycle[lineIndex * ${ATTRIBUTES_PER_LINE} + 2]), startPos, endPos);
+    output.color = getColor(lineLifeCycle[lineIndex * ${ATTRIBUTES_PER_LINE} + 2]);
     return output;
 }
 // @location(0) indicates which colorAttachment (specified in 

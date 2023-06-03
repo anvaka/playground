@@ -3,6 +3,7 @@ import createFPSControls from './createFPSControls';
 import createSegmentedLines from './createSegmentedLines';
 import createVectorFieldCalculator from './createVectorFieldCalculator';
 import sharedState from './sharedState';
+import createGuide from './createGuide';
 
 export default async function createScene(canvas) {
   canvas.width = window.innerWidth;
@@ -30,9 +31,10 @@ export default async function createScene(canvas) {
     lineCoordinatesArray[i] = Math.random() * 2 - 1;
   }
 
-  const fieldLines = createSegmentedLines(drawContext, LINE_COUNT, SEGMENTS_PER_LINE, lineCoordinatesArray, sharedState.hue);
-//  fieldLines.setVisibleCount(0);
-  lastVisibleIndex = LINE_COUNT - 1;
+  const guide = createGuide(drawContext);
+  const fieldLines = createSegmentedLines(drawContext, LINE_COUNT, SEGMENTS_PER_LINE, lineCoordinatesArray, sharedState.rgba);
+  fieldLines.setVisibleCount(0);
+//   lastVisibleIndex = LINE_COUNT - 1;
 
   const field = `
 fn getVelocityAtPoint(pos: vec4f) -> vec4f {
@@ -40,10 +42,11 @@ fn getVelocityAtPoint(pos: vec4f) -> vec4f {
     let y = pos.y;
     let z = pos.z;
     let w = pos.w;
+    return vec4f(10 * (y - x), x * (28 - z) - y, x * y - 1.5*z, 0);
     return vec4f(-y, sin(x), 0, 0);
 }`
   // And this is a compute shader to update the vector field.
-  const vectorFieldCalculator = createVectorFieldCalculator(drawContext, fieldLines, { dt: 0.1, field });
+  const vectorFieldCalculator = createVectorFieldCalculator(drawContext, fieldLines, { dt: 0.01, field });
 
   listenToEvents();
   const input = createFPSControls(drawContext, onAddLine);
@@ -78,6 +81,7 @@ fn getVelocityAtPoint(pos: vec4f) -> vec4f {
         }]
     });
 
+    guide.draw(pass);
     fieldLines.draw(pass);
 
     pass.end();
@@ -93,7 +97,7 @@ fn getVelocityAtPoint(pos: vec4f) -> vec4f {
 
     const device = drawContext.device;
     let lineState = new Uint32Array(fieldLines.ATTRIBUTES_PER_LINE);
-    lineState[2] = sharedState.hue;
+    lineState[2] = sharedState.rgba;
     device.queue.writeBuffer( 
       fieldLines.lineLifeCycle, 
       lastVisibleIndex * fieldLines.ATTRIBUTES_PER_LINE * 4, 

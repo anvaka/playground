@@ -155,10 +155,15 @@
 .cross-container {
   position: absolute;
   color: white;
+  pointer-events: none;
 }
 
+.cross-container .indicator {
+  text-align: center;
+  position: relative;
+  top: 8px;
+}
 .cross-location {
-  transform: translateX(-50%);
   color: #444;
 }
 .hue-picker {

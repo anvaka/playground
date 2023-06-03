@@ -1,7 +1,112 @@
 import './hud.css';
 import {vec3} from 'gl-matrix';
 import sharedState from './sharedState';
-import eventify from 'ngraph.events';
+
+function rgbToHsv(red, green, blue) {
+  // Normalize the RGB values
+  var r = red / 255;
+  var g = green / 255;
+  var b = blue / 255;
+
+  // Find the maximum and minimum values of RGB
+  var max = Math.max(r, g, b);
+  var min = Math.min(r, g, b);
+
+  var h, s, v;
+
+  // Calculate the hue
+  if (max === min) {
+    h = 0; // No saturation, so hue is 0
+  } else if (max === r) {
+    h = ((g - b) / (max - min)) % 6;
+  } else if (max === g) {
+    h = (2 + (b - r) / (max - min)) % 6;
+  } else if (max === b) {
+    h = (4 + (r - g) / (max - min)) % 6;
+  }
+
+  h = Math.round(h * 60); // Convert hue to degrees
+
+  // Calculate the saturation
+  if (max === 0) {
+    s = 0; // No maximum value, so saturation is 0
+  } else {
+    s = 1 - min / max;
+  }
+
+  s = Math.round(s * 100); // Convert saturation to percentage
+
+  // Calculate the value
+  v = Math.round(max * 100); // Convert value to percentage
+
+  // Return the HSV values as an object
+  return [h, s, v]
+}
+
+function hsvToRgb(hue, saturation, value) {
+  // Convert hue to a value between 0 and 360 degrees
+  var h = hue % 360;
+
+  // Normalize the saturation and value to be between 0 and 1
+  var s = saturation / 100;
+  var v = value / 100;
+
+  // Calculate chroma
+  var c = v * s;
+
+  // Calculate the hue sector
+  var sector = h / 60;
+
+  // Calculate intermediate values
+  var x = c * (1 - Math.abs((sector % 2) - 1));
+  var m = v - c;
+
+  // Initialize RGB values
+  var r, g, b;
+
+  if (sector >= 0 && sector < 1) {
+    r = c;
+    g = x;
+    b = 0;
+  } else if (sector >= 1 && sector < 2) {
+    r = x;
+    g = c;
+    b = 0;
+  } else if (sector >= 2 && sector < 3) {
+    r = 0;
+    g = c;
+    b = x;
+  } else if (sector >= 3 && sector < 4) {
+    r = 0;
+    g = x;
+    b = c;
+  } else if (sector >= 4 && sector < 5) {
+    r = x;
+    g = 0;
+    b = c;
+  } else {
+    r = c;
+    g = 0;
+    b = x;
+  }
+
+  // Adjust RGB values
+  r = Math.round((r + m) * 255);
+  g = Math.round((g + m) * 255);
+  b = Math.round((b + m) * 255);
+
+  // Return the RGB values as an object
+  return [r, g, b]
+}
+
+
+function getColor(rgbaNumber) {
+  let r = (rgbaNumber >> 24) & 0xFF;
+  let g = (rgbaNumber >> 16) & 0xFF;
+  let b = (rgbaNumber >> 8) & 0xFF;
+
+  return rgbToHsv(r, g, b);
+}
 
 export default function createHud(parent, view) {
   const holder = document.createElement('div');
@@ -105,7 +210,7 @@ function getAxesHtml() {
     </div>
   </div>
   <div class="cross-container">
-    <div>+</div>
+    <div class='indicator'>+</div>
     <div class="cross-location">
     </div>
   </div>`;
@@ -133,8 +238,9 @@ function createHueCirclePicker(parent) {
 
   const currentHueEl = document.createElement('div');
   currentHueEl.style = 'transform: translate(-50%, -50%); position: absolute; top: 50%; left: 50%;';
-  currentHueEl.style.color = `hsl(${sharedState.hue || 0}, 80%, 50%)`;
-  currentHueEl.innerText = sharedState.hue || 0;
+  let hsl = getColor(sharedState.rgba);
+  currentHueEl.style.color = `hsl(${hsl[0] || 0}, 80%, 50%)`;
+  currentHueEl.innerText = Math.round(hsl[0]);
   huePicker.appendChild(currentHueEl);
   return {};
 
@@ -151,8 +257,8 @@ function createHueCirclePicker(parent) {
   }
 
   function drawCurrent() {
-    let angle = Math.round(sharedState.hue || 0);
-    // we are going to draw white circle to indicate where the current hue value is:
+    let hsl = getColor(sharedState.rgba);
+    let angle = Math.round(hsl[0]);
     ctx.beginPath();
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 2;
@@ -170,8 +276,10 @@ function createHueCirclePicker(parent) {
     let dx = x - radius;
     let dy = y - radius;
     let angle = Math.round(180 * Math.atan2(dy, dx) / Math.PI);
+    if (angle < 0) angle += 360;
+    let rgb = hsvToRgb(angle, 80, 50);
 
-    sharedState.hue = angle < 0 ? angle + 360 : angle;
+    sharedState.rgba = (rgb[0] << 24) | (rgb[1] << 16) | (rgb[2] << 8) | 0x3f;
 
     redraw();
   }
@@ -187,7 +295,9 @@ function createHueCirclePicker(parent) {
     drawCircle();
     drawCurrent();
 
-    currentHueEl.style.color = `hsl(${sharedState.hue || 0}, 80%, 50%)`;
-    currentHueEl.innerText = sharedState.hue || 0;
+    let hsl = getColor(sharedState.rgba);
+    currentHueEl.style.color = `hsl(${hsl[0] || 0}, 80%, 50%)`;
+    if (hsl[0] < 0) hsl[0] += 360;
+    currentHueEl.innerText = Math.round(hsl[0] || 0);
   }
 }
