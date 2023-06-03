@@ -1,47 +1,261 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <title>Lines</title>
-        <style>
-            * {
-                box-sizing: border-box;
-            }
-            body {
-                margin: 0;
-                padding: 0;
-                display: grid;
-                place-items: center;
-                background-color: #0066FF;
-            }
-            .side-panel {
-                display: none;
-                position: absolute;
-    left: 0;
-    top: 0;
-    background: #001223;
-    height: 100%;
-    width: 400px;
-            }
-            textarea {
-                width: 100%;
-                background-color: #121212;
-                color: #fff;
-            }
-        </style>
-        <script src='ngraph.random.js'></script>
 
-        <script src="gl-matrix-min.js"></script>
-    </head> 
-    <body>
-        <canvas></canvas>
-        <div class="side-panel">
-            <div class="editor">
-                <textarea name="field"  rows="20"></textarea>
+<head>
+    <meta charset="utf-8">
+    <title>Lines</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            display: grid;
+            place-items: center;
+            background-color: #0066FF;
+        }
+
+        .side-panel {
+            display: none;
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #001223;
+            height: 100%;
+            width: 400px;
+        }
+
+        textarea {
+            width: 100%;
+            background-color: #121212;
+            color: #fff;
+        }
+
+        :root {
+            --space-ship-height: 30px;
+            --space-ship-width: 30;
+            --horizontal-arrow-color: red;
+            --vertical-arrow-color: lime;
+            --vertical-axis-color: #ccc;
+            --horizontal-axis-color: #ccc;
+            --space-ship-color: deepskyblue;
+            --space-ship-second-color: yellow;
+        }
+
+        .coordinate-plane {
+            position: absolute;
+            right: 8px;
+            top: 8px;
+            width: 120px;
+        }
+
+        .axes-container {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            background: transparent;
+            color: white;
+        }
+
+        .ship {
+            display: flex;
+            width: 30px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            position: relative;
+            height: var(--space-ship-height);
+            background: transparent;
+            justify-content: space-between;
+        }
+
+        .ship .center {
+            flex: 1;
+            background-color: var(--space-ship-second-color);
+        }
+
+        .left {
+            border-left: 14px solid transparent;
+            border-right: 0px solid transparent;
+            border-bottom: var(--space-ship-height) solid var(--space-ship-color);
+            width: 0px;
+            height: 0px;
+        }
+
+        .right {
+            border-right: 14px solid transparent;
+            border-left: 0px solid transparent;
+            border-bottom: var(--space-ship-height) solid var(--space-ship-color);
+            width: 0px;
+            height: 0px;
+        }
+
+        .axes {
+            position: absolute;
+            transform: rotate(0deg);
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            align-items: center;
+            justify-items: center;
+        }
+
+        .horizontal {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background-color: var(--horizontal-axis-color);
+            text-align: right;
+        }
+
+        .vertical {
+            position: absolute;
+            width: 2px;
+            height: 100%;
+            background-color: var(--vertical-axis-color);
+        }
+
+        .right-arrow {
+            position: absolute;
+            right: -5px;
+            width: 0;
+            height: 0;
+            top: -3px;
+            border-left: 12px solid var(--horizontal-arrow-color);
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+        }
+
+        .top-arrow {
+            position: absolute;
+            right: -3px;
+            width: 0;
+            height: 0;
+            top: -5px;
+            border-bottom: 12px solid var(--vertical-arrow-color);
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+        }
+
+        .axis-label {
+            font-size: 12px;
+            font-family: sans-serif;
+        }
+
+        .vertical .axis-label {
+            position: relative;
+            left: -12px;
+            top: -8px
+        }
+
+        .location {
+            position: absolute;
+            bottom: 8px;
+            font-size: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            background: rgba(0, 0, 0, 0.9)
+        }
+
+        .plane-axis {
+            position: absolute;
+            top: 50%;
+            width: 100%;
+        }
+
+        .plane-level {
+            position: absolute;
+            top: calc(50% - 1px);
+            left: calc(50% - 15px);
+        }
+
+        .ship-pitch {
+            transform-origin: 15px 2px;
+            position: absolute;
+        }
+
+        .ship-body {
+            height: 4px;
+            width: 30px;
+            position: absolute;
+            background-color: var(--space-ship-color);
+        }
+
+        .ship-tail {
+            width: 0;
+            height: 0;
+            position: absolute;
+            top: -14px;
+            border-left: 0px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 14px solid var(--space-ship-second-color);
+        }
+        .cross-container {
+            position: absolute;
+            color: white;
+        }
+    </style>
+    <script src='ngraph.random.js'></script>
+
+    <script src="gl-matrix-min.js"></script>
+</head>
+
+<body>
+    <canvas></canvas>
+    <div class="coordinate-plane">
+<div class='axes-container level-indicator'>
+            <div class="plane-axis">
+                <div class="horizontal">
+                    <span class='axis-label'>pitch</span>
+                </div>
             </div>
-            <button id="updateButton">update field</button>
-            <div id="error"></div>
+
+            <div class='plane-level'>
+                <div class='ship-pitch'>
+                    <div class="ship-body"></div>
+                    <div class="ship-tail"></div>
+                </div>
+            </div>
         </div>
-        <script type="module" src="main.js"></script>
-    </body>
+        <div class='axes-container'>
+            <div class="axes">
+                <div class="horizontal">
+                    <span class='right-arrow'></span>
+                    <span class='axis-label'>x</span>
+                </div>
+                <div class="vertical">
+                    <span class='top-arrow'></span>
+                    <span class='axis-label'>y</span>
+                </div>
+            </div>
+
+            <div class='ship'>
+                <div class='left'></div>
+                <div class="center"></div>
+                <div class="right"></div>
+            </div>
+            <div class="location"></div>
+        </div>
+    </div>
+
+    <div class="cross-container">
+        <div>+</div>
+    </div>
+
+
+    <div class="side-panel">
+        <div class="editor">
+            <textarea name="field" rows="20"></textarea>
+        </div>
+        <button id="updateButton">update field</button>
+        <div id="error"></div>
+    </div>
+    <script type="module" src="main.js"></script>
+</body>
+
 </html>

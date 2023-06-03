@@ -4,10 +4,11 @@ export default function createMovingLinesCollection(
     ) {
     instanceCounter++;
 
-    const { width, height, device, cnvasFormat } = drawContext;
+    const { width, height, device, canvasFormat } = drawContext;
     const POINT_DIMENSIONS = 4;
     const POINTS_PER_LINE = POINT_DIMENSIONS * (SEGMENTS_PER_LINE + 1);
     const lineLifeCycleArrayByteLength = LINE_COUNT * 2 * Uint32Array.BYTES_PER_ELEMENT; // first is the segment head, second is segment length
+    let visibleCount = LINE_COUNT
 
     const vertices = new Float32Array([
         -0.5, 0, -0.5, 1, 0.5, 1, // First 2D triangle of the quad
@@ -165,7 +166,7 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
             module: lineShaderModule,
             entryPoint: "fragmentMain",
             targets: [{
-                format: cnvasFormat,
+                format: canvasFormat,
                 blend: {
                     color: {
                         srcFactor: "src-alpha",
@@ -213,6 +214,8 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
     return {
         lineCoordinates,
         lineLifeCycle: lineLifeCycleStorage,
+        setVisibleCount: (count) => visibleCount = count,
+        getVisibleCount: () => visibleCount,
         draw
     }
 
@@ -222,6 +225,6 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
         // vertexBufferLayout.attributes in the pipeline.
         pass.setVertexBuffer(0, vertexBuffer);
         pass.setBindGroup(0, renderBindGroup);
-        pass.draw(vertices.length / 2, LINE_COUNT * SEGMENTS_PER_LINE);
+        pass.draw(vertices.length / 2, visibleCount * SEGMENTS_PER_LINE);
     }
 }

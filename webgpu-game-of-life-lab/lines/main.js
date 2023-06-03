@@ -1,5 +1,5 @@
 import ViewMatrix from './viewMatrix.js';
-import createMapInputController from './input.js';
+import createInputController from './input.js';
 import createMovingLinesCollection from './createMovingLinesCollection.js';
 import createVectorFieldCalculator from './createVectorFieldComputeShader.js';
 const canvas = document.querySelector('canvas');
@@ -16,6 +16,43 @@ fn getVelocityAtPoint(pos: vec4f) -> vec4f {
     let y = pos.y;
     let z = pos.z;
     let w = pos.w;
+    // // Thomas
+    // let b = 0.19;
+
+    // return vec4f( 
+    //     -b * x + sin(y),
+    //     -b * y + sin(z),
+    //     -b * z + sin(x),
+    //     0
+    // );
+    // molten lava
+    // let a = 1.5;
+
+    // return vec4f(
+    //     y, 
+    //     -x + y*z, 
+    //     a*w - y * y, 
+    //     z
+    // );
+    // Pretty bug
+    // let a = 1.5;
+
+    // return vec4f(
+    //     y, 
+    //     -x + y*w, 
+    //     a - y * y, 
+    //     z
+    // );
+    // http://www.3d-meier.de/tut19/Seite13.html
+    let a = 1.4;
+
+    return vec4f(
+        -y, x, 0,
+        // -a * x - 4. * y - 4 * z - y * y, 
+        // -a * y - 4. * z - 4 * x - z * z, 
+        // -a * z - 4. * x - 4 * y - x * x, 
+        0.
+    );
     return vec4f(10 * (y - x), x * (28 - z) - y, x * y - 1.5*w, (x-y)+z);
 }`
 document.querySelector('textarea').value = field;
@@ -44,8 +81,9 @@ const drawContext = {
     pixelRatio: window.devicePixelRatio || 1,
 };
 
+let lastVisibleIndex = 0;
 drawContext.view = new ViewMatrix(drawContext);
-createMapInputController(drawContext);
+createInputController(drawContext, onAddLine);
 
 const LINE_COUNT = 2000;
 const POINT_DIMENSIONS = 4;
@@ -61,14 +99,14 @@ if (!adapter) {
 }
 const device = await adapter.requestDevice();
 const context = canvas.getContext('webgpu');
-const cnvasFormat = navigator.gpu.getPreferredCanvasFormat();
+const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
 
 context.configure({
     device,
-    format: cnvasFormat
+    format: canvasFormat
 });
 
-drawContext.cnvasFormat = cnvasFormat;
+drawContext.canvasFormat = canvasFormat;
 drawContext.device = device;
 
 const mvpTypedArray = drawContext.view.modelViewProjection;
@@ -83,22 +121,23 @@ const lineCoordinatesArray = new Float32Array(LINE_COUNT * POINTS_PER_LINE);
 for (let i = 0; i < LINE_COUNT; i ++) {
     let lineStart = i * POINTS_PER_LINE;
 
-    lineCoordinatesArray[lineStart]     = Math.cos(i / LINE_COUNT * Math.PI);
-    lineCoordinatesArray[lineStart + 1] = Math.sin(i / LINE_COUNT * Math.PI);
-    lineCoordinatesArray[lineStart + 2] = 0.1;
-    lineCoordinatesArray[lineStart + 3] = .1;
-    // for (let j = 0; j < POINTS_PER_LINE; j += POINT_DIMENSIONS) {
-    //     lineCoordinatesArray[lineStart + j]     = (random() - 0.5) * 2;
-    //     lineCoordinatesArray[lineStart + j + 1] = (random() - 0.5) * 2;
-    //     lineCoordinatesArray[lineStart + j + 2] = (random() - 0.5) * 2;
-    //     lineCoordinatesArray[lineStart + j + 3] = (random() - 0.5) * 2;
-    // }
+    // lineCoordinatesArray[lineStart]     = -1;// Math.cos(i / LINE_COUNT * Math.PI);
+    // lineCoordinatesArray[lineStart + 1] = 1;// Math.sin(i / LINE_COUNT * Math.PI);
+    // lineCoordinatesArray[lineStart + 2] = 0;
+    // lineCoordinatesArray[lineStart + 3] = .1;
+    for (let j = 0; j < POINTS_PER_LINE; j += POINT_DIMENSIONS) {
+        lineCoordinatesArray[lineStart + j]     = (random() - 0.5) * 2;
+        lineCoordinatesArray[lineStart + j + 1] = (random() - 0.5) * 2;
+        lineCoordinatesArray[lineStart + j + 2] = (random() - 0.5) * 2;
+        lineCoordinatesArray[lineStart + j + 3] = (random() - 0.5) * 2;
+    }
 }
 
 let movingLinesCollection = createMovingLinesCollection(drawContext, 
     LINE_COUNT, SEGMENTS_PER_LINE,
     mvpUniform,
     lineCoordinatesArray);
+    movingLinesCollection.setVisibleCount(0);
 let vectorFieldCalculator = createVectorFieldCalculator(drawContext,
     LINE_COUNT, SEGMENTS_PER_LINE,
     movingLinesCollection.lineCoordinates,
@@ -181,6 +220,13 @@ function createGridLines(left, bottom, right, top) {
         y += 1;
         lineCount += 1;
     }
+
+    gridLines.push(
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 1, 0
+    );
+    lineCount += 1;
     let typedArray = new Float32Array(gridLines);
     let collection = createMovingLinesCollection(drawContext, 
         lineCount, 2,
@@ -194,6 +240,29 @@ function createGridLines(left, bottom, right, top) {
     }
     device.queue.writeBuffer(collection.lineLifeCycle, 0, lifeCycle);
     return collection;
+}
+
+function onAddLine(coordinate) {
+    let lineCount = movingLinesCollection.getVisibleCount();
+    if (lineCount >= LINE_COUNT) {
+        lineCount = lastVisibleIndex;
+        lastVisibleIndex = (lastVisibleIndex + 1) % LINE_COUNT;
+    }
+
+    device.queue.writeBuffer( 
+        movingLinesCollection.lineLifeCycle, 
+        lineCount * 2 * 4, 
+        Uint32Array.from([0, 0])
+    );
+    device.queue.writeBuffer(
+        movingLinesCollection.lineCoordinates,
+        lineCount * POINTS_PER_LINE * 4,
+        Float32Array.from(coordinate)
+    );
+
+    if (lineCount < LINE_COUNT) {
+        movingLinesCollection.setVisibleCount(lineCount + 1);
+    }
 }
 
 function updateCameraPositionAccordingToTheField() {

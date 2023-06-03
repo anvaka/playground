@@ -22,18 +22,6 @@ function clampTo(x, threshold, clampValue) {
     return Math.abs(x) < threshold ? clampValue : x;
 }
 
-export default function createMapInputController(drawContext) {
-    // const camera = createCamera(drawContext);
-    // const keyboardInput = createKeyboardController(drawContext.canvas, camera);
-    const input = createFPSControls(drawContext);
-
-    return { dispose };
-    function dispose() {
-        input.dispose();
-    }
-}
-
-
 function isModifierKey(e) {
     return e.altKey || e.ctrlKey || e.metaKey;
 }
@@ -62,7 +50,7 @@ const INPUT_COMMANDS = {
  * Game input controls similar to the first player games, where user can "walk" insider
  * the world and look around.
  */
-function createFPSControls(drawContext) {
+export default function createFPSControls(drawContext, onAddLine) {
   // Very likely spaceMap camera can be adjusted to support this navigation model too, but
   // for now, I'm using a separate camera. Should consider uniting them in the future if possible.
   let {view} = drawContext;
@@ -173,7 +161,12 @@ function createFPSControls(drawContext) {
     if (e.which !== 1) return; // only left button works here.
 
     if (document.pointerLockElement) {
-      document.exitPointerLock();
+
+      let delta = vec3.transformQuat([0, 0, 0], [0, 0, -5], view.orientation);
+      onAddLine([
+        view.position[0] + delta[0], view.position[1] + delta[1], view.position[2] + delta[2], 0
+      ])
+      // document.exitPointerLock();
     } else if (captureMouse) {
       inputTarget.requestPointerLock();
     } else {
@@ -415,7 +408,6 @@ function createFPSControls(drawContext) {
   function commitMatrixChanges() {
     view.update();
     vec3.transformMat4(centerPosition, FRONT_VECTOR, view.cameraWorld);
-    // view.update();
   }
 
   function rotateBy(yaw, pitch) {
@@ -436,7 +428,6 @@ function createFPSControls(drawContext) {
     let delta = vec3.transformQuat([0, 0, 0], [-dx, 0, -dy], view.orientation);
     cameraPosition[0] += delta[0];
     cameraPosition[1] += delta[1];
-    console.log('move center: ', cameraPosition)
   }
 
   function dispose() {

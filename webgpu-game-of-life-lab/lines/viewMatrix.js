@@ -4,6 +4,10 @@ const yAxis = [0, 1, 0];
 const zAxis = [0, 0, 1];
 
 let {mat4, vec3} = glMatrix;
+const axesEl = document.querySelector('.axes-container .axes');
+const locationEl = document.querySelector('.axes-container .location');
+const pitchEl = document.querySelector('.axes-container .ship-pitch');
+
 /**
  * View matrix allows you to place camera anywhere in the world
  */
@@ -23,7 +27,7 @@ export default class ViewMatrix {
     /**
      * Camera position in the world
      */
-    this.position = [0, -50, 10];
+    this.position = [0, -5, 10];
     /**
      * Camera orientation in the world
      */
@@ -34,7 +38,7 @@ export default class ViewMatrix {
     this.center = [0, 0, 0];
 
     this.projection = mat4.create();
-    mat4.perspective(this.projection, drawContext.fov, 1, 0.1, 100);
+    mat4.perspective(this.projection, drawContext.fov, 1, 0.1, 1000);
 
     this.inverseProjection = mat4.create();
     this.modelViewProjection = mat4.create();
@@ -66,6 +70,16 @@ export default class ViewMatrix {
     mat4.multiply(this.modelViewProjection, this.projection, this.matrix);
     this.updated = true;
 
+    let delta = vec3.transformQuat([0, 0, 0], [0, 0, -5], this.orientation);
+
+    let xyAngle = Math.round(180 * Math.atan2(delta[1], delta[0]) / Math.PI - 90);
+
+    axesEl.style.transform = `rotate(${xyAngle}deg)`;
+    locationEl.textContent = `[${this.position.map(n => n.toFixed(2)).join(', ')}]`;
+
+    let pitch = getPitchFromQuaternion(this.orientation);
+    pitchEl.style.transform = `rotate(${pitch}deg)`;
+
     return this;
   }
 
@@ -95,3 +109,13 @@ export default class ViewMatrix {
     return this.translateOnAxis(zAxis, distance);
   }
 }
+
+
+  function getPitchFromQuaternion(q) {
+    let x = q[0];
+    let y = q[1];
+    let z = q[2];
+    let w = q[3];
+    let pitch = 90-Math.round(180 * Math.atan2(2 * (y * z + w * x), w * w - x * x - y * y + z * z) / Math.PI);
+    return pitch;
+  }
