@@ -2,6 +2,7 @@ import ViewMatrix from './viewMatrix';
 import createFPSControls from './createFPSControls';
 import createSegmentedLines from './createSegmentedLines';
 import createVectorFieldCalculator from './createVectorFieldCalculator';
+import sharedState from './sharedState';
 
 export default async function createScene(canvas) {
   canvas.width = window.innerWidth;
@@ -25,8 +26,13 @@ export default async function createScene(canvas) {
 
   // These segments will visualize our vector field.
   const lineCoordinatesArray = new Float32Array(LINE_COUNT * POINTS_PER_LINE);
-  const fieldLines = createSegmentedLines(drawContext, LINE_COUNT, SEGMENTS_PER_LINE, lineCoordinatesArray);
-  fieldLines.setVisibleCount(0);
+  for (let i = 0; i < lineCoordinatesArray.length; ++i) {
+    lineCoordinatesArray[i] = Math.random() * 2 - 1;
+  }
+
+  const fieldLines = createSegmentedLines(drawContext, LINE_COUNT, SEGMENTS_PER_LINE, lineCoordinatesArray, sharedState.hue);
+//  fieldLines.setVisibleCount(0);
+  lastVisibleIndex = LINE_COUNT - 1;
 
   const field = `
 fn getVelocityAtPoint(pos: vec4f) -> vec4f {
@@ -34,7 +40,7 @@ fn getVelocityAtPoint(pos: vec4f) -> vec4f {
     let y = pos.y;
     let z = pos.z;
     let w = pos.w;
-    return vec4f(-y, x, 0, 0.);
+    return vec4f(-y, sin(x), 0, 0);
 }`
   // And this is a compute shader to update the vector field.
   const vectorFieldCalculator = createVectorFieldCalculator(drawContext, fieldLines, { dt: 0.1, field });
@@ -84,22 +90,25 @@ fn getVelocityAtPoint(pos: vec4f) -> vec4f {
 
   function onAddLine(coordinate) {
     let lineCount = fieldLines.getVisibleCount();
-    if (lineCount >= LINE_COUNT) {
-        lineCount = lastVisibleIndex;
-        lastVisibleIndex = (lastVisibleIndex + 1) % LINE_COUNT;
-    }
 
     const device = drawContext.device;
+    let lineState = new Uint32Array(fieldLines.ATTRIBUTES_PER_LINE);
+    lineState[2] = sharedState.hue;
     device.queue.writeBuffer( 
-        fieldLines.lineLifeCycle, 
-        lineCount * fieldLines.ATTRIBUTES_PER_LINE * 4, 
-        new Uint32Array(fieldLines.ATTRIBUTES_PER_LINE)
+      fieldLines.lineLifeCycle, 
+      lastVisibleIndex * fieldLines.ATTRIBUTES_PER_LINE * 4, 
+      lineState
     );
     device.queue.writeBuffer(
-        fieldLines.lineCoordinates,
-        lineCount * POINTS_PER_LINE * 4,
-        Float32Array.from(coordinate)
+      fieldLines.lineCoordinates,
+      lastVisibleIndex * POINTS_PER_LINE * 4,
+      Float32Array.from(coordinate)
     );
+
+    lastVisibleIndex += 1;
+    if (lastVisibleIndex >= LINE_COUNT) {
+      lastVisibleIndex = 0;
+    }
 
     if (lineCount < LINE_COUNT) {
         fieldLines.setVisibleCount(lineCount + 1);

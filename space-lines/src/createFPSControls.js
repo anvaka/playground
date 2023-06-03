@@ -146,7 +146,7 @@ export default function createFPSControls(drawContext, onAddLine) {
   }
 
   function notifyLineAdded() {
-    let delta = vec3.transformQuat([0, 0, 0], [0, 0, -5], view.orientation);
+    const delta = vec3.transformQuat([0, 0, 0], [0, 0, -view.targetDistance], view.orientation);
     onAddLine([
       view.position[0] + delta[0], view.position[1] + delta[1], view.position[2] + delta[2], 0
     ])
@@ -253,6 +253,10 @@ export default function createFPSControls(drawContext, onAddLine) {
   function handleMousePositionChange(e) {
     // This handler only called when pointer is locked.
     updateLookAtByOffset(e.movementX, -e.movementY)
+    // if left button is down, also add a line:
+    if (e.buttons & 1) {
+      notifyLineAdded();
+    }
   }
 
   function updateLookAtByOffset(dx, dy) {

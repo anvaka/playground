@@ -29,6 +29,11 @@ export default class ViewMatrix {
      */
     this.center = [0, 0, 0];
 
+    /**
+     * When we shoot particles - how far are they from the view?
+     */
+    this.targetDistance = 5;
+
     this.projection = mat4.create();
     mat4.perspective(this.projection, drawContext.fov, 1, 0.1, 1000);
 

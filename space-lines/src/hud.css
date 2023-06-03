@@ -108,12 +108,14 @@
 
 .location {
   position: absolute;
-  bottom: 8px;
+  bottom: -12px;
   font-size: 12px;
   left: 50%;
   transform: translateX(-50%);
   white-space: nowrap;
-  background: rgba(0, 0, 0, 0.9)
+  background: rgba(0, 0, 0, 0.9);
+  text-align: center;
+  border: 0;
 }
 
 .plane-axis {
@@ -153,4 +155,13 @@
 .cross-container {
   position: absolute;
   color: white;
+}
+
+.cross-location {
+  transform: translateX(-50%);
+  color: #444;
+}
+.hue-picker {
+  margin-top: 20px;
+  position: relative;
 }
