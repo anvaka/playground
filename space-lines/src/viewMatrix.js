@@ -35,7 +35,8 @@ export default class ViewMatrix {
     this.targetDistance = 5;
 
     this.projection = mat4.create();
-    mat4.perspective(this.projection, drawContext.fov, 1, 0.1, 1000);
+    const ar = drawContext.width/drawContext.height;
+    mat4.perspective(this.projection, drawContext.fov, ar, 0.1, 1000);
 
     this.inverseProjection = mat4.create();
     this.modelViewProjection = mat4.create();
@@ -69,6 +70,12 @@ export default class ViewMatrix {
     this.fire('updated', this);
 
     return this;
+  }
+
+  updateSize(width, height, fov) {
+    const ar = width/height;
+    mat4.perspective(this.projection, fov, ar, 0.1, 1000);
+    this.update();
   }
 
   /**

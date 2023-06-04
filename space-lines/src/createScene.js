@@ -19,6 +19,7 @@ export default async function createScene(canvas) {
   drawContext.view = new ViewMatrix(drawContext);
   await initWebGPU();
 
+  let customEmitters = new Map();
   const LINE_COUNT = 2000;
   const POINT_DIMENSIONS = 4;
   const SEGMENTS_PER_LINE = 100;
@@ -43,9 +44,49 @@ export default async function createScene(canvas) {
   const input = createFPSControls(drawContext, onAddLine);
   requestAnimationFrame(drawFrame);
 
+  window.addEmitter = addEmitter;
+
   return {
     viewMatrix: drawContext.view,
     updateField
+  }
+
+  function addEmitter(emitterDef, id) {
+    let emitterId = emitterDef.id ?? id ?? 'emitter-' + (Math.round(Math.random()*1000)).toString(36);
+    let field = emitterDef.field;
+    let lineCount = emitterDef.lineCount || 420;
+    let segmentCount = emitterDef.segmentCount || 100;
+    
+    let initialPositions = emitterDef.initialPositions;
+    let color = emitterDef.color || sharedState.rgba;
+    if (!initialPositions) {
+      initialPositions = new Float32Array(lineCount * (segmentCount + 1) * 4);
+      let startPoint = emitterDef.startPoint || [0, 0, 0, 0];
+      while (startPoint.length < 4) {
+        startPoint.push(0);
+      }
+      for (let i = 0; i < initialPositions.length; i++) {
+        initialPositions[i] = startPoint[i % 4] + Math.random() * 2 - 1;
+      }
+    } 
+
+    let emitterLines = createSegmentedLines(drawContext, lineCount, segmentCount, initialPositions, color);
+    let emitterCalculator = createVectorFieldCalculator(drawContext, emitterLines, field);
+    let emitter = {
+      emitterId,
+      calculate(encoder) {
+        emitterCalculator.updatePositions(encoder);
+      },
+      draw(pass) {
+        emitterLines.draw(pass);
+      },
+      remove() {
+        emitterLines.dispose();
+        customEmitters.delete(emitterId);
+      }
+    }
+    customEmitters.set(emitterId, emitter);
+    return emitter;
   }
 
   function updateField(newField) {
@@ -69,6 +110,7 @@ export default async function createScene(canvas) {
     const encoder = device.createCommandEncoder();
 
     vectorFieldCalculator.updatePositions(encoder);
+    customEmitters.forEach(emitter => emitter.calculate(encoder));
 
     const pass = encoder.beginRenderPass({
         colorAttachments: [{
@@ -81,6 +123,7 @@ export default async function createScene(canvas) {
 
     guide.draw(pass);
     fieldLines.draw(pass);
+    customEmitters.forEach(emitter => emitter.draw(pass));
 
     pass.end();
     device.queue.submit([encoder.finish()]);
@@ -122,6 +165,7 @@ export default async function createScene(canvas) {
     canvas.height = window.innerHeight;
     drawContext.width = canvas.width;
     drawContext.height = canvas.height;
+    drawContext.view.updateSize(drawContext.width, drawContext.height, drawContext.fov);
   }
 
   async function initWebGPU() {

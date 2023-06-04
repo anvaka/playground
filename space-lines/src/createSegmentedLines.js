@@ -235,7 +235,11 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
         lineLifeCycle: lineLifeCycleStorage,
         setVisibleCount: (count) => visibleCount = count,
         getVisibleCount: () => visibleCount,
-        draw
+        draw,
+        dispose() {
+            lineCoordinates.destroy();
+            lineLifeCycleStorage.destroy();
+        }
     }
 
     function draw(pass) {
