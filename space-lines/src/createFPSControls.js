@@ -1,8 +1,9 @@
-import {vec3, quat, mat4, vec4} from 'gl-matrix';
+import {vec3, quat, mat4} from 'gl-matrix';
+import eventify from 'ngraph.events';
 
 const FRONT_VECTOR = [0, 0, -1];
 
-const INPUT_COMMANDS = {
+export const INPUT_COMMANDS = {
   MOVE_FORWARD:  1,
   MOVE_BACKWARD: 2,
   MOVE_LEFT:  3,
@@ -116,6 +117,7 @@ export default function createFPSControls(drawContext, onAddLine) {
 /* Space */ 32: INPUT_COMMANDS.MOVE_UP
   };
 
+  eventify(api);
   return api;
 
   function handleKeyDown(e) {
@@ -364,6 +366,7 @@ export default function createFPSControls(drawContext, onAddLine) {
     moveState[INPUT_COMMANDS.MOVE_DOWN] = dz < 0;
     moveState[INPUT_COMMANDS.TURN_LEFT] = dPhi < 0;
     moveState[INPUT_COMMANDS.TURN_RIGHT] = dPhi > 0;
+    api.fire('move', moveState);
   }
 
   function lookAt(eye, center) {

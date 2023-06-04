@@ -96,7 +96,7 @@ export default function createVectorFieldCalculator(drawContext, segmentedLines,
                 lineCoordinates[lastPosIndex + 2], lineCoordinates[lastPosIndex + 3]
                 );
     
-            if (rand(lastPos * f32(lineIndex)) > 10) {
+            if (rand(lastPos * f32(lineIndex)) > 10) { // disabled temporary
                 lastPos = vec4f(rand(lastPos), rand(lastPos - 1), rand(lastPos + 1), rand(lastPos + 2)) * 2.0 - 1.0;
     
                 lastPosIndex = lineIndex * ${POINTS_PER_LINE} + (${SEGMENTS_PER_LINE} * ${POINT_DIMENSIONS});

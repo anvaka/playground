@@ -4,6 +4,7 @@ import createSegmentedLines from './createSegmentedLines';
 import createVectorFieldCalculator from './createVectorFieldCalculator';
 import sharedState from './sharedState';
 import createGuide from './createGuide';
+import createKeyMap from './createKeyMap';
 
 export default async function createScene(canvas) {
   canvas.width = window.innerWidth;
@@ -45,6 +46,7 @@ export default async function createScene(canvas) {
   requestAnimationFrame(drawFrame);
 
   window.addEmitter = addEmitter;
+  createKeyMap(input);
 
   return {
     viewMatrix: drawContext.view,

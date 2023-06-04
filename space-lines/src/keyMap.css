@@ -1,0 +1,73 @@
+.navigation-controls {
+    position: fixed;
+    bottom: 8px;
+    left: 8px;
+}
+.navigation-controls label {
+  color: white;
+}
+.navigation-controls .legend {
+    text-align: center;
+    font-size: 14px;
+}
+.navigation-controls .navigation-row {
+  display: flex;
+}
+.navigation-controls .item {
+  width: 42px;
+  height: 42px;
+  margin: 2px;
+}
+.navigation-controls .navigation-btn {
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: 
+    0 2px 4px rgb(0, 0, 0, .3), 
+    0 -1px 0px rgba(0, 0, 0, 0.05);
+  text-decoration: none;
+  display: flex;
+  width: 42px;
+  flex-direction: column;
+  color: #cecece;
+}
+.navigation-controls .navigation-btn.down {
+  background: rgba(250, 250, 250, .2);
+}
+.navigation-controls .padded {
+  margin-left: 10px;
+}
+.navigation-controls .navigation-btn.secondary {
+  width: 42px;
+  height: 42px;
+  transform: scale(0.70);
+}
+
+.navigation-controls .navigation-btn.secondary svg{
+  padding: 4px;
+}
+
+.navigation-controls .navigation-btn.secondary  .legend {
+  color: #aaa;
+}
+.navigation-controls .navigation-btn.secondary.left {
+  transform-origin: right bottom;
+}
+.navigation-controls .navigation-btn.secondary.right {
+  transform-origin: left bottom;
+}
+.navigation-controls .navigation-btn.wide {
+  width: 75px;
+}
+.navigation-controls .navigation-btn svg {
+  fill: white;
+  padding-top: 4px;
+}
+.navigation-controls .cursor-legend {
+  margin-top: 8px;
+  display: none;
+}
+
+@media (pointer: fine) {
+  .cursor-legend {
+    display: block;
+  }
+}
