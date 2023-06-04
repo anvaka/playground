@@ -43,9 +43,15 @@ export default function createVectorFieldCalculator(drawContext, segmentedLines,
     setNewField
   };
 
-  function setNewField(newField) {
-    let updatedPipeline = createPipeline(newField);
-    simulationPipeline = updatedPipeline;
+  function setNewField(newField, onDone) {
+    if (onDone) {
+      createPipeline(newField, onDone).then((updatedPipeline) => {
+        if (updatedPipeline) simulationPipeline = updatedPipeline;
+      })
+    } else {
+      let updatedPipeline = createPipeline(newField);
+      simulationPipeline = updatedPipeline;
+    }
   }
 
   function updatePositions(encoder) {
@@ -57,7 +63,7 @@ export default function createVectorFieldCalculator(drawContext, segmentedLines,
     computePass.end();
   }
 
-  function createPipeline(field) {
+  function createPipeline(field, doneCallback) {
     const simulationShaderModule = device.createShaderModule({
       label: 'Flow simulation shader',
       code: `
@@ -124,14 +130,33 @@ export default function createVectorFieldCalculator(drawContext, segmentedLines,
         }
         `
     });
-
-    return device.createComputePipeline({
-      label: 'Flow simulation pipeline',
-      layout: computePipelineLayout,
-      compute: {
-        module: simulationShaderModule,
-        entryPoint: 'computeMain',
-      }
-    });
+    if (doneCallback) {
+      return simulationShaderModule.getCompilationInfo().then((info) => {
+        let errors = info.messages.filter((m) => m.type === 'error');
+        if (errors.length > 0) {
+          console.error('Error compiling shader:', errors);
+          doneCallback(errors[0].message);
+          return null;
+        } else {
+          return device.createComputePipeline({
+            label: 'Flow simulation pipeline',
+            layout: computePipelineLayout,
+            compute: {
+              module: simulationShaderModule,
+              entryPoint: 'computeMain',
+            }
+          });
+        }
+      });
+    } else {
+      return device.createComputePipeline({
+        label: 'Flow simulation pipeline',
+        layout: computePipelineLayout,
+        compute: {
+          module: simulationShaderModule,
+          entryPoint: 'computeMain',
+        }
+      });
+    }
   }
 }

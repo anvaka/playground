@@ -26,6 +26,7 @@ import('monaco-editor').then(monaco => {
     minimap: {
       enabled: false
     },
+    automaticLayout: true,
     roundedSelection: true,
     scrollBeyondLastLine: false,
     readOnly: false,
@@ -43,9 +44,15 @@ import('monaco-editor').then(monaco => {
 
   editorPanel.querySelector('button.save').addEventListener('click', (e) => {
     let field = editor.getValue();
+    document.querySelector('.field-errors').textContent = '';
 
-    currentScene?.updateField(field);
-    sharedState.field = field;
+    currentScene?.updateField(field, (errors) => {
+      if (errors) {
+        document.querySelector('.field-errors').textContent = errors;
+        return;
+      }
+      sharedState.field = field;
+    });
   });
 
   editorPanel.querySelector('button.close').addEventListener('click', (e) => {

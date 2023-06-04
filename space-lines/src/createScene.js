@@ -91,10 +91,10 @@ export default async function createScene(canvas) {
     return emitter;
   }
 
-  function updateField(newField) {
+  function updateField(newField, done) {
     lastVisibleIndex = 0;
     fieldLines.setVisibleCount(0);
-    vectorFieldCalculator.setNewField(newField);
+    vectorFieldCalculator.setNewField(newField, done);
   }
 
   function drawFrame() {

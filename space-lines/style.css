@@ -23,10 +23,11 @@
   --space-ship-second-color: yellow;
 }
 .field-editor-panel {
-  width: 400px;
+  width: 600px;
   position: absolute;
   right: 0;
   bottom: 0;
+  z-index: 1;
 }
 .hidden {
   display: none;
@@ -81,4 +82,22 @@ h1 {
   position: absolute;
   right: 8px;
   bottom: 8px;
+}
+.field-errors {
+  color: orangered;
+  background: #333;
+  font-size: 12px;
+}
+.field-editor-panel .controls {
+  background: #111;
+}
+
+/* when screen is too small, adjust the editor */
+@media (max-width: 600px) {
+  .field-editor-panel {
+    width: 100%;
+  }
+  .field-editor {
+    width: 100%;
+  }
 }
