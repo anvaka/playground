@@ -5,7 +5,7 @@ export default function createGuide(drawContext) {
     let lifeCycle = [];
     let minX = -50, maxX = 50, minY = -50, maxY = 50;
     let xStep = 1, yStep = 1;
-    let gridColor = 0x22224444;
+    let gridColor = 0x44448844;
     let dotsPerLine = 12;
     for (let x = minX; x <= maxX; x += xStep) {
         lines.push(
@@ -30,13 +30,13 @@ export default function createGuide(drawContext) {
         0, 0, 0, 0,
         0, 1, 0, 0,
     );
-    lifeCycle.push(0, 2, 0x0000ffff);
+    lifeCycle.push(0, 2, 0x00ff00ff);
     lines.push(
         0, 0, 0, 0,
         0, 0, 0, 0,
         0, 0, 1, 0,
     );
-    lifeCycle.push(0, 2, 0x00ff00ff);
+    lifeCycle.push(0, 2, 0xffff00ff);
     lines.push(
         0, 0, 0, 0,
         0, 0, 0, 0,

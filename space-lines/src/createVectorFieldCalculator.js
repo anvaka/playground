@@ -1,5 +1,4 @@
-export default function createVectorFieldCalculator(drawContext, segmentedLines, fieldConfig) {
-  const dt = fieldConfig.dt;
+export default function createVectorFieldCalculator(drawContext, segmentedLines, field) {
   const WORKGROUP_SIZE = 8;
   const { 
     POINT_DIMENSIONS, POINTS_PER_LINE, LINE_COUNT, SEGMENTS_PER_LINE, ATTRIBUTES_PER_LINE,
@@ -25,7 +24,7 @@ export default function createVectorFieldCalculator(drawContext, segmentedLines,
     bindGroupLayouts: [computeBindGroupLayout]
   });
 
-  let simulationPipeline = createPipeline(fieldConfig.field);
+  let simulationPipeline = createPipeline(field);
   const computeBindGroup = device.createBindGroup({
     label: 'Line render compute bind group A',
     layout: computeBindGroupLayout,
@@ -67,7 +66,7 @@ export default function createVectorFieldCalculator(drawContext, segmentedLines,
     
         ${field}
     
-        fn rk4(pos: vec4f, dt: f32) -> vec4f {
+        fn rk4(pos: vec4f) -> vec4f {
             let k1 = getVelocityAtPoint(pos);
             let k2 = getVelocityAtPoint(pos + 0.5 * dt * k1);
             let k3 = getVelocityAtPoint(pos + 0.5 * dt * k2);
@@ -110,7 +109,7 @@ export default function createVectorFieldCalculator(drawContext, segmentedLines,
             }
 
             // advance it:
-            let newPos = rk4(lastPos, ${dt});
+            let newPos = rk4(lastPos);
 
             // Update the line:
             let newLength = clamp(1 + lineLength, 0, ${SEGMENTS_PER_LINE});

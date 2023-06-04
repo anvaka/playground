@@ -110,7 +110,7 @@ fn vertexMain(input: VertexInput) -> VertexOutput {
     }
     var start = (head - length + i + ${SEGMENTS_PER_LINE + 1}) % (${SEGMENTS_PER_LINE + 1});
 
-    var width = 2.0;// * (f32(i) / f32(${SEGMENTS_PER_LINE}));
+    var width = 2.0;
     var startIndex = lineStart + (start * ${POINT_DIMENSIONS});
     var endIndex = lineStart + ((start + 1) * ${POINT_DIMENSIONS}) % (${POINTS_PER_LINE});
     var startPos = vec3(lineCoordinates[startIndex + 0], lineCoordinates[startIndex + 1], lineCoordinates[startIndex + 2]);

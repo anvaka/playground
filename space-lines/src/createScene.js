@@ -36,17 +36,8 @@ export default async function createScene(canvas) {
   fieldLines.setVisibleCount(0);
 //   lastVisibleIndex = LINE_COUNT - 1;
 
-  const field = `
-fn getVelocityAtPoint(pos: vec4f) -> vec4f {
-    let x = pos.x;
-    let y = pos.y;
-    let z = pos.z;
-    let w = pos.w;
-    return vec4f(10 * (y - x), x * (28 - z) - y, x * y - 1.5*z, 0);
-    return vec4f(-y, sin(x), 0, 0);
-}`
   // And this is a compute shader to update the vector field.
-  const vectorFieldCalculator = createVectorFieldCalculator(drawContext, fieldLines, { dt: 0.01, field });
+  const vectorFieldCalculator = createVectorFieldCalculator(drawContext, fieldLines, sharedState.field);
 
   listenToEvents();
   const input = createFPSControls(drawContext, onAddLine);
@@ -54,6 +45,13 @@ fn getVelocityAtPoint(pos: vec4f) -> vec4f {
 
   return {
     viewMatrix: drawContext.view,
+    updateField
+  }
+
+  function updateField(newField) {
+    lastVisibleIndex = 0;
+    fieldLines.setVisibleCount(0);
+    vectorFieldCalculator.setNewField(newField);
   }
 
   function drawFrame() {
