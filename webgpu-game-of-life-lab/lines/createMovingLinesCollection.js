@@ -7,7 +7,8 @@ export default function createMovingLinesCollection(
     const { width, height, device, canvasFormat } = drawContext;
     const POINT_DIMENSIONS = 4;
     const POINTS_PER_LINE = POINT_DIMENSIONS * (SEGMENTS_PER_LINE + 1);
-    const lineLifeCycleArrayByteLength = LINE_COUNT * 2 * Uint32Array.BYTES_PER_ELEMENT; // first is the segment head, second is segment length
+    // first is the segment head, second is segment length
+    const lineLifeCycleArrayByteLength = LINE_COUNT * 2 * Uint32Array.BYTES_PER_ELEMENT;
     let visibleCount = LINE_COUNT
 
     const vertices = new Float32Array([

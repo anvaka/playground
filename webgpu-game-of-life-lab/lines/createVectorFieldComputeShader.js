@@ -2,14 +2,12 @@ export default function createVectorFieldComputeShader(drawContext, LINE_COUNT, 
     lineCoordinatesStorage, lineLifeCycleStorage, fieldConfig) {
     let dt = fieldConfig.dt;
 
-
     const WORKGROUP_SIZE = 8;
 
     const POINT_DIMENSIONS = 4;
     const POINTS_PER_LINE = POINT_DIMENSIONS * (SEGMENTS_PER_LINE + 1);
 
     const { device } = drawContext;
-
 
     const computeBindGroupLayout = device.createBindGroupLayout({
         label: 'Flow simulation bind group layout',

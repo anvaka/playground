@@ -141,8 +141,7 @@ let movingLinesCollection = createMovingLinesCollection(drawContext,
 let vectorFieldCalculator = createVectorFieldCalculator(drawContext,
     LINE_COUNT, SEGMENTS_PER_LINE,
     movingLinesCollection.lineCoordinates,
-    movingLinesCollection.lineLifeCycle,
-    {
+    movingLinesCollection.lineLifeCycle, {
         dt, 
         field
     });
