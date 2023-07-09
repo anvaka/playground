@@ -268,7 +268,7 @@ async function addImage(imageSrc, countryPolygon, variant, polyIndex) {
     "type": "raster",
     "source": imgKey,
     "paint": { "raster-opacity": 0.85 }
-  });
+  }, 'borders');
 }
 
 async function clipImage(url, coordinates, variant = 0) {
