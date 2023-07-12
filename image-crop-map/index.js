@@ -231,15 +231,11 @@ function initMap(borders) {
   });
 
   loadNextCountry(0, borders);
-  // Object.keys(countryBackground).forEach(country => {
-  //   let countryPolygon = borders.features.find(f => f.properties.admin === country);
-  //   if (countryPolygon.geometry.type === "MultiPolygon") {
-  //     getAllPolygons(countryPolygon).forEach((polygon, polyIndex) => {
-  //       addImage(countryBackground[country], polygon, 0, polyIndex);
-  //     });
-  //   } else if (countryPolygon.geometry.type === "Polygon") {
-  //     addImage(countryBackground[country], countryPolygon, 0, 0);
-  //   }
+  // map.on('click', function (e) {
+  //   // find which country we clicked on
+  //   let features = map.queryRenderedFeatures(e.point, {layers: ['borders']});
+  //   if (!features.length) return;
+  //   console.log(features);
   // });
 }
 
@@ -300,10 +296,6 @@ async function clipImage(url, coordinates, variant = 0) {
     if (coord[0] > maxLon) maxLon = coord[0];
     if (coord[1] > maxLat) maxLat = coord[1];
   }
-  const lonRatio = maxLon - minLon;
-  const latRatio = maxLat - minLat;
-
-  const ratio = lonRatio > latRatio ? lonRatio / latRatio : latRatio / lonRatio;
 
   const topLeft = mercator(minLon, maxLat);
   const bottomRight = mercator(maxLon, minLat);
@@ -312,14 +304,6 @@ async function clipImage(url, coordinates, variant = 0) {
   const canvas = document.createElement('canvas');
   let width = canvas.width = img.width/2;
   let height = canvas.height = img.height/2;
-  const originalWidth = width, originalHeight = height;
-  // if (lonRatio > latRatio) {
-  //   height = width / ratio;
-  // } else {
-  //   width = height / ratio;
-  // }
-  canvas.width = width;
-  canvas.height = height;
 
   const ctx = canvas.getContext('2d');
 
@@ -333,11 +317,11 @@ async function clipImage(url, coordinates, variant = 0) {
 
   // Draw the image
   let sx = 0, sy = 0;
-  if (variant === 1 || variant === 3) sx += originalWidth;
-  if (variant === 2 || variant === 3) sy += originalHeight;
+  if (variant === 1 || variant === 3) sx += width;
+  if (variant === 2 || variant === 3) sy += height;
 
   
-  ctx.drawImage(img.img, sx, sy, originalWidth, originalHeight, 0, 0, width, height);
+  ctx.drawImage(img.img, sx, sy, width, height, 0, 0, width, height);
   let imageCoordinates = [
     [minLon, maxLat],
     [maxLon, maxLat],
@@ -363,11 +347,9 @@ function clipContextToPolygon(ctx, coordinates, project) {
     }
   }
 
-  // Close and clip the path
   ctx.closePath();
   ctx.clip();
 }
-
 
 function getAllPolygons(multiPolygon) {
   return multiPolygon.geometry.coordinates.map(polygon => ({
