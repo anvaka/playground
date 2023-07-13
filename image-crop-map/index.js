@@ -453,6 +453,10 @@ function renderSideBar(countryName) {
     countryInfo.quadrant = quadrant;
     countryInfo.loadedKeys = [];
     loadSingleCountry(countryInfo);
+    if (window.innerWidth < 600) {
+      sidebar.innerHTML = '';
+      sidebar.style.display = 'none';
+    }
   });
 
   function getQuadrant(e, mainImage) {
