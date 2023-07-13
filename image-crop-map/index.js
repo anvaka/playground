@@ -5,15 +5,10 @@ var map = new maplibregl.Map({
   container: 'map',
   zoom: 1,
   minZoom: 1,
+  pitchWithRotate: false,
   layers: []
 });
-// map.addLayer( {
-//   "id": "background",
-//   "type": "background",
-//   "paint": {
-//     "background-color": "rgb(158,189,255)"
-//   }
-// });
+const loadedImages = new Map();
 const countryBackground = {
   'Afghanistan': 'images-small/anvaka_Most_stereotypical_person_in_Afghanistan_9d2b5ee8-23f2-444a-bcbc-1024458e2ae1.webp',
   'Angola': 'images-small/anvaka_Most_stereotypical_person_in_Angola_e85bf80a-34cd-41dd-8236-7ad5d3cdc4c2.webp',
@@ -114,7 +109,6 @@ const countryBackground = {
 "Myanmar": "images-small/anvaka_Most_stereotypical_person_in_Myanmar_044a4114-1873-4eb0-bca4-5506455b1b7d.webp",
 "Montenegro": "images-small/anvaka_Most_stereotypical_person_in_Montenegro_bf028056-88f6-43c3-9409-004e2703bc8e.webp",
 "Luxembourg": "images-small/anvaka_Most_stereotypical_person_in_Luxembourg_2c59a039-7f76-4a08-bfec-4ed4a859443a.webp",
-"Lesotho": "images-small/anvaka_Most_stereotypical_person_in_Lesotho_07a1c1b9-2aa6-4972-8926-e77ba0f61737.webp",
 "Mongolia": "images-small/anvaka_Most_stereotypical_person_in_Mongolia_d8812a0f-aa4a-4d27-aff8-ca5a75b592b9.webp",
 "Mali": "images-small/anvaka_Most_stereotypical_person_in_Mali_37c5c624-6d4c-4376-8a75-8465ce50e9cf.webp",
 "Morocco": "images-small/anvaka_Most_stereotypical_person_in_Morocco_f141c013-6151-41eb-b563-00924d8157f5.webp",
@@ -175,7 +169,7 @@ const countryBackground = {
 "Togo": "images-small/anvaka_Most_stereotypical_person_in_Togo_f3e6095a-d57f-483e-963d-6047b74ec477.webp",
 "Sweden": "images-small/anvaka_Most_stereotypical_person_in_Sweden_a0bed96a-8f36-4f58-8ee5-ae02138a1255.webp",
 "Slovakia": "images-small/anvaka_Most_stereotypical_person_in_Slovakia_52fc81b7-fcbd-4660-a15e-63231716851b.webp",
- 'Libya': 'images-small/anvaka_the_most_stereotypical_person_in_Libya_65bf396a-11a9-48e3-902e-d50daf1b53e9.webp',
+'Libya': 'images-small/anvaka_the_most_stereotypical_person_in_Libya_65bf396a-11a9-48e3-902e-d50daf1b53e9.webp',
 'Mexico': 'images-small/anvaka_most_stereotypical_person_in_Mexico_2464780d-0655-44d2-93b3-bf5e38e8386a.webp',
 'Canada': 'images-small/anvaka_most_typical_man_in_Canada_a2cc54c4-433e-48c2-933f-a9ac88b7763d.webp',
 'Turkey': 'images-small/anvaka_Most_stereotypical_person_in_Turkey_862f160f-7411-406e-92f9-d97ce04c9f4d.webp',
@@ -190,6 +184,7 @@ const countryBackground = {
 'Vanuatu': 'images-small/anvaka_Most_stereotypical_person_in_Vanuatu_830d0208-f8ea-45f9-aaac-81bd025e5522.webp',
 'Yemen': 'images-small/anvaka_Most_stereotypical_person_in_Yemen_5cac87ec-d592-434f-966e-f03f68b4a3ad.webp',
 "South Africa": 'images-small/anvaka_Most_stereotypical_person_in_South_Africa_c22f0256-2538-4f2a-8dc5-f866d877b623.webp',
+"Lesotho": "images-small/anvaka_Most_stereotypical_person_in_Lesotho_07a1c1b9-2aa6-4972-8926-e77ba0f61737.webp",
 'Zambia': 'images-small/anvaka_Most_stereotypical_person_in_Zambia_2570a342-2289-4d73-af73-beaa88da7567.webp',
 'Zimbabwe': 'images-small/anvaka_Most_stereotypical_person_in_Zimbabwe_c03a654d-f3d6-4ff7-a4ec-f63691e670fa.webp',
 }
@@ -218,6 +213,16 @@ function initMap(borders) {
     "type": "geojson",
     "data": borders
   });
+  // add this layer to track clicked countries
+  map.addLayer({
+    "id": "country-backgrounds",
+    "type": "fill",
+    "source": "borders",
+    "layout": {},
+    "paint": {
+      "fill-opacity": 0.0
+     },
+  });
 
   map.addLayer({
     "id": "borders",
@@ -231,32 +236,38 @@ function initMap(borders) {
   });
 
   loadNextCountry(0, borders);
-  // map.on('click', function (e) {
-  //   // find which country we clicked on
-  //   let features = map.queryRenderedFeatures(e.point, {layers: ['borders']});
-  //   if (!features.length) return;
-  //   console.log(features);
-  // });
+  map.on('click', function (e) {
+    let features = map.queryRenderedFeatures(e.point, {layers: ['country-backgrounds']});
+    if (!features.length) return;
+    renderSideBar(features[0].properties.admin)
+  });
 }
 
 function loadNextCountry(countryIndex, borders) {
   let countryPolygon = borders.features[countryIndex];
   if (!countryPolygon) return;
-  let image = countryBackground[countryPolygon.properties.admin];
-  if (!image) return;
 
+  const countryInfo = {
+    quadrant: 0,
+    countryPolygon,
+    image: countryBackground[countryPolygon.properties.admin],
+    loadedKeys: []
+  };
+
+  if (!countryInfo.image) return;
+  loadedImages.set(countryPolygon.properties.admin, countryInfo);
+  loadSingleCountry(countryInfo).then(() => loadNextCountry(countryIndex + 1, borders));
+}
+
+function loadSingleCountry(countryInfo) {
+  const {countryPolygon, image, quadrant} = countryInfo;
   if (countryPolygon.geometry.type === "MultiPolygon") {
-    Promise.all(getAllPolygons(countryPolygon).map((polygon, polyIndex) => {
-      return addImage(image, polygon, 0, polyIndex);
-    })).then(() => {
-      loadNextCountry(countryIndex + 1, borders);
-    });
+    return Promise.all(getAllPolygons(countryPolygon).map((polygon, polyIndex) => {
+      return addImage(image, polygon, quadrant, polyIndex);
+    }));
   } else if (countryPolygon.geometry.type === "Polygon") {
-    addImage(image, countryPolygon, 0, 0).then(() => {
-      loadNextCountry(countryIndex + 1, borders);
-    });
+    return addImage(image, countryPolygon, quadrant, 0);
   }
-
 }
 
 async function addImage(imageSrc, countryPolygon, variant, polyIndex) {
@@ -264,7 +275,7 @@ async function addImage(imageSrc, countryPolygon, variant, polyIndex) {
     throw new Error('Unsupported polygon type')
   }
 
-  const img = await clipImage(imageSrc, countryPolygon.geometry.coordinates[0]);
+  const img = await clipImage(imageSrc, countryPolygon.geometry.coordinates[0], variant);
   const imgKey = `image-${countryPolygon.properties.admin}-${variant}${polyIndex}`;
 
   map.addSource(imgKey, {
@@ -277,9 +288,10 @@ async function addImage(imageSrc, countryPolygon, variant, polyIndex) {
     "id": imgKey,
     "type": "raster",
     "source": imgKey,
-    "paint": { "raster-opacity": 0.85 }
+    "paint": { "raster-opacity": 1 }
   }, 'borders');
 
+  loadedImages.get(countryPolygon.properties.admin).loadedKeys.push(imgKey);
   return img;
 }
 
@@ -296,6 +308,10 @@ async function clipImage(url, coordinates, variant = 0) {
     if (coord[0] > maxLon) maxLon = coord[0];
     if (coord[1] > maxLat) maxLat = coord[1];
   }
+  const MAX_LATITUDE = 85.0511;
+  const MIN_LATITUDE = -85.0511;
+  minLat = Math.max(minLat, MIN_LATITUDE);
+  maxLat = Math.min(maxLat, MAX_LATITUDE);
 
   const topLeft = mercator(minLon, maxLat);
   const bottomRight = mercator(maxLon, minLat);
@@ -380,4 +396,71 @@ function mercator(lon, lat) {
         x: x,
         y: y
     };
+}
+
+function renderSideBar(countryName) {
+  if (!countryName) return;
+  let content = `
+    <h3 class='query-title'>Query sent to <a href="https://www.midjourney.com/">Midjourney</a>
+    <a href='#' class='close'>[x]</a>
+    </h3>
+    <code>/imagine prompt:"Most stereotypical person in <b>${countryName}</b>"</code>
+    <div style="width:100%; position: relative;" class="imgContainer">
+      <img src="${countryBackground[countryName]}" alt="imagine most stereotypical person in ${countryName}" />
+      <div class="quadrant-border"></div>
+    </div>
+    <a href="${countryBackground[countryName]}" target="_blank" class="result-open">Open image in new tab</a>
+    <hr />
+    <iframe src="https://en.m.wikipedia.org/wiki/${countryName}" width="100%" height="100%" frameborder="0"></iframe>
+  `;
+  let sidebar = document.querySelector('#sidebar');
+  sidebar.innerHTML = content;
+  sidebar.style.display = 'block';
+  sidebar.scrollTop = 0;
+  sidebar.querySelector('.close').addEventListener('click', (e) => {
+    e.preventDefault();
+    sidebar.innerHTML = '';
+    sidebar.style.display = 'none';
+  });
+
+  const mainImage = sidebar.querySelector('.imgContainer');
+  const quadrantBorder = sidebar.querySelector('.quadrant-border');
+  // mainImage has four quadrants, we want to highlight each one as mouse enters over it
+  mainImage.addEventListener('mousemove', (e) => {
+    const { quadrant, width, height } = getQuadrant(e, mainImage);
+    quadrantBorder.style.left = (quadrant % 2 === 0 ? 0 : width/2) + 'px';
+    quadrantBorder.style.top = (quadrant < 2 ? 0 : height/2) + 'px';
+    quadrantBorder.style.width = width/2 + 'px';
+    quadrantBorder.style.height = height/2 + 'px';
+    quadrantBorder.style.border = '2px solid #fff';
+    quadrantBorder.style.position = 'absolute';
+  });
+  mainImage.addEventListener('mouseleave', (e) => {
+    quadrantBorder.style.border = 'none';
+  });
+  mainImage.addEventListener('click', (e) => {
+    const { quadrant } = getQuadrant(e, mainImage);
+    if (quadrant < 0 || quadrant > 3) throw new Error('Invalid quadrant');
+
+    const countryInfo = loadedImages.get(countryName);
+    if (!countryInfo || countryInfo.quadrant === quadrant) return;
+    countryInfo.quadrant = quadrant;
+    countryInfo.loadedKeys.forEach(key => {
+      // delete old sources/layers for this key:
+      map.removeLayer(key);
+      map.removeSource(key);
+    });
+    countryInfo.quadrant = quadrant;
+    countryInfo.loadedKeys = [];
+    loadSingleCountry(countryInfo);
+  });
+
+  function getQuadrant(e, mainImage) {
+    const clientRect = mainImage.getBoundingClientRect();
+    const x = e.clientX - clientRect.left;
+    const y = e.clientY - clientRect.top;
+    const width = clientRect.width;
+    const height = clientRect.height;
+    return {quadrant: (x < width/2 ? 0 : 1) + (y < height/2 ? 0 : 2), width, height};
+  }
 }

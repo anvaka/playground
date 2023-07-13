@@ -5,19 +5,72 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Exploring map cropping</title>
   <style>
-    * { box-sizing: border-box; }
+    :root {
+      --code-background-color: #f8f8f8;
+      --code-color: #333;
+      --map-background: #BFCDCF;
+
+    }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
     body {
+      font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+    Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
       margin: 0;
-      background-color: #BFCDCF;
+      background-color: var(--map-background);
+      text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
     }
     #map {
       width: 100%;
       height: 100%;
+    }
+    #sidebar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 440px;
+      height: 100%;
+      background-color: #fff;
+      overflow-y: scroll;
+      padding: 10px;
+      display: none;
+    }
+
+    #sidebar hr {
+      margin: 10px 0;
+    }
+    #sidebar img {
+      width: 100%;
+    }
+    #sidebar a.result-open {
+      font-size: 12px;
+      text-decoration: none;
+    }
+    #sidebar h3.query-title {
+      margin: 0;
+      font-weight: normal;
+    }
+    #sidebar h3.query-title .close {
+      float: right;
+      text-decoration: none;
+    }
+    #sidebar code {
+      display: block;
+      background-color: var(--code-background-color);
+      color: var(--code-color);
+      padding: 10px;
+      margin: 10px 0;
     }
   </style>
   <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
@@ -27,6 +80,8 @@
 </head>
 <body>
   <div id="map"></div>
+  <div id="sidebar">
+  </div>
   
   <script type="module" src="index.js"></script>
 </body>
