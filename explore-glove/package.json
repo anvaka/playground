@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "annoy": "^2.0.1",
+    "annoy": "^3.0.3",
     "body-parser": "^1.18.3",
     "express": "^4.16.4"
   }
