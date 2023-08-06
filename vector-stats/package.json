@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "ngraph.forcelayout": "^3.3.1",
+    "ngraph.fromdot": "^7.0.0",
+    "ngraph.todot": "^4.0.0"
+  }
+}
