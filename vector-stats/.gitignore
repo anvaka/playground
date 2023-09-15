@@ -2,3 +2,4 @@
 *.dot
 *.ann
 *.pdf
+__pycache__
