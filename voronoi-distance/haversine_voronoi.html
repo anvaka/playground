@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<meta name="robots" content="noindex">
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Voronoi Diagram with Haversine Distance</title>
+</head>
+<body>
+  <canvas id="canvas" width="800" height="800"></canvas>
+<script>
+// Haversine distance function
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth radius in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function mercatorProjection(lat, lon, canvasWidth, canvasHeight) {
+  const x = (lon + 180) * (canvasWidth / 360);
+  const y = (canvasHeight / 2) - (canvasWidth * Math.log(Math.tan((Math.PI / 4) + (lat * Math.PI / 180) / 2)) / (2 * Math.PI));
+  return { x, y };
+}
+
+// Main function to draw Voronoi diagram
+function drawVoronoi(centralPoints) {
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const canvasWidth = canvas.width;
+  const canvasHeight = canvas.height;
+
+  for (let x = 0; x < canvasWidth; x++) {
+    for (let y = 0; y < canvasHeight; y++) {
+      let minDistance = Infinity;
+      let closestPoint;
+
+      // Convert canvas x, y to lat, lon
+      const lon = (x / canvasWidth) * 360 - 180;
+      const lat = (2 * Math.atan(Math.exp((canvasHeight / 2 - y) * 2 * Math.PI / canvasWidth)) - Math.PI / 2) * 180 / Math.PI;
+
+      for (const point of centralPoints) {
+        const distance = haversineDistance(lat, lon, point.lat, point.lon);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestPoint = point;
+        }
+      }
+
+      ctx.fillStyle = closestPoint.color;
+      ctx.fillRect(x, y, 1, 1);
+    }
+  }
+  ctx.fillStyle = 'white';
+  for (const point of centralPoints) {
+    const { x: projX, y: projY } = mercatorProjection(point.lat, point.lon, canvasWidth, canvasHeight);
+    ctx.fillRect(Math.round(projX) - 2, Math.round(projY) -2, 4, 4);
+  }
+
+}
+
+// Define central points with lat, lon, and color
+const centralPoints = [
+  { lat: 40.7128, lon: -74.0060, color: '#FF0000' }, // New York
+  { lat: 51.5074, lon: -0.1278, color: '#00FF00' }, // London
+  { lat: 35.6895, lon: 139.6917, color: '#0000FF' }, // Tokyo
+  { lat: 34.0522, lon: -118.2437, color: '#FFFF00' }, // Los Angeles
+  { lat: 41.8781, lon: -87.6298, color: '#FF00FF' }, // Chicago
+  { lat: 48.8566, lon: 2.3522, color: '#00FFFF' }, // Paris
+  { lat: -23.5505, lon: -46.6333, color: '#800000' }, // São Paulo
+  { lat: 28.6139, lon: 77.2090, color: '#008000' }, // New Delhi
+  { lat: 37.7749, lon: -122.4194, color: '#000080' }, // San Francisco
+  { lat: 19.4326, lon: -99.1332, color: '#808000' }, // Mexico City
+  { lat: 39.9042, lon: 116.4074, color: '#800080' }, // Beijing
+  { lat: -33.8688, lon: 151.2093, color: '#008080' }, // Sydney
+  { lat: 55.7558, lon: 37.6176, color: '#FFA500' }, // Moscow
+  { lat: 31.2304, lon: 121.4737, color: '#A52A2A' }, // Shanghai
+  { lat: 3.1390, lon: 101.6869, color: '#5F9EA0' }, // Kuala Lumpur
+  { lat: -34.6037, lon: -58.3816, color: '#7FFF00' }, // Buenos Aires
+  { lat: 43.6532, lon: -79.3832, color: '#D2691E' }, // Toronto
+  { lat: 37.5665, lon: 126.9780, color: '#8A2BE2' }, // Seoul
+  { lat: 25.276987, lon: 55.296249, color: '#7FFF00' }, // Dubai
+  { lat: 1.3521, lon: 103.8198, color: '#DEB887' }, // Singapore
+  { lat: 40.4168, lon: -3.7038, color: '#DC143C' }, // Madrid
+  { lat: -26.2041, lon: 28.0473, color: '#00FFFF' }, // Johannesburg
+  { lat: 52.5200, lon: 13.4050, color: '#00008B' }, // Berlin
+  { lat: -37.8136, lon: 144.9631, color: '#B8860B' }, // Melbourne
+  { lat: 30.0444, lon: 31.2357, color: '#A9A9A9' } // Cairo
+];
+
+drawVoronoi(centralPoints);
+
+</script>
+</body>
+</html>
