@@ -1,0 +1,15 @@
+digraph G {
+  "Blue Moss" -> "Blue Mossy Wall" [color="black"];
+  "Brown Moss" -> "Brown Mossy Wall" [color="black"];
+  "Stinkbug" -> "Ghostly Stinkbug Blocker" [color="black"];
+  "Green Moss" -> "Green Mossy Wall" [color="black"];
+  "Grass Seeds" -> "Ivy Stone Wall" [color="black"];
+  "Grass Seeds" -> "Lichen Stone Wall" [color="black"];
+  "Purple Moss" -> "Purple Mossy Wall" [color="black"];
+  "Red Moss" -> "Red Mossy Wall" [color="black"];
+  "Demonite Bar" -> "Shadow Candle" [color="black"];
+  "Torch" -> "Shadow Candle" [color="black"];
+  "Crimtane Bar" -> "Shadow Candle" [color="black"];
+  "Torch" -> "Shadow Candle" [color="black"];
+  "Any Wood" -> "Tattered Wood Sign" [color="black"];
+}

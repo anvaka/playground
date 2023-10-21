@@ -1,0 +1,34 @@
+digraph G {
+  "Ice Block" -> "Frozen Bathtub" [color="black"];
+  "Ice Block" -> "Frozen Bed" [color="black"];
+  "Silk" -> "Frozen Bed" [color="black"];
+  "Book" -> "Frozen Bookcase" [color="black"];
+  "Ice Block" -> "Frozen Bookcase" [color="black"];
+  "Ice Block" -> "Frozen Candelabra" [color="black"];
+  "Ice Torch" -> "Frozen Candelabra" [color="black"];
+  "Ice Block" -> "Frozen Candle" [color="black"];
+  "Ice Torch" -> "Frozen Candle" [color="black"];
+  "Ice Block" -> "Frozen Chair" [color="black"];
+  "Chain" -> "Frozen Chandelier" [color="black"];
+  "Ice Block" -> "Frozen Chandelier" [color="black"];
+  "Ice Torch" -> "Frozen Chandelier" [color="black"];
+  "Any Iron Bar" -> "Frozen Clock" [color="black"];
+  "Glass" -> "Frozen Clock" [color="black"];
+  "Ice Block" -> "Frozen Clock" [color="black"];
+  "Ice Block" -> "Frozen Door" [color="black"];
+  "Ice Block" -> "Frozen Dresser" [color="black"];
+  "Ice Block" -> "Frozen Lamp" [color="black"];
+  "Ice Torch" -> "Frozen Lamp" [color="black"];
+  "Ice Block" -> "Frozen Lantern" [color="black"];
+  "Ice Torch" -> "Frozen Lantern" [color="black"];
+  "Bone" -> "Frozen Piano" [color="black"];
+  "Book" -> "Frozen Piano" [color="black"];
+  "Ice Block" -> "Frozen Piano" [color="black"];
+  "Ice Block" -> "Frozen Sink" [color="black"];
+  "Water Bucket" -> "Frozen Sink" [color="black"];
+  "Ice Block" -> "Frozen Sofa" [color="black"];
+  "Silk" -> "Frozen Sofa" [color="black"];
+  "Ice Block" -> "Frozen Table" [color="black"];
+  "Ice Block" -> "Frozen Toilet" [color="black"];
+  "Ice Block" -> "Frozen Work Bench" [color="black"];
+}

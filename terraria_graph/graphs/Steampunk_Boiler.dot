@@ -1,0 +1,36 @@
+digraph G {
+  "Cog" -> "Steampunk Bathtub" [color="black"];
+  "Cog" -> "Steampunk Bed" [color="black"];
+  "Silk" -> "Steampunk Bed" [color="black"];
+  "Book" -> "Steampunk Bookcase" [color="black"];
+  "Cog" -> "Steampunk Bookcase" [color="black"];
+  "Cog" -> "Steampunk Candelabra" [color="black"];
+  "Torch" -> "Steampunk Candelabra" [color="black"];
+  "Cog" -> "Steampunk Candle" [color="black"];
+  "Torch" -> "Steampunk Candle" [color="black"];
+  "Cog" -> "Steampunk Chair" [color="black"];
+  "Chain" -> "Steampunk Chandelier" [color="black"];
+  "Cog" -> "Steampunk Chandelier" [color="black"];
+  "Torch" -> "Steampunk Chandelier" [color="black"];
+  "Any Iron Bar" -> "Steampunk Chest" [color="black"];
+  "Cog" -> "Steampunk Chest" [color="black"];
+  "Any Iron Bar" -> "Steampunk Clock" [color="black"];
+  "Cog" -> "Steampunk Clock" [color="black"];
+  "Glass" -> "Steampunk Clock" [color="black"];
+  "Cog" -> "Steampunk Door" [color="black"];
+  "Cog" -> "Steampunk Dresser" [color="black"];
+  "Cog" -> "Steampunk Lamp" [color="black"];
+  "Torch" -> "Steampunk Lamp" [color="black"];
+  "Cog" -> "Steampunk Lantern" [color="black"];
+  "Torch" -> "Steampunk Lantern" [color="black"];
+  "Bone" -> "Steampunk Piano" [color="black"];
+  "Book" -> "Steampunk Piano" [color="black"];
+  "Cog" -> "Steampunk Piano" [color="black"];
+  "Cog" -> "Steampunk Sink" [color="black"];
+  "Water Bucket" -> "Steampunk Sink" [color="black"];
+  "Cog" -> "Steampunk Sofa" [color="black"];
+  "Silk" -> "Steampunk Sofa" [color="black"];
+  "Cog" -> "Steampunk Table" [color="black"];
+  "Cog" -> "Steampunk Toilet" [color="black"];
+  "Cog" -> "Steampunk Work Bench" [color="black"];
+}

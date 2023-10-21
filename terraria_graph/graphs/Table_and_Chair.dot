@@ -1,0 +1,14 @@
+digraph G {
+  "Chain" -> "Copper Watch" [color="black"];
+  "Copper Bar" -> "Copper Watch" [color="black"];
+  "Chain" -> "Gold Watch" [color="black"];
+  "Gold Bar" -> "Gold Watch" [color="black"];
+  "Chain" -> "Platinum Watch" [color="black"];
+  "Platinum Bar" -> "Platinum Watch" [color="black"];
+  "Chain" -> "Silver Watch" [color="black"];
+  "Silver Bar" -> "Silver Watch" [color="black"];
+  "Chain" -> "Tin Watch" [color="black"];
+  "Tin Bar" -> "Tin Watch" [color="black"];
+  "Chain" -> "Tungsten Watch" [color="black"];
+  "Tungsten Bar" -> "Tungsten Watch" [color="black"];
+}

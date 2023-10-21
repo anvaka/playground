@@ -1,0 +1,36 @@
+digraph G {
+  "Flesh Block" -> "Flesh Bathtub" [color="black"];
+  "Flesh Block" -> "Flesh Bed" [color="black"];
+  "Silk" -> "Flesh Bed" [color="black"];
+  "Book" -> "Flesh Bookcase" [color="black"];
+  "Flesh Block" -> "Flesh Bookcase" [color="black"];
+  "Flesh Block" -> "Flesh Candelabra" [color="black"];
+  "Torch" -> "Flesh Candelabra" [color="black"];
+  "Flesh Block" -> "Flesh Candle" [color="black"];
+  "Torch" -> "Flesh Candle" [color="black"];
+  "Flesh Block" -> "Flesh Chair" [color="black"];
+  "Chain" -> "Flesh Chandelier" [color="black"];
+  "Flesh Block" -> "Flesh Chandelier" [color="black"];
+  "Torch" -> "Flesh Chandelier" [color="black"];
+  "Any Iron Bar" -> "Flesh Chest" [color="black"];
+  "Flesh Block" -> "Flesh Chest" [color="black"];
+  "Any Iron Bar" -> "Flesh Clock" [color="black"];
+  "Flesh Block" -> "Flesh Clock" [color="black"];
+  "Glass" -> "Flesh Clock" [color="black"];
+  "Flesh Block" -> "Flesh Door" [color="black"];
+  "Flesh Block" -> "Flesh Dresser" [color="black"];
+  "Flesh Block" -> "Flesh Lamp" [color="black"];
+  "Torch" -> "Flesh Lamp" [color="black"];
+  "Flesh Block" -> "Flesh Lantern" [color="black"];
+  "Torch" -> "Flesh Lantern" [color="black"];
+  "Bone" -> "Flesh Piano" [color="black"];
+  "Book" -> "Flesh Piano" [color="black"];
+  "Flesh Block" -> "Flesh Piano" [color="black"];
+  "Flesh Block" -> "Flesh Sink" [color="black"];
+  "Water Bucket" -> "Flesh Sink" [color="black"];
+  "Flesh Block" -> "Flesh Sofa" [color="black"];
+  "Silk" -> "Flesh Sofa" [color="black"];
+  "Flesh Block" -> "Flesh Table" [color="black"];
+  "Flesh Block" -> "Flesh Toilet" [color="black"];
+  "Flesh Block" -> "Flesh Work Bench" [color="black"];
+}

@@ -1,0 +1,4 @@
+digraph G {
+  "Crimstone Block" -> "Flesh Block" [color="black"];
+  "Ebonstone Block" -> "Lesion Block" [color="black"];
+}

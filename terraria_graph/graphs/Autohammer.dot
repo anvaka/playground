@@ -1,0 +1,8 @@
+digraph G {
+  "Rocket III" -> "Mini Nuke I" [color="black"];
+  "Shroomite Bar" -> "Mini Nuke I" [color="black"];
+  "Rocket IV" -> "Mini Nuke II" [color="black"];
+  "Shroomite Bar" -> "Mini Nuke II" [color="black"];
+  "Chlorophyte Bar" -> "Shroomite Bar" [color="black"];
+  "Glowing Mushroom" -> "Shroomite Bar" [color="black"];
+}

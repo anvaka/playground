@@ -1,0 +1,6 @@
+digraph G {
+  "Hellstone" -> "Hellstone Bar" [color="black"];
+  "Obsidian" -> "Hellstone Bar" [color="black"];
+  "Bug Net" -> "Lavaproof Bug Net" [color="black"];
+  "Hellstone Bar" -> "Lavaproof Bug Net" [color="black"];
+}

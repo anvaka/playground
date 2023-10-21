@@ -1,0 +1,28 @@
+digraph G {
+  "Fallen Star" -> "Blue Starry Block" [color="black"];
+  "Glass" -> "Blue Starry Block" [color="black"];
+  "Confetti" -> "Confetti Block" [color="black"];
+  "Glass" -> "Confetti Block" [color="black"];
+  "Musket Ball" -> "Endless Musket Pouch" [color="black"];
+  "Wooden Arrow" -> "Endless Quiver" [color="black"];
+  "Fallen Star" -> "Gold Starry Block" [color="black"];
+  "Glass" -> "Gold Starry Block" [color="black"];
+  "Cursed Flame" -> "Living Cursed Fire Block" [color="black"];
+  "Living Fire Block" -> "Living Cursed Fire Block" [color="black"];
+  "Demon Torch" -> "Living Demon Fire Block" [color="black"];
+  "Living Fire Block" -> "Living Demon Fire Block" [color="black"];
+  "Ice Block" -> "Living Frost Fire Block" [color="black"];
+  "Living Fire Block" -> "Living Frost Fire Block" [color="black"];
+  "Ichor" -> "Living Ichor Block" [color="black"];
+  "Living Fire Block" -> "Living Ichor Block" [color="black"];
+  "Living Fire Block" -> "Living Ultrabright Fire Block" [color="black"];
+  "Ultrabright Torch" -> "Living Ultrabright Fire Block" [color="black"];
+  "Any Sand" -> "Magic Sand Dropper" [color="black"];
+  "Empty Dropper" -> "Magic Sand Dropper" [color="black"];
+  "Confetti" -> "Midnight Confetti Block" [color="black"];
+  "Glass" -> "Midnight Confetti Block" [color="black"];
+  "Glass" -> "Sandfall Block" [color="black"];
+  "Sand Block" -> "Sandfall Block" [color="black"];
+  "Glass" -> "Snowfall Block" [color="black"];
+  "Snow Block" -> "Snowfall Block" [color="black"];
+}

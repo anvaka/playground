@@ -1,0 +1,36 @@
+digraph G {
+  "Lesion Block" -> "Lesion Bathtub" [color="black"];
+  "Lesion Block" -> "Lesion Bed" [color="black"];
+  "Silk" -> "Lesion Bed" [color="black"];
+  "Book" -> "Lesion Bookcase" [color="black"];
+  "Lesion Block" -> "Lesion Bookcase" [color="black"];
+  "Lesion Block" -> "Lesion Candelabra" [color="black"];
+  "Torch" -> "Lesion Candelabra" [color="black"];
+  "Lesion Block" -> "Lesion Candle" [color="black"];
+  "Torch" -> "Lesion Candle" [color="black"];
+  "Lesion Block" -> "Lesion Chair" [color="black"];
+  "Chain" -> "Lesion Chandelier" [color="black"];
+  "Lesion Block" -> "Lesion Chandelier" [color="black"];
+  "Torch" -> "Lesion Chandelier" [color="black"];
+  "Any Iron Bar" -> "Lesion Chest" [color="black"];
+  "Lesion Block" -> "Lesion Chest" [color="black"];
+  "Any Iron Bar" -> "Lesion Clock" [color="black"];
+  "Glass" -> "Lesion Clock" [color="black"];
+  "Lesion Block" -> "Lesion Clock" [color="black"];
+  "Lesion Block" -> "Lesion Door" [color="black"];
+  "Lesion Block" -> "Lesion Dresser" [color="black"];
+  "Lesion Block" -> "Lesion Lamp" [color="black"];
+  "Torch" -> "Lesion Lamp" [color="black"];
+  "Lesion Block" -> "Lesion Lantern" [color="black"];
+  "Torch" -> "Lesion Lantern" [color="black"];
+  "Bone" -> "Lesion Piano" [color="black"];
+  "Book" -> "Lesion Piano" [color="black"];
+  "Lesion Block" -> "Lesion Piano" [color="black"];
+  "Lesion Block" -> "Lesion Sink" [color="black"];
+  "Water Bucket" -> "Lesion Sink" [color="black"];
+  "Lesion Block" -> "Lesion Sofa" [color="black"];
+  "Silk" -> "Lesion Sofa" [color="black"];
+  "Lesion Block" -> "Lesion Table" [color="black"];
+  "Lesion Block" -> "Lesion Toilet" [color="black"];
+  "Lesion Block" -> "Lesion Work Bench" [color="black"];
+}

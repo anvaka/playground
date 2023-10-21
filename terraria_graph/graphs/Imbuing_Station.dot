@@ -1,0 +1,10 @@
+digraph G {
+  "Bottled Water" -> "Flask of Gold" [color="black"];
+  "Gold Dust" -> "Flask of Gold" [color="black"];
+  "Bottled Water" -> "Flask of Nanites" [color="black"];
+  "Nanites" -> "Flask of Nanites" [color="black"];
+  "Bottled Water" -> "Flask of Party" [color="black"];
+  "Confetti" -> "Flask of Party" [color="black"];
+  "Bottled Water" -> "Flask of Venom" [color="black"];
+  "Vial of Venom" -> "Flask of Venom" [color="black"];
+}

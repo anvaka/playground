@@ -1,0 +1,37 @@
+digraph G {
+  "Hallowed Bar" -> "Ancient Hallowed Greaves" [color="black"];
+  "Hallowed Bar" -> "Ancient Hallowed Headgear" [color="black"];
+  "Hallowed Bar" -> "Ancient Hallowed Helmet" [color="black"];
+  "Hallowed Bar" -> "Ancient Hallowed Hood" [color="black"];
+  "Hallowed Bar" -> "Ancient Hallowed Mask" [color="black"];
+  "Hallowed Bar" -> "Ancient Hallowed Plate Mail" [color="black"];
+  "Demonite Ore" -> "Deer Thing" [color="black"];
+  "Flinx Fur" -> "Deer Thing" [color="black"];
+  "Lens" -> "Deer Thing" [color="black"];
+  "Crimtane Ore" -> "Deer Thing" [color="black"];
+  "Flinx Fur" -> "Deer Thing" [color="black"];
+  "Lens" -> "Deer Thing" [color="black"];
+  "Blade of Grass" -> "Night's Edge" [color="black"];
+  "Light's Bane" -> "Night's Edge" [color="black"];
+  "Muramasa" -> "Night's Edge" [color="black"];
+  "Volcano" -> "Night's Edge" [color="black"];
+  "Blade of Grass" -> "Night's Edge" [color="black"];
+  "Blood Butcherer" -> "Night's Edge" [color="black"];
+  "Muramasa" -> "Night's Edge" [color="black"];
+  "Volcano" -> "Night's Edge" [color="black"];
+  "Lens" -> "Suspicious Looking Eye" [color="black"];
+  "Bone" -> "Void Bag" [color="black"];
+  "Jungle Spores" -> "Void Bag" [color="black"];
+  "Shadow Scale" -> "Void Bag" [color="black"];
+  "Bone" -> "Void Bag" [color="black"];
+  "Jungle Spores" -> "Void Bag" [color="black"];
+  "Tissue Sample" -> "Void Bag" [color="black"];
+  "Bone" -> "Void Vault" [color="black"];
+  "Jungle Spores" -> "Void Vault" [color="black"];
+  "Tissue Sample" -> "Void Vault" [color="black"];
+  "Bone" -> "Void Vault" [color="black"];
+  "Jungle Spores" -> "Void Vault" [color="black"];
+  "Shadow Scale" -> "Void Vault" [color="black"];
+  "Rotten Chunk" -> "Worm Food" [color="black"];
+  "Vile Powder" -> "Worm Food" [color="black"];
+}

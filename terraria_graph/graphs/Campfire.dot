@@ -1,0 +1,3 @@
+digraph G {
+  "Marshmallow on a Stick" -> "Cooked Marshmallow" [color="black"];
+}

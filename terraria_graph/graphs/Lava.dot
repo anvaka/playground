@@ -1,0 +1,4 @@
+digraph G {
+  "Dry Bomb" -> "Lava Bomb" [color="black"];
+  "Dry Rocket" -> "Lava Rocket" [color="black"];
+}

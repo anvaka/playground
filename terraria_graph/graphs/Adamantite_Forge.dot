@@ -1,0 +1,6 @@
+digraph G {
+  "Crystal Shard" -> "Crystal Block" [color="black"];
+  "Stone Block" -> "Crystal Block" [color="black"];
+  "Chlorophyte Bar" -> "Spectre Bar" [color="black"];
+  "Ectoplasm" -> "Spectre Bar" [color="black"];
+}

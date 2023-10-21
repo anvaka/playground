@@ -1,0 +1,4 @@
+digraph G {
+  "Glass" -> "Lavafall Block" [color="black"];
+  "Empty Dropper" -> "Magic Lava Dropper" [color="black"];
+}

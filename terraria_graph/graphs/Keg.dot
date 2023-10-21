@@ -1,0 +1,3 @@
+digraph G {
+  "Mug" -> "Ale" [color="black"];
+}

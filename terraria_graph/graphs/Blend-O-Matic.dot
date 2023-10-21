@@ -1,0 +1,4 @@
+digraph G {
+  "Gel" -> "Asphalt Block" [color="black"];
+  "Stone Block" -> "Asphalt Block" [color="black"];
+}

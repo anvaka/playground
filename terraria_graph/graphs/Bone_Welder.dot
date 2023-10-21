@@ -1,0 +1,32 @@
+digraph G {
+  "Bone" -> "Bone Bathtub" [color="black"];
+  "Bone" -> "Bone Bed" [color="black"];
+  "Silk" -> "Bone Bed" [color="black"];
+  "Bone" -> "Bone Bookcase" [color="black"];
+  "Book" -> "Bone Bookcase" [color="black"];
+  "Bone" -> "Bone Candelabra" [color="black"];
+  "Torch" -> "Bone Candelabra" [color="black"];
+  "Bone" -> "Bone Chair" [color="black"];
+  "Bone" -> "Bone Chandelier" [color="black"];
+  "Chain" -> "Bone Chandelier" [color="black"];
+  "Torch" -> "Bone Chandelier" [color="black"];
+  "Any Iron Bar" -> "Bone Chest" [color="black"];
+  "Bone" -> "Bone Chest" [color="black"];
+  "Any Iron Bar" -> "Bone Clock" [color="black"];
+  "Bone" -> "Bone Clock" [color="black"];
+  "Glass" -> "Bone Clock" [color="black"];
+  "Bone" -> "Bone Door" [color="black"];
+  "Bone" -> "Bone Dresser" [color="black"];
+  "Bone" -> "Bone Lamp" [color="black"];
+  "Torch" -> "Bone Lamp" [color="black"];
+  "Bone" -> "Bone Lantern" [color="black"];
+  "Torch" -> "Bone Lantern" [color="black"];
+  "Bone" -> "Bone Piano" [color="black"];
+  "Book" -> "Bone Piano" [color="black"];
+  "Bone" -> "Bone Sink" [color="black"];
+  "Water Bucket" -> "Bone Sink" [color="black"];
+  "Bone" -> "Bone Sofa" [color="black"];
+  "Silk" -> "Bone Sofa" [color="black"];
+  "Bone" -> "Bone Table" [color="black"];
+  "Bone" -> "Bone Toilet" [color="black"];
+}

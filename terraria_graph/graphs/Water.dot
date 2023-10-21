@@ -1,0 +1,6 @@
+digraph G {
+  "Bottle" -> "Bottled Water" [color="black"];
+  "Dirt Block" -> "Mud Block" [color="black"];
+  "Dry Bomb" -> "Wet Bomb" [color="black"];
+  "Dry Rocket" -> "Wet Rocket" [color="black"];
+}

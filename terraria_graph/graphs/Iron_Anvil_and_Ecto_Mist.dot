@@ -1,0 +1,10 @@
+digraph G {
+  "Any Iron Bar" -> "Coffin Minecart" [color="black"];
+  "Any Wood" -> "Coffin Minecart" [color="black"];
+  "Rotten Chunk" -> "Coffin Minecart" [color="black"];
+  "Any Iron Bar" -> "Coffin Minecart" [color="black"];
+  "Any Wood" -> "Coffin Minecart" [color="black"];
+  "Vertebra" -> "Coffin Minecart" [color="black"];
+  "Any Iron Bar" -> "Gravedigger's Shovel" [color="black"];
+  "Any Wood" -> "Gravedigger's Shovel" [color="black"];
+}

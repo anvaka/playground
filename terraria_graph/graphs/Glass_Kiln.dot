@@ -1,0 +1,33 @@
+digraph G {
+  "Glass" -> "Glass Bathtub" [color="black"];
+  "Glass" -> "Glass Bed" [color="black"];
+  "Silk" -> "Glass Bed" [color="black"];
+  "Book" -> "Glass Bookcase" [color="black"];
+  "Glass" -> "Glass Bookcase" [color="black"];
+  "Glass" -> "Glass Candelabra" [color="black"];
+  "Torch" -> "Glass Candelabra" [color="black"];
+  "Glass" -> "Glass Candle" [color="black"];
+  "Torch" -> "Glass Candle" [color="black"];
+  "Glass" -> "Glass Chair" [color="black"];
+  "Chain" -> "Glass Chandelier" [color="black"];
+  "Glass" -> "Glass Chandelier" [color="black"];
+  "Torch" -> "Glass Chandelier" [color="black"];
+  "Any Iron Bar" -> "Glass Chest" [color="black"];
+  "Glass" -> "Glass Chest" [color="black"];
+  "Glass" -> "Glass Door" [color="black"];
+  "Glass" -> "Glass Dresser" [color="black"];
+  "Glass" -> "Glass Lamp" [color="black"];
+  "Torch" -> "Glass Lamp" [color="black"];
+  "Glass" -> "Glass Lantern" [color="black"];
+  "Torch" -> "Glass Lantern" [color="black"];
+  "Bone" -> "Glass Piano" [color="black"];
+  "Book" -> "Glass Piano" [color="black"];
+  "Glass" -> "Glass Piano" [color="black"];
+  "Glass" -> "Glass Sink" [color="black"];
+  "Water Bucket" -> "Glass Sink" [color="black"];
+  "Glass" -> "Glass Sofa" [color="black"];
+  "Silk" -> "Glass Sofa" [color="black"];
+  "Glass" -> "Glass Table" [color="black"];
+  "Glass" -> "Glass Toilet" [color="black"];
+  "Glass" -> "Glass Work Bench" [color="black"];
+}

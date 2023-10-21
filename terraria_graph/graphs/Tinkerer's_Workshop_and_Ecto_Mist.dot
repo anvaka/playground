@@ -1,0 +1,8 @@
+digraph G {
+  "Music Box (Desert)" -> "Music Box (Alt Title)" [color="black"];
+  "Music Box (Ice)" -> "Music Box (Alt Title)" [color="black"];
+  "Music Box (Space Day)" -> "Music Box (Alt Title)" [color="black"];
+  "Music Box (Ocean Night)" -> "Music Box (Alt Title)" [color="black"];
+  "Music Box (Boss 5)" -> "Music Box (Alt Title)" [color="black"];
+  "Music Box (Morning Rain)" -> "Music Box (Alt Title)" [color="black"];
+}

@@ -1,0 +1,13 @@
+digraph G {
+  "Platinum Broadsword" -> "Flymeal" [color="black"];
+  "Stinkbug" -> "Flymeal" [color="black"];
+  "Gold Broadsword" -> "Flymeal" [color="black"];
+  "Stinkbug" -> "Flymeal" [color="black"];
+  "Bottle" -> "Bottled Honey" [color="black"];
+  "Platinum Broadsword" -> "Flymeal" [color="black"];
+  "Stinkbug" -> "Flymeal" [color="black"];
+  "Gold Broadsword" -> "Flymeal" [color="black"];
+  "Stinkbug" -> "Flymeal" [color="black"];
+  "Dry Bomb" -> "Honey Bomb" [color="black"];
+  "Dry Rocket" -> "Honey Rocket" [color="black"];
+}

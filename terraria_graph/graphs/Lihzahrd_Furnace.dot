@@ -1,0 +1,33 @@
+digraph G {
+  "Lihzahrd Brick" -> "Lihzahrd Bathtub" [color="black"];
+  "Lihzahrd Brick" -> "Lihzahrd Bed" [color="black"];
+  "Silk" -> "Lihzahrd Bed" [color="black"];
+  "Book" -> "Lihzahrd Bookcase" [color="black"];
+  "Lihzahrd Brick" -> "Lihzahrd Bookcase" [color="black"];
+  "Lihzahrd Brick" -> "Lihzahrd Candelabra" [color="black"];
+  "Torch" -> "Lihzahrd Candelabra" [color="black"];
+  "Lihzahrd Brick" -> "Lihzahrd Candle" [color="black"];
+  "Torch" -> "Lihzahrd Candle" [color="black"];
+  "Lihzahrd Brick" -> "Lihzahrd Chair" [color="black"];
+  "Chain" -> "Lihzahrd Chandelier" [color="black"];
+  "Lihzahrd Brick" -> "Lihzahrd Chandelier" [color="black"];
+  "Torch" -> "Lihzahrd Chandelier" [color="black"];
+  "Any Iron Bar" -> "Lihzahrd Clock" [color="black"];
+  "Glass" -> "Lihzahrd Clock" [color="black"];
+  "Lihzahrd Brick" -> "Lihzahrd Clock" [color="black"];
+  "Lihzahrd Brick" -> "Lihzahrd Door" [color="black"];
+  "Lihzahrd Brick" -> "Lihzahrd Dresser" [color="black"];
+  "Lihzahrd Brick" -> "Lihzahrd Lamp" [color="black"];
+  "Torch" -> "Lihzahrd Lamp" [color="black"];
+  "Lihzahrd Brick" -> "Lihzahrd Lantern" [color="black"];
+  "Torch" -> "Lihzahrd Lantern" [color="black"];
+  "Bone" -> "Lihzahrd Piano" [color="black"];
+  "Book" -> "Lihzahrd Piano" [color="black"];
+  "Lihzahrd Brick" -> "Lihzahrd Piano" [color="black"];
+  "Lihzahrd Brick" -> "Lihzahrd Sink" [color="black"];
+  "Water Bucket" -> "Lihzahrd Sink" [color="black"];
+  "Lihzahrd Brick" -> "Lihzahrd Sofa" [color="black"];
+  "Silk" -> "Lihzahrd Sofa" [color="black"];
+  "Lihzahrd Brick" -> "Lihzahrd Table" [color="black"];
+  "Lihzahrd Brick" -> "Lihzahrd Toilet" [color="black"];
+}

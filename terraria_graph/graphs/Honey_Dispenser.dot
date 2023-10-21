@@ -1,0 +1,35 @@
+digraph G {
+  "Honey Block" -> "Honey Bathtub" [color="black"];
+  "Book" -> "Honey Bookcase" [color="black"];
+  "Honey Block" -> "Honey Bookcase" [color="black"];
+  "Honey Block" -> "Honey Candelabra" [color="black"];
+  "Torch" -> "Honey Candelabra" [color="black"];
+  "Honey Block" -> "Honey Candle" [color="black"];
+  "Torch" -> "Honey Candle" [color="black"];
+  "Honey Block" -> "Honey Chair" [color="black"];
+  "Chain" -> "Honey Chandelier" [color="black"];
+  "Honey Block" -> "Honey Chandelier" [color="black"];
+  "Torch" -> "Honey Chandelier" [color="black"];
+  "Any Iron Bar" -> "Honey Chest" [color="black"];
+  "Honey Block" -> "Honey Chest" [color="black"];
+  "Any Iron Bar" -> "Honey Clock" [color="black"];
+  "Glass" -> "Honey Clock" [color="black"];
+  "Honey Block" -> "Honey Clock" [color="black"];
+  "Honey Block" -> "Honey Cup" [color="black"];
+  "Honey Block" -> "Honey Door" [color="black"];
+  "Honey Block" -> "Honey Dresser" [color="black"];
+  "Honey Block" -> "Honey Lamp" [color="black"];
+  "Torch" -> "Honey Lamp" [color="black"];
+  "Honey Block" -> "Honey Lantern" [color="black"];
+  "Torch" -> "Honey Lantern" [color="black"];
+  "Bone" -> "Honey Piano" [color="black"];
+  "Book" -> "Honey Piano" [color="black"];
+  "Honey Block" -> "Honey Piano" [color="black"];
+  "Honey Block" -> "Honey Sink" [color="black"];
+  "Water Bucket" -> "Honey Sink" [color="black"];
+  "Honey Block" -> "Honey Sofa" [color="black"];
+  "Silk" -> "Honey Sofa" [color="black"];
+  "Honey Block" -> "Honey Table" [color="black"];
+  "Honey Block" -> "Honey Toilet" [color="black"];
+  "Honey Block" -> "Honey Work Bench" [color="black"];
+}
