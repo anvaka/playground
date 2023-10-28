@@ -1,4 +1,5 @@
-const EPSILON = 0.00001;
+import { EPSILON } from './constants.js';
+
 export class Tuple {
   constructor(x, y, z, w) {
     this.x = x;
