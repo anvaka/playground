@@ -9,6 +9,11 @@ export class Canvas {
   }
 
   writePixel(x, y, color) {
+    x = Math.floor(x);
+    y = Math.floor(y);
+    if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
+      return;
+    }
     this.pixels[y * this.width + x] = color;
   }
 
