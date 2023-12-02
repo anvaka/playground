@@ -1,6 +1,9 @@
+import ngraphRandom from 'ngraph.random';
+
 export default function clusterGraph(graph, randomWalkLength = 10, randomWalkCount = 100) {
   let edgeWeights = new Map();
   let totalWalks = 0;
+  const random = ngraphRandom(42);
 
   graph.forEachNode(randomWalk);
   let stats = normalizeEdgeWeights();
@@ -90,7 +93,7 @@ export default function clusterGraph(graph, randomWalkLength = 10, randomWalkCou
     let node = graph.getNode(nodeId);
     const neighbors = [...node.links];
     if (neighbors.length) {
-      const randomIndex = Math.floor(Math.random() * neighbors.length);
+      const randomIndex = Math.floor(random.nextDouble() * neighbors.length);
       let edge = neighbors[randomIndex];
       return edge;
     }

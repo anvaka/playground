@@ -1,7 +1,8 @@
 {
   "type": "module",
   "dependencies": {
-    "ngraph.graph": "^20.0.1"
+    "ngraph.graph": "^20.0.1",
+    "ngraph.random": "^1.1.0"
   },
   "devDependencies": {
     "miserables": "^2.0.0",
