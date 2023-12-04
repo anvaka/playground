@@ -113,6 +113,20 @@ export class Matrix {
     return this.determinant() !== 0;
   }
 
+  isIdentity() {
+    if (this.rows !== this.columns) return false;
+    for (let row = 0; row < this.rows; row++) {
+      for (let column = 0; column < this.columns; column++) {
+        if (row === column) {
+          if (Math.abs(this.get(row, column) - 1) > EPSILON) return false;
+        } else {
+          if (Math.abs(this.get(row, column)) > EPSILON) return false;
+        }
+      }
+    }
+    return true;
+  }
+
   inverse() {
     if (!this.isInvertible()) throw new Error('matrix is not invertible');
     let result = new Matrix(this.rows, this.columns);
