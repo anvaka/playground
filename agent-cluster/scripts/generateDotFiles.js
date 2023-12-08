@@ -12,7 +12,9 @@ const availableColors = [
 ]
 
 let graph = miserables;
-const clusters = clusterGraph(graph);
+const randomWalkLength = numberOrDefault(process.argv[2], 10);
+const randomWalkCount = numberOrDefault(process.argv[3], 100);
+const clusters = clusterGraph(graph, randomWalkLength, randomWalkCount);
 let colorIndex = 0;
 graph.forEachLink(link => {
   delete link.data;
@@ -31,5 +33,11 @@ clusters.forEach(nodes => {
   })
   colorIndex += 1;
 });
+let dotContent = todot(graph);
+console.log(dotContent);
 
-console.log(todot(graph));
+function numberOrDefault(value, defaultValue) {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') return parseInt(value, 10);
+  return defaultValue;
+}
