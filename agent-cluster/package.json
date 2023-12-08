@@ -5,7 +5,10 @@
     "ngraph.random": "^1.1.0"
   },
   "devDependencies": {
+    "canvas": "^2.11.2",
     "miserables": "^2.0.0",
+    "ngraph.forcelayout": "^3.3.1",
+    "ngraph.fromdot": "^7.0.0",
     "ngraph.generators": "^20.1.0",
     "ngraph.todot": "^4.0.0",
     "tap": "^18.6.1"
