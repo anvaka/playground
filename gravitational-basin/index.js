@@ -24,33 +24,33 @@ const uniformBuffer = device.createBuffer({
 });
 device.queue.writeBuffer(uniformBuffer, 0, uniformArray);
 
-// Create an array representing the active state of each cell.
-const ITEMS_PER_PARTICLE = 5; // Body index, px, py, vx, vy
-const cellStateArray = new Float32Array(GRID_SIZE * GRID_SIZE * ITEMS_PER_PARTICLE);
+// Create an array representing the active state of each particle.
+const ITEMS_PER_PARTICLE = 5; // collided body index, x, y, vx, vy
+const particleStateArray = new Float32Array(GRID_SIZE * GRID_SIZE * ITEMS_PER_PARTICLE);
 
-// Create a storage buffer to hold the cell state.
-const cellStateStorage = [
+// Create a storage buffer to hold the particles state.
+const particleStorage = [
   device.createBuffer({
     label: "Cell State A",
-    size: cellStateArray.byteLength,
+    size: particleStateArray.byteLength,
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
   }),
   device.createBuffer({
     label: "Cell State B",
-    size: cellStateArray.byteLength,
+    size: particleStateArray.byteLength,
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
   })
 ];
 
-for (let i = 0; i < cellStateArray.length / ITEMS_PER_PARTICLE; ++i) {
-  cellStateArray[i * ITEMS_PER_PARTICLE] = 0;
+for (let i = 0; i < particleStateArray.length / ITEMS_PER_PARTICLE; ++i) {
+  particleStateArray[i * ITEMS_PER_PARTICLE] = 0;
   let x = i % GRID_SIZE;
   let y = Math.floor(i / GRID_SIZE);
-  cellStateArray[i * ITEMS_PER_PARTICLE + 1] = x;
-  cellStateArray[i * ITEMS_PER_PARTICLE + 2] = y;
+  particleStateArray[i * ITEMS_PER_PARTICLE + 1] = x;
+  particleStateArray[i * ITEMS_PER_PARTICLE + 2] = y;
 }
-device.queue.writeBuffer(cellStateStorage[0], 0, cellStateArray);
-device.queue.writeBuffer(cellStateStorage[1], 0, cellStateArray);
+device.queue.writeBuffer(particleStorage[0], 0, particleStateArray);
+device.queue.writeBuffer(particleStorage[1], 0, particleStateArray);
 
 const vertices = new Float32Array([
   -0.8, -0.8, // Triangle 1 
@@ -102,7 +102,7 @@ const bodiesBuffer = device.createBuffer({
 device.queue.writeBuffer(bodiesBuffer, 0, bodiesData);
 
 const cellShaderModule = device.createShaderModule({
-  label: "Cell shader",
+  label: 'Particle render shader',
   code: `
 struct VertexInput {
   @location(0) pos: vec2f,
@@ -118,18 +118,18 @@ struct FragInput {
   @location(0) color: vec3f,
 };
 
-@group(0) @binding(0) var<uniform> grid: vec2f;
-@group(0) @binding(1) var<storage> cellState: array<f32>;
+@group(0) @binding(0) var<uniform> gridSize: vec2f;
+@group(0) @binding(1) var<storage> particleState: array<f32>;
 @group(0) @binding(3) var<storage, read> bodies: array<f32>;
 
 @vertex
 fn vertexMain(input: VertexInput) -> VertexOutput {
   let i = input.instance * ${ITEMS_PER_PARTICLE};
-  if (cellState[i] == 0.0) {
-    // cell is still moving. Its position is stored in the cellState buffer.
-    let cell = vec2f(cellState[i + 1], cellState[i + 2]);
-    let cellOffset = cell / grid * 2;
-    let gridPos = (input.pos + 1) / grid - 1 + cellOffset;
+  if (particleState[i] == 0.0) {
+    // particle is still moving. Its position is stored in the particleState buffer.
+    let cell = vec2f(particleState[i + 1], particleState[i + 2]);
+    let cellOffset = cell / gridSize * 2;
+    let gridPos = (input.pos + 1) / gridSize - 1 + cellOffset;
 
     var output: VertexOutput;
     output.pos = vec4f(gridPos, 0, 1);
@@ -138,11 +138,11 @@ fn vertexMain(input: VertexInput) -> VertexOutput {
   } else {
     // cell has collided, mark it original position with the collided body color
     var output: VertexOutput;
-    let cell = vec2f(f32(input.instance) % grid.x, floor(f32(input.instance) / grid.x));
-    let cellOffset = cell / grid * 2;
-    let gridPos = (input.pos + 1) / grid - 1 + cellOffset;
+    let cell = vec2f(f32(input.instance) % gridSize.x, floor(f32(input.instance) / gridSize.x));
+    let cellOffset = cell / gridSize * 2;
+    let gridPos = (input.pos + 1) / gridSize - 1 + cellOffset;
     output.pos = vec4f(gridPos, 0, 1);
-    var bodyIndex = u32(cellState[i] - 1.0);
+    var bodyIndex = u32(particleState[i] - 1.0);
     output.color = vec3f(bodies[bodyIndex * 6 + 3], bodies[bodyIndex * 6 + 4], bodies[bodyIndex * 6 + 5]);
     return output;
   }
@@ -176,11 +176,11 @@ const bindGroupLayout = device.createBindGroupLayout({
 });
 
 const pipelineLayout = device.createPipelineLayout({
-  label: "Cell Pipeline Layout", bindGroupLayouts: [ bindGroupLayout ]
+  label: "Particle Pipeline Layout", bindGroupLayouts: [ bindGroupLayout ]
 });
 
 const cellPipeline = device.createRenderPipeline({
-  label: "Cell pipeline",
+  label: "Particle pipeline",
   layout: pipelineLayout,
   vertex: {
     module: cellShaderModule,
@@ -196,37 +196,35 @@ const cellPipeline = device.createRenderPipeline({
 
 const bindGroups = [
   device.createBindGroup({
-    label: "Cell renderer bind group A",
+    label: "Particle renderer bind group A",
     layout: bindGroupLayout,
     entries: [
       { binding: 0, resource: { buffer: uniformBuffer }}, 
-      { binding: 1, resource: { buffer: cellStateStorage[0] }}, 
-      { binding: 2, resource: { buffer: cellStateStorage[1] }},
+      { binding: 1, resource: { buffer: particleStorage[0] }}, 
+      { binding: 2, resource: { buffer: particleStorage[1] }},
       { binding: 3, resource: { buffer: bodiesBuffer }}
     ],
   }),
    device.createBindGroup({
-    label: "Cell renderer bind group B",
+    label: "Particle renderer bind group B",
     layout: bindGroupLayout,
     entries: [
       { binding: 0, resource: { buffer: uniformBuffer } }, 
-      { binding: 1, resource: { buffer: cellStateStorage[1] }},
-      { binding: 2, resource: { buffer: cellStateStorage[0] }},
+      { binding: 1, resource: { buffer: particleStorage[1] }},
+      { binding: 2, resource: { buffer: particleStorage[0] }},
       { binding: 3, resource: { buffer: bodiesBuffer }}
     ],
   })
 ];
 
-
-
 const WORKGROUP_SIZE = 8;
 const simulationShaderModule = device.createShaderModule({
-  label: "Life simulation shader",
+  label: "Gravitational basins simulation shader",
   code: `
     @group(0) @binding(0) var<uniform> grid: vec2f;
 
-    @group(0) @binding(1) var<storage> cellStateIn: array<f32>;
-    @group(0) @binding(2) var<storage, read_write> cellStateOut: array<f32>;
+    @group(0) @binding(1) var<storage> particleStateIn: array<f32>;
+    @group(0) @binding(2) var<storage, read_write> particleStateOut: array<f32>;
 
     struct Particle {
       bodyTouched: f32,
@@ -261,12 +259,12 @@ const simulationShaderModule = device.createShaderModule({
     @compute @workgroup_size(${WORKGROUP_SIZE}, ${WORKGROUP_SIZE})
     fn computeMain(@builtin(global_invocation_id) cell: vec3u) {
       var particleIndex = cellIndex(cell.xy);
-      var bodyTouched = cellStateIn[particleIndex];
+      var bodyTouched = particleStateIn[particleIndex];
 
       var netForce = vec2f(0, 0);
       var particle = Particle(bodyTouched, 
-        vec2f(cellStateIn[particleIndex + 1], cellStateIn[particleIndex + 2]),
-        vec2f(cellStateIn[particleIndex + 3], cellStateIn[particleIndex + 4])
+        vec2f(particleStateIn[particleIndex + 1], particleStateIn[particleIndex + 2]),
+        vec2f(particleStateIn[particleIndex + 3], particleStateIn[particleIndex + 4])
       );
       if (bodyTouched == 0.0) {
         for (var i = 0u; i < ${bodies.length}u; i++) {
@@ -286,19 +284,19 @@ const simulationShaderModule = device.createShaderModule({
       }
       if (bodyTouched == 0.0) {
         let acceleration = netForce; // assume mass = 1
-        let velocity = particle.velocity + acceleration * 2.;
+        let velocity = particle.velocity + acceleration * 2.; // 2 is just a delta time
         let position = particle.position + velocity;
-        cellStateOut[particleIndex + 0] = bodyTouched;
-        cellStateOut[particleIndex + 1] = position.x;
-        cellStateOut[particleIndex + 2] = position.y;
-        cellStateOut[particleIndex + 3] = velocity.x;
-        cellStateOut[particleIndex + 4] = velocity.y;
+        particleStateOut[particleIndex + 0] = bodyTouched;
+        particleStateOut[particleIndex + 1] = position.x;
+        particleStateOut[particleIndex + 2] = position.y;
+        particleStateOut[particleIndex + 3] = velocity.x;
+        particleStateOut[particleIndex + 4] = velocity.y;
       } else {
-        cellStateOut[particleIndex + 0] = bodyTouched;
-        cellStateOut[particleIndex + 1] = cellStateIn[particleIndex + 1];
-        cellStateOut[particleIndex + 2] = cellStateIn[particleIndex + 2];
-        cellStateOut[particleIndex + 3] = cellStateIn[particleIndex + 3];
-        cellStateOut[particleIndex + 4] = cellStateIn[particleIndex + 4];
+        particleStateOut[particleIndex + 0] = bodyTouched;
+        particleStateOut[particleIndex + 1] = particleStateIn[particleIndex + 1];
+        particleStateOut[particleIndex + 2] = particleStateIn[particleIndex + 2];
+        particleStateOut[particleIndex + 3] = particleStateIn[particleIndex + 3];
+        particleStateOut[particleIndex + 4] = particleStateIn[particleIndex + 4];
       }
     }
   `
@@ -310,21 +308,12 @@ const simulationPipeline = device.createComputePipeline({
   compute: { module: simulationShaderModule, entryPoint: "computeMain"}
 });
 
-const encoder = device.createCommandEncoder();
-const pass = encoder.beginRenderPass({
-  colorAttachments: [{
-     view: context.getCurrentTexture().createView(),
-     clearValue: { r: 0, g: 0, b: 0.4, a: 1 },
-     loadOp: "clear",
-     storeOp: "store",
-  }]
-});
-
 let step = 0;
 
 function updateGrid() {
   const encoder = device.createCommandEncoder();
 
+  // compute positions/collisions
   for (let i = 0; i < 100; ++i) {
     const computePass = encoder.beginComputePass();
     computePass.setPipeline(simulationPipeline);
@@ -344,16 +333,13 @@ function updateGrid() {
     }]
   });
 
-  // Draw the grid.
+  // Draw particles
   pass.setPipeline(cellPipeline);
   pass.setBindGroup(0, bindGroups[step % 2]);
   pass.setVertexBuffer(0, vertexBuffer);
   pass.draw(vertices.length / 2, GRID_SIZE * GRID_SIZE);
-
-  // End the render pass and submit the command buffer
   pass.end();
   device.queue.submit([encoder.finish()]);
-
   requestAnimationFrame(updateGrid);
 }
 
