@@ -14,7 +14,7 @@ context.configure({
   format: canvasFormat,
 });
 
-const GRID_SIZE = 128;
+const GRID_SIZE = 128*2;
 // Create a uniform buffer that describes the grid.
 const uniformArray = new Float32Array([GRID_SIZE, GRID_SIZE]);
 const uniformBuffer = device.createBuffer({
@@ -74,6 +74,33 @@ const vertexBufferLayout = {
   attributes: [{ format: "float32x2", offset: 0, shaderLocation: 0, }],
 };
 
+const bodies = [
+  { mass: 10.0, position: { x: 140, y: 140 }, color: { r: 1.0, g: 0.0, b: 0.0 } },
+  { mass: 10.0, position: { x: 120, y: 140 }, color: { r: 0.0, g: 1.0, b: 0.0 } },
+  { mass: 10.0, position: { x: 120, y: 120 }, color: { r: 1.0, g: 1.0, b: 0.0 } },
+  // { mass: 10.0, position: { x: 140, y: 120 }, color: { r: 0.0, g: 0.0, b: 1.0 } },
+]
+
+// Copy the bodies data into the buffer
+const bodiesData = new Float32Array(bodies.length * 6);
+for (let i = 0; i < bodies.length; i++) {
+  const body = bodies[i];
+  const offset = i * 6;
+  bodiesData[offset + 0] = body.mass;
+  bodiesData[offset + 1] = body.position.x;
+  bodiesData[offset + 2] = body.position.y;
+  bodiesData[offset + 3] = body.color.r;
+  bodiesData[offset + 4] = body.color.g;
+  bodiesData[offset + 5] = body.color.b;
+}
+
+// Create a buffer to store the bodies data
+const bodiesBuffer = device.createBuffer({
+  size: bodiesData.byteLength,
+  usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+});
+device.queue.writeBuffer(bodiesBuffer, 0, bodiesData);
+
 const cellShaderModule = device.createShaderModule({
   label: "Cell shader",
   code: `
@@ -93,11 +120,13 @@ struct FragInput {
 
 @group(0) @binding(0) var<uniform> grid: vec2f;
 @group(0) @binding(1) var<storage> cellState: array<f32>;
+@group(0) @binding(3) var<storage, read> bodies: array<f32>;
 
 @vertex
 fn vertexMain(input: VertexInput) -> VertexOutput {
-  let i = input.instance * 5;
+  let i = input.instance * ${ITEMS_PER_PARTICLE};
   if (cellState[i] == 0.0) {
+    // cell is still moving. Its position is stored in the cellState buffer.
     let cell = vec2f(cellState[i + 1], cellState[i + 2]);
     let cellOffset = cell / grid * 2;
     let gridPos = (input.pos + 1) / grid - 1 + cellOffset;
@@ -107,23 +136,15 @@ fn vertexMain(input: VertexInput) -> VertexOutput {
     output.color = vec3f(0, 1, 0.5);
     return output;
   } else {
+    // cell has collided, mark it original position with the collided body color
     var output: VertexOutput;
     let cell = vec2f(f32(input.instance) % grid.x, floor(f32(input.instance) / grid.x));
     let cellOffset = cell / grid * 2;
     let gridPos = (input.pos + 1) / grid - 1 + cellOffset;
     output.pos = vec4f(gridPos, 0, 1);
-    output.color = vec3f(1, 1, 1);
-    if (cellState[i] == 1.0) {
-      output.color = vec3f(1., 0, 0);
-    } else if (cellState[i] == 2.0) {
-      output.color = vec3f(0, 1., 0);
-    } else if (cellState[i] == 3.0) {
-      output.color = vec3f(0, 0, 1.);
-    } else {
-      output.color = vec3f(1, 1, 1.);
-    }
+    var bodyIndex = u32(cellState[i] - 1.0);
+    output.color = vec3f(bodies[bodyIndex * 6 + 3], bodies[bodyIndex * 6 + 4], bodies[bodyIndex * 6 + 5]);
     return output;
-  
   }
 }
 
@@ -147,6 +168,10 @@ const bindGroupLayout = device.createBindGroupLayout({
     binding: 2,
     visibility: GPUShaderStage.COMPUTE,
     buffer: { type: "storage"}
+  }, {
+    binding: 3,
+    visibility: GPUShaderStage.VERTEX | GPUShaderStage.COMPUTE,
+    buffer: { type: "read-only-storage"}
   }]
 });
 
@@ -176,7 +201,8 @@ const bindGroups = [
     entries: [
       { binding: 0, resource: { buffer: uniformBuffer }}, 
       { binding: 1, resource: { buffer: cellStateStorage[0] }}, 
-      { binding: 2, resource: { buffer: cellStateStorage[1] }}
+      { binding: 2, resource: { buffer: cellStateStorage[1] }},
+      { binding: 3, resource: { buffer: bodiesBuffer }}
     ],
   }),
    device.createBindGroup({
@@ -185,10 +211,13 @@ const bindGroups = [
     entries: [
       { binding: 0, resource: { buffer: uniformBuffer } }, 
       { binding: 1, resource: { buffer: cellStateStorage[1] }},
-      { binding: 2, resource: { buffer: cellStateStorage[0] }}
+      { binding: 2, resource: { buffer: cellStateStorage[0] }},
+      { binding: 3, resource: { buffer: bodiesBuffer }}
     ],
   })
 ];
+
+
 
 const WORKGROUP_SIZE = 8;
 const simulationShaderModule = device.createShaderModule({
@@ -210,12 +239,7 @@ const simulationShaderModule = device.createShaderModule({
       position: vec2f,
       color: vec3f
     };
-    
-    const bodies: array<Body, 3> = array<Body, 3>(
-      Body(10.0, vec2f(0.0, 0.0), vec3f(1.0, 0.0, 0.0)),
-      Body(10.0, vec2f(150.0, 120.0), vec3f(0.0, 1.0, 0.0)), 
-      Body(10.0, vec2f(50.0, 110.0), vec3f(0.0, 0.0, 1.0)) 
-    );
+    @group(0) @binding(3) var<storage, read> bodies: array<f32>;
 
     fn cellIndex(cell: vec2u) -> u32 {
       return ((cell.y % u32(grid.y)) * u32(grid.x) +
@@ -225,12 +249,12 @@ const simulationShaderModule = device.createShaderModule({
     fn calculateGravityForce(body: Body, particle: Particle) -> vec2f {
       let diff = body.position - particle.position;
       let d = length(diff);
-      if (d <= 2.0) {
+      if (d <= 1.) {
         return vec2f(0.0, 0.0);
       }
       // Calculate the force magnitude
       const G = 0.01;
-      let forceMagnitude = G * (body.mass * 1.) / (d* d);
+      let forceMagnitude = (G * (body.mass * 1.) / (d* d));
       return diff * forceMagnitude / d;
     }
 
@@ -245,14 +269,19 @@ const simulationShaderModule = device.createShaderModule({
         vec2f(cellStateIn[particleIndex + 3], cellStateIn[particleIndex + 4])
       );
       if (bodyTouched == 0.0) {
-        for (var i = 0u; i < 3u; i++) {
-            let force = calculateGravityForce(bodies[i], particle);
-            if (length(force) > 0) {
-              netForce += force;
-            } else {
-              bodyTouched = f32(i + 1);
-              break;
-            }
+        for (var i = 0u; i < ${bodies.length}u; i++) {
+          let body = Body(
+            bodies[i * 6 + 0],
+            vec2f(bodies[i * 6 + 1], bodies[i * 6 + 2]),
+            vec3f(bodies[i * 6 + 3], bodies[i * 6 + 4], bodies[i * 6 + 5])
+          );
+          let force = calculateGravityForce(body, particle);
+          if (length(force) > 0) {
+            netForce += force;
+          } else {
+            bodyTouched = f32(i + 1);
+            break;
+          }
         }
       }
       if (bodyTouched == 0.0) {
@@ -295,13 +324,16 @@ let step = 0;
 
 function updateGrid() {
   const encoder = device.createCommandEncoder();
-  const computePass = encoder.beginComputePass();
-  computePass.setPipeline(simulationPipeline);
-  computePass.setBindGroup(0, bindGroups[step % 2]);
-  const workgroupCount = Math.ceil(GRID_SIZE / WORKGROUP_SIZE);
-  computePass.dispatchWorkgroups(workgroupCount, workgroupCount);
-  computePass.end();
 
+  for (let i = 0; i < 100; ++i) {
+    const computePass = encoder.beginComputePass();
+    computePass.setPipeline(simulationPipeline);
+    computePass.setBindGroup(0, bindGroups[step % 2]);
+    const workgroupCount = Math.ceil(GRID_SIZE / WORKGROUP_SIZE);
+    computePass.dispatchWorkgroups(workgroupCount, workgroupCount);
+    computePass.end();
+    step++; 
+  }
 
   const pass = encoder.beginRenderPass({
     colorAttachments: [{
@@ -322,7 +354,6 @@ function updateGrid() {
   pass.end();
   device.queue.submit([encoder.finish()]);
 
-  step++; // Increment the step count
   requestAnimationFrame(updateGrid);
 }
 
