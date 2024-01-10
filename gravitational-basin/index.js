@@ -28,15 +28,15 @@ device.queue.writeBuffer(uniformBuffer, 0, uniformArray);
 const ITEMS_PER_PARTICLE = 5; // collided body index, x, y, vx, vy
 const particleStateArray = new Float32Array(GRID_SIZE * GRID_SIZE * ITEMS_PER_PARTICLE);
 
-// Create a storage buffer to hold the particles state.
+// Create a storage buffer to hold the particles state (ping ponged)
 const particleStorage = [
   device.createBuffer({
-    label: "Cell State A",
+    label: "Particle State A",
     size: particleStateArray.byteLength,
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
   }),
   device.createBuffer({
-    label: "Cell State B",
+    label: "Particle State B",
     size: particleStateArray.byteLength,
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
   })
@@ -75,7 +75,7 @@ const vertexBufferLayout = {
 };
 
 const bodies = [
-  { mass: 10.0, position: { x: 140, y: 140 }, color: { r: 1.0, g: 0.0, b: 0.0 } },
+  { mass: 10.0, position: { x: 10, y: 140 }, color: { r: 1.0, g: 0.0, b: 0.0 } },
   { mass: 10.0, position: { x: 120, y: 140 }, color: { r: 0.0, g: 1.0, b: 0.0 } },
   { mass: 10.0, position: { x: 120, y: 120 }, color: { r: 1.0, g: 1.0, b: 0.0 } },
   // { mass: 10.0, position: { x: 140, y: 120 }, color: { r: 0.0, g: 0.0, b: 1.0 } },
@@ -101,7 +101,7 @@ const bodiesBuffer = device.createBuffer({
 });
 device.queue.writeBuffer(bodiesBuffer, 0, bodiesData);
 
-const cellShaderModule = device.createShaderModule({
+const particleShaderModule = device.createShaderModule({
   label: 'Particle render shader',
   code: `
 struct VertexInput {
@@ -136,14 +136,14 @@ fn vertexMain(input: VertexInput) -> VertexOutput {
     output.color = vec3f(0, 1, 0.5);
     return output;
   } else {
-    // cell has collided, mark it original position with the collided body color
+    // particle has collided, mark it original position with the collided body color
     var output: VertexOutput;
     let cell = vec2f(f32(input.instance) % gridSize.x, floor(f32(input.instance) / gridSize.x));
     let cellOffset = cell / gridSize * 2;
     let gridPos = (input.pos + 1) / gridSize - 1 + cellOffset;
     output.pos = vec4f(gridPos, 0, 1);
     var bodyIndex = u32(particleState[i] - 1.0);
-    output.color = vec3f(bodies[bodyIndex * 6 + 3], bodies[bodyIndex * 6 + 4], bodies[bodyIndex * 6 + 5]);
+    output.color = vec3f(bodies[bodyIndex * 6 + 3], bodies[bodyIndex * 6 + 4], bodies[bodyIndex * 6 + 5])*.9;
     return output;
   }
 }
@@ -155,7 +155,7 @@ fn fragmentMain(input: FragInput) -> @location(0) vec4f {
 });
 
 const bindGroupLayout = device.createBindGroupLayout({
-  label: "Cell Bind Group Layout",
+  label: "Particle Bind Group Layout",
   entries: [{
     binding: 0,
     visibility: GPUShaderStage.VERTEX | GPUShaderStage.COMPUTE | GPUShaderStage.FRAGMENT,
@@ -179,16 +179,16 @@ const pipelineLayout = device.createPipelineLayout({
   label: "Particle Pipeline Layout", bindGroupLayouts: [ bindGroupLayout ]
 });
 
-const cellPipeline = device.createRenderPipeline({
+const particlePipeline = device.createRenderPipeline({
   label: "Particle pipeline",
   layout: pipelineLayout,
   vertex: {
-    module: cellShaderModule,
+    module: particleShaderModule,
     entryPoint: "vertexMain",
     buffers: [vertexBufferLayout]
   },
   fragment: {
-    module: cellShaderModule,
+    module: particleShaderModule,
     entryPoint: "fragmentMain",
     targets: [{ format: canvasFormat }]
   }
@@ -238,6 +238,10 @@ const simulationShaderModule = device.createShaderModule({
       color: vec3f
     };
     @group(0) @binding(3) var<storage, read> bodies: array<f32>;
+    const PARTICLE_MASS = 1.0;
+    const G = 0.01;
+    const dT = .2;
+    const collisionRadius = 1.0;
 
     fn cellIndex(cell: vec2u) -> u32 {
       return ((cell.y % u32(grid.y)) * u32(grid.x) +
@@ -247,12 +251,12 @@ const simulationShaderModule = device.createShaderModule({
     fn calculateGravityForce(body: Body, particle: Particle) -> vec2f {
       let diff = body.position - particle.position;
       let d = length(diff);
-      if (d <= 1.) {
+      if (d <= collisionRadius) {
+        // we consider this a collision. Not very accurate but it is a simulation
         return vec2f(0.0, 0.0);
       }
       // Calculate the force magnitude
-      const G = 0.01;
-      let forceMagnitude = (G * (body.mass * 1.) / (d* d));
+      let forceMagnitude = (G * (body.mass * PARTICLE_MASS) / (d* d));
       return diff * forceMagnitude / d;
     }
 
@@ -283,9 +287,13 @@ const simulationShaderModule = device.createShaderModule({
         }
       }
       if (bodyTouched == 0.0) {
-        let acceleration = netForce; // assume mass = 1
-        let velocity = particle.velocity + acceleration * 2.; // 2 is just a delta time
-        let position = particle.position + velocity;
+        // Calculate acceleration (Newton's second law: F = ma)
+        let acceleration = netForce/PARTICLE_MASS;
+        // Update velocity (v = u + at)
+        let velocity = particle.velocity + acceleration * dT; 
+        // Update position (s = ut + 0.5at^2)
+        let position = particle.position + velocity * dT + 0.5 * acceleration * dT * dT;
+
         particleStateOut[particleIndex + 0] = bodyTouched;
         particleStateOut[particleIndex + 1] = position.x;
         particleStateOut[particleIndex + 2] = position.y;
@@ -334,7 +342,7 @@ function updateGrid() {
   });
 
   // Draw particles
-  pass.setPipeline(cellPipeline);
+  pass.setPipeline(particlePipeline);
   pass.setBindGroup(0, bindGroups[step % 2]);
   pass.setVertexBuffer(0, vertexBuffer);
   pass.draw(vertices.length / 2, GRID_SIZE * GRID_SIZE);
