@@ -25,7 +25,7 @@ const uniformBuffer = device.createBuffer({
 device.queue.writeBuffer(uniformBuffer, 0, uniformArray);
 
 // Create an array representing the active state of each particle.
-const ITEMS_PER_PARTICLE = 5; // collided body index, x, y, vx, vy
+const ITEMS_PER_PARTICLE = 6; // collided body index, x, y, vx, vy, life
 const particleStateArray = new Float32Array(GRID_SIZE * GRID_SIZE * ITEMS_PER_PARTICLE);
 
 // Create a storage buffer to hold the particles state (ping ponged)
@@ -75,10 +75,11 @@ const vertexBufferLayout = {
 };
 
 const bodies = [
-  { mass: 10.0, position: { x: 10, y: 140 }, color: { r: 1.0, g: 0.0, b: 0.0 } },
+  { mass: 10.0, position: { x: 0, y: 128 }, color: { r: 1.0, g: 0.0, b: 0.0 } },
   { mass: 10.0, position: { x: 120, y: 140 }, color: { r: 0.0, g: 1.0, b: 0.0 } },
   { mass: 10.0, position: { x: 120, y: 120 }, color: { r: 1.0, g: 1.0, b: 0.0 } },
-  // { mass: 10.0, position: { x: 140, y: 120 }, color: { r: 0.0, g: 0.0, b: 1.0 } },
+  { mass: 10.0, position: { x: 120, y: 0 }, color: { r: 0.0, g: 0.0, b: 1.0 } },
+  { mass: 40.0, position: { x: 120, y: 259 }, color: { r: 0.0, g: 1.0, b: 1.0 } },
 ]
 
 // Copy the bodies data into the buffer
@@ -111,11 +112,11 @@ struct VertexInput {
 
 struct VertexOutput {
   @builtin(position) pos: vec4f,
-  @location(0) color: vec3f,
+  @location(0) color: vec4f,
 };
 
 struct FragInput {
-  @location(0) color: vec3f,
+  @location(0) color: vec4f,
 };
 
 @group(0) @binding(0) var<uniform> gridSize: vec2f;
@@ -133,7 +134,7 @@ fn vertexMain(input: VertexInput) -> VertexOutput {
 
     var output: VertexOutput;
     output.pos = vec4f(gridPos, 0, 1);
-    output.color = vec3f(0, 1, 0.5);
+    output.color = vec4f(0, 1, 0.5, 1.0);
     return output;
   } else {
     // particle has collided, mark it original position with the collided body color
@@ -143,14 +144,18 @@ fn vertexMain(input: VertexInput) -> VertexOutput {
     let gridPos = (input.pos + 1) / gridSize - 1 + cellOffset;
     output.pos = vec4f(gridPos, 0, 1);
     var bodyIndex = u32(particleState[i] - 1.0);
-    output.color = vec3f(bodies[bodyIndex * 6 + 3], bodies[bodyIndex * 6 + 4], bodies[bodyIndex * 6 + 5])*.9;
+    var alpha = max(0.4, 1.0 - particleState[i + 5]/10000);
+    output.color = vec4f(
+      bodies[bodyIndex * 6 + 3], bodies[bodyIndex * 6 + 4], bodies[bodyIndex * 6 + 5],
+      alpha // fade out the particle
+    ) * alpha;
     return output;
   }
 }
 
 @fragment
 fn fragmentMain(input: FragInput) -> @location(0) vec4f {
-  return vec4f(input.color, 1);
+  return input.color;
 }`
 });
 
@@ -299,12 +304,14 @@ const simulationShaderModule = device.createShaderModule({
         particleStateOut[particleIndex + 2] = position.y;
         particleStateOut[particleIndex + 3] = velocity.x;
         particleStateOut[particleIndex + 4] = velocity.y;
+        particleStateOut[particleIndex + 5] = particleStateIn[particleIndex + 5] + 1.0;
       } else {
         particleStateOut[particleIndex + 0] = bodyTouched;
         particleStateOut[particleIndex + 1] = particleStateIn[particleIndex + 1];
         particleStateOut[particleIndex + 2] = particleStateIn[particleIndex + 2];
         particleStateOut[particleIndex + 3] = particleStateIn[particleIndex + 3];
         particleStateOut[particleIndex + 4] = particleStateIn[particleIndex + 4];
+        particleStateOut[particleIndex + 5] = particleStateIn[particleIndex + 5];
       }
     }
   `
@@ -347,6 +354,7 @@ function updateGrid() {
   pass.setVertexBuffer(0, vertexBuffer);
   pass.draw(vertices.length / 2, GRID_SIZE * GRID_SIZE);
   pass.end();
+
   device.queue.submit([encoder.finish()]);
   requestAnimationFrame(updateGrid);
 }
