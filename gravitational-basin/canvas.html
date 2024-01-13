@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<!--
+Created using JS Bin
+http://jsbin.com
+
+Copyright (c) 2024 by anonymous (http://jsbin.com/fedurideni/1/edit)
+
+Released under the MIT license: http://jsbin.mit-license.org
+-->
+<meta name="robots" content="noindex">
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Gravitational basins with canvas</title>
+</head>
+<body>
+  <canvas id="simulationCanvas"></canvas>
+<script id="jsbin-javascript">
+const rectangle = { top: 0, left: 0, width: 250, height: 300 };
+let maxActive = 1000;
+let currentActive = 0;
+let lastIndex = -1;
+const coordinates = generateRandomCoordinates(rectangle);
+const bodies = [
+  { mass: 10, x: 10, y: 150, color: 'blue' },
+  { mass: 10, x: 50, y: 120, color: 'green' },
+  { mass: 10, x: 50, y: 110, color: 'red' },
+];
+
+const canvas = document.getElementById('simulationCanvas');
+
+const ctx = canvas.getContext('2d');
+const width = ctx.width = rectangle.width;
+const height = ctx.height = rectangle.height;
+canvas.width = width;
+canvas.height = height;
+
+const particles = [];
+let lastX = 100, lastY = 100;
+clearRect();
+const G = 0.1; // 6.67430e-11; // Real-world value, likely needs adjustment
+
+function calculateGravityForce(body, particle) {
+    // Calculate the distance between body and particle
+    const dx = body.x - particle.x;
+    const dy = body.y - particle.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // Avoid division by zero for extremely close distances
+    if (distance <= 2) {
+      particle.doneBody = body;
+      return { x: 0, y: 0 };
+    }
+
+    // Calculate the force magnitude
+    const forceMagnitude = G * (body.mass * particle.mass) / (distance * distance);
+
+    // Calculate force components 
+    const forceX = forceMagnitude * (dx / distance);
+    const forceY = forceMagnitude * (dy / distance);
+
+    return { x: forceX, y: forceY };
+}
+
+moveToNext();
+
+function moveToNext() {
+  if (lastIndex >= coordinates.length) return;
+  while (currentActive < maxActive && lastIndex < coordinates.length) {
+    lastIndex += 1;
+    const {x, y} = coordinates[lastIndex]
+    const particle = { 
+      x: x, y: y, 
+      originalX: x, originalY: y,
+      vx: 0, vy: 0, mass: 1 
+    };
+    particles.push(particle);
+    currentActive += 1;
+  }
+}
+
+// Simulation loop
+function simulate() {
+    // Main loop
+    setInterval(() => {
+      particles.forEach(currentParticle => {
+        if (!currentParticle.doneBody) {
+          let netForce = { x: 0, y: 0 };      
+          bodies.forEach(body => {
+            if (currentParticle.doneBody) return;
+            let force = calculateGravityForce(body, currentParticle);
+            netForce.x += force.x;
+            netForce.y += force.y;
+          });
+
+          updateParticleMotion(currentParticle, netForce);
+          if (currentParticle.doneBody) {
+            currentActive -= 1;
+            clearRect();
+            moveToNext();
+          }
+        }
+      });
+      particles.forEach(drawParticle);
+    }, 0); // Update interval
+}
+
+// Start simulation
+simulate();
+
+function drawParticle(particle) {
+  if (particle.doneBody) {
+    ctx.fillStyle = particle.doneBody.color;
+    ctx.fillRect(particle.originalX, particle.originalY, 2, 2); // Drawing a small dot
+    ctx.fillStyle = 'black';
+  } else {
+    let px = width * (particle.x - rectangle.left)/rectangle.width;
+    let py = height * (particle.y - rectangle.top) / rectangle.height;
+    if (px < 0 || py > width || py < 0 || py > height) return;
+    ctx.fillRect(px, py, 2, 2); // Drawing a small dot
+  }
+}
+
+function clearRect() {
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, width, height);
+  bodies.forEach(body => {
+    ctx.fillStyle = body.color;
+    ctx.fillRect(body.x, body.y, 4, 4); // Drawing a small dot
+    ctx.fillStyle = 'black'
+  })
+               
+}
+
+function updateParticleMotion(particle, force) {
+    // Time step for each update, in seconds
+    const deltaTime = 2;
+
+    // Calculate acceleration (Newton's second law: F = ma)
+    const ax = force.x / particle.mass;
+    const ay = force.y / particle.mass;
+
+    // Update velocity (v = u + at)
+    particle.vx += ax * deltaTime;
+    particle.vy += ay * deltaTime;
+
+    // Update position (s = ut + 0.5at^2)
+    // Since deltaTime is small, we can approximate position change as: s ≈ ut
+    particle.x += particle.vx * deltaTime;
+    particle.y += particle.vy * deltaTime;
+    // Boundary check (optional, based on how you want to handle boundaries)
+    // For example, stop the particle or make it bounce on the edges
+}
+
+
+function generateRandomCoordinates(rectangle) {
+    let coordinates = [];
+
+    // Loop through each pixel and add its coordinates to the array
+    for (let y = rectangle.top; y < rectangle.top + rectangle.height; y++) {
+        for (let x = rectangle.left; x < rectangle.left + rectangle.width; x++) {
+            coordinates.push({ x, y });
+        }
+    }
+
+    // Shuffle the array to randomize the order
+    for (let i = coordinates.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [coordinates[i], coordinates[j]] = [coordinates[j], coordinates[i]];
+    }
+
+    return coordinates;
+}
+</script>
+</body>
+</html>
