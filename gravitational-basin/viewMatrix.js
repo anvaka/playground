@@ -35,6 +35,8 @@ export default class ViewMatrix {
     this.targetDistance = 5;
 
     this.projection = mat4.create();
+    this.fov = drawContext.fov;
+
     const ar = drawContext.width/drawContext.height;
     mat4.perspective(this.projection, drawContext.fov, ar, 0.1, 1000);
 
@@ -75,6 +77,18 @@ export default class ViewMatrix {
   updateSize(width, height, fov) {
     const ar = width/height;
     mat4.perspective(this.projection, fov, ar, 0.1, 1000);
+    this.update();
+  }
+
+  showRectangle(rect) {
+    this.position[0] = rect.left + rect.width/2;
+    this.position[1] = rect.top - rect.height/2;
+    this.position[2] = rect.height/2 / Math.tan(this.fov/2);
+    this.center[0] = rect.left + rect.width/2;
+    this.center[1] = rect.top - rect.height/2;
+    mat4.lookAt(this.matrix, this.position, this.center, [0, 1, 0]);
+    mat4.invert(this.cameraWorld, this.matrix);
+    this.deconstructPositionRotation();
     this.update();
   }
 

@@ -1,12 +1,12 @@
 import { createSimulation } from './simulation.js';
-const GRID_SIZE = 128*2;
+const GRID_SIZE = 128*4;
 
 const bodies = [
-  { mass: 10.0, position: { x: 0, y: 128 }, color: { r: 1.0, g: 0.0, b: 0.0 } },
-  { mass: 10.0, position: { x: 120, y: 140 }, color: { r: 0.0, g: 1.0, b: 0.0 } },
-  { mass: 10.0, position: { x: 120, y: 120 }, color: { r: 1.0, g: 1.0, b: 0.0 } },
-  { mass: 10.0, position: { x: 120, y: 0 }, color: { r: 0.0, g: 0.0, b: 1.0 } },
-  { mass: 40.0, position: { x: 120, y: 259 }, color: { r: 0.0, g: 1.0, b: 1.0 } },
+  { mass: 10.0, position: { x: -120, y: 0 }, color: { r: 1.0, g: 0.0, b: 0.0 } },
+  { mass: 10.0, position: { x: 120, y: 0 }, color: { r: 0.0, g: 1.0, b: 0.0 } },
+  { mass: 10.0, position: { x: 0, y: 0 }, color: { r: 1.0, g: 1.0, b: 0.0 } },
+  // { mass: 10.0, position: { x: 120, y: 0 }, color: { r: 0.0, g: 0.0, b: 1.0 } },
+  { mass: 10.0, position: { x: 0, y: 120 }, color: { r: 0.0, g: 1.0, b: 1.0 } },
 ]
 
 getWebGPUContext().then((gpuContext) => {
@@ -36,5 +36,5 @@ async function getWebGPUContext() {
     device: device,
     format: canvasFormat,
   });
-  return {context, device, canvasFormat};
+  return {context, device, canvasFormat, canvas};
 }
