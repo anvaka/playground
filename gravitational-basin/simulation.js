@@ -1,5 +1,19 @@
+import ViewMatrix from './viewMatrix.js';
 
 export function createSimulation(gpuContext, GRID_SIZE, bodies) {
+  const drawContext = {
+    width: GRID_SIZE,
+    height: GRID_SIZE,
+    fov: 45
+  };
+  const simulationRectangle = {
+    left: 0,
+    top: 256,
+    width: 256,
+    height: 256
+  }
+  const view = new ViewMatrix(drawContext);
+
   const { device, canvasFormat, context } = gpuContext;
   // Create a uniform buffer that describes the grid.
   const uniformArray = new Float32Array([GRID_SIZE, GRID_SIZE]);
@@ -8,10 +22,20 @@ export function createSimulation(gpuContext, GRID_SIZE, bodies) {
     size: uniformArray.byteLength,
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
   });
+
   device.queue.writeBuffer(uniformBuffer, 0, uniformArray);
 
+  const mvpTypedArray = view.modelViewProjection;
+  const mvpUniformBuffer = device.createBuffer({
+      label: "mvp matrix",
+      size: mvpTypedArray.byteLength,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+  device.queue.writeBuffer(mvpUniformBuffer, 0, view.modelViewProjection);
+
+
   // Create an array representing the active state of each particle.
-  const ITEMS_PER_PARTICLE = 6; // collided body index, x, y, vx, vy, life
+  const ITEMS_PER_PARTICLE = 8; // collided body index, x, y, vx, vy, life, startX, startY
   const particleStateArray = new Float32Array(GRID_SIZE * GRID_SIZE * ITEMS_PER_PARTICLE);
 
   // Create a storage buffer to hold the particles state (ping ponged)
@@ -29,23 +53,26 @@ export function createSimulation(gpuContext, GRID_SIZE, bodies) {
   ];
 
   for (let i = 0; i < particleStateArray.length / ITEMS_PER_PARTICLE; ++i) {
-    particleStateArray[i * ITEMS_PER_PARTICLE] = 0;
-    let x = i % GRID_SIZE;
-    let y = Math.floor(i / GRID_SIZE);
+    let x = ((i % GRID_SIZE) / GRID_SIZE) * simulationRectangle.width + simulationRectangle.left;
+    let y = simulationRectangle.top - (Math.floor(i / GRID_SIZE) / GRID_SIZE) * simulationRectangle.height;
+
+    particleStateArray[i * ITEMS_PER_PARTICLE + 0] = 0;
     particleStateArray[i * ITEMS_PER_PARTICLE + 1] = x;
     particleStateArray[i * ITEMS_PER_PARTICLE + 2] = y;
+    particleStateArray[i * ITEMS_PER_PARTICLE + 6] = x;
+    particleStateArray[i * ITEMS_PER_PARTICLE + 7] = y;
   }
   device.queue.writeBuffer(particleStorage[0], 0, particleStateArray);
   device.queue.writeBuffer(particleStorage[1], 0, particleStateArray);
 
   const vertices = new Float32Array([
-    -0.8, -0.8, // Triangle 1 
-    0.8, -0.8,
-    0.8, 0.8,
+   -0.5, -0.5, // Triangle 1 
+    0.5, -0.5,
+    0.5,  0.5,
 
-    -0.8, -0.8, // Triangle 2 
-    0.8, 0.8,
-    -0.8, 0.8,
+    -0.5, -0.5, // Triangle 2 
+     0.5,  0.5,
+    -0.5,  0.5,
   ]);
 
   const vertexBuffer = device.createBuffer({
@@ -100,35 +127,26 @@ struct FragInput {
 @group(0) @binding(0) var<uniform> gridSize: vec2f;
 @group(0) @binding(1) var<storage> particleState: array<f32>;
 @group(0) @binding(3) var<storage, read> bodies: array<f32>;
+@group(0) @binding(4) var<uniform> modelViewProjection: mat4x4<f32>;
 
 @vertex
 fn vertexMain(input: VertexInput) -> VertexOutput {
+  var output: VertexOutput;
   let i = input.instance * ${ITEMS_PER_PARTICLE};
-  if (particleState[i] == 0.0) {
-    // particle is still moving. Its position is stored in the particleState buffer.
-    let cell = vec2f(particleState[i + 1], particleState[i + 2]);
-    let cellOffset = cell / gridSize * 2;
-    let gridPos = (input.pos + 1) / gridSize - 1 + cellOffset;
-
-    var output: VertexOutput;
-    output.pos = vec4f(gridPos, 0, 1);
-    output.color = vec4f(0, 1, 0.5, 1.0);
-    return output;
-  } else {
-    // particle has collided, mark it original position with the collided body color
-    var output: VertexOutput;
-    let cell = vec2f(f32(input.instance) % gridSize.x, floor(f32(input.instance) / gridSize.x));
-    let cellOffset = cell / gridSize * 2;
-    let gridPos = (input.pos + 1) / gridSize - 1 + cellOffset;
-    output.pos = vec4f(gridPos, 0, 1);
+  var pos = vec2f(particleState[i + 1], particleState[i + 2]) + input.pos;
+  output.color = vec4f(0, 1, 0.5, 1.0);
+  if (particleState[i] != 0.0) {
+    // it has collided with a body
     var bodyIndex = u32(particleState[i] - 1.0);
     var alpha = max(0.4, 1.0 - particleState[i + 5]/10000);
     output.color = vec4f(
       bodies[bodyIndex * 6 + 3], bodies[bodyIndex * 6 + 4], bodies[bodyIndex * 6 + 5],
       alpha // fade out the particle
     ) * alpha;
-    return output;
+    pos = vec2f(particleState[i + 6], particleState[i + 7]) + input.pos;
   }
+  output.pos = modelViewProjection * vec4f(pos, 0, 1);
+  return output;
 }
 
 @fragment
@@ -154,9 +172,13 @@ fn fragmentMain(input: FragInput) -> @location(0) vec4f {
     }, {
       binding: 3,
       visibility: GPUShaderStage.VERTEX | GPUShaderStage.COMPUTE,
-      buffer: { type: "read-only-storage" }
-    }]
-  });
+      buffer: { type: "read-only-storage" } // bodies positions
+    }, {
+      binding: 4,
+      visibility: GPUShaderStage.VERTEX,
+      buffer: { type: 'uniform' } // mvp matrix
+    }
+  ]});
 
   const pipelineLayout = device.createPipelineLayout({
     label: "Particle Pipeline Layout", bindGroupLayouts: [bindGroupLayout]
@@ -185,7 +207,8 @@ fn fragmentMain(input: FragInput) -> @location(0) vec4f {
         { binding: 0, resource: { buffer: uniformBuffer } },
         { binding: 1, resource: { buffer: particleStorage[0] } },
         { binding: 2, resource: { buffer: particleStorage[1] } },
-        { binding: 3, resource: { buffer: bodiesBuffer } }
+        { binding: 3, resource: { buffer: bodiesBuffer } },
+        { binding: 4, resource: { buffer: mvpUniformBuffer } }
       ],
     }),
     device.createBindGroup({
@@ -195,7 +218,8 @@ fn fragmentMain(input: FragInput) -> @location(0) vec4f {
         { binding: 0, resource: { buffer: uniformBuffer } },
         { binding: 1, resource: { buffer: particleStorage[1] } },
         { binding: 2, resource: { buffer: particleStorage[0] } },
-        { binding: 3, resource: { buffer: bodiesBuffer } }
+        { binding: 3, resource: { buffer: bodiesBuffer } },
+        { binding: 4, resource: { buffer: mvpUniformBuffer } }
       ],
     })
   ];
@@ -223,7 +247,7 @@ fn fragmentMain(input: FragInput) -> @location(0) vec4f {
     @group(0) @binding(3) var<storage, read> bodies: array<f32>;
     const PARTICLE_MASS = 1.0;
     const G = 0.01;
-    const dT = .2;
+    const dT = 2.;
     const collisionRadius = 1.0;
 
     fn cellIndex(cell: vec2u) -> u32 {
@@ -239,7 +263,7 @@ fn fragmentMain(input: FragInput) -> @location(0) vec4f {
         return vec2f(0.0, 0.0);
       }
       // Calculate the force magnitude
-      let forceMagnitude = (G * (body.mass * PARTICLE_MASS) / (d* d));
+      let forceMagnitude = (G * (body.mass * PARTICLE_MASS) / (d * d));
       return diff * forceMagnitude / d;
     }
 
