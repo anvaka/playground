@@ -1,4 +1,5 @@
 import ViewMatrix from './viewMatrix.js';
+import createMapControls from './input/createMapControls.js';
 
 const ITEMS_PER_PARTICLE = 8; // collided body index, x, y, vx, vy, life, startX, startY
 const WORKGROUP_SIZE = 8;
@@ -10,16 +11,27 @@ export function createSimulation(gpuContext, GRID_SIZE, bodies) {
   const drawContext = {
     width: canvas.width,
     height: canvas.height,
-    fov: 45
+    fov: 45,
+    canvas: canvas,
+    getInputOptions() {
+      // return {
+      //  minZoom: 0.1,
+      //  maxZoom: 12
+      // };
+    },
+    pixelRatio: 1, // window.devicePixelRatio,
   };
   const simulationRectangle = {
-    left: -256,
-    top: 256,
-    width: 2*256,
-    height:  2*256
+    left: -128,
+    top: 128,
+    width: 256,
+    height:  256
   }
   const view = new ViewMatrix(drawContext);
   view.showRectangle(simulationRectangle);
+  debugger;
+  drawContext.view = view;
+  const mapControls = createMapControls(drawContext);
 
   // Create a uniform buffer that describes the grid.
   const uniformArray = new Float32Array([GRID_SIZE, GRID_SIZE]);
@@ -224,7 +236,7 @@ fn fragmentMain(input: FragInput) -> @location(0) vec4f {
     @group(0) @binding(3) var<storage, read> bodies: array<f32>;
     const PARTICLE_MASS = 1.0;
     const G = 0.01;
-    const dT = 0.5;
+    const dT = 1.5;
     const collisionRadius = 1.0;
 
     fn cellIndex(cell: vec2u) -> u32 {
@@ -305,6 +317,10 @@ fn fragmentMain(input: FragInput) -> @location(0) vec4f {
   let step = 0;
 
   function updateGrid() {
+    if (view.updated) {
+      device.queue.writeBuffer(mvpUniformBuffer, 0, view.modelViewProjection);
+      view.updated = false;
+    }
     const encoder = device.createCommandEncoder();
 
     // compute positions/collisions

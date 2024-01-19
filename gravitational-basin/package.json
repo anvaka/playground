@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "amator": "^1.1.0",
     "gl-matrix": "^3.4.3",
     "ngraph.events": "^1.2.2"
   },
