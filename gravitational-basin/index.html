@@ -9,14 +9,23 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
+      text-decoration: none;
+      font-family: sans-serif;
+      font-size: 14px;
     }
     * {
       box-sizing: border-box;
+    }
+    a#recompute {
+      position: absolute;
+      top: 10px;
+      left: 10px;
     }
   </style>
 </head>
 <body>
   <canvas width="512" height="512"></canvas>
+  <a href="#" id="recompute">Recompute in the current area</a>
   <script type="module" src="index.js"></script>
 </body>
 </html>

@@ -5,6 +5,14 @@ const ITEMS_PER_PARTICLE = 8; // collided body index, x, y, vx, vy, life, startX
 const WORKGROUP_SIZE = 8;
 
 export function createSimulation(gpuContext, GRID_SIZE, bodies) {
+  let recomputeLink = document.querySelector('#recompute');
+  if (recomputeLink) {
+    recomputeLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      step = 0;
+      recomputeArea();
+    });
+  }
   const { device, canvasFormat, context, canvas } = gpuContext;
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -25,11 +33,10 @@ export function createSimulation(gpuContext, GRID_SIZE, bodies) {
     left: -128,
     top: 128,
     width: 256,
-    height:  256
+    height: 256
   }
   const view = new ViewMatrix(drawContext);
   view.showRectangle(simulationRectangle);
-  debugger;
   drawContext.view = view;
   const mapControls = createMapControls(drawContext);
 
@@ -45,22 +52,22 @@ export function createSimulation(gpuContext, GRID_SIZE, bodies) {
 
   const mvpTypedArray = view.modelViewProjection;
   const mvpUniformBuffer = device.createBuffer({
-      label: "mvp matrix",
-      size: mvpTypedArray.byteLength,
-      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    label: "mvp matrix",
+    size: mvpTypedArray.byteLength,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
   });
   device.queue.writeBuffer(mvpUniformBuffer, 0, view.modelViewProjection);
 
-  const particleStorage = initParticles(GRID_SIZE, simulationRectangle, device);
+  let particleStorage = initParticles(GRID_SIZE, simulationRectangle, device);
 
   const vertices = new Float32Array([
-   -0.5, -0.5, // Triangle 1 
+    -0.5, -0.5, // Triangle 1 
     0.5, -0.5,
-    0.5,  0.5,
+    0.5, 0.5,
 
     -0.5, -0.5, // Triangle 2 
-     0.5,  0.5,
-    -0.5,  0.5,
+    0.5, 0.5,
+    -0.5, 0.5,
   ]);
 
   const vertexBuffer = device.createBuffer({
@@ -168,7 +175,8 @@ fn fragmentMain(input: FragInput) -> @location(0) vec4f {
       visibility: GPUShaderStage.VERTEX,
       buffer: { type: 'uniform' } // mvp matrix
     }
-  ]});
+    ]
+  });
 
   const pipelineLayout = device.createPipelineLayout({
     label: "Particle Pipeline Layout", bindGroupLayouts: [bindGroupLayout]
@@ -189,30 +197,7 @@ fn fragmentMain(input: FragInput) -> @location(0) vec4f {
     }
   });
 
-  const bindGroups = [
-    device.createBindGroup({
-      label: "Particle renderer bind group A",
-      layout: bindGroupLayout,
-      entries: [
-        { binding: 0, resource: { buffer: uniformBuffer } },
-        { binding: 1, resource: { buffer: particleStorage[0] } },
-        { binding: 2, resource: { buffer: particleStorage[1] } },
-        { binding: 3, resource: { buffer: bodiesBuffer } },
-        { binding: 4, resource: { buffer: mvpUniformBuffer } }
-      ],
-    }),
-    device.createBindGroup({
-      label: "Particle renderer bind group B",
-      layout: bindGroupLayout,
-      entries: [
-        { binding: 0, resource: { buffer: uniformBuffer } },
-        { binding: 1, resource: { buffer: particleStorage[1] } },
-        { binding: 2, resource: { buffer: particleStorage[0] } },
-        { binding: 3, resource: { buffer: bodiesBuffer } },
-        { binding: 4, resource: { buffer: mvpUniformBuffer } }
-      ],
-    })
-  ];
+  let bindGroups = createBindGroups();
 
   const simulationShaderModule = device.createShaderModule({
     label: "Gravitational basins simulation shader",
@@ -356,46 +341,100 @@ fn fragmentMain(input: FragInput) -> @location(0) vec4f {
   return {
     update: updateGrid
   }
+
+  function recomputeArea() {
+    const canvasRect = canvas.getBoundingClientRect();
+    let topLeft = view.getSceneCoordinate(0, 0, canvasRect, drawContext.pixelRatio);
+    let bottomRight = view.getSceneCoordinate(canvasRect.width, canvasRect.height, canvasRect, drawContext.pixelRatio);
+    particleStorage[0].destroy();
+    particleStorage[1].destroy();
+    
+    let width = bottomRight[0] - topLeft[0];
+    let height =  topLeft[1] - bottomRight[1];
+    const minSize = Math.min(width, height);
+    // now we need to pick left/top so that the simulation rectangle is centered
+    topLeft[0] -= (minSize - width) / 2;
+    topLeft[1] -= (minSize - height) / 2;
+
+    particleStorage = initParticles(
+      GRID_SIZE, {
+      left: topLeft[0],
+      top: topLeft[1],
+      width: minSize,
+      height: minSize
+    }, device);
+
+    // bindGroups[0].destroy();
+    // bindGroups[1].destroy();
+    bindGroups = createBindGroups();
+  }
+
+  function createBindGroups() {
+    return [
+      device.createBindGroup({
+        label: "Particle renderer bind group A",
+        layout: bindGroupLayout,
+        entries: [
+          { binding: 0, resource: { buffer: uniformBuffer } },
+          { binding: 1, resource: { buffer: particleStorage[0] } },
+          { binding: 2, resource: { buffer: particleStorage[1] } },
+          { binding: 3, resource: { buffer: bodiesBuffer } },
+          { binding: 4, resource: { buffer: mvpUniformBuffer } }
+        ],
+      }),
+      device.createBindGroup({
+        label: "Particle renderer bind group B",
+        layout: bindGroupLayout,
+        entries: [
+          { binding: 0, resource: { buffer: uniformBuffer } },
+          { binding: 1, resource: { buffer: particleStorage[1] } },
+          { binding: 2, resource: { buffer: particleStorage[0] } },
+          { binding: 3, resource: { buffer: bodiesBuffer } },
+          { binding: 4, resource: { buffer: mvpUniformBuffer } }
+        ],
+      })
+    ]
+  }
 }
 
 function initParticles(GRID_SIZE, simulationRectangle, device) {
-    // Create an array representing the active state of each particle.
-    const particleCount = GRID_SIZE * GRID_SIZE;
-    const particleStateArray = new Float32Array(particleCount * ITEMS_PER_PARTICLE);
+  // Create an array representing the active state of each particle.
+  const particleCount = GRID_SIZE * GRID_SIZE;
+  const particleStateArray = new Float32Array(particleCount * ITEMS_PER_PARTICLE);
 
-    // Create a storage buffer to hold the particles state (ping ponged)
-    const particleStorage = [
-      device.createBuffer({
-        label: "Particle State A",
-        size: particleStateArray.byteLength,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-      }),
-      device.createBuffer({
-        label: "Particle State B",
-        size: particleStateArray.byteLength,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-      })
-    ];
+  // Create a storage buffer to hold the particles state (ping ponged)
+  const particleStorage = [
+    device.createBuffer({
+      label: "Particle State A",
+      size: particleStateArray.byteLength,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+    }),
+    device.createBuffer({
+      label: "Particle State B",
+      size: particleStateArray.byteLength,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+    })
+  ];
 
-    // we have particleCount particles, and we want to "tile" the simulation rectangle with them
-    // so we need to calculate the position of each particle in the grid
-    // we use the particle index to calculate the position in the grid
-    for (let i = 0; i < particleCount; ++i) {
-      const nx = (i % GRID_SIZE) / GRID_SIZE;
-      const ny = Math.floor(i / GRID_SIZE) / GRID_SIZE;
+  // we have particleCount particles, and we want to "tile" the simulation rectangle with them
+  // so we need to calculate the position of each particle in the grid
+  // we use the particle index to calculate the position in the grid
+  for (let i = 0; i < particleCount; ++i) {
+    const nx = (i % GRID_SIZE) / GRID_SIZE;
+    const ny = Math.floor(i / GRID_SIZE) / GRID_SIZE;
 
-      const x = nx * simulationRectangle.width + simulationRectangle.left;
-      const y = simulationRectangle.top - ny * simulationRectangle.height;
-  
-      particleStateArray[i * ITEMS_PER_PARTICLE + 0] = 0; // collided body index
-      particleStateArray[i * ITEMS_PER_PARTICLE + 1] = x; // current position x
-      particleStateArray[i * ITEMS_PER_PARTICLE + 2] = y; // current position y
-      particleStateArray[i * ITEMS_PER_PARTICLE + 6] = x; // original position x
-      particleStateArray[i * ITEMS_PER_PARTICLE + 7] = y; // original position y
-    }
-  
-    device.queue.writeBuffer(particleStorage[0], 0, particleStateArray);
-    device.queue.writeBuffer(particleStorage[1], 0, particleStateArray);
+    const x = nx * simulationRectangle.width + simulationRectangle.left;
+    const y = simulationRectangle.top - ny * simulationRectangle.height;
 
-    return particleStorage;
+    particleStateArray[i * ITEMS_PER_PARTICLE + 0] = 0; // collided body index
+    particleStateArray[i * ITEMS_PER_PARTICLE + 1] = x; // current position x
+    particleStateArray[i * ITEMS_PER_PARTICLE + 2] = y; // current position y
+    particleStateArray[i * ITEMS_PER_PARTICLE + 6] = x; // original position x
+    particleStateArray[i * ITEMS_PER_PARTICLE + 7] = y; // original position y
+  }
+
+  device.queue.writeBuffer(particleStorage[0], 0, particleStateArray);
+  device.queue.writeBuffer(particleStorage[1], 0, particleStateArray);
+
+  return particleStorage;
 }
