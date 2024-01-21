@@ -21,12 +21,7 @@ export function createSimulation(gpuContext, GRID_SIZE, bodies) {
     height: canvas.height,
     fov: 45,
     canvas: canvas,
-    getInputOptions() {
-      // return {
-      //  minZoom: 0.1,
-      //  maxZoom: 12
-      // };
-    },
+    getInputOptions() { },
     pixelRatio: 1, // window.devicePixelRatio,
   };
   const simulationRectangle = {
@@ -41,14 +36,17 @@ export function createSimulation(gpuContext, GRID_SIZE, bodies) {
   const mapControls = createMapControls(drawContext);
 
   // Create a uniform buffer that describes the grid.
-  const uniformArray = new Float32Array([GRID_SIZE, GRID_SIZE]);
-  const uniformBuffer = device.createBuffer({
+  const gridSizeUniforms = new Float32Array([
+    GRID_SIZE, GRID_SIZE, 
+    simulationRectangle.width, simulationRectangle.height
+  ]);
+  const gridSizeUniformsBuffer = device.createBuffer({
     label: "Grid Uniforms",
-    size: uniformArray.byteLength,
+    size: gridSizeUniforms.byteLength,
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
   });
 
-  device.queue.writeBuffer(uniformBuffer, 0, uniformArray);
+  device.queue.writeBuffer(gridSizeUniformsBuffer, 0, gridSizeUniforms);
 
   const mvpTypedArray = view.modelViewProjection;
   const mvpUniformBuffer = device.createBuffer({
@@ -119,7 +117,7 @@ struct FragInput {
   @location(0) color: vec4f,
 };
 
-@group(0) @binding(0) var<uniform> gridSize: vec2f;
+@group(0) @binding(0) var<uniform> gridSize: vec4f;
 @group(0) @binding(1) var<storage> particleState: array<f32>;
 @group(0) @binding(3) var<storage, read> bodies: array<f32>;
 @group(0) @binding(4) var<uniform> modelViewProjection: mat4x4<f32>;
@@ -128,10 +126,9 @@ struct FragInput {
 fn vertexMain(input: VertexInput) -> VertexOutput {
   var output: VertexOutput;
   let i = input.instance * ${ITEMS_PER_PARTICLE};
-  let posScale = vec2f(${simulationRectangle.width} / gridSize.x, 
-                        ${simulationRectangle.height} / gridSize.y);
+  let posScale = vec2f(gridSize.z / gridSize.x, gridSize.w / gridSize.y);
   var pos = vec2f(particleState[i + 1], particleState[i + 2]) + input.pos * posScale;
-  output.color = vec4f(0, 1, 0.5, 1.0);
+  output.color = vec4f(.8, 0.8, .9, 1.0);
   if (particleState[i] != 0.0) {
     // it has collided with a body
     var bodyIndex = u32(particleState[i] - 1.0);
@@ -323,7 +320,7 @@ fn fragmentMain(input: FragInput) -> @location(0) vec4f {
       colorAttachments: [{
         view: context.getCurrentTexture().createView(),
         loadOp: "clear",
-        clearValue: { r: 0, g: 0, b: 0.4, a: 1.0 },
+        clearValue: { r: 0.0, g: 0, b: 0.1, a: 1.0 },
         storeOp: "store",
       }]
     });
@@ -364,9 +361,10 @@ fn fragmentMain(input: FragInput) -> @location(0) vec4f {
       height: minSize
     }, device);
 
-    // bindGroups[0].destroy();
-    // bindGroups[1].destroy();
     bindGroups = createBindGroups();
+    gridSizeUniforms[2] = minSize;
+    gridSizeUniforms[3] = minSize;
+    device.queue.writeBuffer(gridSizeUniformsBuffer, 0, gridSizeUniforms);
   }
 
   function createBindGroups() {
@@ -375,7 +373,7 @@ fn fragmentMain(input: FragInput) -> @location(0) vec4f {
         label: "Particle renderer bind group A",
         layout: bindGroupLayout,
         entries: [
-          { binding: 0, resource: { buffer: uniformBuffer } },
+          { binding: 0, resource: { buffer: gridSizeUniformsBuffer } },
           { binding: 1, resource: { buffer: particleStorage[0] } },
           { binding: 2, resource: { buffer: particleStorage[1] } },
           { binding: 3, resource: { buffer: bodiesBuffer } },
@@ -386,7 +384,7 @@ fn fragmentMain(input: FragInput) -> @location(0) vec4f {
         label: "Particle renderer bind group B",
         layout: bindGroupLayout,
         entries: [
-          { binding: 0, resource: { buffer: uniformBuffer } },
+          { binding: 0, resource: { buffer: gridSizeUniformsBuffer } },
           { binding: 1, resource: { buffer: particleStorage[1] } },
           { binding: 2, resource: { buffer: particleStorage[0] } },
           { binding: 3, resource: { buffer: bodiesBuffer } },
