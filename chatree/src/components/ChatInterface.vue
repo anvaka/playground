@@ -34,6 +34,7 @@ export default {
           body: JSON.stringify({
             model: 'gpt-3.5-turbo',
             messages: messages.value,
+            stream: true, // Enable streaming
           }),
         });
 
@@ -41,9 +42,36 @@ export default {
           throw new Error(`HTTP error ${response.status}`);
         }
 
-        const data = await response.json();
-        const assistantReply = data.choices[0].message.content;
-        messages.value.push({ role: 'assistant', content: assistantReply });
+        // Create a reader to read the response stream
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let assistantReply = '';
+        messages.value.push({ role: 'assistant', content: '' });
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data:')) {
+              const data = line.slice('data:'.length).trim();
+              if (data === '[DONE]') {
+                break;
+              }
+              const content = JSON.parse(data).choices[0].delta.content;
+              if (content) {
+                assistantReply += content;
+                // Optionally, you can update the UI here with the current assistantReply
+                messages.value[messages.value.length - 1].content = assistantReply;
+              }
+            }
+          }
+        }
+
+        // messages.value.push({ role: 'assistant', content: assistantReply });
       } catch (error) {
         console.error('Error:', error);
       }
