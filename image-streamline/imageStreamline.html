@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<!--
+Created using JS Bin
+http://jsbin.com
+
+Copyright (c) 2024 by anonymous (http://jsbin.com/rocikayuri/1/edit)
+
+Released under the MIT license: http://jsbin.mit-license.org
+-->
+<meta name="robots" content="noindex">
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+    <script src='https://cdn.jsdelivr.net/gh/anvaka/streamlines@v1.3.0/dist/streamlines.min.js'></script>
+  <title>JS Bin</title>
+</head>
+<body>
+<img src='https://i.imgur.com/K9f3q2wm.jpeg'>
+  <canvas id='scene'></canvas>
+<script id="jsbin-javascript">
+loadImage('https://i.imgur.com/K9f3q2wm.jpeg').then(cnv => {
+  let vectorField = generateVectorField(cnv);
+  let width = cnv.width;
+  let height = cnv.height;
+//   document.body.appendChild(cnv);
+  var sceneCanvas = document.getElementById('scene');
+  sceneCanvas.width = width;
+  sceneCanvas.height = height;
+  var ctx = sceneCanvas.getContext('2d');
+
+  var dSep = 1;
+  var dTest = .2;
+  var boundingBox = {left: 0, top: 0, width: width, height: height}
+
+  // Then you can render to it with this bit of code:
+  var calculator = streamlines({
+    vectorField(p) { 
+      return vectorField[Math.floor(p.y)][Math.floor(p.x)];
+    },
+    boundingBox: boundingBox,
+    dSep: dSep,
+    dTest: dTest,
+    timeStep: 1,
+    onPointAdded: onPointAdded
+  });
+  var grid = calculator.getGrid();
+  calculator.run();
+
+  function onPointAdded(a, b) {
+    // here is how you adjust the width:
+    var dA = grid.findNearest(a.x, a.y);
+    var dB = grid.findNearest(b.x, b.y);
+    var wA = dA > dSep ? 1 : (dA - dTest)/(dSep - dTest);
+    var wB = dB > dSep ? 1 : (dB - dTest)/(dSep - dTest);
+    var width = (wA + wB)/2;
+
+    width *= 2; // multiply by 2 to make it thicker
+
+    ctx.beginPath();
+    ctx.lineWidth = width;
+    ctx.strokeStyle = '#000000';
+    a = transform(a, boundingBox);
+    b = transform(b, boundingBox);
+
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+    ctx.closePath();
+  }
+
+  function transform(pt, boundingBox) {
+    var tx = (pt.x - boundingBox.left)/boundingBox.width;
+    var ty = (pt.y - boundingBox.top)/boundingBox.height;
+    return {
+      x: tx * width,
+      y: ty * height
+    }
+  }
+
+
+
+})
+
+
+function loadImage(imageUrl) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.src = imageUrl;
+    image.crossOrigin = 'anonymous';
+    
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const width = image.width;
+      const height = image.height;
+      
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(image, 0, 0, width, height);      
+      resolve(canvas);
+    };
+    
+    image.onerror = () => {
+      reject(new Error('Failed to load image'));
+    };
+  });
+}
+
+function generateVectorField(canvas) {
+  const ctx = canvas.getContext('2d');
+  const width = canvas.width;
+  const height = canvas.height;
+    
+  // Get the pixel data from the canvas
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const data = imageData.data;
+  
+  // Create a 2D array to store the vector field
+  const vectorField = [];
+  for (let i = 0; i < height; i++) {
+    vectorField[i] = [];
+  }
+  
+// Calculate the vector field using finite differences
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const grayscale1 = getPixelValue(data, width, x, y - 1);
+      const grayscale2 = getPixelValue(data, width, x, y + 1);
+      const grayscale3 = getPixelValue(data, width, x - 1, y);
+      const grayscale4 = getPixelValue(data, width, x + 1, y);
+      
+      const gradientX = (grayscale4 - grayscale3) / 2;
+      const gradientY = (grayscale2 - grayscale1) / 2;
+      
+      // Normalize the gradient vector
+      const magnitude = Math.sqrt(gradientX * gradientX + gradientY * gradientY);
+      const normalizedX = gradientX / magnitude;
+      const normalizedY = gradientY / magnitude;
+      
+      // Store the normalized vector in the vector field array
+      vectorField[y][x] = {
+        x: normalizedX,
+        y: normalizedY
+      };
+    }
+  }
+  
+  return vectorField;
+}
+
+function getPixelValue(data, width, x, y) {
+  const index = (y * width + x) * 4;
+  const red = data[index];
+  const green = data[index + 1];
+  const blue = data[index + 2];
+  
+  return (red + green + blue) / 3;
+}
+</script>
+</body>
+</html>
