@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<meta name="robots" content="noindex">
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Sample image with perlin noise</title>
+</head>
+<body>
+<canvas id='cnv'/>
+<script id="jsbin-javascript">
+// noprotect
+class PerlinNoise {
+    constructor() {
+        this.gradients = {};
+        this.permutation = [];
+
+        for (let i = 0; i < 256; i++) {
+            this.permutation.push(i);
+        }
+
+        this.permutation = this.permutation.sort(() => Math.random() - 0.5);
+        this.permutation = [...this.permutation, ...this.permutation];
+
+        this.grad = [
+            [1,1], [-1,1], [1,-1], [-1,-1],
+            [1,0], [-1,0], [0,1], [0,-1]
+        ];
+    }
+
+    dotGridGradient(ix, iy, x, y) {
+        const distanceX = x - ix;
+        const distanceY = y - iy;
+
+        const gradientIndex = this.permutation[(ix + this.permutation[iy % 256]) % 256] % this.grad.length;
+        const gradient = this.grad[gradientIndex];
+
+        return (distanceX * gradient[0] + distanceY * gradient[1]);
+    }
+
+    fade(t) {
+        return t * t * t * (t * (t * 6 - 15) + 10);
+    }
+
+    lerp(a, b, t) {
+        return a + t * (b - a);
+    }
+
+    noise(x, y) {
+        x = Math.abs(x);
+        y = Math.abs(y);
+        const x0 = Math.floor(x);
+        const x1 = x0 + 1;
+        const y0 = Math.floor(y);
+        const y1 = y0 + 1;
+
+        const sx = this.fade(x - x0);
+        const sy = this.fade(y - y0);
+
+        const n0 = this.dotGridGradient(x0, y0, x, y);
+        const n1 = this.dotGridGradient(x1, y0, x, y);
+        const ix0 = this.lerp(n0, n1, sx);
+
+        const n2 = this.dotGridGradient(x0, y1, x, y);
+        const n3 = this.dotGridGradient(x1, y1, x, y);
+        const ix1 = this.lerp(n2, n3, sx);
+
+        const value = this.lerp(ix0, ix1, sy);
+        return (value + 1) / 2;
+    }
+}
+
+async function loadImage(url) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "Anonymous";  // This is needed if the image is from a different origin
+        img.src = url;
+        img.onload = () => resolve(img);
+        img.onerror = (err) => reject(err);
+    });
+}
+
+async function getImageData(url) {
+    try {
+        const img = await loadImage(url);
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        ctx.drawImage(img, 0, 0, img.width, img.height);
+
+        const imageData = ctx.getImageData(0, 0, img.width, img.height);
+        const pixels = Array.from(imageData.data);
+
+        return {
+            width: img.width,
+            height: img.height,
+            pixels: pixels
+        };
+    } catch (err) {
+        console.error("Error loading image: ", err);
+        return null;
+    }
+}
+let url = 'https://i.imgur.com/hAjKezr.jpeg';
+// url = 'https://i.imgur.com/mLZ5vrL.jpeg'
+getImageData(url).then(d => {
+  console.log('ok', d.width, d.height);
+  animate();
+  function animate() {
+    offset += 0.6;
+    draw(d, offset);
+    requestAnimationFrame(animate);
+  }
+})
+const perlin = new PerlinNoise();
+
+let offset = 0;
+const cnv = document.querySelector('#cnv');
+const width = cnv.width = 300;
+const height = cnv.height = 300;
+const ctx = cnv.getContext('2d');
+
+function draw(sourceImage, ox = 0) {
+  ctx.clearRect(0,0, width, height);
+  ctx.fillRect(0,0, width, height);
+  const imgData = ctx.getImageData(0, 0, width, height);
+  for (let x = 0; x < width; ++x) {
+    for (let y = 0; y < height; ++y) {
+
+      const srcX = Math.floor(perlin.noise((x - ox)/width, (y +ox)/height) * sourceImage.width);
+      const srcY = Math.floor(perlin.noise((x + ox)/width, (y + 0.5*ox)/height) * sourceImage.height);
+//       const srcY = Math.floor(perlin.noise(srcX/sourceImage.width, (y)/height) * sourceImage.width);
+      const srcIdx = (srcX + srcY * sourceImage.width) * 4;
+      const dstIdx = (x + y * width) * 4;
+      imgData.data[dstIdx + 0] = sourceImage.pixels[srcIdx + 0];
+      imgData.data[dstIdx + 1] = sourceImage.pixels[srcIdx + 1];
+      imgData.data[dstIdx + 2] = sourceImage.pixels[srcIdx + 2];
+    }
+  }
+  ctx.putImageData(imgData, 0, 0)
+}
+
+
+</script>
+</body>
+</html>
