@@ -1,4 +1,5 @@
 // Created by https://twitter.com/anvaka
+// See here interactive version: https://editor.p5js.org/anvaka/full/6MAvLP3-s
 let height = 400;
 let width = 400;
 let drawingAreaPadding = 20;
