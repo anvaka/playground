@@ -1,0 +1,19 @@
+{
+  "name": "vite-starter",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.4.8"
+  },
+  "dependencies": {
+    "ngraph.forcelayout": "^3.3.1",
+    "ngraph.fromdot": "^7.0.0",
+    "panzoom": "^9.4.3"
+  }
+}
