@@ -1,16 +1,19 @@
 import {LineStripCollection} from 'w-gl';
 
-const lineColor = 0xffffff86; // this is rgba(255, 255, 255, 0.06)
+// const lineColor = 0xffffff86; // this is rgba(255, 255, 255, 0.06)
 
 export default class HilbertClock {
-    constructor(order, size, startTime) {
+    constructor(order, size, startTime, lineColor = 0xffffff86) {
         this.order = order;
         this.size = size;
+        this.lineColor = lineColor;
         this.startTime = startTime;
         this.numCells = Math.pow(2, order); // size of the Hilbert curve grid
         this.totalSegments = Math.pow(4, order); // total segments in the Hilbert curve
         this.cellSize = this.size / this.numCells; // size of each cell in pixels
         this.currentPosition = null;
+        this.minutesPerSegment = 15;
+        console.log('Total time available in minutes:', this.totalSegments * this.minutesPerSegment);
     }
 
     // Hilbert curve recursive function
@@ -22,7 +25,7 @@ export default class HilbertClock {
               x: px, 
               y: py,
               z: 0,
-              lineColor: lineColor
+              color: this.lineColor
             });
         } else {
             this.hilbert(x, y, yi / 2, yj / 2, xi / 2, xj / 2, n - 1, positions);
@@ -42,14 +45,14 @@ export default class HilbertClock {
     // Map current time to a segment on the Hilbert curve
     setCurrentTime(currentTime) {
         const elapsedTime = (currentTime - this.startTime) / (1000 * 60); // elapsed minutes
-        const segmentIndex = Math.floor(elapsedTime / 15); // each segment is 15 minutes
+        const segmentIndex = Math.floor(elapsedTime / this.minutesPerSegment); 
         const posOffset = this.positions.itemsPerLine * segmentIndex;
         let startX = this.positions.positions[posOffset];
         let startY = this.positions.positions[posOffset + 1];
         let endX = this.positions.positions[posOffset + this.positions.itemsPerLine + 0];
         let endY = this.positions.positions[posOffset + this.positions.itemsPerLine + 1];
-        let x = startX + (endX - startX) * (elapsedTime % 15) / 15;
-        let y = startY + (endY - startY) * (elapsedTime % 15) / 15;
+        let x = startX + (endX - startX) * (elapsedTime % this.minutesPerSegment) / this.minutesPerSegment;
+        let y = startY + (endY - startY) * (elapsedTime % this.minutesPerSegment) / this.minutesPerSegment;
         this.currentPosition = {x, y};
         if (this.lastSegment !== segmentIndex) {
             let i = 0;
