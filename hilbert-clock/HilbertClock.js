@@ -13,40 +13,38 @@ export default class HilbertClock {
         this.cellSize = this.size / this.numCells; // size of each cell in pixels
         this.currentPosition = null;
         this.minutesPerSegment = 15;
-        console.log('Total time available in minutes:', this.totalSegments * this.minutesPerSegment);
     }
 
     // Hilbert curve recursive function
-    hilbert(x, y, xi, xj, yi, yj, n, positions) {
+    hilbert(x, y, xi, xj, yi, yj, n) {
         if (n <= 0) {
             const px = (x + (xi + yi) / 2) * this.cellSize;
             const py = (y + (xj + yj) / 2) * this.cellSize;
-            positions.add({ 
+            this.positions.add({ 
               x: px, 
               y: py,
               z: 0,
               color: this.lineColor
             });
         } else {
-            this.hilbert(x, y, yi / 2, yj / 2, xi / 2, xj / 2, n - 1, positions);
-            this.hilbert(x + xi / 2, y + xj / 2, xi / 2, xj / 2, yi / 2, yj / 2, n - 1, positions);
-            this.hilbert(x + xi / 2 + yi / 2, y + xj / 2 + yj / 2, xi / 2, xj / 2, yi / 2, yj / 2, n - 1, positions);
-            this.hilbert(x + xi / 2 + yi, y + xj / 2 + yj, -yi / 2, -yj / 2, -xi / 2, -xj / 2, n - 1, positions);
+            this.hilbert(x, y, yi / 2, yj / 2, xi / 2, xj / 2, n - 1);
+            this.hilbert(x + xi / 2, y + xj / 2, xi / 2, xj / 2, yi / 2, yj / 2, n - 1);
+            this.hilbert(x + xi / 2 + yi / 2, y + xj / 2 + yj / 2, xi / 2, xj / 2, yi / 2, yj / 2, n - 1);
+            this.hilbert(x + xi / 2 + yi, y + xj / 2 + yj, -yi / 2, -yj / 2, -xi / 2, -xj / 2, n - 1);
         }
     }
 
     // Generate Hilbert curve positions
     generateCurve() {
-        const positions = new LineStripCollection(this.totalSegments);
-        this.hilbert(0, 0, this.numCells, 0, 0, this.numCells, this.order, positions);
-        this.positions = positions;
+        this.positions = new LineStripCollection(this.totalSegments + 1);
+        this.hilbert(0, 0, this.numCells, 0, 0, this.numCells, this.order);
     }
 
     // Map current time to a segment on the Hilbert curve
     setCurrentTime(currentTime) {
         const elapsedTime = (currentTime - this.startTime) / (1000 * 60); // elapsed minutes
         const segmentIndex = Math.floor(elapsedTime / this.minutesPerSegment); 
-        const posOffset = this.positions.itemsPerLine * segmentIndex;
+        const posOffset = this.positions.itemsPerLine * (segmentIndex + 1); // + 1 because lineStripCollection has a first element reserved
         let startX = this.positions.positions[posOffset];
         let startY = this.positions.positions[posOffset + 1];
         let endX = this.positions.positions[posOffset + this.positions.itemsPerLine + 0];
@@ -57,7 +55,7 @@ export default class HilbertClock {
         if (this.lastSegment !== segmentIndex) {
             let i = 0;
             while (i < segmentIndex) {
-                const colorsOffset = this.positions.itemsPerLine * i + 3;
+                const colorsOffset = this.positions.itemsPerLine * (i + 1) + 3;
                 this.positions.colors[colorsOffset] = 0xffffff36;
                 i++;
             }

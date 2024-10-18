@@ -137,3 +137,10 @@ canvas {
   height: 100%;
   position: absolute;
 }
+
+.legend {
+  position: absolute; 
+  border-bottom: 1px solid #0ff;
+  background-color: rgba(0, 0, 0, .4);
+  padding: 8px;
+}
