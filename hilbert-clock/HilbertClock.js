@@ -62,4 +62,20 @@ export default class HilbertClock {
             this.lastSegment = segmentIndex;
         }
     }
+
+    setStartTime(startTime) {
+        if (this.startTime === startTime) {
+            return;
+        }
+        if (startTime > this.startTime) {
+            // reset colors to default:
+            let i = 0;
+            while (i < this.totalSegments) {
+                const colorsOffset = this.positions.itemsPerLine * (i + 1) + 3;
+                this.positions.colors[colorsOffset] = this.lineColor;
+                i++;
+            }
+        }
+        this.startTime = startTime;
+    }
 }

@@ -5,23 +5,41 @@ const canvas = document.getElementById('hilbertCanvas');
 
 const legend = document.querySelector('.legend');
 
-let scene = createScene(canvas);
+let scene = createScene(canvas, {allowPinchRotation: false});
 scene.setClearColor(0x1b/0xff, 0x29/0xff, 0x4a/0xff, 1.)
 
-let startTime = new Date('2004-10-13').getTime();
+const startTimeAsString = '2004-10-13';
+const endTime = document.querySelector('#end-date');
+const startTimeInput = document.querySelector('#start-date');
+startTimeInput.value = startTimeAsString;
+startTimeInput.addEventListener('change', (e) => {
+  const newStartTime = new Date(e.target.value).getTime();
+  curves.forEach(curve => {
+    curve.setStartTime(newStartTime);
+    curve.setCurrentTime(now);
+  });
+  scene.renderFrame();
+  updateCurrentTime();
+  endTime.innerText = new Date(newStartTime + timeAvailable * 60 * 1000).toLocaleDateString();
+});
+
+let startTime = new Date(startTimeAsString).getTime();
+
 let curves = [];
 let minutesPerSegment = 15;
 // at order 11 we want each segment length to be 15 minutes
 // Order 11 has 4^11 cells and curve is continuous, passing each one
 // of them in order, and has 4^11 - 1 segments. This means total available
 // time is: 
-let timeAvailable = 15 * (Math.pow(4, 11) - 1);
+let timeAvailable = minutesPerSegment * (Math.pow(4, 11) - 1);
+endTime.innerText = new Date(startTime + timeAvailable * 60 * 1000).toLocaleDateString();
 for (let i = 11; i > 0; i--) {
   let curve = new HilbertClock(i, 1024, startTime, 0x00FFFFFF);
   // curve.minutesPerSegment = minutesPerSegment;
   // minutesPerSegment *= 4;
   curve.minutesPerSegment = timeAvailable / (curve.totalSegments - 1);
   curve.generateCurve();
+
   curve.setCurrentTime(startTime);
   curves.push(curve);
 }
@@ -54,7 +72,6 @@ scene.appendChild(points);
 scene.on('transform', (t) => {
   let z = t.drawContext.view.position[2];
   let newCurrentCurveIndex = scaleZ(z);
-  console.log(z + ' => ' +newCurrentCurveIndex);
   if (newCurrentCurveIndex !== currentCurveIndex) {
     currentCurveIndex = newCurrentCurveIndex;
     scene.getRoot().removeChild(currentCurve.positions);

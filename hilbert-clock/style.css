@@ -138,9 +138,41 @@ canvas {
   position: absolute;
 }
 
-.legend {
-  position: absolute; 
-  border-bottom: 1px solid #0ff;
+.controls {
   background-color: rgba(0, 0, 0, .4);
+  position: absolute; 
   padding: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.legend {
+  border-bottom: 1px solid #0ff;
+  align-self: center;
+}
+
+.controls-container {
+  margin-top: 8px;
+}
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 6px;
+}
+.column.first {
+  margin-right: 8px;
+  color: var(--color-text);
+}
+
+.column {
+  flex: 1;
+}
+
+#start-date {
+  text-align: center;
+}
+
+#end-date {
+  font-family: monospace;
 }

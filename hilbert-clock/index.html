@@ -8,7 +8,19 @@
   <body>
     <div id="app">
       <canvas id="hilbertCanvas"></canvas>
-      <span class="legend"></span>
+      <div class="controls">
+        <span class="legend"></span>
+        <div class="controls-container">
+          <div class="row">
+            <div class="column first">Line started</div>
+            <div class="column second"><input type="date" id="start-date"/></div>
+          </div>
+          <div class="row">
+            <div class="column first">Line ends</div>
+            <div class="column second"><span id="end-date">some date</span></div>
+          </div>
+        </div>
+      </div>
     </div>
     <script type="module" src="/main.js"></script>
   </body>
