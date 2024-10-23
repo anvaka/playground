@@ -1,6 +1,5 @@
 import {LineStripCollection} from 'w-gl';
-
-// const lineColor = 0xffffff86; // this is rgba(255, 255, 255, 0.06)
+import hilbert from './hilbert';
 
 export default class HilbertClock {
     constructor(order, size, startTime, lineColor = 0xffffff86) {
@@ -37,7 +36,27 @@ export default class HilbertClock {
     // Generate Hilbert curve positions
     generateCurve() {
         this.positions = new LineStripCollection(this.totalSegments + 1);
-        this.hilbert(0, 0, this.numCells, 0, 0, this.numCells, this.order);
+        let useRecursion = true;
+        if (useRecursion) {
+            console.time('hilbert order ' + this.order);
+            this.hilbert(0, 0, this.numCells, 0, 0, this.numCells, this.order);
+            console.timeEnd('hilbert order ' + this.order); 
+        } else {
+            // hilbertIndexToXY(0, this.order);
+            console.time('non-recursive hilbert order ' + this.order);
+            for (let i = 0; i < this.totalSegments; i++) {
+                const {x, y} = hilbertIndexToXY(i, this.order);
+                const px = x * this.cellSize;
+                const py = y * this.cellSize;
+                this.positions.add({ 
+                  x: px, 
+                  y: py,
+                  z: 0,
+                  color: this.lineColor
+                });
+            }
+            console.timeEnd('non-recursive hilbert order ' + this.order);
+        }
     }
 
     // Map current time to a segment on the Hilbert curve
@@ -78,4 +97,28 @@ export default class HilbertClock {
         }
         this.startTime = startTime;
     }
+}
+
+function hilbertIndexToXY(h, order) {
+    let n = 1 << order;
+    let x = 0, y = 0;
+    let t = h;
+    for (let s = 1; s < n; s <<= 1) {
+        let rx = 1 & (t >> 1);
+        let ry = 1 & (t ^ rx);
+        if (ry === 0) {
+            if (rx === 1) {
+                x = s - 1 - x;
+                y = s - 1 - y;
+            }
+            // Swap x and y
+            let temp = x;
+            x = y;
+            y = temp;
+        }
+        x += s * rx;
+        y += s * ry;
+        t >>= 2;
+    }
+    return { x, y };
 }
