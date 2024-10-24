@@ -1,6 +1,7 @@
 import './style.css';
 import {createScene, PointCollection} from 'w-gl';
 import HilbertClock from './HilbertClock.js';
+import hilbert, {hilbertXYToIndex} from './hilbert.js';
 const canvas = document.getElementById('hilbertCanvas');
 
 const legend = document.querySelector('.legend');
@@ -33,6 +34,7 @@ let minutesPerSegment = 15;
 // of them in order, and has 4^11 - 1 segments. This means total available
 // time is: 
 let timeAvailable = minutesPerSegment * (Math.pow(4, 11) - 1);
+let order16TimePerSegment = timeAvailable / (Math.pow(4, 16) - 1);
 endTime.innerText = new Date(startTime + timeAvailable * 60 * 1000).toLocaleDateString();
 for (let i = 11; i > 0; i--) {
   let curve = new HilbertClock(i, sceneSize, startTime, 0x00FFFFFF);
@@ -93,7 +95,9 @@ scene.on('mousemove', function(e) {
   let x_n = Math.floor(hilbertMax * x / currentCurve.size);
   let y_n = Math.floor(hilbertMax * y / currentCurve.size);
   let index = hilbert(x_n, y_n);
-  console.log(`x: ${x}, y: ${y}, x_n: ${x_n}, y_n: ${y_n}, index: ${index}`);
+  let time = currentCurve.startTime + index * order16TimePerSegment * 60 * 1000;
+  let date = new Date(time);
+  console.log(`x: ${x}, y: ${y}, x_n: ${x_n}, y_n: ${y_n}, index: ${index}; date: ${date}`);
 });
 
 setInterval(updateCurrentTime, 1000);
@@ -159,56 +163,4 @@ function formatTime(minutes) {
             return `${isApproximate ? '~' : ''}${value} ${unit}${value > 1 ? 's' : ''}`;
         }
     }
-}
-
-/**
- * Fast Hilbert curve algorithm by http://threadlocalmutex.com/
- * Ported from C++ https://github.com/rawrunprotected/hilbert_curves (public domain)
- * @param {number} x
- * @param {number} y
- */
-function hilbert(x, y) {
-    let a = x ^ y;
-    let b = 0xFFFF ^ a;
-    let c = 0xFFFF ^ (x | y);
-    let d = x & (y ^ 0xFFFF);
-
-    let A = a | (b >> 1);
-    let B = (a >> 1) ^ a;
-    let C = ((c >> 1) ^ (b & (d >> 1))) ^ c;
-    let D = ((a & (c >> 1)) ^ (d >> 1)) ^ d;
-
-    a = A; b = B; c = C; d = D;
-    A = ((a & (a >> 2)) ^ (b & (b >> 2)));
-    B = ((a & (b >> 2)) ^ (b & ((a ^ b) >> 2)));
-    C ^= ((a & (c >> 2)) ^ (b & (d >> 2)));
-    D ^= ((b & (c >> 2)) ^ ((a ^ b) & (d >> 2)));
-
-    a = A; b = B; c = C; d = D;
-    A = ((a & (a >> 4)) ^ (b & (b >> 4)));
-    B = ((a & (b >> 4)) ^ (b & ((a ^ b) >> 4)));
-    C ^= ((a & (c >> 4)) ^ (b & (d >> 4)));
-    D ^= ((b & (c >> 4)) ^ ((a ^ b) & (d >> 4)));
-
-    a = A; b = B; c = C; d = D;
-    C ^= ((a & (c >> 8)) ^ (b & (d >> 8)));
-    D ^= ((b & (c >> 8)) ^ ((a ^ b) & (d >> 8)));
-
-    a = C ^ (C >> 1);
-    b = D ^ (D >> 1);
-
-    let i0 = x ^ y;
-    let i1 = b | (0xFFFF ^ (i0 | a));
-
-    i0 = (i0 | (i0 << 8)) & 0x00FF00FF;
-    i0 = (i0 | (i0 << 4)) & 0x0F0F0F0F;
-    i0 = (i0 | (i0 << 2)) & 0x33333333;
-    i0 = (i0 | (i0 << 1)) & 0x55555555;
-
-    i1 = (i1 | (i1 << 8)) & 0x00FF00FF;
-    i1 = (i1 | (i1 << 4)) & 0x0F0F0F0F;
-    i1 = (i1 | (i1 << 2)) & 0x33333333;
-    i1 = (i1 | (i1 << 1)) & 0x55555555;
-
-    return ((i1 << 1) | i0) >>> 0;
 }

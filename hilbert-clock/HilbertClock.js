@@ -1,5 +1,5 @@
 import {LineStripCollection} from 'w-gl';
-import hilbert from './hilbert';
+import hilbert, {hilbertIndexToXY} from './hilbert';
 
 export default class HilbertClock {
     constructor(order, size, startTime, lineColor = 0xffffff86) {
@@ -36,10 +36,10 @@ export default class HilbertClock {
     // Generate Hilbert curve positions
     generateCurve() {
         this.positions = new LineStripCollection(this.totalSegments + 1);
-        let useRecursion = true;
+        let useRecursion = false;
         if (useRecursion) {
             console.time('hilbert order ' + this.order);
-            this.hilbert(0, 0, this.numCells, 0, 0, this.numCells, this.order);
+            this.hilbert(0, 0, 0, this.numCells, this.numCells, 0, this.order);
             console.timeEnd('hilbert order ' + this.order); 
         } else {
             // hilbertIndexToXY(0, this.order);
@@ -99,7 +99,7 @@ export default class HilbertClock {
     }
 }
 
-function hilbertIndexToXY(h, order) {
+function hilbertIndexToXY_slow(h, order) {
     let n = 1 << order;
     let x = 0, y = 0;
     let t = h;
