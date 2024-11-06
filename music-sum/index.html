@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matrix of exponential sums for a birthday</title>
+  <style>
+body { padding: 0; margin: 0; background: #1B294A; position: absolute; top: 0; left: 0; overflow: hidden; width: 100%; height: 100%}
+  #scene-canvas {
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+  }
+  .loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 24px;
+    font-family: sans-serif;
+    text-align: center;
+  }
+  </style>
+</head>
+<body>
+  <canvas id="scene-canvas"></canvas>
+  <div class="loader">Please be patient - we are building ~3.6 million lines...</div>
+  <audio id="audio" controls>
+    <source src="data/2.mp3" type="audio/mpeg">
+  </audio>
+  
+  <script src='https://cdn.jsdelivr.net/npm/w-gl@0.21.1/build/wgl.min.js'></script>
+  <script type="module" src="index.js"></script>
+</body>
+</html>
