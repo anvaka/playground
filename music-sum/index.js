@@ -81,7 +81,16 @@ function updateVisualization(frequencyData) {
     lines.positions[offset + 1] = canvasY;
     lines.positions[offset + 2] = 21 * dynamicAlpha;
     let r = 0xff;// Math.round(0xFF * dynamicAlpha);
-    lines.colors[offset + 3] = (0x00ffff00 | dynamicAlpha) | (r << 24);
+    lines.colors[offset + 3] = (0x00ffff00 | Math.round(dynamicAlpha)) | (r << 24);
+
+    const freqValue = frequencyData[freqIndex];
+    const hue = 160 + (freqValue / 256) * 150; // Hue between 0 and 360
+    const rgbColor = hslToRgb(hue / 360, 1, 0.5); // Convert HSL to RGB
+    const colorInt = (Math.round(rgbColor.r * 255) << 24) |
+                    (Math.round(rgbColor.g * 255) << 16) |
+                    (Math.round(rgbColor.b * 255) << 8) |
+                    Math.round(dynamicAlpha);
+    lines.colors[offset + 3] = colorInt;
   }
   scene.renderFrame();
 }
@@ -139,4 +148,29 @@ function measureFunction(f, max) {
   maxY += dy * 0.1;
 
   return {minX, minY, maxX, maxY}
+}
+
+function hslToRgb(h, s, l) {
+  let r, g, b;
+
+  if (s == 0) {
+    r = g = b = l; // achromatic
+  } else {
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1/6) return p + (q - p) * 6 * t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    }
+
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1/3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1/3);
+  }
+
+  return { r, g, b };
 }
