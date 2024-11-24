@@ -6,7 +6,7 @@ const width = 800;
 const height = 800;
 
 function generateSimpleFunction() {
-    return generateModuloFunction();
+    return generateCombinationFunction();
     // Random parameters within controlled ranges
     const A = Math.random() * 50 + 1; // A between 1 and 51 to avoid division by zero
     const B = Math.random() * 10;     // B between 0 and 10
@@ -117,9 +117,9 @@ main();
 
 
 function generateCombinationFunction() {
-    const A = Math.random() * 5;
-    const B = Math.random() * 5;
-    const C = Math.random() * 100;
+    const A = (0.5 - Math.random()) * 5;
+    const B = (0.5 - Math.random()) * 5;
+    const C = (0.5 - Math.random()) * 100;
 
     function f(x) {
         return A * x + B * Math.sin(C * x);
@@ -139,7 +139,7 @@ function generateModuloFunction() {
         return A * x * x + B * x + C;
     }
 
-    const code = `${A} * x^2 + ${B} * x + ${C}`;
+    const code = `${A} * x*x + ${B} * x + ${C}`;
     const params = `f(x) = ${code}`;
 
     return { f, code, params };
