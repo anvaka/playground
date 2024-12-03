@@ -1,9 +1,10 @@
 
 import { ForceDirectedGraph, ForceVisualizer, Node, Shape} from './layout.js';
 import * as miserables from 'https://esm.run/miserables';
+import * as generator from 'https://esm.run/ngraph.generators';
 
-const mGraph = miserables.create();
-
+// const mGraph = miserables.create();
+const mGraph = generator.ladder(5);
 
 // const graph = new ForceDirectedGraph({
 //     centerPointWeight: 2.0,     // Center point force multiplier
@@ -30,18 +31,15 @@ graph.setVisualizer(new ForceVisualizer(canvas));
 // const node2 = new Node("2", 100, 100, Shape.Triangle(60));
 // const node3 = new Node("3", -100, 50, Shape.Pentagon(30));
 
-// graph.addNode(node1);
-// graph.addNode(node2);
-// graph.addNode(node3);
 
-// graph.addEdge(node1, node2, 150);
-// graph.addEdge(node2, node3, 150);
+const availableShapes = ['Rectangle', 'Triangle', 'Pentagon']
 
 mGraph.forEachNode(node => {
+    const randomShape = availableShapes[Math.floor(Math.random() * availableShapes.length)];
     const fNode = new Node(node.id, 
         (0.5 - Math.random()) * 100, 
         (0.5 - Math.random()) * 100, 
-        Shape.Triangle(30)
+        Shape[randomShape](Math.random() * 30 + 10, Math.random() * 30 + 10)
     );
     node.fNode = fNode;
 

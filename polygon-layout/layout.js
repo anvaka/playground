@@ -112,11 +112,14 @@ export class Node {
 }
 
 export class ForceVisualizer {
-  constructor(canvas) {
+  constructor(canvas, options = {}) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.scale = 1;
     this.offset = { x: canvas.width / 2, y: canvas.height / 2 };
+    this.drawNodeId = options.drawNodeId || false;
+    this.drawOptimalLength = options.drawOptimalLength || false;
+    this.drawForceIndicator = options.drawForceIndicator || false;
   }
 
   clear() {
@@ -154,11 +157,13 @@ export class ForceVisualizer {
     ctx.fill();
 
     // Draw node ID
-    ctx.fillStyle = '#000';
-    ctx.fillText(node.id,
-      this.offset.x + node.center.x * this.scale,
-      this.offset.y + node.center.y * this.scale - 10
-    );
+    if (this.drawNodeId) {
+      ctx.fillStyle = '#000';
+      ctx.fillText(node.id,
+        this.offset.x + node.center.x * this.scale,
+        this.offset.y + node.center.y * this.scale - 10
+      );
+    }
   }
 
   drawEdge(edge) {
@@ -179,18 +184,22 @@ export class ForceVisualizer {
     ctx.stroke();
 
     // Draw optimal length indicator
-    const midX = (source.x + target.x) / 2;
-    const midY = (source.y + target.y) / 2;
-    const distance = source.distanceTo(target);
-    ctx.fillStyle = distance > edge.optimalLength ? 'red' : 'green';
-    ctx.fillText(
-      Math.round(distance),
-      this.offset.x + midX * this.scale,
-      this.offset.y + midY * this.scale
-    );
+    if (this.drawOptimalLength) {
+      const midX = (source.x + target.x) / 2;
+      const midY = (source.y + target.y) / 2;
+      const distance = source.distanceTo(target);
+      ctx.fillStyle = distance > edge.optimalLength ? 'red' : 'green';
+      ctx.fillText(
+        Math.round(distance),
+        this.offset.x + midX * this.scale,
+        this.offset.y + midY * this.scale
+      );
+    }
   }
 
   drawForce(point, force, color = 'blue') {
+    if (!this.drawForceIndicator) return;
+
     const ctx = this.ctx;
     const scale = 50; // Scale factor for force visualization
 
@@ -300,14 +309,14 @@ export class ForceDirectedGraph {
             force2.y -= force.y * weight;
 
             // Calculate torques
-            if (p1 !== 0) {  // Skip center point for torque
+            if (p1 !== 0 && node1.canRotate) {  // Skip center point for torque
               const r1 = Point.subtract(points1[p1], node1.center);
               torques.set(node1.id,
                 torques.get(node1.id) +
                 (r1.x * force.y - r1.y * force.x) * this.config.torqueStrength
               );
             }
-            if (p2 !== 0) {
+            if (p2 !== 0 && node2.canRotate) {  // Skip center point for torque
               const r2 = Point.subtract(points2[p2], node2.center);
               torques.set(node2.id,
                 torques.get(node2.id) -
