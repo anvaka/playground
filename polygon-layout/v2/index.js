@@ -1,4 +1,16 @@
 // Grid-Based Polygon Layout Algorithm
+import generator from 'https://esm.run/ngraph.generators';
+import * as miserables from 'https://esm.run/miserables';
+import generateSampleCitiesInside from './generateSampleCitiesInside.js';
+
+const mGraph = generator.ladder(5);
+// const mGraph = miserables.create(5);
+const availableShapes = {
+  Rectangle: [[0, 0], [50, 0], [50, 30], [0, 30]],
+  Triangle: [[0, 0], [20, 40], [40, 0]],
+  Pentagon: [[25, 0], [50, 20], [40, 50], [10, 50], [0, 20]],
+  Square: [[0, 0], [20, 0], [20, 20], [0, 20]]
+};
 
 // Constants
 const GRID_SIZE = 400;
@@ -33,50 +45,74 @@ function generateSampleData() {
   
   // Create sample polygons with proper city-to-city connections
   // Each city has a unique ID: polygonId-cityIndex
-  
+  mGraph.forEachNode(node => {
+    const randomShape = Object.keys(availableShapes)[Math.floor(Math.random() * Object.keys(availableShapes).length)];
+    const polygon = availableShapes[randomShape];
+    const citiesInsidePolygon = generateSampleCitiesInside(node.id, polygon, 5);
+    const fNode = createSamplePolygon(node.id, polygon, citiesInsidePolygon, `hsl(${Math.random() * 360}, 70%, 70%)`);
+    node.fNode = fNode;
+    polygons.push(fNode);
+  });
+
+  // Now lets add connection between cities, so that they only connect to the cities inside other polygons
+  // that is connected by the graph
+  let numberOfCitiesToConnect = 3;
+  mGraph.forEachLink(link => {
+
+    const fromNode = mGraph.getNode(link.fromId);
+    const toNode = mGraph.getNode(link.toId);
+    const fromPolygon = fromNode.fNode;
+    const toPolygon = toNode.fNode;
+    for (let i = 0; i < numberOfCitiesToConnect; i++) {
+      const fromCity = fromPolygon.cities[Math.floor(Math.random() * fromPolygon.cities.length)];
+      const toCity = toPolygon.cities[Math.floor(Math.random() * toPolygon.cities.length)];
+      fromCity.connections.push({targetId: `${toCity.id}`, weight: Math.floor(Math.random() * 10)});
+      toCity.connections.push({targetId: `${fromCity.id}`, weight: Math.floor(Math.random() * 10)});
+    }
+  });
   // Polygon 1 - Triangle
-  const p1 = createSamplePolygon(
-    1,
-    [[0, 0], [40, 0], [20, 40]],
-    [
-      {id: "1-0", x: 10, y: 10, connections: [{targetId: "2-0", weight: 5}, {targetId: "3-0", weight: 2}]}
-    ],
-    'rgba(255, 100, 100, 0.7)'
-  );
+  // const p1 = createSamplePolygon(
+  //   1,
+  //   availableShapes.Triangle,
+  //   [
+  //     {id: "1-0", x: 10, y: 10, connections: [{targetId: "2-0", weight: 5}, {targetId: "3-0", weight: 2}]}
+  //   ],
+  //   'rgba(255, 100, 100, 0.7)'
+  // );
   
-  // Polygon 2 - Rectangle
-  const p2 = createSamplePolygon(
-    2,
-    [[0, 0], [50, 0], [50, 30], [0, 30]],
-    [
-      {id: "2-0", x: 15, y: 15, connections: [{targetId: "1-0", weight: 5}, {targetId: "3-0", weight: 3}]},
-      {id: "2-1", x: 35, y: 15, connections: [{targetId: "4-0", weight: 2}]}
-    ],
-    'rgba(100, 255, 100, 0.7)'
-  );
+  // // Polygon 2 - Rectangle
+  // const p2 = createSamplePolygon(
+  //   2,
+  //   availableShapes.Rectangle,
+  //   [
+  //     {id: "2-0", x: 15, y: 15, connections: [{targetId: "1-0", weight: 5}, {targetId: "3-0", weight: 3}]},
+  //     {id: "2-1", x: 35, y: 15, connections: [{targetId: "4-0", weight: 2}]}
+  //   ],
+  //   'rgba(100, 255, 100, 0.7)'
+  // );
   
-  // Polygon 3 - Pentagon
-  const p3 = createSamplePolygon(
-    3,
-    [[20, 0], [40, 10], [30, 40], [10, 40], [0, 10]],
-    [
-      {id: "3-0", x: 20, y: 20, connections: [{targetId: "1-0", weight: 2}, {targetId: "2-0", weight: 3}]}
-    ],
-    'rgba(100, 100, 255, 0.7)'
-  );
+  // // Polygon 3 - Pentagon
+  // const p3 = createSamplePolygon(
+  //   3,
+  //   availableShapes.Pentagon,
+  //   [
+  //     {id: "3-0", x: 20, y: 20, connections: [{targetId: "1-0", weight: 2}, {targetId: "2-0", weight: 3}]}
+  //   ],
+  //   'rgba(100, 100, 255, 0.7)'
+  // );
   
-  // Polygon 4 - Small Square
-  const p4 = createSamplePolygon(
-    4,
-    [[0, 0], [25, 0], [25, 25], [0, 25]],
-    [
-      {id: "4-0", x: 12, y: 12, connections: [{targetId: "2-1", weight: 2}]}
-    ],
-    'rgba(255, 255, 100, 0.7)'
-  );
+  // // Polygon 4 - Small Square
+  // const p4 = createSamplePolygon(
+  //   4,
+  //   availableShapes.Square,
+  //   [
+  //     {id: "4-0", x: 12, y: 12, connections: [{targetId: "2-1", weight: 2}]}
+  //   ],
+  //   'rgba(255, 255, 100, 0.7)'
+  // );
   
   // Add polygons to our list
-  polygons.push(p1, p2, p3, p4);
+  // polygons.push(p1, p2, p3, p4);
 }
 
 // Initialize the grid
@@ -194,7 +230,7 @@ function calculateValue(polygon, position) {
     // If unconnected polygons are close, apply penalty
     // The closer they are, the bigger the penalty
     if (distance < 100) { // 100 pixels threshold
-      value -= (10000 / (distance + 1));
+      value -= (4000 / (distance + 1));
     }
   }
   
@@ -327,7 +363,7 @@ function drawPolygon(polygon) {
 
 // Draw connections between cities
 function drawConnections() {
-  ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
   
   for (const polygon of placedPolygons) {
     const [posX, posY] = polygon.position;
