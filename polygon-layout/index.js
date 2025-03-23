@@ -1,7 +1,7 @@
 
 import { ForceDirectedGraph, ForceVisualizer, Node, Shape} from './layout.js';
 import * as miserables from 'https://esm.run/miserables';
-import * as generator from 'https://esm.run/ngraph.generators';
+import generator from 'https://esm.run/ngraph.generators';
 
 // const mGraph = miserables.create();
 const mGraph = generator.ladder(5);
