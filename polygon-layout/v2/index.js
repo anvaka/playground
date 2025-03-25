@@ -1,21 +1,28 @@
 // Grid-Based Polygon Layout Algorithm
 import generator from 'https://esm.run/ngraph.generators';
+import createForceLayout from 'https://esm.run/ngraph.forcelayout';
 import * as miserables from 'https://esm.run/miserables';
 import generateSampleCitiesInside from './generateSampleCitiesInside.js';
 
-const mGraph = generator.ladder(5);
+// const mGraph = generator.ladder(12);
+const mGraph = generator.complete(5);
 // const mGraph = miserables.create(5);
 const availableShapes = {
   Rectangle: [[0, 0], [50, 0], [50, 30], [0, 30]],
-  Triangle: [[0, 0], [20, 40], [40, 0]],
-  Pentagon: [[25, 0], [50, 20], [40, 50], [10, 50], [0, 20]],
-  Square: [[0, 0], [20, 0], [20, 20], [0, 20]]
+  // Triangle: [[0, 0], [20, 40], [40, 0]],
+  // Pentagon: [[25, 0], [50, 20], [40, 50], [10, 50], [0, 20]],
+  // Square: [[0, 0], [20, 0], [20, 20], [0, 20]]
 };
 
 // Constants
 const GRID_SIZE = 400;
 const CELL_SIZE = 5;
 const GRID_CELLS = GRID_SIZE / CELL_SIZE;
+const LAYOUT_STEPS = 1000;
+const POSITION_WEIGHT = 1.0;
+const CONNECTED_WEIGHT = 1.0;
+const DISCONNECTED_WEIGHT = 0.0;
+const CENTER_WEIGHT = 0.0;
 
 // Main Canvas Setup
 let canvas, ctx;
@@ -39,6 +46,12 @@ function createSamplePolygon(id, vertices, cities, color) {
 
 // Generate sample data
 function generateSampleData() {
+  const layout = createForceLayout(mGraph);
+  for (let i = 0; i < LAYOUT_STEPS; i++) {
+    layout.step();
+  }
+  let layoutBoundingBox = layout.getGraphRect();
+
   // Clear existing data
   polygons = [];
   placedPolygons = [];
@@ -50,6 +63,7 @@ function generateSampleData() {
     const polygon = availableShapes[randomShape];
     const citiesInsidePolygon = generateSampleCitiesInside(node.id, polygon, 5);
     const fNode = createSamplePolygon(node.id, polygon, citiesInsidePolygon, `hsl(${Math.random() * 360}, 70%, 70%)`);
+    fNode.initialPosition = getNormalizedPositionFromLayout(node.id);
     node.fNode = fNode;
     polygons.push(fNode);
   });
@@ -58,7 +72,6 @@ function generateSampleData() {
   // that is connected by the graph
   let numberOfCitiesToConnect = 3;
   mGraph.forEachLink(link => {
-
     const fromNode = mGraph.getNode(link.fromId);
     const toNode = mGraph.getNode(link.toId);
     const fromPolygon = fromNode.fNode;
@@ -70,49 +83,14 @@ function generateSampleData() {
       toCity.connections.push({targetId: `${fromCity.id}`, weight: Math.floor(Math.random() * 10)});
     }
   });
-  // Polygon 1 - Triangle
-  // const p1 = createSamplePolygon(
-  //   1,
-  //   availableShapes.Triangle,
-  //   [
-  //     {id: "1-0", x: 10, y: 10, connections: [{targetId: "2-0", weight: 5}, {targetId: "3-0", weight: 2}]}
-  //   ],
-  //   'rgba(255, 100, 100, 0.7)'
-  // );
-  
-  // // Polygon 2 - Rectangle
-  // const p2 = createSamplePolygon(
-  //   2,
-  //   availableShapes.Rectangle,
-  //   [
-  //     {id: "2-0", x: 15, y: 15, connections: [{targetId: "1-0", weight: 5}, {targetId: "3-0", weight: 3}]},
-  //     {id: "2-1", x: 35, y: 15, connections: [{targetId: "4-0", weight: 2}]}
-  //   ],
-  //   'rgba(100, 255, 100, 0.7)'
-  // );
-  
-  // // Polygon 3 - Pentagon
-  // const p3 = createSamplePolygon(
-  //   3,
-  //   availableShapes.Pentagon,
-  //   [
-  //     {id: "3-0", x: 20, y: 20, connections: [{targetId: "1-0", weight: 2}, {targetId: "2-0", weight: 3}]}
-  //   ],
-  //   'rgba(100, 100, 255, 0.7)'
-  // );
-  
-  // // Polygon 4 - Small Square
-  // const p4 = createSamplePolygon(
-  //   4,
-  //   availableShapes.Square,
-  //   [
-  //     {id: "4-0", x: 12, y: 12, connections: [{targetId: "2-1", weight: 2}]}
-  //   ],
-  //   'rgba(255, 255, 100, 0.7)'
-  // );
-  
-  // Add polygons to our list
-  // polygons.push(p1, p2, p3, p4);
+
+  function getNormalizedPositionFromLayout(nodeId) {
+    const pos = layout.getNodePosition(nodeId);
+    const margin = 20;
+    let x = (pos.x - layoutBoundingBox.min_x - margin) / (2 * margin + layoutBoundingBox.max_x - layoutBoundingBox.min_x) * GRID_SIZE;
+    let y = (pos.y - layoutBoundingBox.min_y - margin) / (2 * margin + layoutBoundingBox.max_y - layoutBoundingBox.min_y) * GRID_SIZE;
+    return [Math.floor(x), Math.floor(y)];
+  }
 }
 
 // Initialize the grid
@@ -162,6 +140,16 @@ function calculateValue(polygon, position) {
       return -Infinity; // Invalid placement (cell already occupied)
     }
   }
+  const [initialX, initialY] = polygon.initialPosition;
+  const distanceFromInitial = Math.sqrt(
+    Math.pow(position[0] - initialX, 2) + 
+    Math.pow(position[1] - initialY, 2)
+  );
+  
+  // The closer to the initial position, the higher the value
+  // Scale based on grid size and weight
+  const positionValue = (GRID_SIZE / (distanceFromInitial + 1)) * POSITION_WEIGHT * 5;
+  value += positionValue;
   
   // Get all placed polygons that this polygon has connections with
   const connectedPolygonIds = new Set();
@@ -198,7 +186,7 @@ function calculateValue(polygon, position) {
           
           // Closer connected cities provide higher value
           // Higher weights provide higher value
-          value += (connection.weight * 1000) / (distance + 1);
+          value += CONNECTED_WEIGHT * (connection.weight * 1000) / (distance + 1);
         }
       }
     }
@@ -230,7 +218,7 @@ function calculateValue(polygon, position) {
     // If unconnected polygons are close, apply penalty
     // The closer they are, the bigger the penalty
     if (distance < 100) { // 100 pixels threshold
-      value -= (4000 / (distance + 1));
+      value -= DISCONNECTED_WEIGHT * (4000 / (distance + 1));
     }
   }
   
@@ -242,13 +230,17 @@ function calculateValue(polygon, position) {
     Math.pow(position[1] - centerY, 2)
   );
   
-  value += 1000 / (distanceToCenter + 1);
+  value += CENTER_WEIGHT * 1000 / (distanceToCenter + 1);
   
   return value;
 }
 
 // Place polygon on the grid at a specific position
 function placePolygon(polygon, position) {
+  if (!Number.isFinite(polygon.id)) {
+    throw new Error('Invalid polygon ID - expected a number, got ' + polygon.id);
+  }
+
   const [posX, posY] = position;
   polygon.position = [posX, posY];
   polygon.placed = true;
@@ -257,7 +249,7 @@ function placePolygon(polygon, position) {
   // Mark cells as occupied
   const occupiedCells = getOccupiedCells(polygon, position);
   for (const [x, y] of occupiedCells) {
-    grid[y][x] = polygon.id;
+    grid[y][x] = polygon.id + 1; // avoid 0. 0 is reserved for empty cells
   }
 }
 
@@ -277,7 +269,7 @@ function runPlacementAlgorithm() {
     const firstPolygon = polygons[0];
     const centerX = GRID_SIZE / 2 - 20; // Offset slightly to avoid edge issues
     const centerY = GRID_SIZE / 2 - 20;
-    placePolygon(firstPolygon, [centerX, centerY]);
+    placePolygon(firstPolygon, firstPolygon.initialPosition);
   }
   
   // Place remaining polygons
