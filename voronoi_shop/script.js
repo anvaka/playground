@@ -1,18 +1,24 @@
 // Import services and modules
 import { getCoffeeShops } from './src/coffeeShopService.js';
 import { CanvasRenderer } from './src/renderer/canvasRenderer.js';
+import { SVGRenderer } from './src/renderer/svgRenderer.js';
 import { VoronoiMap } from './src/voronoi/voronoiMap.js';
 
 // Global elements
 const canvas = document.getElementById('voronoi-canvas');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+let width = window.innerWidth;
+let height = window.innerHeight;
+if (canvas) {
+    canvas.width = width;
+    canvas.height = height;
+}
 const statusDiv = document.getElementById('status');
 const searchForm = document.getElementById('search-form');
 const cityInput = document.getElementById('city');
 
 // Create renderer and voronoi map
-const renderer = new CanvasRenderer(canvas);
+// const renderer = new CanvasRenderer(canvas);
+const renderer = new SVGRenderer(document.body);
 // renderer.setColorScheme('sunset');
 renderer.setColorScheme('blues');
 const voronoiMap = new VoronoiMap(renderer);

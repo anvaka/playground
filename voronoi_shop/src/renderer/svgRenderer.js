@@ -30,6 +30,9 @@ export class SVGRenderer extends RendererInterface {
     this.colorScheme = 'muted'; // Default color scheme
     this.backgroundStyle = 'gradient'; // Default background style: 'plain' or 'gradient'
     this.currentRenderState = null; // Store current render state for resize handling
+    if (typeof panzoom !== undefined) {
+      this.panzoom = panzoom(this.contentGroup);
+    }
   }
 
   /**
