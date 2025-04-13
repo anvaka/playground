@@ -1,4 +1,6 @@
 import { RendererInterface } from './rendererInterface.js';
+import { getColorFromPalette } from '../utils/colorPalettes.js';
+import { createClipPathFromGeoJSON, drawGeometry } from '../utils/geoJsonPathUtils.js';
 
 /**
  * Canvas implementation of the renderer interface
@@ -56,72 +58,18 @@ export class CanvasRenderer extends RendererInterface {
       // Process each feature in the collection
       cityGeojson.features.forEach(feature => {
         if (feature.geometry) {
-          this.drawGeometry(feature.geometry, transformFn);
+          drawGeometry(this.ctx, feature.geometry, transformFn);
         }
       });
     } else if (cityGeojson.type === 'Feature') {
       // Process single feature
       if (cityGeojson.geometry) {
-        this.drawGeometry(cityGeojson.geometry, transformFn);
+        drawGeometry(this.ctx, cityGeojson.geometry, transformFn);
       }
     } else {
       // Direct geometry object
-      this.drawGeometry(cityGeojson, transformFn);
+      drawGeometry(this.ctx, cityGeojson, transformFn);
     }
-  }
-  
-  /**
-   * Draw geometry from GeoJSON
-   * @param {Object} geometry - GeoJSON geometry object
-   * @param {Function} transformFn - Function to transform coordinates
-   */
-  drawGeometry(geometry, transformFn) {
-    this.ctx.beginPath();
-    
-    if (geometry.type === 'Polygon') {
-      // Draw the outer ring of the polygon
-      this.drawRing(geometry.coordinates[0], transformFn);
-      
-      // Draw any holes (inner rings)
-      for (let i = 1; i < geometry.coordinates.length; i++) {
-        this.drawRing(geometry.coordinates[i], transformFn);
-      }
-    } else if (geometry.type === 'MultiPolygon') {
-      // Draw each polygon in the multipolygon
-      geometry.coordinates.forEach(polygon => {
-        // Draw the outer ring
-        this.drawRing(polygon[0], transformFn);
-        
-        // Draw any holes
-        for (let i = 1; i < polygon.length; i++) {
-          this.drawRing(polygon[i], transformFn);
-        }
-      });
-    } else if (geometry.type === 'Point') {
-      const point = transformFn(geometry.coordinates[0], geometry.coordinates[1]);
-      this.ctx.arc(point[0], point[1], 10, 0, Math.PI * 2);
-    }
-    
-    this.ctx.stroke();
-  }
-  
-  /**
-   * Draw a ring (polygon boundary or hole)
-   * @param {Array} ring - Array of coordinates for the ring
-   * @param {Function} transformFn - Function to transform coordinates
-   */
-  drawRing(ring, transformFn) {
-    if (!ring || ring.length === 0) return;
-    
-    const start = transformFn(ring[0][0], ring[0][1]);
-    this.ctx.moveTo(start[0], start[1]);
-    
-    for (let i = 1; i < ring.length; i++) {
-      const point = transformFn(ring[i][0], ring[i][1]);
-      this.ctx.lineTo(point[0], point[1]);
-    }
-    
-    this.ctx.closePath();
   }
 
   /**
@@ -201,7 +149,7 @@ export class CanvasRenderer extends RendererInterface {
     ctx.save();
     
     ctx.beginPath();
-    this.createClipPathFromGeoJSON(cityGeojson, transformFn);
+    createClipPathFromGeoJSON(ctx, cityGeojson, transformFn);
     
     // Apply the clipping region
     ctx.clip();
@@ -237,147 +185,17 @@ export class CanvasRenderer extends RendererInterface {
     ctx.lineWidth = 2;
     ctx.strokeStyle = '#006600';
     ctx.beginPath();
-    this.createClipPathFromGeoJSON(cityGeojson, transformFn);
+    createClipPathFromGeoJSON(ctx, cityGeojson, transformFn);
     ctx.stroke();
   }
   
-  /**
-   * Create a clip path from GeoJSON data
-   * @param {Object} geoJson - The GeoJSON data
-   * @param {Function} transformFn - Function to transform geo coordinates
-   */
-  createClipPathFromGeoJSON(geoJson, transformFn) {
-    if (!geoJson) return;
-    
-    // Handle different GeoJSON formats
-    if (geoJson.type === 'FeatureCollection') {
-      geoJson.features.forEach(feature => {
-        if (feature.geometry) {
-          this.addGeometryToPath(feature.geometry, transformFn);
-        }
-      });
-    } else if (geoJson.type === 'Feature') {
-      if (geoJson.geometry) {
-        this.addGeometryToPath(geoJson.geometry, transformFn);
-      }
-    } else {
-      // Direct geometry object
-      this.addGeometryToPath(geoJson, transformFn);
-    }
-  }
-  
-  /**
-   * Add geometry to the current path
-   * @param {Object} geometry - GeoJSON geometry object
-   * @param {Function} transformFn - Function to transform coordinates
-   */
-  addGeometryToPath(geometry, transformFn) {
-    if (geometry.type === 'Polygon') {
-      // Add the outer ring to the path
-      this.addRingToPath(geometry.coordinates[0], transformFn);
-      
-      // Add holes (inner rings) in reverse order to create proper mask
-      for (let i = 1; i < geometry.coordinates.length; i++) {
-        this.addRingToPath(geometry.coordinates[i], transformFn, true);
-      }
-    } else if (geometry.type === 'MultiPolygon') {
-      // Process each polygon in the multipolygon
-      geometry.coordinates.forEach(polygon => {
-        // Add outer ring
-        this.addRingToPath(polygon[0], transformFn);
-        
-        // Add holes
-        for (let i = 1; i < polygon.length; i++) {
-          this.addRingToPath(polygon[i], transformFn, true);
-        }
-      });
-    }
-  }
-  
-  /**
-   * Add a ring to the current path
-   * @param {Array} ring - Array of coordinates for the ring
-   * @param {Function} transformFn - Function to transform coordinates
-   * @param {boolean} isHole - Whether this ring is a hole (inner ring)
-   */
-  addRingToPath(ring, transformFn, isHole = false) {
-    if (!ring || ring.length === 0) return;
-    
-    // For holes, we need to go in the opposite direction
-    const orderedRing = isHole ? [...ring].reverse() : ring;
-    
-    const start = transformFn(orderedRing[0][0], orderedRing[0][1]);
-    this.ctx.moveTo(start[0], start[1]);
-    
-    for (let i = 1; i < orderedRing.length; i++) {
-      const point = transformFn(orderedRing[i][0], orderedRing[i][1]);
-      this.ctx.lineTo(point[0], point[1]);
-    }
-    
-    this.ctx.closePath();
-  }
-  
-  /**
-   * Fill with a color from the selected palette
-   * @param {number} index - The index to generate a color from
-   * @returns {string} - A CSS color string
-   */
-  getColorFromPalette(index) {
-    const palettes = {
-      // Muted earth tones for a cozy vibe
-      muted: [
-        '#d9c5a0', // beige
-        '#8a9a5b', // sage green
-        '#c19a6b', // light brown
-        '#a4b494', // grayed green  
-        '#7d6c46', // dark olive
-        '#b5b8a3', // pale sage
-        '#a98467', // medium brown
-        '#718355', // forest green
-        '#d8d4c4', // light beige
-        '#84714f'  // dark tan
-      ],
-      
-      // Sunset gradient colors for warmth
-      sunset: [
-        '#f9a03f', // orange
-        '#e06377', // coral
-        '#c83349', // red
-        '#5c374c', // deep purple
-        '#eb5e55', // salmon
-        '#ff9e80', // peach
-        '#d35269', // raspberry
-        '#8a5082', // violet
-        '#edad92', // light peach
-        '#aa3e98'  // magenta
-      ],
-      
-      // Monochromatic blues with contrast
-      blues: [
-        '#a4c3d2', // light blue
-        '#7a9eb1', // medium blue
-        '#5c7d99', // blue grey
-        '#426a8c', // slate blue
-        '#375673', // dark blue
-        '#2a4158', // navy
-        '#8fb5d5', // sky blue
-        '#6a93ad', // steel blue
-        '#b8d0e0', // pale blue  
-        '#1e3648'  // dark navy
-      ]
-    };
-    
-    const palette = palettes[this.colorScheme];
-    return palette[index % palette.length];
-  }
-
   /**
    * Generate a consistent color based on an index
    * @param {number} index - The index to generate a color from
    * @returns {string} - A CSS color string
    */
   getRandomColor(index) {
-    return this.getColorFromPalette(index);
+    return getColorFromPalette(this.colorScheme, index);
   }
 
   /**
