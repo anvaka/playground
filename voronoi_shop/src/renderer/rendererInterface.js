@@ -47,12 +47,4 @@ export class RendererInterface {
   renderPoints(points) {
     throw new Error('Method not implemented');
   }
-
-  /**
-   * Render a legend
-   * @param {Object} options - Legend options
-   */
-  renderLegend(options) {
-    throw new Error('Method not implemented');
-  }
 }

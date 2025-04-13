@@ -17,6 +17,13 @@ const renderer = new CanvasRenderer(canvas);
 renderer.setColorScheme('blues');
 const voronoiMap = new VoronoiMap(renderer);
 
+// Handle window resize events
+window.addEventListener('resize', () => {
+  const newWidth = window.innerWidth;
+  const newHeight = window.innerHeight;
+  voronoiMap.handleResize(newWidth, newHeight);
+});
+
 // Function to update status with message
 function updateStatus(message, type = 'loading') {
     statusDiv.textContent = message;

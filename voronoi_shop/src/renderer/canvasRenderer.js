@@ -11,6 +11,7 @@ export class CanvasRenderer extends RendererInterface {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.colorScheme = 'muted'; // Default color scheme
+    this.currentRenderState = null; // Store current render state for resize handling
   }
 
   /**
@@ -20,6 +21,28 @@ export class CanvasRenderer extends RendererInterface {
   setColorScheme(scheme) {
     if (['muted', 'sunset', 'blues'].includes(scheme)) {
       this.colorScheme = scheme;
+    }
+  }
+  
+  /**
+   * Resize the canvas to match new dimensions
+   * @param {number} width - New canvas width
+   * @param {number} height - New canvas height
+   */
+  resize(width, height) {
+    this.canvas.width = width;
+    this.canvas.height = height;
+    
+    // Re-render current content if available
+    if (this.currentRenderState) {
+      const { type, message, data } = this.currentRenderState;
+      
+      if (type === 'welcome') {
+        this.renderWelcomeMessage(message);
+      } else if (type === 'voronoi' && data) {
+        this.clear();
+        data.render();
+      }
     }
   }
 
@@ -40,6 +63,12 @@ export class CanvasRenderer extends RendererInterface {
     this.ctx.font = '20px Arial';
     this.ctx.textAlign = 'center';
     this.ctx.fillText(message, this.canvas.width/2, this.canvas.height/2);
+    
+    // Store render state
+    this.currentRenderState = {
+      type: 'welcome',
+      message: message
+    };
   }
 
   /**
@@ -187,6 +216,14 @@ export class CanvasRenderer extends RendererInterface {
     ctx.beginPath();
     createClipPathFromGeoJSON(ctx, cityGeojson, transformFn);
     ctx.stroke();
+    
+    // Store render state
+    this.currentRenderState = {
+      type: 'voronoi',
+      data: {
+        render: () => this.renderVoronoiCellsWithClipping(cells, cityGeojson, transformFn)
+      }
+    };
   }
   
   /**
@@ -209,39 +246,5 @@ export class CanvasRenderer extends RendererInterface {
       this.ctx.arc(point[0], point[1], 3, 0, Math.PI * 2);
       this.ctx.fill();
     });
-  }
-
-  /**
-   * Render a legend
-   * @param {Object} options - Legend options including city name and count
-   */
-  renderLegend(options) {
-    const { cityName, count, margin = 50 } = options;
-    
-    this.ctx.fillStyle = '#000000';
-    this.ctx.font = '14px Arial';
-    this.ctx.textAlign = 'left';
-    this.ctx.fillText(`Coffee Shops in ${cityName}: ${count}`, margin, 30);
-    
-    // Draw red dot for legend
-    this.ctx.fillStyle = '#FF0000';
-    this.ctx.beginPath();
-    this.ctx.arc(margin + 200, 26, 3, 0, Math.PI * 2);
-    this.ctx.fill();
-    
-    // Draw legend text for coffee shop points
-    this.ctx.fillStyle = '#000000';
-    this.ctx.fillText('Coffee Shop', margin + 210, 30);
-    
-    // Add city outline to legend
-    this.ctx.strokeStyle = '#006600';
-    this.ctx.lineWidth = 2;
-    this.ctx.beginPath();
-    this.ctx.moveTo(margin + 280, 26);
-    this.ctx.lineTo(margin + 320, 26);
-    this.ctx.stroke();
-    
-    this.ctx.fillStyle = '#000000';
-    this.ctx.fillText('City Outline', margin + 330, 30);
   }
 }

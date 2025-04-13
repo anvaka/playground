@@ -22,6 +22,23 @@ export class VoronoiMap {
     this.renderer.clear();
     this.renderer.renderWelcomeMessage('Enter a city name to see coffee shop Voronoi diagram');
   }
+  
+  /**
+   * Handle resize events by updating the canvas and re-rendering
+   * @param {number} width - New width
+   * @param {number} height - New height
+   */
+  handleResize(width, height) {
+    // Update renderer dimensions
+    this.renderer.resize(width, height);
+    
+    // If we have data loaded, recreate the transformer with new dimensions and re-render
+    if (this.bbox && this.coffeeShops.length > 0) {
+      const canvas = this.renderer.canvas;
+      this.transformer = new GeoTransformer(this.bbox, canvas.width, canvas.height);
+      this.render();
+    }
+  }
 
   /**
    * Set the data for visualization
