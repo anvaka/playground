@@ -5,20 +5,22 @@ import { SVGRenderer } from './src/renderer/svgRenderer.js';
 import { VoronoiMap } from './src/voronoi/voronoiMap.js';
 
 // Global elements
-const canvas = document.getElementById('voronoi-canvas');
-let width = window.innerWidth;
-let height = window.innerHeight;
-if (canvas) {
-    canvas.width = width;
-    canvas.height = height;
-}
+const useCanvas = false;
 const statusDiv = document.getElementById('status');
 const searchForm = document.getElementById('search-form');
 const cityInput = document.getElementById('city');
 
+let renderer;
+if (useCanvas) {
+    const canvas = document.createElement('canvas');
+    document.body.querySelector('.canvas-container').appendChild(canvas);
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    renderer = new CanvasRenderer(canvas);
+} else {
+    renderer = new SVGRenderer(document.body);
+}
 // Create renderer and voronoi map
-// const renderer = new CanvasRenderer(canvas);
-const renderer = new SVGRenderer(document.body);
 // renderer.setColorScheme('sunset');
 renderer.setColorScheme('blues');
 const voronoiMap = new VoronoiMap(renderer);
