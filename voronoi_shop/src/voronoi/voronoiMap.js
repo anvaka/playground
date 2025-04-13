@@ -99,7 +99,8 @@ export class VoronoiMap {
     this.renderer.renderVoronoiCellsWithClipping(
       cells,
       this.cityGeojson,
-      (lon, lat) => this.transformer.geoToCanvas(lon, lat)
+      (lon, lat) => this.transformer.geoToCanvas(lon, lat),
+      this.coffeeShops // Pass the coffee shop data to the renderer
     );
     
     return this;

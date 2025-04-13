@@ -30,9 +30,44 @@ export class SVGRenderer extends RendererInterface {
     this.colorScheme = 'muted'; // Default color scheme
     this.backgroundStyle = 'gradient'; // Default background style: 'plain' or 'gradient'
     this.currentRenderState = null; // Store current render state for resize handling
-    if (typeof panzoom !== undefined) {
+    
+    // Setup tooltip element
+    this._setupTooltip();
+    
+    if (typeof panzoom !== 'undefined') {
       this.panzoom = panzoom(this.contentGroup);
     }
+  }
+
+  /**
+   * Setup tooltip element for displaying shop information
+   */
+  _setupTooltip() {
+    // Create tooltip element if it doesn't exist
+    let tooltip = document.getElementById('voronoi-tooltip');
+    if (!tooltip) {
+      tooltip = document.createElement('div');
+      tooltip.id = 'voronoi-tooltip';
+      tooltip.style.position = 'absolute';
+      tooltip.style.padding = '8px 12px';
+      tooltip.style.background = 'rgba(255, 255, 255, 0.9)';
+      tooltip.style.boxShadow = '0 1px 8px rgba(0, 0, 0, 0.1)';
+      tooltip.style.borderRadius = '4px';
+      tooltip.style.fontSize = '14px';
+      tooltip.style.color = '#333';
+      tooltip.style.zIndex = '1000';
+      tooltip.style.pointerEvents = 'none';
+      tooltip.style.opacity = '0';
+      tooltip.style.transition = 'opacity 0.2s';
+      document.body.appendChild(tooltip);
+    }
+    this.tooltip = tooltip;
+    
+    // Add mouse move listener to track mouse position for tooltip
+    document.addEventListener('mousemove', (e) => {
+      this.tooltip.style.left = (e.pageX + 10) + 'px';
+      this.tooltip.style.top = (e.pageY + 10) + 'px';
+    });
   }
 
   /**
@@ -364,8 +399,9 @@ export class SVGRenderer extends RendererInterface {
    * @param {Array} cells - Array of Voronoi cells
    * @param {Object} cityGeojson - GeoJSON of city boundaries for clipping
    * @param {Function} transformFn - Function to transform geo coordinates to canvas
+   * @param {Array} shops - Optional array of shop data corresponding to cells
    */
-  renderVoronoiCellsWithClipping(cells, cityGeojson, transformFn) {
+  renderVoronoiCellsWithClipping(cells, cityGeojson, transformFn, shops = []) {
     if (!cells || !cells.length) return;
     
     // Create a clip path for the city boundary
@@ -404,6 +440,33 @@ export class SVGRenderer extends RendererInterface {
       path.setAttribute('stroke', '#333');
       path.setAttribute('stroke-width', '0.5');
       
+      // Add shop data as attributes if available
+      if (shops[cell.index]) {
+        const shop = shops[cell.index];
+        const shopName = shop.tags?.name || 'Coffee Shop';
+        const address = shop.tags?.['addr:street'] || '';
+        
+        path.setAttribute('data-shop-name', shopName);
+        if (address) {
+          path.setAttribute('data-shop-address', address);
+        }
+        
+        // Add event listeners for tooltip
+        path.addEventListener('mouseenter', () => {
+          let tooltipContent = shopName;
+          if (address) {
+            tooltipContent += `<br>${address}`;
+          }
+          
+          this.tooltip.innerHTML = tooltipContent;
+          this.tooltip.style.opacity = '1';
+        });
+        
+        path.addEventListener('mouseleave', () => {
+          this.tooltip.style.opacity = '0';
+        });
+      }
+      
       cellsGroup.appendChild(path);
     });
     
@@ -413,7 +476,7 @@ export class SVGRenderer extends RendererInterface {
     this.currentRenderState = {
       type: 'voronoi',
       data: {
-        render: () => this.renderVoronoiCellsWithClipping(cells, cityGeojson, transformFn)
+        render: () => this.renderVoronoiCellsWithClipping(cells, cityGeojson, transformFn, shops)
       }
     };
   }
