@@ -15,23 +15,30 @@ export async function getCoffeeShops(cityName) {
     }
     
     const city = nominatimData[0];
+    const boundaries = extractBoundaries([city])[0];
     
-    // Calculate a bounding box around the city's center
-    // This is a simplification - a proper implementation would use the city's actual boundary
-    const bbox = {
-        south: parseFloat(city.boundingbox[0]),
-        west: parseFloat(city.boundingbox[2]),
-        north: parseFloat(city.boundingbox[1]),
-        east: parseFloat(city.boundingbox[3])
-    };
-    
-    // Query Overpass API for coffee shops within the bounding box
+    // Query Overpass API for coffee shops using area ID or bounding box
     const overpassApiUrl = "https://overpass-api.de/api/interpreter";
-    const query = `
-        [out:json];
-        node["amenity"="cafe"](${bbox.south},${bbox.west},${bbox.north},${bbox.east});
-        out body;
-    `;
+    const timeout = 90; // seconds
+    const maxHeapByteSize = 1073741824; // 1GB
+    
+    let query;
+    if (boundaries.areaId) {
+        // Use area ID for more precise boundary
+        query = `[timeout:${timeout}][maxsize:${maxHeapByteSize}][out:json];
+area(${boundaries.areaId});
+(._; )->.area;
+node["amenity"="cafe"](area.area);
+out body;`;
+    } else if (boundaries.bbox) {
+        // Fallback to bounding box
+        const bbox = serializeBBox(boundaries.bbox);
+        query = `[timeout:${timeout}][maxsize:${maxHeapByteSize}][bbox:${bbox}][out:json];
+node["amenity"="cafe"];
+out body;`;
+    } else {
+        throw new Error(`Could not determine boundaries for ${cityName}`);
+    }
     
     const response = await fetch(overpassApiUrl, {
         method: 'POST',
@@ -53,7 +60,60 @@ export async function getCoffeeShops(cityName) {
     
     return {
         shops: data.elements,
-        bbox: bbox,
+        bbox: boundaries.bbox ? {
+            south: boundaries.bbox[0],
+            west: boundaries.bbox[1],
+            north: boundaries.bbox[2],
+            east: boundaries.bbox[3]
+        } : null,
         cityGeojson: city.geojson
     };
+}
+
+/**
+ * Extracts boundary information from Nominatim API results
+ * @param {Array} results - Array of results from Nominatim API
+ * @returns {Array} - Array of boundary objects with areaId and bbox
+ */
+function extractBoundaries(results) {
+    return results.map(row => {
+        let areaId, bbox;
+        if (row.osm_type === 'relation') {
+            // By convention the area id can be calculated from an existing relation
+            // by adding 3600000000 to its OSM id
+            areaId = row.osm_id + 36e8;
+        } else if (row.osm_type === 'way') {
+            // For ways, add 2400000000 to the OSM id
+            areaId = row.osm_id + 24e8;
+        }
+        
+        if (row.boundingbox) {
+            bbox = [
+                Number.parseFloat(row.boundingbox[0]),
+                Number.parseFloat(row.boundingbox[2]),
+                Number.parseFloat(row.boundingbox[1]),
+                Number.parseFloat(row.boundingbox[3]),
+            ];
+        }
+
+        return {
+            areaId,
+            bbox,
+            lat: row.lat,
+            lon: row.lon,
+            osmId: row.osm_id,
+            osmType: row.osm_type,
+            name: row.display_name,
+            type: row.type,
+        };
+    });
+}
+
+/**
+ * Converts a bounding box array to a string format for Overpass API
+ * @param {Array} bbox - Bounding box [south, west, north, east]
+ * @returns {string} - Serialized bounding box string
+ */
+function serializeBBox(bbox) {
+    return bbox.join(',');
 }
