@@ -1,5 +1,6 @@
 /**
  * Utility for transforming geographic coordinates to canvas coordinates
+ * with proper scaling and aspect ratio preservation
  */
 export class GeoTransformer {
   constructor(bbox, canvasWidth, canvasHeight, margin = 50) {
@@ -10,12 +11,15 @@ export class GeoTransformer {
     this.calculateTransformation();
   }
 
+  /**
+   * Calculate the transformation parameters for geo to canvas conversion
+   */
   calculateTransformation() {
     const { bbox, margin, canvasWidth, canvasHeight } = this;
     const mapWidth = canvasWidth - margin * 2;
     const mapHeight = canvasHeight - margin * 2;
     
-    // Add consistent padding to the bounding box (15% on each side)
+    // Add padding to the bounding box (15%)
     const padding = 0.15;
     const lonSpan = bbox.east - bbox.west;
     const latSpan = bbox.north - bbox.south;
@@ -27,29 +31,29 @@ export class GeoTransformer {
       north: bbox.north + latSpan * padding
     };
 
-    // Recalculate spans with padding
+    // Calculate spans with padding
     const paddedLonSpan = this.paddedBbox.east - this.paddedBbox.west;
     const paddedLatSpan = this.paddedBbox.north - this.paddedBbox.south;
 
-    // Adjust for Earth's curvature
+    // Adjust for Earth's curvature at this latitude
     const midLat = (this.paddedBbox.north + this.paddedBbox.south) / 2;
     const latRadians = midLat * Math.PI / 180;
     this.lonCorrectionFactor = Math.cos(latRadians);
     
-    // Corrected span
+    // Longitude span corrected for Earth's curvature
     const correctedLonSpan = paddedLonSpan * this.lonCorrectionFactor;
     
-    // Calculate aspect ratio of the geographic area (corrected for Earth's curvature)
+    // Calculate aspect ratios to maintain proper scaling
     const geoAspectRatio = correctedLonSpan / paddedLatSpan;
     const canvasAspectRatio = mapWidth / mapHeight;
     
-    // Set up projection based on aspect ratios
+    // Set scaling factors based on which dimension constrains the map
     if (geoAspectRatio > canvasAspectRatio) {
-      // Width constrains the map
+      // Width is the constraint
       this.xScale = mapWidth / correctedLonSpan;
       this.yScale = this.xScale; 
     } else {
-      // Height constrains the map
+      // Height is the constraint
       this.yScale = mapHeight / paddedLatSpan;
       this.xScale = this.yScale;
     }
@@ -62,10 +66,16 @@ export class GeoTransformer {
     this.yOffset = margin + (mapHeight - correctedHeight) / 2;
   }
 
-  // Convert geo coordinates to canvas coordinates with proper aspect ratio
+  /**
+   * Convert geographic coordinates to canvas coordinates
+   * @param {number} lon - Longitude
+   * @param {number} lat - Latitude
+   * @returns {Array} [x, y] canvas coordinates
+   */
   geoToCanvas(lon, lat) {
     const x = this.xOffset + (lon - this.paddedBbox.west) * this.xScale * this.lonCorrectionFactor;
-    const y = this.yOffset + (this.paddedBbox.north - lat) * this.yScale; // Invert y-axis
+    // Invert y-axis since canvas y increases downward but latitude increases upward
+    const y = this.yOffset + (this.paddedBbox.north - lat) * this.yScale;
     return [x, y];
   }
 }

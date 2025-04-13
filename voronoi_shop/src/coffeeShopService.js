@@ -1,4 +1,4 @@
-// Coffee shop data fetching service
+// Coffee shop data fetching service using OpenStreetMap APIs
 
 /**
  * Gets coffee shops for a given city name using OpenStreetMap APIs
@@ -6,45 +6,118 @@
  * @returns {Promise<Object>} - Object containing shops data, bounding box, and city geojson
  */
 export async function getCoffeeShops(cityName) {
-    // First, get the city boundaries from Nominatim API
-    const nominatimResponse = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cityName)}&format=json&limit=1&polygon_geojson=1`);
-    const nominatimData = await nominatimResponse.json();
+    try {
+        // First, get the city boundaries from Nominatim API
+        const cityData = await fetchCityData(cityName);
+        
+        if (!cityData) {
+            throw new Error(`City "${cityName}" not found`);
+        }
+        
+        // Extract boundary information
+        const boundary = extractBoundary(cityData);
+        
+        // Get coffee shops using Overpass API
+        const shops = await fetchCoffeeShopsInBoundary(boundary);
+        
+        return {
+            shops,
+            bbox: {
+                south: boundary.bbox[0],
+                west: boundary.bbox[1],
+                north: boundary.bbox[2],
+                east: boundary.bbox[3]
+            },
+            cityGeojson: cityData.geojson
+        };
+    } catch (error) {
+        console.error('Error fetching coffee shops:', error);
+        throw error;
+    }
+}
+
+/**
+ * Fetch city data from Nominatim API
+ * @param {string} cityName - Name of the city
+ * @returns {Promise<Object>} - City data
+ */
+async function fetchCityData(cityName) {
+    const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cityName)}&format=json&limit=1&polygon_geojson=1`;
+    const response = await fetch(nominatimUrl);
     
-    if (!nominatimData || nominatimData.length === 0) {
-        throw new Error(`City "${cityName}" not found`);
+    if (!response.ok) {
+        throw new Error(`Nominatim API error: ${response.status}`);
     }
     
-    const city = nominatimData[0];
-    const boundaries = extractBoundaries([city])[0];
+    const data = await response.json();
+    return data.length > 0 ? data[0] : null;
+}
+
+/**
+ * Extract boundary information from Nominatim result
+ * @param {Object} cityData - City data from Nominatim
+ * @returns {Object} - Boundary information
+ */
+function extractBoundary(cityData) {
+    let areaId = null;
     
-    // Query Overpass API for coffee shops using area ID or bounding box
+    // Calculate area ID based on OSM object type
+    if (cityData.osm_type === 'relation') {
+        // For relations, add 3600000000 to OSM ID
+        areaId = cityData.osm_id + 36e8;
+    } else if (cityData.osm_type === 'way') {
+        // For ways, add 2400000000 to OSM ID
+        areaId = cityData.osm_id + 24e8;
+    }
+    
+    // Extract bounding box
+    const bbox = cityData.boundingbox ? [
+        Number.parseFloat(cityData.boundingbox[0]), // south
+        Number.parseFloat(cityData.boundingbox[2]), // west
+        Number.parseFloat(cityData.boundingbox[1]), // north
+        Number.parseFloat(cityData.boundingbox[3]), // east
+    ] : null;
+    
+    return {
+        areaId,
+        bbox,
+        name: cityData.display_name
+    };
+}
+
+/**
+ * Fetch coffee shops within a boundary using Overpass API
+ * @param {Object} boundary - Boundary information
+ * @returns {Promise<Array>} - Array of coffee shops
+ */
+async function fetchCoffeeShopsInBoundary(boundary) {
     const overpassApiUrl = "https://overpass-api.de/api/interpreter";
     const timeout = 90; // seconds
-    const maxHeapByteSize = 1073741824; // 1GB
+    const maxHeapSize = 1073741824; // 1GB
     
     let query;
-    if (boundaries.areaId) {
+    
+    // Construct query based on available boundary information
+    if (boundary.areaId) {
         // Use area ID for more precise boundary
-        query = `[timeout:${timeout}][maxsize:${maxHeapByteSize}][out:json];
-area(${boundaries.areaId});
+        query = `[timeout:${timeout}][maxsize:${maxHeapSize}][out:json];
+area(${boundary.areaId});
 (._; )->.area;
 node["amenity"="cafe"](area.area);
 out body;`;
-    } else if (boundaries.bbox) {
-        // Fallback to bounding box
-        const bbox = serializeBBox(boundaries.bbox);
-        query = `[timeout:${timeout}][maxsize:${maxHeapByteSize}][bbox:${bbox}][out:json];
+    } else if (boundary.bbox) {
+        // Fall back to bounding box
+        query = `[timeout:${timeout}][maxsize:${maxHeapSize}][bbox:${boundary.bbox.join(',')}][out:json];
 node["amenity"="cafe"];
 out body;`;
     } else {
-        throw new Error(`Could not determine boundaries for ${cityName}`);
+        throw new Error('No valid boundary information available');
     }
     
+    // Execute Overpass query
     const response = await fetch(overpassApiUrl, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: `data=${encodeURIComponent(query)}`
     });
     
@@ -55,65 +128,8 @@ out body;`;
     const data = await response.json();
     
     if (!data.elements || data.elements.length === 0) {
-        throw new Error(`No coffee shops found in ${cityName}`);
+        throw new Error(`No coffee shops found`);
     }
     
-    return {
-        shops: data.elements,
-        bbox: boundaries.bbox ? {
-            south: boundaries.bbox[0],
-            west: boundaries.bbox[1],
-            north: boundaries.bbox[2],
-            east: boundaries.bbox[3]
-        } : null,
-        cityGeojson: city.geojson
-    };
-}
-
-/**
- * Extracts boundary information from Nominatim API results
- * @param {Array} results - Array of results from Nominatim API
- * @returns {Array} - Array of boundary objects with areaId and bbox
- */
-function extractBoundaries(results) {
-    return results.map(row => {
-        let areaId, bbox;
-        if (row.osm_type === 'relation') {
-            // By convention the area id can be calculated from an existing relation
-            // by adding 3600000000 to its OSM id
-            areaId = row.osm_id + 36e8;
-        } else if (row.osm_type === 'way') {
-            // For ways, add 2400000000 to the OSM id
-            areaId = row.osm_id + 24e8;
-        }
-        
-        if (row.boundingbox) {
-            bbox = [
-                Number.parseFloat(row.boundingbox[0]),
-                Number.parseFloat(row.boundingbox[2]),
-                Number.parseFloat(row.boundingbox[1]),
-                Number.parseFloat(row.boundingbox[3]),
-            ];
-        }
-
-        return {
-            areaId,
-            bbox,
-            lat: row.lat,
-            lon: row.lon,
-            osmId: row.osm_id,
-            osmType: row.osm_type,
-            name: row.display_name,
-            type: row.type,
-        };
-    });
-}
-
-/**
- * Converts a bounding box array to a string format for Overpass API
- * @param {Array} bbox - Bounding box [south, west, north, east]
- * @returns {string} - Serialized bounding box string
- */
-function serializeBBox(bbox) {
-    return bbox.join(',');
+    return data.elements;
 }

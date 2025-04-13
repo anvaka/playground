@@ -1,5 +1,5 @@
 /**
- * Generates a Voronoi diagram from a set of points
+ * Generates a Voronoi diagram from a set of points using D3's Delaunay
  */
 export class VoronoiGenerator {
   constructor() {
@@ -11,6 +11,7 @@ export class VoronoiGenerator {
   /**
    * Set points for the Voronoi diagram
    * @param {Array} points - Array of [x, y] coordinates
+   * @returns {VoronoiGenerator} - This instance for method chaining
    */
   setPoints(points) {
     this.points = points;
@@ -20,6 +21,7 @@ export class VoronoiGenerator {
   /**
    * Set the bounding box for the Voronoi diagram
    * @param {Array} bbox - [x0, y0, x1, y1] bounding box
+   * @returns {VoronoiGenerator} - This instance for method chaining
    */
   setBoundingBox(bbox) {
     this.bbox = bbox;
@@ -28,6 +30,8 @@ export class VoronoiGenerator {
 
   /**
    * Generate the Voronoi diagram using D3's Delaunay
+   * @returns {VoronoiGenerator} - This instance for method chaining
+   * @throws {Error} If points or bounding box are not set
    */
   generate() {
     if (!this.points.length || !this.bbox) {
@@ -37,24 +41,18 @@ export class VoronoiGenerator {
     const delaunay = d3.Delaunay.from(this.points);
     const voronoi = delaunay.voronoi(this.bbox);
     
-    // Store cells for easy access
-    this.cells = [];
-    for (let i = 0; i < this.points.length; i++) {
+    // Process cells from the voronoi diagram
+    this.cells = Array.from({length: this.points.length}, (_, i) => {
       const cell = voronoi.cellPolygon(i);
-      if (cell) {
-        this.cells.push({
-          points: cell,
-          index: i
-        });
-      }
-    }
+      return cell ? { points: cell, index: i } : null;
+    }).filter(Boolean);
 
     return this;
   }
 
   /**
    * Get the generated cells
-   * @returns {Array} Array of cell objects
+   * @returns {Array} Array of cell objects with points and index properties
    */
   getCells() {
     return this.cells;

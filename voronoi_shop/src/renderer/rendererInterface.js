@@ -16,6 +16,31 @@ export class RendererInterface {
   }
 
   /**
+   * Resize the rendering area
+   * @param {number} width - New width
+   * @param {number} height - New height
+   */
+  resize(width, height) {
+    throw new Error('Method not implemented');
+  }
+
+  /**
+   * Set color scheme for the renderer
+   * @param {string} scheme - Color scheme name
+   */
+  setColorScheme(scheme) {
+    throw new Error('Method not implemented');
+  }
+
+  /**
+   * Set background style for the renderer
+   * @param {string} style - Background style name
+   */
+  setBackgroundStyle(style) {
+    throw new Error('Method not implemented');
+  }
+
+  /**
    * Render city outline from GeoJSON
    * @param {Object} cityGeojson - GeoJSON representation of the city
    * @param {Function} transformFn - Function to transform coordinates
@@ -25,10 +50,13 @@ export class RendererInterface {
   }
 
   /**
-   * Render Voronoi cells
-   * @param {Array} cells - Array of cell objects with points and index properties
+   * Render Voronoi cells with clipping to city boundaries
+   * @param {Array} cells - Array of Voronoi cells
+   * @param {Object} cityGeojson - GeoJSON of city boundaries for clipping
+   * @param {Function} transformFn - Function to transform geo coordinates to canvas
+   * @param {Array} shops - Optional array of shop data corresponding to cells
    */
-  renderVoronoiCells(cells) {
+  renderVoronoiCellsWithClipping(cells, cityGeojson, transformFn, shops) {
     throw new Error('Method not implemented');
   }
 

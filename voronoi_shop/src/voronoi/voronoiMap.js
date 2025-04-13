@@ -21,8 +21,6 @@ export class VoronoiMap {
    */
   initialize() {
     this.renderer.clear();
-    
-    // Show the welcome message that's already in HTML
     this.showWelcomeMessage('Enter a city name to see coffee shop Voronoi diagram');
   }
 
@@ -57,16 +55,11 @@ export class VoronoiMap {
    * @param {number} height - New height
    */
   handleResize(width, height) {
-    // Update renderer dimensions
     this.renderer.resize(width, height);
     
-    // If we have data loaded, recreate the transformer with new dimensions and re-render
+    // Re-render if we have data
     if (this.bbox && this.coffeeShops.length > 0) {
-      const canvas = {
-        width: window.innerWidth,
-        height: window.innerHeight
-      }
-      this.transformer = new GeoTransformer(this.bbox, canvas.width, canvas.height);
+      this.transformer = new GeoTransformer(this.bbox, width, height);
       this.render();
     }
   }
@@ -77,7 +70,6 @@ export class VoronoiMap {
    * @param {string} cityName - Name of the city
    */
   setData(data, cityName) {
-    // Hide welcome message when data is loaded
     this.hideWelcomeMessage();
     
     this.coffeeShops = data.shops;
@@ -86,11 +78,11 @@ export class VoronoiMap {
     this.cityName = cityName;
     
     // Create a new transformer for this dataset
-    const canvas = {
-      width: window.innerWidth,
-      height: window.innerHeight
-    }
-    this.transformer = new GeoTransformer(this.bbox, canvas.width, canvas.height);
+    this.transformer = new GeoTransformer(
+      this.bbox, 
+      window.innerWidth, 
+      window.innerHeight
+    );
     
     return this;
   }
@@ -117,78 +109,21 @@ export class VoronoiMap {
       .setBoundingBox([0, 0, window.innerWidth, window.innerHeight])
       .generate();
     
-    // Get Voronoi cells
     const cells = this.voronoiGenerator.getCells();
     
-    // First render city outline to establish the boundary
+    // Render city outline and Voronoi cells with clipping
     this.renderer.renderCityOutline(
       this.cityGeojson, 
       (lon, lat) => this.transformer.geoToCanvas(lon, lat)
     );
     
-    // Then render Voronoi cells with clipping to the city boundary
     this.renderer.renderVoronoiCellsWithClipping(
       cells,
       this.cityGeojson,
       (lon, lat) => this.transformer.geoToCanvas(lon, lat),
-      this.coffeeShops // Pass the coffee shop data to the renderer
+      this.coffeeShops
     );
     
     return this;
-  }
-
-  /**
-   * Prepare city path for clipping by converting GeoJSON to canvas coordinates
-   * @param {Object} cityGeojson - GeoJSON representation of city boundaries
-   * @returns {Array} Path coordinates for clipping
-   */
-  prepareCityPathForClipping(cityGeojson) {
-    if (!cityGeojson) return null;
-    
-    const cityPath = [];
-    
-    // Handle different GeoJSON structure formats
-    if (cityGeojson.type === 'Feature' || cityGeojson.type === 'FeatureCollection') {
-      // Process features
-      const features = cityGeojson.type === 'Feature' ? [cityGeojson] : cityGeojson.features;
-      
-      features.forEach(feature => {
-        if (feature.geometry) {
-          this.processGeometry(feature.geometry, cityPath);
-        }
-      });
-    } else if (cityGeojson.type === 'Polygon' || cityGeojson.type === 'MultiPolygon') {
-      // Process direct geometry
-      this.processGeometry(cityGeojson, cityPath);
-    }
-    
-    return cityPath.length > 0 ? cityPath : null;
-  }
-  
-  /**
-   * Process geometry from GeoJSON to extract path coordinates
-   * @param {Object} geometry - GeoJSON geometry object
-   * @param {Array} cityPath - Output array to store path coordinates
-   */
-  processGeometry(geometry, cityPath) {
-    if (geometry.type === 'Polygon') {
-      // Process each ring in the polygon (first ring is outer, rest are holes)
-      geometry.coordinates.forEach(ring => {
-        const transformedRing = ring.map(coord => {
-          return this.transformer.geoToCanvas(coord[0], coord[1]);
-        });
-        cityPath.push(transformedRing);
-      });
-    } else if (geometry.type === 'MultiPolygon') {
-      // Process each polygon in the multipolygon
-      geometry.coordinates.forEach(polygon => {
-        polygon.forEach(ring => {
-          const transformedRing = ring.map(coord => {
-            return this.transformer.geoToCanvas(coord[0], coord[1]);
-          });
-          cityPath.push(transformedRing);
-        });
-      });
-    }
   }
 }

@@ -4,41 +4,53 @@ import { CanvasRenderer } from './src/renderer/canvasRenderer.js';
 import { SVGRenderer } from './src/renderer/svgRenderer.js';
 import { VoronoiMap } from './src/voronoi/voronoiMap.js';
 
-// Global elements
-const useCanvas = false;
+// Constants
+const RENDERER_TYPE = 'canvas'; // Change to 'canvas' to use canvas renderer
+const COLOR_SCHEME = 'blues'; // Options: 'muted', 'sunset', 'blues'
+
+// Initialize DOM elements
 const statusDiv = document.getElementById('status');
 const searchForm = document.getElementById('search-form');
 const cityInput = document.getElementById('city');
+const containerElement = document.querySelector('.canvas-container');
 
+// Create renderer based on type
 let renderer;
-if (useCanvas) {
+if (RENDERER_TYPE === 'canvas') {
     const canvas = document.createElement('canvas');
-    document.body.querySelector('.canvas-container').appendChild(canvas);
+    containerElement.appendChild(canvas);
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     renderer = new CanvasRenderer(canvas);
 } else {
+    // Default to SVG renderer
     renderer = new SVGRenderer(document.body);
 }
-// Create renderer and voronoi map
-// renderer.setColorScheme('sunset');
-renderer.setColorScheme('blues');
+
+// Configure renderer and create Voronoi map
+renderer.setColorScheme(COLOR_SCHEME);
 const voronoiMap = new VoronoiMap(renderer);
 
 // Handle window resize events
 window.addEventListener('resize', () => {
-  const newWidth = window.innerWidth;
-  const newHeight = window.innerHeight;
-  voronoiMap.handleResize(newWidth, newHeight);
+  voronoiMap.handleResize(window.innerWidth, window.innerHeight);
 });
 
-// Function to update status with message
+/**
+ * Update status message with type styling
+ * @param {string} message - Message to display
+ * @param {string} type - Message type (loading, success, error)
+ */
 function updateStatus(message, type = 'loading') {
     statusDiv.textContent = message;
     statusDiv.className = type;
 }
 
-// Function to get coffee shops from coffee shop service
+/**
+ * Fetch coffee shop data for the specified city
+ * @param {string} cityName - Name of the city to search
+ * @returns {Promise<Object>} - Coffee shop data
+ */
 async function fetchCoffeeShops(cityName) {
     updateStatus(`Searching for coffee shops in ${cityName}...`);
     
@@ -52,7 +64,7 @@ async function fetchCoffeeShops(cityName) {
     }
 }
 
-// Form submit handler
+// Set up form submit handler
 searchForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const city = cityInput.value.trim();
@@ -67,7 +79,6 @@ searchForm.addEventListener('submit', async (e) => {
         voronoiMap.setData(data, city).render();
     } catch (error) {
         console.error(error);
-        // Status already updated in fetchCoffeeShops function
     }
 });
 
