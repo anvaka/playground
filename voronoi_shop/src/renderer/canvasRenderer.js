@@ -12,6 +12,7 @@ export class CanvasRenderer extends RendererInterface {
     this.ctx = canvas.getContext('2d');
     this.colorScheme = 'muted'; // Default color scheme
     this.currentRenderState = null; // Store current render state for resize handling
+    this.backgroundStyle = 'gradient'; // Default background style: 'plain' or 'gradient'
   }
 
   /**
@@ -21,6 +22,16 @@ export class CanvasRenderer extends RendererInterface {
   setColorScheme(scheme) {
     if (['muted', 'sunset', 'blues'].includes(scheme)) {
       this.colorScheme = scheme;
+    }
+  }
+  
+  /**
+   * Set the background style
+   * @param {string} style - The background style ('plain' or 'gradient')
+   */
+  setBackgroundStyle(style) {
+    if (['plain', 'gradient'].includes(style)) {
+      this.backgroundStyle = style;
     }
   }
   
@@ -37,10 +48,10 @@ export class CanvasRenderer extends RendererInterface {
     if (this.currentRenderState) {
       const { type, message, data } = this.currentRenderState;
       
+      this.clear();
       if (type === 'welcome') {
         this.renderWelcomeMessage(message);
       } else if (type === 'voronoi' && data) {
-        this.clear();
         data.render();
       }
     }
@@ -50,8 +61,87 @@ export class CanvasRenderer extends RendererInterface {
    * Clear the canvas
    */
   clear() {
-    this.ctx.fillStyle = '#ffffff';
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    // Default to gradient background for more visual interest
+    this.backgroundStyle = this.backgroundStyle || 'gradient';
+    
+    if (this.backgroundStyle === 'gradient') {
+      this.applyGradientBackground();
+    } else {
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+  }
+
+  /**
+   * Apply a radial gradient background
+   */
+  applyGradientBackground() {
+    const ctx = this.ctx;
+    const width = this.canvas.width;
+    const height = this.canvas.height;
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const maxRadius = Math.max(width, height) * 0.7;
+    
+    // Create main radial gradient
+    const gradient = ctx.createRadialGradient(
+      centerX, centerY, 0,
+      centerX, centerY, maxRadius
+    );
+    
+    // Add color stops for a more artistic look
+    gradient.addColorStop(0, '#f0f4f8');  // Light blue-gray in the center
+    gradient.addColorStop(0.5, '#e1e9f0'); // Muted blue-gray
+    gradient.addColorStop(0.7, '#d3dfea');  // Slightly darker tone
+    gradient.addColorStop(1, '#c4d5e3');   // Darker edge to draw eye inward
+    
+    // Fill the background with the gradient
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+    
+    // Add subtle texture for a rugged look
+    this.addBackgroundTexture();
+  }
+  
+  /**
+   * Add subtle texture to the background for a rugged artistic look
+   */
+  addBackgroundTexture() {
+    const ctx = this.ctx;
+    const width = this.canvas.width;
+    const height = this.canvas.height;
+    const centerX = width / 2;
+    const centerY = height / 2;
+    
+    ctx.save();
+    ctx.globalAlpha = 0.22; // Subtle effect
+
+    // Add radial beams
+    // this.drawRadialBeams(ctx, centerX, centerY, width, height);
+    
+    // Add noise texture overlay
+    this.drawNoiseTexture(ctx, width, height);
+    
+    ctx.restore();
+  }
+
+  /**
+   * Draw a subtle noise texture across the canvas
+   */
+  drawNoiseTexture(ctx, width, height) {
+    // Create some random dots/noise for texture
+    for (let i = 0; i < 300; i++) {
+      const x = Math.random() * width;
+      const y = Math.random() * height;
+      const size = 1.5 + Math.random() * 2.5;
+      
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      
+      const alpha = 0.05 + Math.random() * 0.05;
+      ctx.fillStyle = `rgba(60, 80, 100, ${alpha})`;
+      ctx.fill();
+    }
   }
 
   /**
@@ -79,8 +169,9 @@ export class CanvasRenderer extends RendererInterface {
   renderCityOutline(cityGeojson, transformFn) {
     if (!cityGeojson) return;
     
-    this.ctx.strokeStyle = '#006600';
-    this.ctx.lineWidth = 2;
+    // Make the city outline transparent
+    this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+    this.ctx.lineWidth = 1;
     
     // Handle GeoJSON based on type
     if (cityGeojson.type === 'FeatureCollection') {
@@ -149,9 +240,13 @@ export class CanvasRenderer extends RendererInterface {
       
       ctx.closePath();
       
-      // Fill with a random color
-      const color = this.getRandomColor(i);
-      ctx.fillStyle = color;
+      // Calculate distance to edge factor for transparency
+      const distanceToEdgeFactor = this.calculateDistanceToEdge(cell, cityPath);
+      
+      // Fill with a random color with subtle edge transparency
+      const baseColor = this.getRandomColor(i);
+      const alpha = 0.7 + (distanceToEdgeFactor * 0.3); // Range from 0.7 to 1.0 based on distance
+      ctx.fillStyle = this.applyTransparency(baseColor, alpha);
       ctx.fill();
       
       // Draw border
@@ -161,6 +256,46 @@ export class CanvasRenderer extends RendererInterface {
       
       ctx.restore(); // Restore context after rendering cell (removes clipping)
     });
+  }
+
+  /**
+   * Calculate a factor representing distance from cell to the edge of the city
+   * @param {Object} cell - The Voronoi cell
+   * @param {Array} cityPath - City boundary path
+   * @returns {number} - Factor between 0 and 1 (0 = edge, 1 = center)
+   */
+  calculateDistanceToEdge(cell, cityPath) {
+    // Simple implementation - this could be improved for accuracy
+    // For now, return a random value between 0.5 and 1 for subtle effect
+    return 0.5 + Math.random() * 0.5;
+  }
+  
+  /**
+   * Apply transparency to a color
+   * @param {string} color - CSS color string
+   * @param {number} alpha - Alpha value (0-1)
+   * @returns {string} - RGBA color string
+   */
+  applyTransparency(color, alpha) {
+    // Simple handling for hex colors
+    if (color.startsWith('#')) {
+      const r = parseInt(color.slice(1, 3), 16);
+      const g = parseInt(color.slice(3, 5), 16);
+      const b = parseInt(color.slice(5, 7), 16);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+    
+    // If it's already rgba, replace the alpha
+    if (color.startsWith('rgba')) {
+      return color.replace(/[\d\.]+\)$/, `${alpha})`);
+    }
+    
+    // If it's rgb, convert to rgba
+    if (color.startsWith('rgb')) {
+      return color.replace('rgb', 'rgba').replace(')', `, ${alpha})`);
+    }
+    
+    return color;
   }
 
   /**
@@ -196,9 +331,14 @@ export class CanvasRenderer extends RendererInterface {
       
       ctx.closePath();
       
-      // Fill with a random color
-      const color = this.getRandomColor(i);
-      ctx.fillStyle = color;
+      // Calculate distance to edge for transparency
+      const center = this.calculateCellCenter(cell);
+      const distanceToEdgeFactor = this.calculateDistanceFromCenter(center, this.canvas.width, this.canvas.height);
+      
+      // Fill with a random color with subtle edge transparency
+      const baseColor = this.getRandomColor(i);
+      const alpha = 0.7 + (distanceToEdgeFactor * 0.3); // Range from 0.7 to 1.0 based on distance
+      ctx.fillStyle = this.applyTransparency(baseColor, alpha);
       ctx.fill();
       
       // Draw border
@@ -210,12 +350,7 @@ export class CanvasRenderer extends RendererInterface {
     // Restore context to remove clipping region
     ctx.restore();
     
-    // Re-draw the city outline on top
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#006600';
-    ctx.beginPath();
-    createClipPathFromGeoJSON(ctx, cityGeojson, transformFn);
-    ctx.stroke();
+    // Remove the green city outline - we don't redraw it
     
     // Store render state
     this.currentRenderState = {
@@ -224,6 +359,45 @@ export class CanvasRenderer extends RendererInterface {
         render: () => this.renderVoronoiCellsWithClipping(cells, cityGeojson, transformFn)
       }
     };
+  }
+  
+  /**
+   * Calculate the center point of a cell
+   * @param {Object} cell - Voronoi cell with points
+   * @returns {Array} - [x, y] coordinates of center
+   */
+  calculateCellCenter(cell) {
+    if (!cell.points || cell.points.length === 0) return [0, 0];
+    
+    let sumX = 0;
+    let sumY = 0;
+    
+    for (const point of cell.points) {
+      sumX += point[0];
+      sumY += point[1];
+    }
+    
+    return [sumX / cell.points.length, sumY / cell.points.length];
+  }
+  
+  /**
+   * Calculate a normalized distance from canvas center (for edge transparency)
+   * @param {Array} point - [x, y] coordinates
+   * @param {number} width - Canvas width
+   * @param {number} height - Canvas height
+   * @returns {number} - Distance factor (0 = edge, 1 = center)
+   */
+  calculateDistanceFromCenter(point, width, height) {
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const maxDistance = Math.sqrt(centerX * centerX + centerY * centerY);
+    
+    const dx = point[0] - centerX;
+    const dy = point[1] - centerY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // Invert and normalize: 1 at center, 0 at corners
+    return Math.max(0, Math.min(1, 1 - (distance / maxDistance)));
   }
   
   /**
