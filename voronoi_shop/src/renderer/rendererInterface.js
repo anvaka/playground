@@ -59,12 +59,4 @@ export class RendererInterface {
   renderVoronoiCellsWithClipping(cells, cityGeojson, transformFn, shops) {
     throw new Error('Method not implemented');
   }
-
-  /**
-   * Render points at specific locations
-   * @param {Array} points - Array of [x, y] coordinates
-   */
-  renderPoints(points) {
-    throw new Error('Method not implemented');
-  }
 }

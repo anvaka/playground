@@ -174,72 +174,6 @@ export class CanvasRenderer extends RendererInterface {
   }
 
   /**
-   * Render Voronoi cells with clipping to city boundaries
-   * @param {Array} cells - Array of Voronoi cells
-   * @param {Array} cityPath - Optional city boundary path for clipping
-   */
-  renderVoronoiCells(cells, cityPath = null) {
-    const ctx = this.ctx;
-    
-    // Draw each cell
-    cells.forEach((cell, i) => {
-      if (!cell || !cell.points || cell.points.length < 3) return;
-      
-      ctx.save(); // Save context before clipping
-      
-      // If we have a cityPath, create a clipping path
-      if (cityPath && cityPath.length) {
-        ctx.beginPath();
-        
-        // Add each polygon from the city path to our clipping path
-        cityPath.forEach(polygon => {
-          if (polygon && polygon.length) {
-            // Move to first point
-            ctx.moveTo(polygon[0][0], polygon[0][1]);
-            
-            // Add lines to remaining points
-            for (let i = 1; i < polygon.length; i++) {
-              ctx.lineTo(polygon[i][0], polygon[i][1]);
-            }
-            
-            // Close the path
-            ctx.closePath();
-          }
-        });
-        
-        // Set the clipping region
-        ctx.clip();
-      }
-      
-      // Draw the cell
-      ctx.beginPath();
-      ctx.moveTo(cell.points[0][0], cell.points[0][1]);
-      
-      for (let j = 1; j < cell.points.length; j++) {
-        ctx.lineTo(cell.points[j][0], cell.points[j][1]);
-      }
-      
-      ctx.closePath();
-      
-      // Calculate distance to edge factor for transparency
-      const distanceToEdgeFactor = this.calculateDistanceToEdge(cell, cityPath);
-      
-      // Fill with a random color with subtle edge transparency
-      const baseColor = this.getRandomColor(i);
-      const alpha = 0.7 + (distanceToEdgeFactor * 0.3); // Range from 0.7 to 1.0 based on distance
-      ctx.fillStyle = this.applyTransparency(baseColor, alpha);
-      ctx.fill();
-      
-      // Draw border
-      ctx.strokeStyle = '#333';
-      ctx.lineWidth = 0.5;
-      ctx.stroke();
-      
-      ctx.restore(); // Restore context after rendering cell (removes clipping)
-    });
-  }
-
-  /**
    * Calculate a factor representing distance from cell to the edge of the city
    * @param {Object} cell - The Voronoi cell
    * @param {Array} cityPath - City boundary path
@@ -390,16 +324,4 @@ export class CanvasRenderer extends RendererInterface {
     return getColorFromPalette(this.colorScheme, index);
   }
 
-  /**
-   * Render points at specific locations
-   * @param {Array} points - Array of [x, y] coordinates
-   */
-  renderPoints(points) {
-    this.ctx.fillStyle = '#FF0000';
-    points.forEach(point => {
-      this.ctx.beginPath();
-      this.ctx.arc(point[0], point[1], 3, 0, Math.PI * 2);
-      this.ctx.fill();
-    });
-  }
 }

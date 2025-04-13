@@ -4,8 +4,7 @@ import { CanvasRenderer } from './src/renderer/canvasRenderer.js';
 import { SVGRenderer } from './src/renderer/svgRenderer.js';
 import { VoronoiMap } from './src/voronoi/voronoiMap.js';
 
-// Constants
-const RENDERER_TYPE = 'canvas'; // Change to 'canvas' to use canvas renderer
+const RENDERER_TYPE = 'svg'; // Change to 'canvas' to use canvas renderer
 const COLOR_SCHEME = 'blues'; // Options: 'muted', 'sunset', 'blues'
 
 // Initialize DOM elements
