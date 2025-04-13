@@ -48,17 +48,6 @@ export class SVGRenderer extends RendererInterface {
     if (!tooltip) {
       tooltip = document.createElement('div');
       tooltip.id = 'voronoi-tooltip';
-      tooltip.style.position = 'absolute';
-      tooltip.style.padding = '8px 12px';
-      tooltip.style.background = 'rgba(255, 255, 255, 0.9)';
-      tooltip.style.boxShadow = '0 1px 8px rgba(0, 0, 0, 0.1)';
-      tooltip.style.borderRadius = '4px';
-      tooltip.style.fontSize = '14px';
-      tooltip.style.color = '#333';
-      tooltip.style.zIndex = '1000';
-      tooltip.style.pointerEvents = 'none';
-      tooltip.style.opacity = '0';
-      tooltip.style.transition = 'opacity 0.2s';
       document.body.appendChild(tooltip);
     }
     this.tooltip = tooltip;
