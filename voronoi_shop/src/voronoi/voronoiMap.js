@@ -34,7 +34,10 @@ export class VoronoiMap {
     
     // If we have data loaded, recreate the transformer with new dimensions and re-render
     if (this.bbox && this.coffeeShops.length > 0) {
-      const canvas = this.renderer.canvas;
+      const canvas = {
+        width: window.innerWidth,
+        height: window.innerHeight
+      }
       this.transformer = new GeoTransformer(this.bbox, canvas.width, canvas.height);
       this.render();
     }
@@ -52,7 +55,10 @@ export class VoronoiMap {
     this.cityName = cityName;
     
     // Create a new transformer for this dataset
-    const canvas = this.renderer.canvas;
+    const canvas = {
+      width: window.innerWidth,
+      height: window.innerHeight
+    }
     this.transformer = new GeoTransformer(this.bbox, canvas.width, canvas.height);
     
     return this;
@@ -77,7 +83,7 @@ export class VoronoiMap {
     // Set up and generate Voronoi diagram
     this.voronoiGenerator
       .setPoints(scaledPoints)
-      .setBoundingBox([0, 0, this.renderer.canvas.width, this.renderer.canvas.height])
+      .setBoundingBox([0, 0, window.innerWidth, window.innerHeight])
       .generate();
     
     // Get Voronoi cells
