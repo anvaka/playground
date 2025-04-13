@@ -8,19 +8,15 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Coffee Shop Voronoi Map</h1>
-        <div class="form-container">
-            <form id="search-form">
-                <label for="city">Enter a city name:</label>
-                <input type="text" id="city" required placeholder="e.g., Vienna, Paris, London">
-                <button type="submit">Find Coffee Shops</button>
-            </form>
-            <div id="status"></div>
-        </div>
-        <div class="canvas-container">
-            <canvas id="voronoi-canvas" width="1000" height="600"></canvas>
-        </div>
+    <div class="canvas-container">
+        <canvas id="voronoi-canvas"></canvas>
+    </div>
+    <div class="form-container">
+        <form id="search-form">
+            <input type="text" id="city" required placeholder="Enter city name">
+            <button type="submit">Find Coffee Shops</button>
+        </form>
+        <div id="status"></div>
     </div>
 
     <script src="script.js" type="module"></script>

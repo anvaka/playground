@@ -79,16 +79,6 @@ export class VoronoiMap {
       (lon, lat) => this.transformer.geoToCanvas(lon, lat)
     );
     
-    // Optionally, render shop points
-    // this.renderer.renderPoints(scaledPoints);
-    
-    // Render legend with city information
-    this.renderer.renderLegend({
-      cityName: this.cityName,
-      count: this.coffeeShops.length,
-      margin: 50
-    });
-    
     return this;
   }
 

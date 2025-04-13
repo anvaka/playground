@@ -5,6 +5,8 @@ import { VoronoiMap } from './src/voronoi/voronoiMap.js';
 
 // Global elements
 const canvas = document.getElementById('voronoi-canvas');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 const statusDiv = document.getElementById('status');
 const searchForm = document.getElementById('search-form');
 const cityInput = document.getElementById('city');
