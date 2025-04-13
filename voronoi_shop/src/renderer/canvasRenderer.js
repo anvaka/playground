@@ -46,12 +46,10 @@ export class CanvasRenderer extends RendererInterface {
     
     // Re-render current content if available
     if (this.currentRenderState) {
-      const { type, message, data } = this.currentRenderState;
+      const { type, data } = this.currentRenderState;
       
       this.clear();
-      if (type === 'welcome') {
-        this.renderWelcomeMessage(message);
-      } else if (type === 'voronoi' && data) {
+      if (type === 'voronoi' && data) {
         data.render();
       }
     }
@@ -142,23 +140,6 @@ export class CanvasRenderer extends RendererInterface {
       ctx.fillStyle = `rgba(60, 80, 100, ${alpha})`;
       ctx.fill();
     }
-  }
-
-  /**
-   * Render welcome message
-   * @param {string} message - The message to display
-   */
-  renderWelcomeMessage(message) {
-    this.ctx.fillStyle = '#333333';
-    this.ctx.font = '20px Arial';
-    this.ctx.textAlign = 'center';
-    this.ctx.fillText(message, this.canvas.width/2, this.canvas.height/2);
-    
-    // Store render state
-    this.currentRenderState = {
-      type: 'welcome',
-      message: message
-    };
   }
 
   /**

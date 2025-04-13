@@ -13,6 +13,7 @@ export class VoronoiMap {
     this.cityName = '';
     this.cityGeojson = null;
     this.bbox = null;
+    this.welcomeMessage = document.getElementById('welcome-message');
   }
 
   /**
@@ -20,7 +21,34 @@ export class VoronoiMap {
    */
   initialize() {
     this.renderer.clear();
-    this.renderer.renderWelcomeMessage('Enter a city name to see coffee shop Voronoi diagram');
+    
+    // Show the welcome message that's already in HTML
+    this.showWelcomeMessage('Enter a city name to see coffee shop Voronoi diagram');
+  }
+
+  /**
+   * Shows the welcome message with the specified text
+   * @param {string} message - The message to display
+   */
+  showWelcomeMessage(message) {
+    if (this.welcomeMessage) {
+      this.welcomeMessage.textContent = message;
+      this.welcomeMessage.style.display = 'block';
+      this.welcomeMessage.style.opacity = '1';
+    }
+  }
+  
+  /**
+   * Hides the welcome message
+   */
+  hideWelcomeMessage() {
+    if (this.welcomeMessage) {
+      this.welcomeMessage.style.opacity = '0';
+      // After transition completes, hide it completely
+      setTimeout(() => {
+        this.welcomeMessage.style.display = 'none';
+      }, 300);
+    }
   }
   
   /**
@@ -49,6 +77,9 @@ export class VoronoiMap {
    * @param {string} cityName - Name of the city
    */
   setData(data, cityName) {
+    // Hide welcome message when data is loaded
+    this.hideWelcomeMessage();
+    
     this.coffeeShops = data.shops;
     this.bbox = data.bbox;
     this.cityGeojson = data.cityGeojson;

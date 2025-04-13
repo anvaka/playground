@@ -102,12 +102,10 @@ export class SVGRenderer extends RendererInterface {
     
     // Re-render current content if available
     if (this.currentRenderState) {
-      const { type, message, data } = this.currentRenderState;
+      const { type, data } = this.currentRenderState;
       
       this.clear();
-      if (type === 'welcome') {
-        this.renderWelcomeMessage(message);
-      } else if (type === 'voronoi' && data) {
+      if (type === 'voronoi' && data) {
         data.render();
       }
     }
@@ -239,33 +237,6 @@ export class SVGRenderer extends RendererInterface {
     }
     
     this.backgroundGroup.appendChild(noiseGroup);
-  }
-
-  /**
-   * Render welcome message
-   * @param {string} message - The message to display
-   */
-  renderWelcomeMessage(message) {
-    const width = parseInt(this.svg.getAttribute('width'));
-    const height = parseInt(this.svg.getAttribute('height'));
-    
-    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    text.setAttribute('x', width / 2);
-    text.setAttribute('y', height / 2);
-    text.setAttribute('text-anchor', 'middle');
-    text.setAttribute('dominant-baseline', 'middle');
-    text.setAttribute('font-family', 'Arial');
-    text.setAttribute('font-size', '20px');
-    text.setAttribute('fill', '#333333');
-    text.textContent = message;
-    
-    this.contentGroup.appendChild(text);
-    
-    // Store render state
-    this.currentRenderState = {
-      type: 'welcome',
-      message: message
-    };
   }
 
   /**

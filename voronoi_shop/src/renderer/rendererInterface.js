@@ -16,14 +16,6 @@ export class RendererInterface {
   }
 
   /**
-   * Render welcome message
-   * @param {string} message - The message to display
-   */
-  renderWelcomeMessage(message) {
-    throw new Error('Method not implemented');
-  }
-
-  /**
    * Render city outline from GeoJSON
    * @param {Object} cityGeojson - GeoJSON representation of the city
    * @param {Function} transformFn - Function to transform coordinates

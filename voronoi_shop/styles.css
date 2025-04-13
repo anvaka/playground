@@ -109,3 +109,17 @@ button:hover {
     opacity: 0;
     transition: opacity 0.2s;
 }
+
+#welcome-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: Arial, sans-serif;
+    font-size: 20px;
+    color: #333333;
+    text-align: center;
+    pointer-events: none;
+    z-index: 10;
+    transition: opacity 0.3s ease;
+}
