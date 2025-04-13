@@ -7,18 +7,22 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <link rel="stylesheet" href="styles.css">
     <script src='https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js'></script>
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
     <div class="canvas-container">
     </div>
-    <div id="welcome-message">Enter a city name to see coffee shop Voronoi diagram</div>
+    <div id="welcome-message">Enter a city name to find coffee shops</div>
     <div class="form-container">
         <form id="search-form">
-            <input type="text" id="city" required placeholder="Enter city name" autofocus>
-            <button type="submit">Find Coffee Shops</button>
+            <div class="search-input-group">
+                <input type="text" id="city" required placeholder="Enter city name" autofocus>
+                <button type="submit" id="search-button" aria-label="Search">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <div id="status"></div>
         </form>
-        <div id="status"></div>
     </div>
 
     <script src="script.js" type="module"></script>

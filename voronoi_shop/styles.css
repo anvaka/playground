@@ -18,7 +18,9 @@ body {
     position: absolute;
     top: 20px;
     left: 20px;
+    min-width: 420px;
     box-shadow: 0 1px 8px rgba(0, 0, 0, 0.05);
+    z-index: 100;
 }
 
 canvas, body {
@@ -29,6 +31,12 @@ canvas, body {
     height: 100%;
     margin: 0;
     padding: 0;
+}
+
+.search-input-group {
+    display: flex;
+    align-items: center;
+    width: 100%;
 }
 
 input, button {
@@ -42,9 +50,9 @@ input, button {
 input {
     background-color: #f5f5f5;
     color: #333;
-    margin-right: 8px;
-    width: 220px;
     border-bottom: 1px solid #e0e0e0;
+    border-radius: 3px 0 0 3px;
+    flex: 1;
 }
 
 input:focus {
@@ -58,15 +66,17 @@ input::placeholder {
     opacity: 0.7;
 }
 
-button {
+#search-button {
     background-color: #555;
     color: white;
     cursor: pointer;
-    font-weight: 400;
-    letter-spacing: 0.5px;
+    padding: 10px 14px;
+    border-radius: 0 3px 3px 0;
+    margin-right: 0;
+    width: auto;
 }
 
-button:hover {
+#search-button:hover {
     background-color: #333;
 }
 
@@ -122,4 +132,24 @@ button:hover {
     pointer-events: none;
     z-index: 10;
     transition: opacity 0.3s ease;
+}
+
+/* Responsive styles */
+@media screen and (max-width: 600px) {
+    .form-container {
+        min-width: none;
+        width: 100%;
+        left: 0;
+        top: 0;
+        padding: 10px;
+        border-radius: 0;
+    }
+    
+    .search-input-group {
+        width: 100%;
+    }
+    
+    #status {
+        margin-top: 10px;
+    }
 }
