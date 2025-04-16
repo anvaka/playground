@@ -1,14 +1,14 @@
 const MaxLineSegments = 10000;
 
 const JANUARY = 1;
-const DECEMBER = 12;
+const DECEMBER = 2;
 
 const lineColor = 0xffffff06; // this is rgba(255, 255, 255, 0.06)
 const PI_2 = Math.PI * 2;
 
 function makeBirthdayFunction(month = 6, day = 29) {
   return function f(x) {
-    return x/(month + 1) + Math.cos(x*day);
+    return x/(month + 1) + Math.cos(x*(day));
   }
 }
 
@@ -69,7 +69,9 @@ function renderFunction(f, startX, startY, endX, endY) {
   // let's draw a grid:
   let lines = new LineStripCollection(MaxLineSegments);
   let prevPoint = {x: 0, y: 0};
+  let z = 0;
   for (let i = 0; i < MaxLineSegments; i++) {
+    z += Math.sqrt(prevPoint.x * prevPoint.x + prevPoint.y * prevPoint.y) * 0.1;
     prevPoint = getNextPoint(f, prevPoint, i);
     const canvasX = (prevPoint.x - functionDimensions.minX) * scaleX + startX;
     const canvasY = (prevPoint.y - functionDimensions.minY) * scaleY + startY;
