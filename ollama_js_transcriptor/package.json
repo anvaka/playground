@@ -1,0 +1,11 @@
+{
+  "type": "module",
+  "dependencies": {
+    "ollama": "^0.5.16",
+    "openai": "^5.5.1"
+  },
+  "scripts": {
+    "process": "node index.js",
+    "openai": "node openai_transcribe.js"
+  }
+}
