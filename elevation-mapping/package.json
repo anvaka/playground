@@ -1,0 +1,16 @@
+{
+  "name": "elevation-svg-processor",
+  "version": "1.0.0",
+  "description": "Process SVG files with heightmap data to color paths based on elevation",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "demo": "node demo.js"
+  },
+  "dependencies": {
+    "jimp": "^0.22.10",
+    "xml2js": "^0.6.2"
+  },
+  "author": "",
+  "license": "MIT"
+}
