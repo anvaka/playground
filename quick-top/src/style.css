@@ -1,0 +1,147 @@
+:root {
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #e2e8f0;
+  background-color: #030712;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #0f172a 0%, #020617 65%);
+  color: inherit;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.75rem;
+}
+
+.app-header p {
+  margin: 0.2rem 0 0;
+  color: #94a3b8;
+}
+
+.app-header .meta {
+  font-size: 0.9rem;
+  color: #cbd5f5;
+}
+
+.canvas {
+  position: relative;
+  flex: 1;
+  min-height: 420px;
+  background: rgba(15, 23, 42, 0.35);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 1.5rem;
+  padding: 1rem;
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+}
+
+.state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: 1rem;
+}
+
+.state.loading {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.55);
+  border-radius: 1.5rem;
+}
+
+.state.error {
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  background: rgba(127, 29, 29, 0.35);
+}
+
+button {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  padding: 0.5rem 1.5rem;
+  background: transparent;
+  color: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+button:hover {
+  border-color: #f8fafc;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 10;
+  min-width: 220px;
+  max-width: 280px;
+  padding: 0.75rem 1rem;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 0.75rem;
+  pointer-events: none;
+  box-shadow: 0 10px 40px rgba(2, 6, 23, 0.65);
+}
+
+.tooltip-letter {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.25rem;
+  color: #38bdf8;
+}
+
+.tooltip-title {
+  margin: 0.2rem 0 0;
+  font-weight: 600;
+}
+
+.tooltip-author {
+  margin: 0.1rem 0 0;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+@media (max-width: 768px) {
+  .app-shell {
+    padding: 1.25rem;
+  }
+
+  .canvas {
+    min-height: 360px;
+  }
+}
