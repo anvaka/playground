@@ -1,0 +1,23 @@
+{
+  "name": "flash-cards",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@anvaka/vue-llm": "file:../../research-tree/packages/vue-llm",
+    "@pinyin-pro/data": "^1.2.0",
+    "marked": "^17.0.1",
+    "pinyin-pro": "^3.27.0",
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.0",
+    "openai": "^6.9.1",
+    "vite": "^5.0.0"
+  }
+}

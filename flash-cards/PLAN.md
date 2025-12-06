@@ -34,8 +34,7 @@ flash-cards/
 │   │   ├── FlashCard.vue      # Front/back flip card
 │   │   ├── CardEditor.vue     # Edit before saving
 │   │   ├── CardList.vue       # Browse saved cards
-│   │   ├── StudyMode.vue      # Practice flashcards
-│   │   └── Settings.vue       # API keys modal
+│   │   ├── Settings.vue       # API keys modal
 │   ├── services/
 │   │   ├── dictionary.js      # Parse & search CEDICT/IDS
 │   │   ├── llm.js             # OpenAI/Anthropic calls
@@ -178,8 +177,7 @@ Respond with valid JSON matching this schema:
 
 ### Phase 4: Study & Browse
 1. CardList component (browse all cards)
-2. StudyMode component (flip through cards)
-3. Search/filter functionality
+2. Search/filter functionality
 
 ### Phase 5: Images (Optional/On-demand)
 1. Image generation service
@@ -214,8 +212,7 @@ Respond with valid JSON matching this schema:
 10. `src/components/FlashCard.vue`
 11. `src/components/CardEditor.vue`
 12. `src/components/CardList.vue`
-13. `src/components/StudyMode.vue`
-14. `src/App.vue` — ties it together
+13. `src/App.vue` — ties it together
 15. `src/main.js` — bootstrap
 
 ---
