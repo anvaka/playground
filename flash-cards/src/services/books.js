@@ -114,7 +114,7 @@ export function generateBookId() {
 // Chinese sentence endings, English sentence endings, or paragraph breaks (2+ newlines)
 const SENTENCE_ENDINGS_ZH = /[。！？]+/g
 const SENTENCE_ENDINGS_EN = /[.!?]+(?=\s|$)|\n{2,}/g
-const TARGET_PAGE_SIZE = 300  // characters for Chinese, words for English
+const TARGET_PAGE_SIZE = 500  // characters for Chinese, words for English
 
 /**
  * Check if text contains Chinese characters

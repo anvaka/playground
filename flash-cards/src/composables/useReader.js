@@ -50,12 +50,31 @@ async function segmentText(chineseText) {
 
 /**
  * Look up meaning for a segment from CEDICT
+ * Falls back to component meanings for multi-char words not in dictionary
  */
 export async function getSegmentMeaning(text) {
   const lookup = await lookupChinese(text)
+  
+  // Direct dictionary match
   if (lookup.cedict?.[0]) {
     return formatDefinitions(lookup.cedict[0].definitions, 3)
   }
+  
+  // Fallback: synthesize meaning from component characters
+  if (text.length > 1) {
+    const parts = []
+    for (const char of text) {
+      const charLookup = await lookupChinese(char)
+      if (charLookup.cedict?.[0]) {
+        const def = formatDefinitions(charLookup.cedict[0].definitions, 1)
+        parts.push(`${char}: ${def}`)
+      }
+    }
+    if (parts.length > 0) {
+      return parts.join(' + ')
+    }
+  }
+  
   return ''
 }
 

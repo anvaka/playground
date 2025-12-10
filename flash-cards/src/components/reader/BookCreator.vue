@@ -19,8 +19,11 @@
         class="form-textarea"
         rows="8"
       ></textarea>
-      <div class="field-hint" v-if="sourceText.trim()">
-        {{ textStats }}
+      <div class="field-hint" v-if="sourceText.trim() || isGenerating">
+        <span v-if="sourceText.trim()">{{ textStats }}</span>
+        <button v-if="isGenerating" class="btn-stop" @click="handleStop">
+          ◼ Stop
+        </button>
       </div>
     </div>
 
@@ -111,6 +114,7 @@ const targetLevel = ref('hsk1-2')
 const showGenerateForm = ref(false)
 const generatePrompt = ref('')
 const isGenerating = ref(false)
+let currentGenerationId = 0
 
 const textareaRef = ref(null)
 const generateTextareaRef = ref(null)
@@ -198,16 +202,6 @@ const textStats = computed(() => {
   }
 })
 
-function getLevelDescription(levelId) {
-  const levelMap = {
-    'hsk1-2': 'HSK 1-2 level (beginner, ~300 basic words)',
-    'hsk3-4': 'HSK 3-4 level (intermediate, ~1200 words)',
-    'hsk5-6': 'HSK 5-6 level (advanced, ~2500 words)',
-    'natural': 'natural Chinese without vocabulary restrictions'
-  }
-  return levelMap[levelId] || 'intermediate level'
-}
-
 async function handleGenerate() {
   if (!generatePrompt.value.trim()) return
   
@@ -217,9 +211,9 @@ async function handleGenerate() {
   }
   
   isGenerating.value = true
+  const generationId = ++currentGenerationId
   
-  const levelDesc = getLevelDescription(targetLevel.value)
-  const prompt = `Generate a Chinese text about the following topic. Write in Chinese characters (Simplified Chinese), approximately 300-500 characters. The text should be suitable for ${levelDesc}.
+  const prompt = `Generate a Chinese text about the following topic. Write in Chinese characters (Simplified Chinese), approximately 400-500 characters.
 
 Topic: ${generatePrompt.value}
 
@@ -231,19 +225,38 @@ Requirements:
 - Just output the Chinese text, nothing else`
 
   try {
-    const response = await client.stream({
+    showGenerateForm.value = false
+    sourceText.value = ''
+    
+    await client.stream({
       messages: [{ role: 'user', content: prompt }]
+    }, (chunk) => {
+      // Only update if this generation is still current
+      if (generationId === currentGenerationId) {
+        sourceText.value = chunk.fullContent
+      }
     })
     
-    sourceText.value = response.trim()
-    showGenerateForm.value = false
-    generatePrompt.value = ''
+    if (generationId === currentGenerationId) {
+      sourceText.value = sourceText.value.trim()
+      generatePrompt.value = ''
+    }
   } catch (err) {
-    console.error('Generation failed:', err)
-    alert('Failed to generate text. Please check your LLM settings and try again.')
+    if (generationId === currentGenerationId) {
+      console.error('Generation failed:', err)
+      alert('Failed to generate text. Please check your LLM settings and try again.')
+    }
   } finally {
-    isGenerating.value = false
+    if (generationId === currentGenerationId) {
+      isGenerating.value = false
+    }
   }
+}
+
+function handleStop() {
+  currentGenerationId++ // Invalidate current generation
+  isGenerating.value = false
+  sourceText.value = sourceText.value.trim()
 }
 
 function handleCreate() {
@@ -354,9 +367,28 @@ function handleCreate() {
 }
 
 .field-hint {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 8px;
   font-size: 0.8rem;
   color: var(--text-muted);
+}
+
+.btn-stop {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-stop:hover {
+  border-color: var(--text-muted);
+  color: var(--text);
 }
 
 /* Generate helper */

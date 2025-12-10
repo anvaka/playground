@@ -1,0 +1,8 @@
+bugs:
+* The Added card without definitions should be easier to regenerate (no need to go to edit). Or maybe auto-regenerate on open?
+* On the reader view the buttons at the bottom are hard to click on my mobile device (they are too close to the edge).
+* We should log each flash card game and collect stats on the cards that are missed the most.
+* Should make unified tags view everywhere.
+* Color code the tones?
+* integrate better payment instead of byok. 
+* Opening settings, pressing esc - goes back instead of closing settings only

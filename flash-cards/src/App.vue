@@ -7,8 +7,9 @@
       </div>
     </header>
     
-    <!-- Global Search Bar (always visible) -->
+    <!-- Global Search Bar (always visible except during games) -->
     <SearchBar 
+      v-if="!router.isGames.value"
       ref="searchBarRef"
       placeholder="Search Chinese or English..."
       @select="handleDictSelect"
@@ -22,16 +23,16 @@
     
     <!-- Deck Browser (home view) -->
     <DeckBrowser
-      v-if="!cardState.currentCard.value && !deckNav.activeDeck.value && !cardState.urlLoading.value && !gameView && !readerView"
+      v-if="router.isHome.value && !cardState.urlLoading.value"
       :user-cards="savedCards"
       @openDeck="handleOpenDeck"
       @openGames="handleOpenGames"
       @openReader="handleOpenReader"
     />
     
-    <!-- Deck View (browsing a specific deck) -->
+    <!-- Deck View (browsing a specific deck, not viewing a card) -->
     <DeckView
-      v-if="!cardState.currentCard.value && deckNav.activeDeck.value && !gameView && !readerView"
+      v-else-if="router.isDeck.value"
       :title="deckNav.activeDeckTitle.value"
       :cards="deckNav.activeDeckCards.value"
       @back="handleCloseDeck"
@@ -40,50 +41,50 @@
     
     <!-- Flash Match Setup -->
     <FlashMatchSetup
-      v-if="gameView === 'flash-match-setup'"
-      @back="handleCloseGames"
+      v-if="router.isGames.value && router.gameStage.value === 'setup'"
+      @back="handleBackFromGameSetup"
       @start="handleStartFlashMatch"
     />
     
     <!-- Flash Match Game -->
     <FlashMatchGame
-      v-if="gameView === 'flash-match-play'"
+      v-if="router.isGames.value && router.gameStage.value === 'play'"
       :game="flashMatch"
       @quit="handleQuitFlashMatch"
-      @finished="gameView = 'flash-match-results'"
+      @finished="handleGameFinished"
     />
     
     <!-- Flash Match Results -->
     <FlashMatchResults
-      v-if="gameView === 'flash-match-results'"
+      v-if="router.isGames.value && router.gameStage.value === 'results'"
       :game="flashMatch"
-      @back="handleCloseGames"
-      @setup="gameView = 'flash-match-setup'"
+      @back="handleBackFromGameResults"
+      @setup="handleBackToGameSetup"
       @playAgain="handlePlayFlashMatchAgain"
       @navigateToCard="handleNavigateFromGame"
     />
     
     <!-- Reader Home -->
     <ReaderHome
-      v-if="readerView === 'home'"
+      v-if="router.isReader.value && router.readerStage.value === 'home'"
       :books="reader.books.value"
       :loading="reader.loading.value"
       @back="handleCloseReader"
-      @newBook="readerView = 'create'"
+      @newBook="handleNewBook"
       @openBook="handleOpenBook"
       @deleteBook="handleDeleteBook"
     />
     
     <!-- Book Creator -->
     <BookCreator
-      v-if="readerView === 'create'"
-      @cancel="readerView = 'home'"
+      v-if="router.isReader.value && router.readerStage.value === 'create'"
+      @cancel="handleCancelBookCreate"
       @create="handleCreateBook"
     />
     
     <!-- Reading View -->
     <ReadingView
-      v-if="readerView === 'reading' && reader.currentBook.value"
+      v-if="router.isReader.value && router.readerStage.value === 'reading' && reader.currentBook.value"
       :book="reader.currentBook.value"
       :page="reader.currentPage.value"
       :current-page-index="reader.currentPageIndex.value"
@@ -116,7 +117,7 @@
       </div>
     </div>
     
-    <!-- Navigation header when browsing cards -->
+    <!-- Navigation header when browsing cards in a deck -->
     <div v-if="isBrowsingCards" ref="studyHeaderRef" class="study-header">
       <button class="btn btn-small" @click="handleCloseCard">← Back</button>
       <h2 class="study-header-title">{{ deckNav.activeDeckTitle.value }}</h2>
@@ -146,7 +147,7 @@
     
     <!-- Trivia Card View -->
     <TriviaCardView
-      v-if="cardState.currentCard.value && cardState.currentCard.value.type === 'trivia'"
+      v-if="cardState.currentCard.value && cardState.currentCard.value.type === 'trivia' && !router.isGames.value && !router.isReader.value"
       :card="cardState.currentCard.value"
       :key="'trivia-' + cardState.currentCard.value.id"
       :initial-flipped="cardState.isNewCard.value"
@@ -159,7 +160,7 @@
     
     <!-- Vocabulary/Phrase Card View -->
     <CardView 
-      v-else-if="cardState.currentCard.value"
+      v-else-if="cardState.currentCard.value && !router.isGames.value && !router.isReader.value"
       :card="cardState.currentCard.value"
       :key="'vocab-' + cardState.currentCard.value.id"
       :is-new="cardState.isNewCard.value"
@@ -199,7 +200,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useLLM, LLMConfigModal } from '@anvaka/vue-llm'
 
 import SearchBar from './components/SearchBar.vue'
@@ -218,7 +219,7 @@ import ReadingView from './components/reader/ReadingView.vue'
 import { initDictionary } from './services/dictionary.js'
 import { getLocalCards, saveCard, createCard, getCardByCharacter } from './services/storage.js'
 
-import { useRouter } from './composables/useRouter.js'
+import { useAppRouter } from './composables/useAppRouter.js'
 import { useDeckNavigation } from './composables/useDeckNavigation.js'
 import { useCardState } from './composables/useCardState.js'
 import { useCardGeneration } from './composables/useCardGeneration.js'
@@ -236,12 +237,10 @@ const regeneratedData = ref(null)
 const studyHeaderRef = ref(null)
 const searchBarRef = ref(null)
 
-// Game state
-const gameView = ref(null)  // null | 'browser' | 'flash-match-setup' | 'flash-match-play' | 'flash-match-results'
+// Flash match game state
 const flashMatch = useFlashMatch()
 
 // Reader state
-const readerView = ref(null)  // null | 'home' | 'create' | 'reading'
 const reader = useReader(() => client)
 const readerHasMiniCard = ref(false)  // Track if mini-card is open in reader
 
@@ -268,7 +267,8 @@ const deckNav = useDeckNavigation({
     cardState.currentCard.value = card
     cardState.currentDictLookup.value = null
     cardState.updateHskBadge()
-    router.replaceHistoryState()
+    // Update card index in URL without pushing new history entry
+    router.updateCardIndex(deckNav.currentIndex.value)
   }
 })
 
@@ -281,75 +281,98 @@ const cardGen = useCardGeneration({
   }
 })
 
-// Router / history management
-const router = useRouter({
-  getState: () => ({
-    activeDeck: deckNav.activeDeck.value,
-    currentCard: cardState.currentCard.value,
-    currentIndex: deckNav.currentIndex.value
-  }),
-  onRestore: async ({ deckInfo, cardChar }) => {
-    // Open deck first
-    if (deckInfo) {
-      await deckNav.openDeck(deckInfo)
+// Unified app router
+const router = useAppRouter({
+  onNavigate: handleRouteChange
+})
+
+/**
+ * Handle route changes from browser back/forward navigation or initial load
+ */
+async function handleRouteChange(route) {
+  // Clear states that don't match the new route
+  if (route.view === 'home') {
+    cardState.closeCard()
+    deckNav.closeDeck()
+    flashMatch.resetGame()
+    reader.closeBook()
+  } else if (route.view === 'deck') {
+    cardState.closeCard()
+    flashMatch.resetGame()
+    reader.closeBook()
+    if (route.deck) {
+      await deckNav.openDeck(route.deck)
     }
-    
-    // Then open card
-    if (cardChar) {
-      if (deckNav.activeDeck.value && deckNav.activeDeckCards.value.length > 0) {
-        const deckCard = deckNav.findCardInDeck(cardChar)
-        if (deckCard) {
-          deckNav.openCardFromDeck(deckCard)
-          cardState.openSavedCard(deckCard)
-          return
-        }
-      }
-      await cardState.openCardByCharacter(cardChar)
-      deckNav.clearNavigation()
-    }
-  },
-  onPopState: async (state) => {
-    if (!state) {
-      // No state = home
-      cardState.closeCard()
+  } else if (route.view === 'card') {
+    flashMatch.resetGame()
+    reader.closeBook()
+    // Restore deck context if present
+    if (route.deck && (!deckNav.activeDeck.value || JSON.stringify(deckNav.activeDeck.value) !== JSON.stringify(route.deck))) {
+      await deckNav.openDeck(route.deck)
+    } else if (!route.deck && deckNav.activeDeck.value) {
       deckNav.closeDeck()
+    }
+    // Restore card
+    if (route.card) {
+      await restoreCardFromRoute(route)
+    }
+  } else if (route.view === 'games') {
+    cardState.closeCard()
+    deckNav.closeDeck()
+    reader.closeBook()
+    // If navigating directly to play/results without active game, redirect to setup
+    if ((route.gameStage === 'play' || route.gameStage === 'results') && flashMatch.status.value === 'setup') {
+      router.goToGames('setup')
       return
     }
-    
-    // Restore deck
-    if (state.deck && (!deckNav.activeDeck.value || JSON.stringify(deckNav.activeDeck.value) !== JSON.stringify(state.deck))) {
-      await deckNav.openDeck(state.deck)
-    } else if (!state.deck && deckNav.activeDeck.value) {
-      deckNav.closeDeck()
-    }
-    
-    // Restore card
-    if (state.card) {
-      if (deckNav.activeDeck.value && deckNav.activeDeckCards.value.length > 0) {
-        const deckCard = deckNav.findCardInDeck(state.card)
-        if (deckCard) {
-          deckNav.openCardFromDeck(deckCard)
-          cardState.openSavedCard(deckCard)
-          if (typeof state.cardIndex === 'number' && state.cardIndex >= 0) {
-            deckNav.currentIndex.value = state.cardIndex
-          }
-          return
-        }
-      }
-      await cardState.openCardByCharacter(state.card)
-    } else if (cardState.currentCard.value) {
-      cardState.closeCard()
-      if (!deckNav.activeDeck.value) {
-        deckNav.clearNavigation()
-      }
+  } else if (route.view === 'reader') {
+    cardState.closeCard()
+    deckNav.closeDeck()
+    flashMatch.resetGame()
+    // Handle reader state
+    if (route.readerStage === 'reading' && route.bookId) {
+      await reader.loadBooks()
+      await reader.openBook(route.bookId)
+    } else if (route.readerStage === 'home') {
+      reader.closeBook()
+      await reader.loadBooks()
     }
   }
-})
+}
+
+/**
+ * Restore card state from route
+ */
+async function restoreCardFromRoute(route) {
+  if (!route.card) return
+  
+  // Check if card is in current deck
+  if (deckNav.activeDeck.value && deckNav.activeDeckCards.value.length > 0) {
+    const deckCard = deckNav.findCardInDeck(route.card)
+    if (deckCard) {
+      deckNav.openCardFromDeck(deckCard)
+      cardState.openSavedCard(deckCard)
+      if (typeof route.cardIndex === 'number' && route.cardIndex >= 0) {
+        deckNav.currentIndex.value = route.cardIndex
+      }
+      return
+    }
+  }
+  
+  // Fall back to opening by character
+  await cardState.openCardByCharacter(route.card)
+  if (!deckNav.activeDeck.value) {
+    deckNav.clearNavigation()
+  }
+}
 
 // ============ Computed ============
 
 const isBrowsingCards = computed(() => {
-  return cardState.currentCard.value && !cardState.isNewCard.value && deckNav.displayOrder.value.length > 0
+  return cardState.currentCard.value && 
+         !cardState.isNewCard.value && 
+         deckNav.displayOrder.value.length > 0 &&
+         router.hasDeckContext.value
 })
 
 const displayError = computed(() => cardState.error.value || cardGen.error.value)
@@ -366,10 +389,10 @@ const canRetryGeneration = computed(() => {
 // ============ Event Handlers ============
 
 async function handleNavigateToWord(character) {
-  // Navigate to a related word - similar to opening by character
+  // Navigate to a related word - opens without deck context
   deckNav.clearNavigation()
   await cardState.openCardByCharacter(character)
-  router.pushHistoryState()
+  router.goToCard(character)
 }
 
 async function handleDictSelect(entry) {
@@ -387,14 +410,17 @@ async function handleDictSelect(entry) {
         deckNav.displayOrder.value = deckNav.activeDeckCards.value.map((_, i) => i)
         deckNav.currentIndex.value = idx
       }
+      router.goToCard(entry.simplified, deckNav.activeDeck.value, idx)
     } else {
       deckNav.setupSavedCardsNavigation(result.card)
+      router.goToCard(entry.simplified)
     }
   } else if (result.action === 'newCard' || result.action === 'openHsk') {
     deckNav.clearNavigation()
+    router.goToCard(entry.simplified)
+  } else if (result.action === 'openDeck') {
+    router.goToCard(entry.simplified, deckNav.activeDeck.value)
   }
-  
-  router.pushHistoryState()
 }
 
 async function handleFreeform(query) {
@@ -405,7 +431,7 @@ async function handleFreeform(query) {
   
   cardState.handleFreeform(query)
   deckNav.clearNavigation()
-  router.pushHistoryState()
+  router.goToCard(query)
   
   await cardGen.generateFromFreeform(cardState.pendingFreeformQuery.value)
 }
@@ -453,12 +479,21 @@ function handleAddToCollection() {
 // ============ Game Handlers ============
 
 function handleOpenGames() {
-  gameView.value = 'flash-match-setup'
+  router.goToGames('setup')
 }
 
-function handleCloseGames() {
-  gameView.value = null
+function handleBackFromGameSetup() {
   flashMatch.resetGame()
+  router.goHome()
+}
+
+function handleBackFromGameResults() {
+  flashMatch.resetGame()
+  router.goToGames('setup')
+}
+
+function handleBackToGameSetup() {
+  router.goToGames('setup')
 }
 
 async function handleStartFlashMatch(config) {
@@ -469,62 +504,73 @@ async function handleStartFlashMatch(config) {
   
   try {
     await flashMatch.initGame()
-    gameView.value = 'flash-match-play'
+    router.goToGames('play')
   } catch (err) {
     cardState.error.value = err.message
   }
 }
 
 function handleQuitFlashMatch() {
-  gameView.value = 'flash-match-setup'
   flashMatch.resetGame()
+  router.goToGames('setup')
+}
+
+function handleGameFinished() {
+  router.goToGames('results')
 }
 
 async function handlePlayFlashMatchAgain() {
   try {
     await flashMatch.initGame()
-    gameView.value = 'flash-match-play'
+    router.goToGames('play')
   } catch (err) {
     cardState.error.value = err.message
-    gameView.value = 'flash-match-setup'
+    router.goToGames('setup')
   }
 }
 
 async function handleNavigateFromGame(character) {
-  gameView.value = null
   flashMatch.resetGame()
   await cardState.openCardByCharacter(character)
-  router.pushHistoryState()
+  router.goToCard(character)
 }
 
 // ============ Reader Handlers ============
 
 async function handleOpenReader() {
-  readerView.value = 'home'
   await reader.loadBooks()
+  router.goToReader('home')
 }
 
 function handleCloseReader() {
-  readerView.value = null
   reader.closeBook()
+  router.goHome()
+}
+
+function handleNewBook() {
+  router.goToReader('create')
+}
+
+function handleCancelBookCreate() {
+  router.goToReader('home')
 }
 
 async function handleOpenBook(bookId) {
   await reader.openBook(bookId)
   if (reader.currentBook.value) {
-    readerView.value = 'reading'
+    router.goToReader('reading', bookId)
   }
 }
 
 function handleCloseBook() {
   reader.closeBook()
-  readerView.value = 'home'
+  router.goToReader('home')
 }
 
 async function handleCreateBook(bookData) {
   const book = await reader.createNewBook(bookData)
   if (book) {
-    readerView.value = 'reading'
+    router.goToReader('reading', book.id)
   }
 }
 
@@ -564,18 +610,18 @@ async function handleOpenWordFromReader(character) {
 
 async function handleOpenDeck(deckInfo) {
   await deckNav.openDeck(deckInfo)
-  router.pushHistoryState()
+  router.goToDeck(deckInfo)
 }
 
 function handleCloseDeck() {
   deckNav.closeDeck()
-  router.pushHistoryState()
+  router.goHome()
 }
 
 function handleSelectCardFromDeck(card, shuffledOrder) {
   deckNav.openCardFromDeck(card, shuffledOrder)
   cardState.openSavedCard(card)
-  router.pushHistoryState()
+  router.goToCard(card.character, deckNav.activeDeck.value, deckNav.currentIndex.value)
 }
 
 function handlePrevCard() {
@@ -593,25 +639,29 @@ function handleShuffleDeck() {
 function handleCloseCard() {
   cardState.closeCard()
   
-  if (!deckNav.activeDeck.value) {
+  if (deckNav.activeDeck.value) {
+    router.goToDeck(deckNav.activeDeck.value)
+  } else {
     deckNav.clearNavigation()
+    router.goHome()
   }
-  
-  router.pushHistoryState()
 }
 
 function handleDelete() {
   if (!confirm('Delete this card?')) return
   
   const cardId = cardState.currentCard.value.id
+  const wasUserDeck = deckNav.activeDeck.value?.type === 'user'
+  
   cardState.handleDelete(cardId)
   
-  // If browsing, move to next card or close
+  // If browsing a deck, try to move to next card
   if (isBrowsingCards.value && deckNav.displayOrder.value.length > 1) {
     const nextCard = deckNav.removeFromDisplayOrder(cardId)
     if (nextCard) {
       cardState.currentCard.value = nextCard
       cardState.updateHskBadge()
+      router.replace({ card: nextCard.character, cardIndex: deckNav.currentIndex.value })
     } else {
       handleCloseCard()
     }
@@ -619,8 +669,8 @@ function handleDelete() {
     handleCloseCard()
   }
   
-  // Refresh deck cards if in user deck
-  if (deckNav.activeDeck.value?.type === 'user') {
+  // Refresh deck cards if in user deck (without navigating)
+  if (wasUserDeck && deckNav.activeDeck.value) {
     deckNav.openDeck(deckNav.activeDeck.value)
   }
 }
@@ -646,46 +696,49 @@ async function handleLLMConfigChanged() {
 function goHome() {
   cardState.closeCard()
   deckNav.closeDeck()
-  gameView.value = null
   flashMatch.resetGame()
-  readerView.value = null
   reader.closeBook()
-  router.pushHistoryState()
+  router.goHome()
 }
 
 function handleKeyDown(e) {
   if (e.key === 'Escape') {
-    if (showLLMConfig.value) {
+    // Modal checks first - prevent navigation while modals are open
+    if (showSettings.value) {
+      showSettings.value = false
+    } else if (showLLMConfig.value) {
       showLLMConfig.value = false
-    } else if (gameView.value === 'flash-match-play') {
+    } else if (router.isGames.value && router.gameStage.value === 'play') {
       // Don't allow escape during game - must click quit
       return
-    } else if (gameView.value) {
-      handleCloseGames()
-    } else if (readerView.value === 'reading') {
+    } else if (router.isGames.value) {
+      if (router.gameStage.value === 'results') {
+        handleBackFromGameResults()
+      } else {
+        handleBackFromGameSetup()
+      }
+    } else if (router.isReader.value && router.readerStage.value === 'reading') {
       // If mini-card is open, let ReadingView handle it
       if (readerHasMiniCard.value) {
         return  // ReadingView will close mini-card and emit miniCardChange(false)
       }
       handleCloseBook()
-    } else if (readerView.value === 'create') {
-      readerView.value = 'home'
-    } else if (readerView.value === 'home') {
+    } else if (router.isReader.value && router.readerStage.value === 'create') {
+      handleCancelBookCreate()
+    } else if (router.isReader.value && router.readerStage.value === 'home') {
       handleCloseReader()
     } else if (cardState.currentCard.value) {
       handleCloseCard()
     } else if (deckNav.activeDeck.value) {
       handleCloseDeck()
-    } else if (showSettings.value) {
-      showSettings.value = false
     }
   }
   
-  // Skip card navigation when focus is on text input elements
+  // Arrow key navigation - only when browsing cards in a deck (not in reader)
   const activeEl = document.activeElement
   const isTextInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')
   
-  if (isBrowsingCards.value && !isTextInput) {
+  if (isBrowsingCards.value && !isTextInput && !router.isReader.value) {
     if (e.key === 'ArrowLeft') {
       handlePrevCard()
     } else if (e.key === 'ArrowRight') {
@@ -700,7 +753,10 @@ onMounted(async () => {
   document.addEventListener('keydown', handleKeyDown)
   await initDictionary()
   loadCards()
-  router.restoreFromUrl()
+  
+  // Initialize router and restore state from URL
+  const initialRoute = router.init()
+  await handleRouteChange(initialRoute)
 })
 
 onUnmounted(() => {

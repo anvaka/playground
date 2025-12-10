@@ -162,7 +162,10 @@ const canGenerateImage = computed(() => {
 watch(() => props.card, async (newCard) => {
   flipped.value = props.initialFlipped
   await loadImage(newCard.id)
-  scrollToCard()
+  // Don't scroll while editing - prevents jarring scroll on every keystroke
+  if (!props.isEditing) {
+    scrollToCard()
+  }
 }, { deep: true })
 
 // Load image on mount
