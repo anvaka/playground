@@ -1,192 +1,142 @@
 <template>
   <div class="app">
-    <header class="header">
-      <h1 class="header-title" @click="goHome">Chinese Flashcards</h1>
-      <div class="header-actions">
-        <button class="btn btn-small" @click="showSettings = true">Settings</button>
+    <!-- Compact Header: Menu | Search | Settings -->
+    <header class="app-header">
+      <button 
+        class="header-btn menu-btn" 
+        @click="showMenu = !showMenu"
+        title="Menu"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      
+      <div class="header-search">
+        <SearchBar 
+          placeholder="Search Chinese or English..."
+          @select="handleDictSelect"
+          @freeform="handleFreeform"
+        />
       </div>
     </header>
-    
-    <!-- Global Search Bar (always visible except during games) -->
-    <SearchBar 
-      v-if="!router.isGames.value"
-      ref="searchBarRef"
-      placeholder="Search Chinese or English..."
-      @select="handleDictSelect"
-      @freeform="handleFreeform"
-    />
-    
-    <!-- URL Loading State -->
-    <div v-if="cardState.urlLoading.value" class="card loading-card">
-      <p>Loading card...</p>
-    </div>
-    
-    <!-- Deck Browser (home view) -->
-    <DeckBrowser
-      v-if="router.isHome.value && !cardState.urlLoading.value"
-      :user-cards="savedCards"
-      @openDeck="handleOpenDeck"
-      @openGames="handleOpenGames"
-      @openReader="handleOpenReader"
-    />
-    
-    <!-- Deck View (browsing a specific deck, not viewing a card) -->
-    <DeckView
-      v-else-if="router.isDeck.value"
-      :title="deckNav.activeDeckTitle.value"
-      :cards="deckNav.activeDeckCards.value"
-      @back="handleCloseDeck"
-      @selectCard="handleSelectCardFromDeck"
-    />
-    
-    <!-- Flash Match Setup -->
-    <FlashMatchSetup
-      v-if="router.isGames.value && router.gameStage.value === 'setup'"
-      @back="handleBackFromGameSetup"
-      @start="handleStartFlashMatch"
-    />
-    
-    <!-- Flash Match Game -->
-    <FlashMatchGame
-      v-if="router.isGames.value && router.gameStage.value === 'play'"
-      :game="flashMatch"
-      @quit="handleQuitFlashMatch"
-      @finished="handleGameFinished"
-    />
-    
-    <!-- Flash Match Results -->
-    <FlashMatchResults
-      v-if="router.isGames.value && router.gameStage.value === 'results'"
-      :game="flashMatch"
-      @back="handleBackFromGameResults"
-      @setup="handleBackToGameSetup"
-      @playAgain="handlePlayFlashMatchAgain"
-      @navigateToCard="handleNavigateFromGame"
-    />
-    
-    <!-- Reader Home -->
-    <ReaderHome
-      v-if="router.isReader.value && router.readerStage.value === 'home'"
-      :books="reader.books.value"
-      :loading="reader.loading.value"
-      @back="handleCloseReader"
-      @newBook="handleNewBook"
-      @openBook="handleOpenBook"
-      @deleteBook="handleDeleteBook"
-    />
-    
-    <!-- Book Creator -->
-    <BookCreator
-      v-if="router.isReader.value && router.readerStage.value === 'create'"
-      @cancel="handleCancelBookCreate"
-      @create="handleCreateBook"
-    />
-    
-    <!-- Reading View -->
-    <ReadingView
-      v-if="router.isReader.value && router.readerStage.value === 'reading' && reader.currentBook.value"
-      :book="reader.currentBook.value"
-      :page="reader.currentPage.value"
-      :current-page-index="reader.currentPageIndex.value"
-      :total-pages="reader.totalPages.value"
-      :original-text="reader.currentPageOriginal.value"
-      :translating="reader.translating.value"
-      :back-translating="reader.backTranslating.value"
-      :error="reader.error.value"
-      :back-translation-error="reader.backTranslationError.value"
-      :on-add-word="handleAddWordFromReader"
-      @back="handleCloseBook"
-      @prevPage="reader.prevPage()"
-      @nextPage="reader.nextPage()"
-      @translate="reader.ensurePageTranslated()"
-      @backTranslate="reader.ensureBackTranslation()"
-      @retry="reader.retryTranslation()"
-      @retryBackTranslation="reader.retryBackTranslation()"
-      @openWord="handleOpenWordFromReader"
-      @miniCardChange="readerHasMiniCard = $event"
-      @settingsChange="reader.updateDisplaySettings($event)"
-    />
-    
-    <!-- Error display -->
-    <div v-if="displayError" class="card error-card">
-      <p class="error-text">{{ displayError }}</p>
-      <p v-if="isJsonParseError" class="error-hint">LLM generated invalid JSON. This happens occasionally - try again.</p>
-      <div class="error-actions">
-        <button v-if="canRetryGeneration" class="btn btn-small" @click="handleRetry">Retry</button>
-        <button class="btn btn-small btn-secondary" @click="clearError">Dismiss</button>
-      </div>
-    </div>
-    
-    <!-- Navigation header when browsing cards in a deck -->
-    <div v-if="isBrowsingCards" ref="studyHeaderRef" class="study-header">
-      <button class="btn btn-small" @click="handleCloseCard">← Back</button>
-      <h2 class="study-header-title">{{ deckNav.activeDeckTitle.value }}</h2>
-      <div class="study-header-nav">
-        <button 
-          class="nav-btn" 
-          @click="handlePrevCard" 
-          :disabled="deckNav.currentIndex.value === 0"
-          title="Previous (←)"
-        >
-          ‹
-        </button>
-        <div class="study-progress">
-          {{ deckNav.currentIndex.value + 1 }} / {{ deckNav.displayOrder.value.length }}
+
+    <!-- Side Panel -->
+    <div class="side-panel" :class="{ open: showMenu }">
+      <div class="side-panel-backdrop" @click="showMenu = false"></div>
+      <nav class="side-panel-content">
+        <div class="side-panel-header">
+          <span class="side-panel-title">Menu</span>
+          <button class="side-panel-close" @click="showMenu = false">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
         </div>
-        <button 
-          class="nav-btn" 
-          @click="handleNextCard" 
-          :disabled="deckNav.currentIndex.value === deckNav.displayOrder.value.length - 1"
-          title="Next (→)"
-        >
-          ›
+        <button class="menu-item" :class="{ active: router.isHome.value }" @click="navigateHome">
+          Cards
         </button>
-      </div>
-      <button class="btn btn-small" @click="handleShuffleDeck" title="Shuffle">Shuffle</button>
+        <button class="menu-item" :class="{ active: router.isExplore.value }" @click="navigateExplore">
+          Explore
+        </button>
+        <button class="menu-item disabled" disabled>
+          Games
+          <span class="menu-badge">Soon</span>
+        </button>
+        <button class="menu-item" :class="{ active: router.isReview.value }" @click="navigateReview">
+          SRS Review
+          <span v-if="cardCounts.dueCount + cardCounts.newCount > 0" class="menu-badge due">{{ cardCounts.dueCount + cardCounts.newCount }}</span>
+        </button>
+        <button class="menu-item disabled" disabled>
+          Reader
+          <span class="menu-badge">Soon</span>
+        </button>
+        <div class="menu-spacer"></div>
+        <button class="menu-item" @click="openSettings">
+          Settings
+        </button>
+      </nav>
     </div>
-    
-    <!-- Trivia Card View -->
-    <TriviaCardView
-      v-if="cardState.currentCard.value && cardState.currentCard.value.type === 'trivia' && !router.isGames.value && !router.isReader.value"
-      :card="cardState.currentCard.value"
-      :key="'trivia-' + cardState.currentCard.value.id"
-      :initial-flipped="cardState.isNewCard.value"
-      :show-close="!isBrowsingCards"
-      :scroll-target-ref="studyHeaderRef"
-      @delete="handleDelete"
-      @close="handleCloseCard"
-      @navigate="handleNavigateToWord"
-    />
-    
-    <!-- Vocabulary/Phrase Card View -->
-    <CardView 
-      v-else-if="cardState.currentCard.value && !router.isGames.value && !router.isReader.value"
-      :card="cardState.currentCard.value"
-      :key="'vocab-' + cardState.currentCard.value.id"
-      :is-new="cardState.isNewCard.value"
-      :loading="cardGen.loading.value"
-      :initial-flipped="cardState.isNewCard.value"
-      :show-close="!isBrowsingCards"
-      :hsk-badge="cardState.currentHskBadge.value"
-      :is-in-collection="cardState.isCurrentCardInCollection.value"
-      :regenerated-data="regeneratedData"
-      :scroll-target-ref="studyHeaderRef"
-      @generate="handleGenerate"
-      @regenerate="handleRegenerate"
-      @clearRegenerated="regeneratedData = null"
-      @save="handleSaveCard"
-      @delete="handleDelete"
-      @close="handleCloseCard"
-      @addToCollection="handleAddToCollection"
-      @navigate="handleNavigateToWord"
-    />
-    
-    <!-- Settings Modal -->
-    <Settings 
-      v-if="showSettings"
-      @close="showSettings = false"
-      @saved="loadCards"
-    />
+
+    <!-- Main Content Area -->
+    <main class="app-content">
+      <!-- Home: Card List -->
+      <div v-if="router.isHome.value" class="card-list-view">
+        <div v-if="savedCards.length === 0" class="empty-state">
+          <p>No cards yet.</p>
+          <p class="empty-hint">Search for a word above to create your first card.</p>
+        </div>
+        <div v-else class="cards-list">
+          <div 
+            v-for="card in savedCards" 
+            :key="card.id" 
+            class="card-list-item"
+            @click="openCard(card)"
+          >
+            <span class="card-character">{{ card.character }}</span>
+            <button 
+              class="delete-btn"
+              @click.stop="deleteCard(card.id)"
+              title="Delete card"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Editor -->
+      <div v-else-if="router.isCard.value" class="card-editor-view">
+        <div class="editor-nav">
+          <button class="back-btn" @click="goBack">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+            <span>Back</span>
+          </button>
+        </div>
+        
+        <MarkdownCardEditor
+          v-if="currentCard"
+          ref="cardEditorRef"
+          :card="currentCard"
+          :get-client="() => client"
+          @saved="handleSaved"
+          @open-chat="handleOpenChat"
+        />
+      </div>
+
+      <!-- SRS Review -->
+      <SRSReviewView 
+        v-else-if="router.isReview.value"
+        @done="handleReviewDone"
+      />
+
+      <!-- Explore HSK Words -->
+      <ExploreView
+        v-else-if="router.isExplore.value"
+        ref="exploreView"
+        :initial-level="router.exploreLevel.value"
+        @select-word="handleExploreSelect"
+        @change-level="handleExploreLevel"
+      />
+    </main>
+
+    <!-- Bottom Nav (prepared but hidden for now) -->
+    <!-- 
+    <nav class="bottom-nav">
+      <button class="nav-item" :class="{ active: router.isHome.value }">Cards</button>
+      <button class="nav-item">Games</button>
+      <button class="nav-item">SRS</button>
+      <button class="nav-item">Reader</button>
+    </nav>
+    -->
 
     <!-- LLM Config Modal -->
     <Teleport to="body">
@@ -196,493 +146,235 @@
         @config-changed="handleLLMConfigChanged"
       />
     </Teleport>
+
+    <!-- Global Chat Panel (slides in from right) -->
+    <Teleport to="body">
+      <Transition name="chat-slide">
+        <div v-if="showChat" class="chat-overlay">
+          <div class="chat-backdrop" @click="showChat = false"></div>
+          <aside class="chat-panel">
+            <CardChat
+              :key="chatContext.cardId + (chatContext.initialQuery || '')"
+              :card-id="chatContext.cardId"
+              :card-content="chatContext.cardContent"
+              :card-character="chatContext.cardCharacter"
+              :initial-query="chatContext.initialQuery"
+              :get-client="() => client"
+              @close="showChat = false"
+              @edit-card="handleChatEditCard"
+              @create-card="handleChatCreateCard"
+              @open-settings="openSettingsFromChat"
+            />
+          </aside>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useLLM, LLMConfigModal } from '@anvaka/vue-llm'
 
 import SearchBar from './components/SearchBar.vue'
-import CardView from './components/CardView.vue'
-import TriviaCardView from './components/TriviaCardView.vue'
-import Settings from './components/Settings.vue'
-import DeckBrowser from './components/DeckBrowser.vue'
-import DeckView from './components/DeckView.vue'
-import FlashMatchSetup from './components/games/FlashMatchSetup.vue'
-import FlashMatchGame from './components/games/FlashMatchGame.vue'
-import FlashMatchResults from './components/games/FlashMatchResults.vue'
-import ReaderHome from './components/reader/ReaderHome.vue'
-import BookCreator from './components/reader/BookCreator.vue'
-import ReadingView from './components/reader/ReadingView.vue'
+import MarkdownCardEditor from './components/MarkdownCardEditor.vue'
+import SRSReviewView from './components/SRSReviewView.vue'
+import ExploreView from './components/ExploreView.vue'
+import CardChat from './components/CardChat.vue'
 
-import { initDictionary } from './services/dictionary.js'
-import { getLocalCards, saveCard, createCard, getCardByCharacter } from './services/storage.js'
+import { useRouter } from './composables/useRouter.js'
+import { initDictionary, lookupChinese } from './services/dictionary.js'
+import { 
+  getMarkdownCards, 
+  deleteMarkdownCard, 
+  getMarkdownCardByCharacter,
+  getMarkdownCard,
+  getCardCounts,
+  createMarkdownCard,
+  saveMarkdownCard
+} from './services/markdownStorage.js'
+import { buildCardTemplate } from './services/cardMarkdown.js'
 
-import { useAppRouter } from './composables/useAppRouter.js'
-import { useDeckNavigation } from './composables/useDeckNavigation.js'
-import { useCardState } from './composables/useCardState.js'
-import { useCardGeneration } from './composables/useCardGeneration.js'
-import { useFlashMatch } from './composables/useFlashMatch.js'
-import { useReader } from './composables/useReader.js'
+// ============ Router ============
+
+const router = useRouter()
 
 // ============ Core State ============
 
 const { client, getActiveProviderId, refresh } = useLLM()
 
-const showSettings = ref(false)
 const showLLMConfig = ref(false)
+const showMenu = ref(false)
+const showChat = ref(false)
+const chatContext = ref({ cardId: '', cardContent: '', cardCharacter: '' })
 const savedCards = ref([])
-const regeneratedData = ref(null)
-const studyHeaderRef = ref(null)
-const searchBarRef = ref(null)
-
-// Flash match game state
-const flashMatch = useFlashMatch()
-
-// Reader state
-const reader = useReader(() => client)
-const readerHasMiniCard = ref(false)  // Track if mini-card is open in reader
+const currentCard = ref(null)
+const cardCounts = ref({ newCount: 0, dueCount: 0, totalCount: 0 })
+const exploreView = ref(null)
+const cardEditorRef = ref(null)
 
 function loadCards() {
-  savedCards.value = getLocalCards()
+  savedCards.value = getMarkdownCards()
+  cardCounts.value = getCardCounts()
 }
 
 function isConfigured() {
   return !!getActiveProviderId()
 }
 
-// ============ Composables Setup ============
+// ============ Route Handling ============
 
-// Card state management
-const cardState = useCardState({
-  savedCards,
-  loadCards
-})
-
-// Deck navigation
-const deckNav = useDeckNavigation({
-  savedCards,
-  onCardChange: (card) => {
-    cardState.currentCard.value = card
-    cardState.currentDictLookup.value = null
-    cardState.updateHskBadge()
-    // Update card index in URL without pushing new history entry
-    router.updateCardIndex(deckNav.currentIndex.value)
-  }
-})
-
-// Card generation
-const cardGen = useCardGeneration({
-  getClient: () => client,
-  loadCards,
-  onCardGenerated: (card) => {
-    cardState.markAsGenerated(card)
-  }
-})
-
-// Unified app router
-const router = useAppRouter({
-  onNavigate: handleRouteChange
-})
-
-/**
- * Handle route changes from browser back/forward navigation or initial load
- */
-async function handleRouteChange(route) {
-  // Clear states that don't match the new route
-  if (route.view === 'home') {
-    cardState.closeCard()
-    deckNav.closeDeck()
-    flashMatch.resetGame()
-    reader.closeBook()
-  } else if (route.view === 'deck') {
-    cardState.closeCard()
-    flashMatch.resetGame()
-    reader.closeBook()
-    if (route.deck) {
-      await deckNav.openDeck(route.deck)
+// Load card when route changes
+watch(() => router.route.value, async (route) => {
+  showMenu.value = false
+  
+  if (route.name === 'home') {
+    currentCard.value = null
+    showChat.value = false
+  } else if (route.name === 'card') {
+    // Load existing card by ID
+    const card = getMarkdownCard(route.id)
+    if (card) {
+      currentCard.value = card
+    } else {
+      // Card not found, go home
+      router.goHome()
     }
-  } else if (route.view === 'card') {
-    flashMatch.resetGame()
-    reader.closeBook()
-    // Restore deck context if present
-    if (route.deck && (!deckNav.activeDeck.value || JSON.stringify(deckNav.activeDeck.value) !== JSON.stringify(route.deck))) {
-      await deckNav.openDeck(route.deck)
-    } else if (!route.deck && deckNav.activeDeck.value) {
-      deckNav.closeDeck()
-    }
-    // Restore card
-    if (route.card) {
-      await restoreCardFromRoute(route)
-    }
-  } else if (route.view === 'games') {
-    cardState.closeCard()
-    deckNav.closeDeck()
-    reader.closeBook()
-    // If navigating directly to play/results without active game, redirect to setup
-    if ((route.gameStage === 'play' || route.gameStage === 'results') && flashMatch.status.value === 'setup') {
-      router.goToGames('setup')
+  } else if (route.name === 'card-new') {
+    // Create new card from query
+    // Skip if we already have a card with content (created from chat)
+    if (currentCard.value?.content && currentCard.value?.isNew) {
       return
     }
-  } else if (route.view === 'reader') {
-    cardState.closeCard()
-    deckNav.closeDeck()
-    flashMatch.resetGame()
-    // Handle reader state
-    if (route.readerStage === 'reading' && route.bookId) {
-      await reader.loadBooks()
-      await reader.openBook(route.bookId)
-    } else if (route.readerStage === 'home') {
-      reader.closeBook()
-      await reader.loadBooks()
+    if (route.query) {
+      await createCardFromQuery(route.query)
+    } else {
+      currentCard.value = { id: null, character: '', content: '', isNew: true }
+    }
+  }
+}, { immediate: true })
+
+async function createCardFromQuery(query) {
+  // Check for existing card first
+  const existing = getMarkdownCardByCharacter(query)
+  if (existing) {
+    router.goToCard(existing.id)
+    return
+  }
+  
+  // Try dictionary lookup
+  const lookup = await lookupChinese(query)
+  if (lookup) {
+    const template = buildCardTemplate(query, lookup)
+    currentCard.value = {
+      id: null,
+      character: query,
+      content: template,
+      isNew: true
+    }
+  } else {
+    // Freeform - no dictionary match
+    currentCard.value = { 
+      id: null, 
+      character: query, 
+      content: '', 
+      isNew: true 
     }
   }
 }
 
-/**
- * Restore card state from route
- */
-async function restoreCardFromRoute(route) {
-  if (!route.card) return
-  
-  // Check if card is in current deck
-  if (deckNav.activeDeck.value && deckNav.activeDeckCards.value.length > 0) {
-    const deckCard = deckNav.findCardInDeck(route.card)
-    if (deckCard) {
-      deckNav.openCardFromDeck(deckCard)
-      cardState.openSavedCard(deckCard)
-      if (typeof route.cardIndex === 'number' && route.cardIndex >= 0) {
-        deckNav.currentIndex.value = route.cardIndex
-      }
-      return
-    }
-  }
-  
-  // Fall back to opening by character
-  await cardState.openCardByCharacter(route.card)
-  if (!deckNav.activeDeck.value) {
-    deckNav.clearNavigation()
-  }
+// ============ Navigation ============
+
+function navigateHome() {
+  router.goHome()
 }
 
-// ============ Computed ============
-
-const isBrowsingCards = computed(() => {
-  return cardState.currentCard.value && 
-         !cardState.isNewCard.value && 
-         deckNav.displayOrder.value.length > 0 &&
-         router.hasDeckContext.value
-})
-
-const displayError = computed(() => cardState.error.value || cardGen.error.value)
-
-const isJsonParseError = computed(() => {
-  const err = displayError.value
-  return err && (err.includes('JSON') || err.includes('position') || err.includes('Unexpected'))
-})
-
-const canRetryGeneration = computed(() => {
-  return cardState.pendingFreeformQuery.value || cardState.pendingDictEntry.value
-})
-
-// ============ Event Handlers ============
-
-async function handleNavigateToWord(character) {
-  // Navigate to a related word - opens without deck context
-  deckNav.clearNavigation()
-  await cardState.openCardByCharacter(character)
-  router.goToCard(character)
+function goBack() {
+  history.back()
 }
+
+function navigateReview() {
+  showMenu.value = false
+  router.goToReview()
+}
+
+function navigateExplore() {
+  showMenu.value = false
+  router.goToExplore(1)
+}
+
+function handleExploreSelect(simplified) {
+  router.goToNewCard(simplified)
+}
+
+function handleExploreLevel(level) {
+  router.goToExplore(level)
+}
+
+function handleReviewDone() {
+  loadCards() // refresh counts
+  router.goHome()
+}
+
+function openSettings() {
+  showMenu.value = false
+  showLLMConfig.value = true
+}
+
+function openCard(card) {
+  router.goToCard(card.id)
+}
+
+// ============ Search Handlers ============
 
 async function handleDictSelect(entry) {
-  const result = await cardState.handleDictSelect(entry, {
-    findCardInDeck: deckNav.findCardInDeck,
-    openCardFromDeck: deckNav.openCardFromDeck,
-    activeDeck: deckNav.activeDeck,
-    activeDeckCards: deckNav.activeDeckCards
-  })
-  
-  if (result.action === 'openSaved') {
-    if (deckNav.activeDeck.value) {
-      const idx = deckNav.activeDeckCards.value.findIndex(c => c.id === result.card.id)
-      if (idx >= 0) {
-        deckNav.displayOrder.value = deckNav.activeDeckCards.value.map((_, i) => i)
-        deckNav.currentIndex.value = idx
-      }
-      router.goToCard(entry.simplified, deckNav.activeDeck.value, idx)
-    } else {
-      deckNav.setupSavedCardsNavigation(result.card)
-      router.goToCard(entry.simplified)
-    }
-  } else if (result.action === 'newCard' || result.action === 'openHsk') {
-    deckNav.clearNavigation()
-    router.goToCard(entry.simplified)
-  } else if (result.action === 'openDeck') {
-    router.goToCard(entry.simplified, deckNav.activeDeck.value)
-  }
-}
-
-async function handleFreeform(query) {
-  if (!isConfigured()) {
-    showLLMConfig.value = true
-    return
-  }
-  
-  cardState.handleFreeform(query)
-  deckNav.clearNavigation()
-  router.goToCard(query)
-  
-  await cardGen.generateFromFreeform(cardState.pendingFreeformQuery.value)
-}
-
-async function handleGenerate() {
-  if (!isConfigured()) {
-    showLLMConfig.value = true
-    return
-  }
-  
-  if (cardState.pendingFreeformQuery.value) {
-    await cardGen.generateFromFreeform(cardState.pendingFreeformQuery.value)
-  } else if (cardState.pendingDictEntry.value) {
-    await cardGen.generateFromDictEntry(cardState.pendingDictEntry.value)
-  } else {
-    cardState.error.value = 'No dictionary entry to generate from'
-  }
-}
-
-async function handleRegenerate() {
-  if (!isConfigured()) {
-    showLLMConfig.value = true
-    return
-  }
-  
-  if (!cardState.currentCard.value) {
-    cardState.error.value = 'No card to regenerate'
-    return
-  }
-  
-  const result = await cardGen.regenerateCard(cardState.currentCard.value)
-  if (result) {
-    regeneratedData.value = result
-  }
-}
-
-function handleSaveCard(card) {
-  cardState.saveCurrentCard(card)
-}
-
-function handleAddToCollection() {
-  cardState.addCurrentToCollection()
-}
-
-// ============ Game Handlers ============
-
-function handleOpenGames() {
-  router.goToGames('setup')
-}
-
-function handleBackFromGameSetup() {
-  flashMatch.resetGame()
-  router.goHome()
-}
-
-function handleBackFromGameResults() {
-  flashMatch.resetGame()
-  router.goToGames('setup')
-}
-
-function handleBackToGameSetup() {
-  router.goToGames('setup')
-}
-
-async function handleStartFlashMatch(config) {
-  flashMatch.mode.value = config.mode
-  flashMatch.hidePinyin.value = config.hidePinyin
-  flashMatch.selectedTags.value = config.tags
-  flashMatch.timeLimit.value = config.timeLimit
-  
-  try {
-    await flashMatch.initGame()
-    router.goToGames('play')
-  } catch (err) {
-    cardState.error.value = err.message
-  }
-}
-
-function handleQuitFlashMatch() {
-  flashMatch.resetGame()
-  router.goToGames('setup')
-}
-
-function handleGameFinished() {
-  router.goToGames('results')
-}
-
-async function handlePlayFlashMatchAgain() {
-  try {
-    await flashMatch.initGame()
-    router.goToGames('play')
-  } catch (err) {
-    cardState.error.value = err.message
-    router.goToGames('setup')
-  }
-}
-
-async function handleNavigateFromGame(character) {
-  flashMatch.resetGame()
-  await cardState.openCardByCharacter(character)
-  router.goToCard(character)
-}
-
-// ============ Reader Handlers ============
-
-async function handleOpenReader() {
-  await reader.loadBooks()
-  router.goToReader('home')
-}
-
-function handleCloseReader() {
-  reader.closeBook()
-  router.goHome()
-}
-
-function handleNewBook() {
-  router.goToReader('create')
-}
-
-function handleCancelBookCreate() {
-  router.goToReader('home')
-}
-
-async function handleOpenBook(bookId) {
-  await reader.openBook(bookId)
-  if (reader.currentBook.value) {
-    router.goToReader('reading', bookId)
-  }
-}
-
-function handleCloseBook() {
-  reader.closeBook()
-  router.goToReader('home')
-}
-
-async function handleCreateBook(bookData) {
-  const book = await reader.createNewBook(bookData)
-  if (book) {
-    router.goToReader('reading', book.id)
-  }
-}
-
-async function handleDeleteBook(bookId) {
-  await reader.removeBook(bookId)
-}
-
-function handleAddWordFromReader({ text, pinyin, meaning, bookTitle, bookId }) {
-  // Check if card already exists
-  const existing = getCardByCharacter(text, pinyin)
+  // Check for existing card first
+  const existing = getMarkdownCardByCharacter(entry.simplified)
   if (existing) {
-    return { success: false, reason: 'exists' }
+    router.goToCard(existing.id)
+    return
   }
   
-  // Create a card from the reader word
-  const card = createCard({
-    character: text,
-    pinyin: pinyin,
-    meaning: meaning,
-    translation: meaning,
-    tags: ['user', 'reader', `book:${bookTitle}`],
-    sourceBookId: bookId
-  })
+  // Navigate to new card with query
+  router.goToNewCard(entry.simplified)
+}
+
+function handleFreeform(query) {
+  if (!isConfigured()) {
+    showLLMConfig.value = true
+    return
+  }
   
-  saveCard(card)
+  // Open chat with the query - let the AI tutor handle it
+  chatContext.value = { 
+    cardId: 'freeform', 
+    cardContent: '', 
+    cardCharacter: '',
+    initialQuery: query
+  }
+  showChat.value = true
+}
+
+// ============ Card Actions ============
+
+function handleSaved(saved) {
+  currentCard.value = saved
   loadCards()
-  return { success: true, card }
-}
-
-async function handleOpenWordFromReader(character) {
-  // Prepopulate search with the word - search overlay appears on top of reader
-  // Don't close reader so user can easily go back
-  if (searchBarRef.value) {
-    await searchBarRef.value.prepopulateSearch(character)
+  // Refresh explore view if it exists (to update "in deck" status)
+  exploreView.value?.refresh()
+  // Update URL to reflect saved card ID
+  if (saved.id) {
+    router.goToCard(saved.id)
   }
 }
 
-async function handleOpenDeck(deckInfo) {
-  await deckNav.openDeck(deckInfo)
-  router.goToDeck(deckInfo)
-}
-
-function handleCloseDeck() {
-  deckNav.closeDeck()
-  router.goHome()
-}
-
-function handleSelectCardFromDeck(card, shuffledOrder) {
-  deckNav.openCardFromDeck(card, shuffledOrder)
-  cardState.openSavedCard(card)
-  router.goToCard(card.character, deckNav.activeDeck.value, deckNav.currentIndex.value)
-}
-
-function handlePrevCard() {
-  deckNav.prevCard()
-}
-
-function handleNextCard() {
-  deckNav.nextCard()
-}
-
-function handleShuffleDeck() {
-  deckNav.shuffleCurrentDeck()
-}
-
-function handleCloseCard() {
-  cardState.closeCard()
-  
-  if (deckNav.activeDeck.value) {
-    router.goToDeck(deckNav.activeDeck.value)
-  } else {
-    deckNav.clearNavigation()
+function deleteCard(cardId) {
+  if (!confirm('Delete this card?')) return
+  deleteMarkdownCard(cardId)
+  loadCards()
+  if (currentCard.value?.id === cardId) {
     router.goHome()
   }
-}
-
-function handleDelete() {
-  if (!confirm('Delete this card?')) return
-  
-  const cardId = cardState.currentCard.value.id
-  const wasUserDeck = deckNav.activeDeck.value?.type === 'user'
-  
-  cardState.handleDelete(cardId)
-  
-  // If browsing a deck, try to move to next card
-  if (isBrowsingCards.value && deckNav.displayOrder.value.length > 1) {
-    const nextCard = deckNav.removeFromDisplayOrder(cardId)
-    if (nextCard) {
-      cardState.currentCard.value = nextCard
-      cardState.updateHskBadge()
-      router.replace({ card: nextCard.character, cardIndex: deckNav.currentIndex.value })
-    } else {
-      handleCloseCard()
-    }
-  } else {
-    handleCloseCard()
-  }
-  
-  // Refresh deck cards if in user deck (without navigating)
-  if (wasUserDeck && deckNav.activeDeck.value) {
-    deckNav.openDeck(deckNav.activeDeck.value)
-  }
-}
-
-function clearError() {
-  cardState.error.value = null
-  cardGen.error.value = null
-}
-
-async function handleRetry() {
-  clearError()
-  await handleGenerate()
 }
 
 async function handleLLMConfigChanged() {
@@ -691,58 +383,68 @@ async function handleLLMConfigChanged() {
   } catch {}
 }
 
-// ============ Keyboard Navigation ============
+// ============ Chat Handlers ============
 
-function goHome() {
-  cardState.closeCard()
-  deckNav.closeDeck()
-  flashMatch.resetGame()
-  reader.closeBook()
-  router.goHome()
+function handleOpenChat({ cardId, cardContent, cardCharacter }) {
+  chatContext.value = { cardId, cardContent, cardCharacter, initialQuery: '' }
+  showChat.value = true
 }
+
+function handleChatEditCard({ section, content, fullContent }) {
+  if (cardEditorRef.value) {
+    cardEditorRef.value.applyCardEdit({ section, content, fullContent })
+    // Update chat context with new content
+    chatContext.value.cardContent = cardEditorRef.value.getContent()
+  }
+}
+
+function handleChatCreateCard({ word, content }) {
+  showChat.value = false
+  
+  if (content) {
+    // Content was generated in chat - save the card immediately
+    const newCard = createMarkdownCard(content)
+    const saved = saveMarkdownCard(newCard)
+    loadCards() // refresh card list
+    currentCard.value = saved
+    router.goToCard(saved.id)
+  } else {
+    // No content - navigate to new card (old flow)
+    router.goToNewCard(word)
+  }
+}
+
+async function createCardWithContent(word, content) {
+  // Extract character from content or use word
+  const character = word || content.match(/^#\s*Front\s*\n([^\n(]+)/m)?.[1]?.trim() || 'new'
+  
+  currentCard.value = {
+    id: null,
+    character,
+    content,
+    isNew: true
+  }
+  
+  // Navigate to card-new view
+  router.goToNewCard(character)
+}
+
+function openSettingsFromChat() {
+  showLLMConfig.value = true
+}
+
+// ============ Keyboard Navigation ============
 
 function handleKeyDown(e) {
   if (e.key === 'Escape') {
-    // Modal checks first - prevent navigation while modals are open
-    if (showSettings.value) {
-      showSettings.value = false
-    } else if (showLLMConfig.value) {
+    if (showLLMConfig.value) {
       showLLMConfig.value = false
-    } else if (router.isGames.value && router.gameStage.value === 'play') {
-      // Don't allow escape during game - must click quit
-      return
-    } else if (router.isGames.value) {
-      if (router.gameStage.value === 'results') {
-        handleBackFromGameResults()
-      } else {
-        handleBackFromGameSetup()
-      }
-    } else if (router.isReader.value && router.readerStage.value === 'reading') {
-      // If mini-card is open, let ReadingView handle it
-      if (readerHasMiniCard.value) {
-        return  // ReadingView will close mini-card and emit miniCardChange(false)
-      }
-      handleCloseBook()
-    } else if (router.isReader.value && router.readerStage.value === 'create') {
-      handleCancelBookCreate()
-    } else if (router.isReader.value && router.readerStage.value === 'home') {
-      handleCloseReader()
-    } else if (cardState.currentCard.value) {
-      handleCloseCard()
-    } else if (deckNav.activeDeck.value) {
-      handleCloseDeck()
-    }
-  }
-  
-  // Arrow key navigation - only when browsing cards in a deck (not in reader)
-  const activeEl = document.activeElement
-  const isTextInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')
-  
-  if (isBrowsingCards.value && !isTextInput && !router.isReader.value) {
-    if (e.key === 'ArrowLeft') {
-      handlePrevCard()
-    } else if (e.key === 'ArrowRight') {
-      handleNextCard()
+    } else if (showChat.value) {
+      showChat.value = false
+    } else if (showMenu.value) {
+      showMenu.value = false
+    } else if (router.isCard.value) {
+      router.goHome()
     }
   }
 }
@@ -751,15 +453,366 @@ function handleKeyDown(e) {
 
 onMounted(async () => {
   document.addEventListener('keydown', handleKeyDown)
+  router.init()
   await initDictionary()
   loadCards()
-  
-  // Initialize router and restore state from URL
-  const initialRoute = router.init()
-  await handleRouteChange(initialRoute)
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeyDown)
 })
 </script>
+
+<style scoped>
+/* App Layout */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Header */
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.header-btn:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.header-search {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Menu Dropdown */
+.side-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.side-panel.open {
+  pointer-events: auto;
+}
+
+.side-panel-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.side-panel.open .side-panel-backdrop {
+  opacity: 1;
+}
+
+.side-panel-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 260px;
+  max-width: 80vw;
+  background: var(--card-bg);
+  border-right: 1px solid var(--border);
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
+  transform: translateX(-100%);
+  transition: transform 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.side-panel.open .side-panel-content {
+  transform: translateX(0);
+}
+
+.side-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.side-panel-title {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.side-panel-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.side-panel-close:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.menu-item:hover:not(.disabled) {
+  background: var(--bg);
+}
+
+.menu-item.active {
+  background: var(--bg);
+  color: var(--secondary);
+  border-left: 3px solid var(--secondary);
+}
+
+.menu-item.disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.menu-badge {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  background: var(--bg);
+  border-radius: 4px;
+  color: var(--text-muted);
+}
+
+.menu-badge.due {
+  background: var(--secondary);
+  color: white;
+}
+
+.menu-spacer {
+  flex: 1;
+  min-height: 20px;
+}
+
+/* Main Content */
+.app-content {
+  flex: 1;
+  padding: 16px 0;
+}
+
+/* Card List View */
+.card-list-view {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+
+.empty-state p {
+  margin: 0;
+}
+
+.empty-hint {
+  margin-top: 8px !important;
+  font-size: 0.9rem;
+}
+
+.cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.card-list-item:hover {
+  background: var(--bg);
+  border-color: var(--border-hover);
+}
+
+.card-character {
+  font-size: 1.25rem;
+}
+
+.delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.delete-btn:hover {
+  background: rgba(220, 53, 69, 0.1);
+  color: var(--danger);
+}
+
+/* Card Editor View */
+.card-editor-view {
+  margin: 0 auto;
+}
+
+.editor-nav {
+  margin-bottom: 16px;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.back-btn:hover {
+  background: var(--bg);
+  border-color: var(--border-hover);
+}
+
+/* Bottom Nav (prepared, commented out in template) */
+.bottom-nav {
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0;
+  background: var(--card-bg);
+  border-top: 1px solid var(--border);
+  position: sticky;
+  bottom: 0;
+}
+
+.nav-item {
+  flex: 1;
+  padding: 12px 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  color: var(--secondary);
+}
+
+/* Global Chat Panel */
+.chat-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+}
+
+.chat-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.chat-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 400px;
+  max-width: 100vw;
+  background: var(--card-bg);
+  border-left: 1px solid var(--border);
+  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Chat slide transition */
+.chat-slide-enter-active,
+.chat-slide-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.chat-slide-enter-active .chat-panel,
+.chat-slide-leave-active .chat-panel {
+  transition: transform 0.2s ease;
+}
+
+.chat-slide-enter-from,
+.chat-slide-leave-to {
+  opacity: 0;
+}
+
+.chat-slide-enter-from .chat-panel,
+.chat-slide-leave-to .chat-panel {
+  transform: translateX(100%);
+}
+
+@media (max-width: 480px) {
+  .chat-panel {
+    width: 100vw;
+  }
+}
+</style>

@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@anvaka/vue-llm": "file:../../research-tree/packages/vue-llm",
+    "@anvaka/vue-llm": "^0.1.1",
     "@pinyin-pro/data": "^1.2.0",
     "marked": "^17.0.1",
     "pinyin-pro": "^3.27.0",

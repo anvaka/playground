@@ -268,7 +268,6 @@ defineExpose({
 <style scoped>
 .search-container {
   position: relative;
-  margin-bottom: 20px;
   z-index: 50;
 }
 
@@ -316,11 +315,13 @@ defineExpose({
 
 .search-input-wrapper input {
   flex: 1;
-  padding: 10px 40px 10px 40px;
+  padding: 8px 40px 8px 40px;
   border: none;
   border-radius: var(--radius);
   background: transparent;
   font-size: 1rem;
+  height: 36px;
+  box-sizing: border-box;
 }
 
 .search-input-wrapper input:focus {
@@ -353,9 +354,17 @@ defineExpose({
 }
 
 .search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--secondary);
   border-top: 1px solid var(--border);
+  border-radius: 0 0 var(--radius) var(--radius);
   max-height: 60vh;
   overflow-y: auto;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
 }
 
 .dict-results {
