@@ -21,6 +21,16 @@
           @freeform="handleFreeform"
         />
       </div>
+
+      <button 
+        class="header-btn chat-btn" 
+        @click="openGlobalChat"
+        title="Chat"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </button>
     </header>
 
     <!-- Side Panel -->
@@ -55,6 +65,10 @@
           <span class="menu-badge">Soon</span>
         </button>
         <div class="menu-spacer"></div>
+        
+        <!-- Conversations Section -->
+        <ThreadList ref="threadListRef" @thread-opened="showMenu = false" />
+        
         <button class="menu-item" @click="openSettings">
           Settings
         </button>
@@ -106,7 +120,6 @@
           v-if="currentCard"
           ref="cardEditorRef"
           :card="currentCard"
-          :get-client="() => client"
           @saved="handleSaved"
           @open-chat="handleOpenChat"
         />
@@ -150,17 +163,14 @@
     <!-- Global Chat Panel (slides in from right) -->
     <Teleport to="body">
       <Transition name="chat-slide">
-        <div v-if="showChat" class="chat-overlay">
-          <div class="chat-backdrop" @click="showChat = false"></div>
+        <div v-if="chat.isOpen.value" class="chat-overlay">
+          <div class="chat-backdrop" @click="handleChatClose"></div>
           <aside class="chat-panel">
             <CardChat
-              :key="chatContext.cardId + (chatContext.initialQuery || '')"
-              :card-id="chatContext.cardId"
-              :card-content="chatContext.cardContent"
-              :card-character="chatContext.cardCharacter"
-              :initial-query="chatContext.initialQuery"
-              :get-client="() => client"
-              @close="showChat = false"
+              ref="cardChatRef"
+              :key="chat.chatKey.value"
+              :current-view="getCurrentViewName()"
+              @close="handleChatClose"
               @edit-card="handleChatEditCard"
               @create-card="handleChatCreateCard"
               @open-settings="openSettingsFromChat"
@@ -173,7 +183,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
 import { useLLM, LLMConfigModal } from '@anvaka/vue-llm'
 
 import SearchBar from './components/SearchBar.vue'
@@ -181,8 +191,10 @@ import MarkdownCardEditor from './components/MarkdownCardEditor.vue'
 import SRSReviewView from './components/SRSReviewView.vue'
 import ExploreView from './components/ExploreView.vue'
 import CardChat from './components/CardChat.vue'
+import ThreadList from './components/ThreadList.vue'
 
 import { useRouter } from './composables/useRouter.js'
+import { useChatContext } from './composables/useChatContext.js'
 import { initDictionary, lookupChinese } from './services/dictionary.js'
 import { 
   getMarkdownCards, 
@@ -194,6 +206,7 @@ import {
   saveMarkdownCard
 } from './services/markdownStorage.js'
 import { buildCardTemplate } from './services/cardMarkdown.js'
+import { deleteAllCardImages } from './services/imageGen.js'
 
 // ============ Router ============
 
@@ -202,16 +215,17 @@ const router = useRouter()
 // ============ Core State ============
 
 const { client, getActiveProviderId, refresh } = useLLM()
+const chat = useChatContext()
 
 const showLLMConfig = ref(false)
 const showMenu = ref(false)
-const showChat = ref(false)
-const chatContext = ref({ cardId: '', cardContent: '', cardCharacter: '' })
 const savedCards = ref([])
 const currentCard = ref(null)
 const cardCounts = ref({ newCount: 0, dueCount: 0, totalCount: 0 })
 const exploreView = ref(null)
 const cardEditorRef = ref(null)
+const cardChatRef = ref(null)
+const threadListRef = ref(null)
 
 function loadCards() {
   savedCards.value = getMarkdownCards()
@@ -230,7 +244,7 @@ watch(() => router.route.value, async (route) => {
   
   if (route.name === 'home') {
     currentCard.value = null
-    showChat.value = false
+    chat.close()
   } else if (route.name === 'card') {
     // Load existing card by ID
     const card = getMarkdownCard(route.id)
@@ -303,8 +317,24 @@ function navigateExplore() {
   router.goToExplore(1)
 }
 
-function handleExploreSelect(simplified) {
-  router.goToNewCard(simplified)
+async function handleExploreSelect(simplified) {
+  // Check for existing card first
+  const existing = getMarkdownCardByCharacter(simplified)
+  if (existing) {
+    router.goToCard(existing.id)
+    // On larger screens, also open chat with card context
+    if (window.innerWidth > 768) {
+      chat.openForCard({
+        cardId: existing.id,
+        cardContent: existing.content,
+        cardCharacter: existing.character
+      })
+    }
+    return
+  }
+  
+  // New word: open ephemeral chat with dictionary context
+  await chat.openForWord(simplified)
 }
 
 function handleExploreLevel(level) {
@@ -332,11 +362,20 @@ async function handleDictSelect(entry) {
   const existing = getMarkdownCardByCharacter(entry.simplified)
   if (existing) {
     router.goToCard(existing.id)
+    // On larger screens, also open chat with card context
+    if (window.innerWidth > 768) {
+      chat.openForCard({
+        cardId: existing.id,
+        cardContent: existing.content,
+        cardCharacter: existing.character
+      })
+    }
     return
   }
   
-  // Navigate to new card with query
-  router.goToNewCard(entry.simplified)
+  // New word: open ephemeral chat with dictionary context
+  const lookup = await lookupChinese(entry.simplified)
+  await chat.openForWord(entry.simplified, entry, lookup)
 }
 
 function handleFreeform(query) {
@@ -345,14 +384,8 @@ function handleFreeform(query) {
     return
   }
   
-  // Open chat with the query - let the AI tutor handle it
-  chatContext.value = { 
-    cardId: 'freeform', 
-    cardContent: '', 
-    cardCharacter: '',
-    initialQuery: query
-  }
-  showChat.value = true
+  // Open chat with the query
+  chat.openWithQuery(query)
 }
 
 // ============ Card Actions ============
@@ -371,6 +404,7 @@ function handleSaved(saved) {
 function deleteCard(cardId) {
   if (!confirm('Delete this card?')) return
   deleteMarkdownCard(cardId)
+  deleteAllCardImages(cardId) // Clean up associated images
   loadCards()
   if (currentCard.value?.id === cardId) {
     router.goHome()
@@ -385,31 +419,50 @@ async function handleLLMConfigChanged() {
 
 // ============ Chat Handlers ============
 
-function handleOpenChat({ cardId, cardContent, cardCharacter }) {
-  chatContext.value = { cardId, cardContent, cardCharacter, initialQuery: '' }
-  showChat.value = true
+function getCurrentViewName() {
+  if (router.isHome.value) return 'home'
+  if (router.isCard.value) return `card:${currentCard.value?.id || 'new'}`
+  if (router.isReview.value) return 'srs'
+  if (router.isExplore.value) return `explore:${router.exploreLevel.value || 1}`
+  return 'home'
 }
 
-function handleChatEditCard({ section, content, fullContent }) {
+function handleOpenChat({ cardId, cardContent, cardCharacter }) {
+  chat.openForCard({ cardId, cardContent, cardCharacter })
+}
+
+function handleChatEditCard({ cardId, section, content, fullContent }) {
+  // If cardId specified and different from current, we'd need to load that card
+  // For now, apply to current card in editor
   if (cardEditorRef.value) {
     cardEditorRef.value.applyCardEdit({ section, content, fullContent })
     // Update chat context with new content
-    chatContext.value.cardContent = cardEditorRef.value.getContent()
+    chat.updateCardContext({
+      cardId: chat.context.value.cardId,
+      cardContent: cardEditorRef.value.getContent(),
+      cardCharacter: chat.context.value.cardCharacter
+    })
   }
 }
 
 function handleChatCreateCard({ word, content }) {
-  showChat.value = false
-  
   if (content) {
     // Content was generated in chat - save the card immediately
     const newCard = createMarkdownCard(content)
     const saved = saveMarkdownCard(newCard)
     loadCards() // refresh card list
     currentCard.value = saved
+    // Keep chat open, navigate to new card
     router.goToCard(saved.id)
+    // Update chat context with new card
+    chat.updateCardContext({
+      cardId: saved.id,
+      cardContent: saved.content,
+      cardCharacter: saved.character
+    })
   } else {
     // No content - navigate to new card (old flow)
+    chat.close()
     router.goToNewCard(word)
   }
 }
@@ -433,14 +486,23 @@ function openSettingsFromChat() {
   showLLMConfig.value = true
 }
 
+function openGlobalChat() {
+  chat.openGlobal()
+}
+
+function handleChatClose() {
+  chat.close()
+  threadListRef.value?.refresh()
+}
+
 // ============ Keyboard Navigation ============
 
 function handleKeyDown(e) {
   if (e.key === 'Escape') {
     if (showLLMConfig.value) {
       showLLMConfig.value = false
-    } else if (showChat.value) {
-      showChat.value = false
+    } else if (chat.isOpen.value) {
+      chat.close()
     } else if (showMenu.value) {
       showMenu.value = false
     } else if (router.isCard.value) {
@@ -631,8 +693,18 @@ onUnmounted(() => {
 }
 
 .menu-spacer {
-  flex: 1;
-  min-height: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* Thread List in Side Panel */
+.menu-section-header {
+  padding: 12px 16px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
 }
 
 /* Main Content */

@@ -58,7 +58,7 @@
 
         <!-- Back (revealed on click) -->
         <div v-if="isRevealed" class="card-back">
-          <div class="card-content markdown-content" v-html="renderedBack"></div>
+          <div ref="cardBackRef" class="card-content markdown-content" v-html="renderedBack" @click="handleBackClick"></div>
         </div>
 
         <!-- Tap to reveal -->
@@ -96,15 +96,20 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { getDueCards } from '../services/markdownStorage.js'
 import { Quality, reviewCard, previewIntervals, formatInterval } from '../services/srs.js'
 import { renderMarkdown, parseCardSections, extractFrontInfo } from '../services/cardMarkdown.js'
 import { useSpeech } from '../composables/useSpeech.js'
+import { useCardImages } from '../composables/useCardImages.js'
 
 const emit = defineEmits(['done'])
 
 const { speak, isSpeaking, isSupported: speechSupported } = useSpeech()
+const { resolveImageUrl } = useCardImages()
+
+// Ref to card back content for image resolution
+const cardBackRef = ref(null)
 
 // Review queue
 const reviewQueue = ref([])
@@ -153,6 +158,55 @@ const intervals = computed(() => {
 function reveal() {
   isRevealed.value = true
 }
+
+/**
+ * Handle clicks on inline speak icons in card back
+ */
+function handleBackClick(event) {
+  const target = event.target
+  if (target.classList.contains('inline-speak')) {
+    const text = decodeURIComponent(target.dataset.speak || '')
+    if (text) {
+      speak(text)
+    }
+  }
+}
+
+/**
+ * Resolve card:// images in the card back
+ */
+async function resolveCardImages() {
+  if (!cardBackRef.value) return
+  
+  const images = cardBackRef.value.querySelectorAll('img[data-card-src]')
+  for (const img of images) {
+    const cardSrc = img.getAttribute('data-card-src')
+    if (!cardSrc) continue
+    
+    img.classList.add('card-image-loading')
+    img.classList.remove('card-image-pending')
+    try {
+      const objectUrl = await resolveImageUrl(cardSrc)
+      if (objectUrl) {
+        img.src = objectUrl
+        img.removeAttribute('data-card-src')
+        img.classList.remove('card-image-loading')
+      } else {
+        img.classList.add('card-image-error')
+      }
+    } catch {
+      img.classList.add('card-image-error')
+    }
+  }
+}
+
+// Resolve images when card is revealed
+watch(isRevealed, async (revealed) => {
+  if (revealed) {
+    await nextTick()
+    resolveCardImages()
+  }
+})
 
 function grade(quality) {
   if (!currentCard.value) return
@@ -381,6 +435,46 @@ onMounted(() => {
 .stat-label {
   font-size: 0.85rem;
   color: var(--text-muted);
+}
+
+/* Card images */
+.markdown-content :deep(img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  margin: 8px 0;
+}
+
+.markdown-content :deep(img.card-image-pending),
+.markdown-content :deep(img.card-image-loading) {
+  opacity: 0.5;
+  min-height: 100px;
+  background: rgba(128, 128, 128, 0.1);
+}
+
+.markdown-content :deep(img.card-image-error) {
+  opacity: 0.3;
+  min-height: 50px;
+  background: rgba(220, 53, 69, 0.1);
+  border: 1px dashed rgba(220, 53, 69, 0.3);
+}
+
+/* Inline speak icons after Chinese text */
+.markdown-content :deep(.inline-speak) {
+  display: inline;
+  margin-left: 2px;
+  font-size: 0.7em;
+  color: var(--text-muted);
+  opacity: 0.4;
+  cursor: pointer;
+  transition: opacity 0.15s ease, color 0.15s ease;
+  user-select: none;
+  vertical-align: middle;
+}
+
+.markdown-content :deep(.inline-speak:hover) {
+  opacity: 1;
+  color: var(--secondary);
 }
 
 </style>

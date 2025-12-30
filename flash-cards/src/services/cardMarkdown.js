@@ -4,12 +4,38 @@
 
 import { marked } from 'marked'
 
+// Custom renderer for card:// image URLs
+// Outputs a placeholder src with data-card-src for async resolution
+const cardImageRenderer = {
+  image(token) {
+    const { href, title, text } = token
+    if (href && href.startsWith('card://')) {
+      // Use transparent 1x1 gif as placeholder, store real URL in data attribute
+      const placeholder = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+      const titleAttr = title ? ` title="${escapeAttr(title)}"` : ''
+      return `<img src="${placeholder}" data-card-src="${escapeAttr(href)}" alt="${escapeAttr(text)}"${titleAttr} class="card-image-pending">`
+    }
+    // Default rendering for normal images
+    const titleAttr = title ? ` title="${escapeAttr(title)}"` : ''
+    return `<img src="${escapeAttr(href)}" alt="${escapeAttr(text)}"${titleAttr}>`
+  }
+}
+
 // Configure marked for streaming-friendly output (marked v5+ API)
 marked.use({
   gfm: true,
   breaks: true,
-  async: false // Ensure synchronous parsing
+  async: false, // Ensure synchronous parsing
+  renderer: cardImageRenderer
 })
+
+/**
+ * Escape HTML attribute value
+ */
+function escapeAttr(str) {
+  if (!str) return ''
+  return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
 
 /**
  * Parse card markdown into structured sections
@@ -105,16 +131,48 @@ export function extractFrontInfo(frontSection) {
 }
 
 /**
+ * Regex to match Chinese text sequences (CJK Unified Ideographs + common punctuation)
+ * Captures meaningful phrases, not single characters
+ */
+const CHINESE_PHRASE_REGEX = /([\u4e00-\u9fff][\u4e00-\u9fff\u3000-\u303f\uff00-\uffef，。！？、；：""''（）]*)/g
+
+/**
+ * Inject small speak icons after Chinese text sequences
+ * @param {string} html - Rendered HTML
+ * @returns {string} HTML with speak icons
+ */
+function injectSpeakIcons(html) {
+  // Don't inject inside HTML tags
+  return html.replace(/>([^<]+)</g, (match, textContent) => {
+    const withIcons = textContent.replace(CHINESE_PHRASE_REGEX, (phrase) => {
+      // Only add icon if phrase has 2+ characters (skip single chars in context)
+      if (phrase.length < 2) return phrase
+      const encoded = encodeURIComponent(phrase)
+      return `${phrase}<span class="inline-speak" data-speak="${encoded}" title="Listen">▸</span>`
+    })
+    return `>${withIcons}<`
+  })
+}
+
+/**
  * Render markdown to HTML with streaming support
  * Handles partial markdown gracefully
  * @param {string} markdown - Raw markdown (possibly incomplete)
+ * @param {Object} options - Render options
+ * @param {boolean} options.speakIcons - Inject speak icons after Chinese text (default: true)
  * @returns {string} Rendered HTML
  */
-export function renderMarkdown(markdown) {
+export function renderMarkdown(markdown, options = {}) {
   if (!markdown) return ''
   
+  const { speakIcons = true } = options
+  
   try {
-    return marked.parse(markdown)
+    let html = marked.parse(markdown)
+    if (speakIcons) {
+      html = injectSpeakIcons(html)
+    }
+    return html
   } catch {
     // Fallback for incomplete markdown during streaming
     return escapeHtml(markdown).replace(/\n/g, '<br>')
@@ -222,7 +280,7 @@ export const CARD_FORMAT_GUIDE = `
 Word (pīnyīn with tone marks)
 
 ## Hint
-*3-6 words hinting at meaning*
+*Retrieval cue, NOT a definition. 3-6 words max.*
 
 # Back
 
@@ -262,7 +320,8 @@ Fill-in-the-blank sentence testing the pattern:
 感冒了要___休息。(Gǎnmào le yào ___ xiūxi.)
 
 ## Hint
-*Clue about what fills the blank*
+*Clue about the grammar function, not the answer itself.*
+*e.g., "degree modifier" or "completed action marker"*
 
 # Back
 
@@ -295,7 +354,8 @@ Register or formality notes. Include only if relevant.
 Phrase (pīnyīn)
 
 ## Hint
-*When or how to use it*
+*Social situation or emotional tone — not the translation.*
+*e.g., "casual greeting" or "expressing frustration"*
 
 # Back
 
@@ -376,87 +436,4 @@ export function extractCharacterForIndex(markdown) {
   return character
 }
 
-/**
- * Build system prompt for card chat
- * @param {string} character - The card's character/word
- * @param {string} cardContent - Current card markdown content
- * @returns {string} System prompt for chat
- */
-export function buildChatSystemPrompt(character, cardContent) {
-  const hasCard = cardContent && cardContent.trim().length > 0
-  
-  return `You are a Chinese language tutor helping a student learn Chinese.${character ? ` Currently discussing: "${character}"` : ''}
 
-${hasCard ? `CURRENT FLASHCARD:
----
-${cardContent}
----` : 'No card loaded. You can create new cards when asked.'}
-
-YOUR ROLE:
-- Answer questions about grammar, usage, etymology, and cultural context
-- Always respond in English (unless the user writes in Chinese)
-- When explaining grammar patterns, provide clear examples with pinyin and translations
-- Help create high-quality flashcards following the format guide below
-
-TOOLS - Use when user asks to create or modify cards:
-
-1. Edit a section:
-<tool>editCardSection</tool>
-<args>{"section": "examples", "content": "- 新例句。(Xīn lìjù.) — New example."}</args>
-Valid sections: front, hint, image, meaning, examples, related, components, answer, pattern, usage, contrast
-
-2. Replace entire card:
-<tool>replaceCard</tool>
-<args>{"content": "# Front\\n..."}</args>
-
-3. Create NEW card:
-<tool>createCard</tool>
-<args>{"word": "...", "content": "# Front\\n..."}</args>
-
-${CARD_FORMAT_GUIDE}`
-}
-
-/**
- * Parse tool call from assistant response
- * @param {string} content - Assistant message content
- * @returns {Object|null} Parsed tool call or null
- */
-export function parseToolCall(content) {
-  if (!content) return null
-
-  // Match <tool>name</tool> and <args>{...}</args> pattern
-  const toolMatch = content.match(/<tool>(\w+)<\/tool>/)
-  const argsMatch = content.match(/<args>([\s\S]*?)<\/args>/)
-
-  if (!toolMatch) return null
-
-  const name = toolMatch[1]
-  let args = {}
-
-  if (argsMatch) {
-    try {
-      args = JSON.parse(argsMatch[1].trim())
-    } catch {
-      // Try to extract key-value pairs if JSON fails
-      args = { raw: argsMatch[1].trim() }
-    }
-  }
-
-  // Generate preview for certain tools
-  let preview = null
-  if (name === 'editCardSection' && args.content) {
-    preview = args.content.slice(0, 200) + (args.content.length > 200 ? '...' : '')
-  } else if (name === 'replaceCard' && args.content) {
-    preview = args.content.slice(0, 300) + (args.content.length > 300 ? '...' : '')
-  } else if (name === 'createCard') {
-    // Show word and preview of content if available
-    const word = args.word || 'new card'
-    if (args.content) {
-      preview = `Word: ${word}\n\n${args.content.slice(0, 250)}${args.content.length > 250 ? '...' : ''}`
-    } else {
-      preview = `Word: ${word}`
-    }
-  }
-
-  return { name, args, preview }
-}

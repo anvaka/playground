@@ -44,64 +44,52 @@
     <div v-if="threads.length > 1" class="thread-selector">
       <select v-model="selectedThreadId" @change="loadThread(selectedThreadId)">
         <option v-for="thread in threads" :key="thread.id" :value="thread.id">
-          {{ formatThreadDate(thread.updated) }}
+          {{ thread.title || formatThreadDate(thread.updated) }}
         </option>
       </select>
     </div>
 
     <!-- Messages -->
-    <div class="chat-messages" ref="messagesContainer">
+    <div class="chat-messages" ref="messagesContainer" @click="handleMessagesClick">
       <div v-if="messages.length === 0 && !isStreaming" class="chat-empty">
-        <p>Ask questions about this card, request changes, or discuss grammar.</p>
+        <p>Ask questions, explore your cards, or create new ones.</p>
       </div>
       
       <div 
         v-for="msg in messages" 
         :key="msg.id" 
         class="chat-message"
-        :class="msg.role"
+        :class="[msg.role, { 'command-result': msg.isCommandResult }]"
       >
-        <div class="message-role">{{ msg.role === 'user' ? 'You' : 'Assistant' }}</div>
+        <div class="message-role">{{ getRoleLabel(msg) }}</div>
         <div class="message-content">
-          <div v-if="msg.role === 'assistant'" v-html="renderMarkdown(getDisplayContent(msg.content))"></div>
+          <div v-if="msg.role === 'assistant'" v-html="renderMarkdown(getMessageDisplayContent(msg))"></div>
+          <div v-else-if="msg.isCommandResult" class="command-output"><pre>{{ msg.content }}</pre></div>
           <div v-else>{{ msg.content }}</div>
         </div>
         
-        <!-- Tool call UI -->
-        <div v-if="msg.toolCall && !msg.toolApplied" class="tool-call">
-          <div class="tool-call-header">
-            <span class="tool-name">{{ getToolDescription(msg.toolCall) }}</span>
-          </div>
-          <div v-if="msg.toolCall.preview" class="tool-preview">
-            <pre>{{ msg.toolCall.preview }}</pre>
-          </div>
-          <div class="tool-actions">
-            <button 
-              class="btn btn-small btn-primary" 
-              @click="applyTool(msg)"
-              :disabled="msg.applying"
-            >
-              {{ msg.applying ? 'Applying...' : 'Apply' }}
-            </button>
-            <button 
-              class="btn btn-small" 
-              @click="dismissTool(msg)"
-              :disabled="msg.applying"
-            >
-              Dismiss
-            </button>
-          </div>
+        <!-- Generated card action -->
+        <div v-if="msg.generatedCard && !msg.applied" class="action-prompt">
+          <button class="btn btn-small btn-primary" @click="applyGeneratedCard(msg)">
+            Save Card
+          </button>
         </div>
-        <div v-else-if="msg.toolApplied" class="tool-applied">
-          Applied
+        
+        <!-- Pending edit action -->
+        <div v-if="msg.pendingEdit && !msg.applied" class="action-prompt">
+          <button class="btn btn-small btn-primary" @click="applyPendingEdit(msg)">
+            Apply Edit
+          </button>
         </div>
+        
+        <div v-if="msg.applied" class="action-applied">✓ Applied</div>
       </div>
 
       <!-- Streaming message -->
       <div v-if="isStreaming" class="chat-message assistant">
         <div class="message-role">Assistant</div>
         <div class="message-content">
-          <div v-if="streamingContent" v-html="renderMarkdown(getDisplayContent(streamingContent))"></div>
+          <div v-if="streamingContent" v-html="renderMarkdown(streamingContent)"></div>
           <span v-else class="typing-indicator">
             <span></span><span></span><span></span>
           </span>
@@ -132,41 +120,47 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, nextTick } from 'vue'
-import { marked } from 'marked'
+import { ref, watch, onMounted, nextTick, computed } from 'vue'
 import {
-  getThreadsForCard,
+  getAllThreads,
   getThread,
   createThread,
   addMessage,
-  updateMessage
+  updateMessage,
+  updateThreadTitle,
+  getOrCreateCurrentThread
 } from '../services/chatStorage.js'
-import { buildChatSystemPrompt, parseToolCall } from '../services/cardMarkdown.js'
+import { 
+  executeCommand, 
+  parseCommands, 
+  getDisplayText,
+  buildShellSystemPrompt,
+  setAppContext
+} from '../services/vfs.js'
+import { buildMarkdownPrompt, renderMarkdown } from '../services/cardMarkdown.js'
+import { formatForLLM } from '../services/dictionary.js'
+import { useSpeech } from '../composables/useSpeech.js'
+import { useLLM } from '@anvaka/vue-llm'
+import { useRouter } from '../composables/useRouter.js'
+import { useChatContext } from '../composables/useChatContext.js'
 
 const props = defineProps({
-  cardId: {
+  currentView: {
     type: String,
-    required: true
-  },
-  cardContent: {
-    type: String,
-    default: ''
-  },
-  cardCharacter: {
-    type: String,
-    default: ''
-  },
-  initialQuery: {
-    type: String,
-    default: ''
-  },
-  getClient: {
-    type: Function,
-    required: true
+    default: 'home'
   }
 })
 
+const { client } = useLLM()
+const router = useRouter()
+const chat = useChatContext()
+
 const emit = defineEmits(['close', 'edit-card', 'create-card', 'open-settings'])
+
+const { speak } = useSpeech()
+
+// Computed for template access
+const cardCharacter = computed(() => chat.context.value.cardCharacter)
 
 // State
 const threads = ref([])
@@ -178,20 +172,59 @@ const isStreaming = ref(false)
 const streamingContent = ref('')
 const messagesContainer = ref(null)
 const inputRef = ref(null)
+const pendingAction = ref(null) // Action waiting for user confirmation
 
-// Load threads on mount and when cardId changes
-watch(() => props.cardId, async (newId) => {
-  if (newId) {
-    await loadThreads()
-  }
+// Update app context when chat context changes
+watch([() => chat.context.value.cardId, () => chat.context.value.cardContent, () => props.currentView], () => {
+  setAppContext({
+    currentView: props.currentView,
+    currentCardId: chat.context.value.cardId,
+    currentCardContent: chat.context.value.cardContent
+  })
 }, { immediate: true })
 
+// Load threads on mount
+onMounted(async () => {
+  await loadThreads()
+  inputRef.value?.focus()
+  
+  // If a specific thread was requested, load it
+  if (chat.context.value.threadId) {
+    await loadThread(chat.context.value.threadId)
+    return
+  }
+  
+  // If there's an initial query, start a fresh thread and send it
+  if (chat.context.value.initialQuery) {
+    await startNewThread()
+    inputText.value = chat.context.value.initialQuery
+    await nextTick()
+    await sendMessage()
+    return
+  }
+  
+  // If there's ephemeral context (dictionary lookup), show it without persisting
+  if (chat.context.value.ephemeralContext) {
+    await startNewThread()
+    // Add ephemeral message (not persisted)
+    messages.value.push({
+      id: 'ephemeral-context',
+      role: 'assistant',
+      content: chat.context.value.ephemeralContext.content,
+      timestamp: new Date().toISOString(),
+      isEphemeral: true
+    })
+    await scrollToBottom()
+  }
+})
+
 async function loadThreads() {
-  threads.value = await getThreadsForCard(props.cardId)
+  threads.value = await getAllThreads()
   
   if (threads.value.length > 0) {
     await loadThread(threads.value[0].id)
   } else {
+    // No threads yet - will create one on first message
     currentThread.value = null
     selectedThreadId.value = null
     messages.value = []
@@ -217,6 +250,26 @@ async function startNewThread() {
   inputRef.value?.focus()
 }
 
+function handleMessagesClick(event) {
+  const target = event.target
+  
+  // Handle inline speak icons
+  if (target.classList.contains('inline-speak')) {
+    const text = decodeURIComponent(target.dataset.speak || '')
+    if (text) {
+      speak(text)
+    }
+    return
+  }
+  
+  // Handle create-card links
+  if (target.tagName === 'A' && target.dataset.action === 'create-card') {
+    event.preventDefault()
+    inputText.value = 'Create card'
+    sendMessage()
+  }
+}
+
 async function sendMessage() {
   const text = inputText.value.trim()
   if (!text || isStreaming.value) return
@@ -224,11 +277,25 @@ async function sendMessage() {
   inputText.value = ''
   autoResize()
 
+  // Check if we have ephemeral context that needs to be persisted
+  const hasEphemeralContext = messages.value.some(m => m.isEphemeral)
+  
   // Create thread if needed
-  if (!currentThread.value) {
-    currentThread.value = await createThread(props.cardId)
+  const isNewThread = !currentThread.value
+  if (isNewThread) {
+    currentThread.value = await createThread()
     selectedThreadId.value = currentThread.value.id
     threads.value.unshift(currentThread.value)
+    
+    // If we had ephemeral context, persist it as assistant message
+    if (hasEphemeralContext && chat.context.value.ephemeralContext) {
+      await addMessage(currentThread.value.id, 'assistant', chat.context.value.ephemeralContext.content)
+      // Remove ephemeral flag from the displayed message
+      const ephemeralMsg = messages.value.find(m => m.isEphemeral)
+      if (ephemeralMsg) {
+        ephemeralMsg.isEphemeral = false
+      }
+    }
   }
 
   // Add user message
@@ -236,21 +303,39 @@ async function sendMessage() {
   const userMsg = userMsgData.messages[userMsgData.messages.length - 1]
   messages.value.push(userMsg)
 
+  // Auto-title new threads from first user message
+  if (isNewThread) {
+    // Use word from ephemeral context if available, otherwise first message
+    const title = chat.context.value.ephemeralContext?.word 
+      ? `${chat.context.value.ephemeralContext.word} - ${generateThreadTitle(text)}`
+      : generateThreadTitle(text)
+    await updateThreadTitle(currentThread.value.id, title)
+    currentThread.value.title = title
+  }
+
   await scrollToBottom()
-  await generateResponse(text)
+  await generateResponse()
 }
 
-async function generateResponse(userMessage) {
+// Max continuation depth to prevent runaway loops
+const MAX_CONTINUATION_DEPTH = 5
+
+async function generateResponse(systemOverride = null, depth = 0) {
+  if (depth >= MAX_CONTINUATION_DEPTH) {
+    console.warn('Max continuation depth reached')
+    return
+  }
+  
   isStreaming.value = true
   streamingContent.value = ''
 
   try {
-    const client = props.getClient()
-    const systemPrompt = buildChatSystemPrompt(props.cardCharacter, props.cardContent)
+    const systemPrompt = systemOverride || buildShellSystemPrompt()
 
     // Build message history for context (last 10 messages)
+    // The current user message is already in messages.value (added by sendMessage)
     const historyMessages = messages.value.slice(-10).map(m => ({
-      role: m.role === 'tool' ? 'assistant' : m.role,
+      role: m.role,
       content: m.content
     }))
 
@@ -259,25 +344,33 @@ async function generateResponse(userMessage) {
     await client.stream({
       messages: [
         { role: 'system', content: systemPrompt },
-        ...historyMessages,
-        { role: 'user', content: userMessage }
+        ...historyMessages
       ]
     }, (chunk) => {
       fullContent = chunk.fullContent
       streamingContent.value = fullContent
     })
 
-    // Check for tool calls
-    const toolCall = parseToolCall(fullContent)
-    const metadata = toolCall ? { toolCall } : {}
-
-    // Save to storage
-    const updatedThread = await addMessage(currentThread.value.id, 'assistant', fullContent, metadata)
+    // Parse any commands from the response
+    const commands = parseCommands(fullContent)
+    
+    // Save assistant message
+    const updatedThread = await addMessage(currentThread.value.id, 'assistant', fullContent)
     const assistantMsg = updatedThread.messages[updatedThread.messages.length - 1]
     messages.value.push(assistantMsg)
 
+    // Execute commands if any, then let LLM continue reasoning
+    if (commands.length > 0) {
+      const shouldContinue = await executeCommandsSequentially(commands)
+      if (shouldContinue) {
+        // LLM issued commands - let it see results and continue
+        await generateResponse(null, depth + 1)
+        return // recursive call handles thread refresh
+      }
+    }
+
     // Refresh threads list
-    threads.value = await getThreadsForCard(props.cardId)
+    threads.value = await getAllThreads()
 
   } catch (err) {
     const errorMsg = {
@@ -294,118 +387,265 @@ async function generateResponse(userMessage) {
   }
 }
 
-async function applyTool(msg) {
-  if (msg.applying || msg.toolApplied) return
+/**
+ * Execute commands from LLM response
+ * Stops execution when hitting a command that requires user interaction
+ * @returns {boolean} Whether LLM should continue (had commands but no blocking action)
+ */
+async function executeCommandsSequentially(commands) {
+  let hadCommands = commands.length > 0
   
-  msg.applying = true
-  const { toolCall } = msg
-  
-  try {
-    if (toolCall.name === 'editCardSection' || toolCall.name === 'replaceCard') {
-      emit('edit-card', {
-        section: toolCall.args?.section,
-        content: toolCall.args?.content || toolCall.args?.newContent,
-        fullContent: toolCall.name === 'replaceCard' ? toolCall.args?.content : null
-      })
-    } else if (toolCall.name === 'createCard') {
-      // Pass both word and content (if generated)
-      emit('create-card', { 
-        word: toolCall.args?.word,
-        content: toolCall.args?.content 
-      })
-    }
-
-    msg.toolApplied = true
-    msg.applying = false
+  for (const cmd of commands) {
+    const result = await executeCommand(cmd)
     
-    // Persist the applied state
-    if (currentThread.value) {
-      await updateMessage(currentThread.value.id, msg.id, { toolApplied: true })
+    // Add command result as a system message for context
+    const resultMsg = {
+      id: Date.now().toString(),
+      role: 'system',
+      content: `$ ${cmd}\n${result.output}`,
+      timestamp: new Date().toISOString(),
+      isCommandResult: true
     }
-  } catch (err) {
-    msg.applying = false
-    console.error('Failed to apply tool:', err)
+    
+    // Save to thread
+    if (currentThread.value) {
+      await addMessage(currentThread.value.id, 'system', resultMsg.content, { isCommandResult: true })
+    }
+    messages.value.push(resultMsg)
+    await scrollToBottom()
+    
+    // Handle actions that need UI interaction
+    if (result.action) {
+      const shouldStop = await handleAction(result.action)
+      // Stop executing more commands if this action needs user interaction
+      if (shouldStop) {
+        return false // Don't continue LLM - waiting for user
+      }
+    }
   }
+  
+  return hadCommands // Continue LLM if we ran commands
 }
 
-function dismissTool(msg) {
-  msg.toolCall = null
-}
-
-function getToolDescription(toolCall) {
-  switch (toolCall.name) {
-    case 'editCardSection':
-      return `Edit ${toolCall.args?.section || 'section'}`
-    case 'replaceCard':
-      return 'Replace card content'
-    case 'createCard':
-      const hasContent = !!toolCall.args?.content
-      return hasContent 
-        ? `Create card: ${toolCall.args?.word}` 
-        : `Create card for "${toolCall.args?.word}" (no content)`
-    case 'lookupDictionary':
-      return `Look up "${toolCall.args?.word}"`
-    default:
-      return toolCall.name
-  }
-}
-
-function renderMarkdown(text) {
-  if (!text) return ''
-  try {
-    return marked.parse(text)
-  } catch {
-    return text
+/**
+ * Handle navigation targets from LLM commands
+ */
+function handleNavigate(target) {
+  // Parse target: home, srs, explore, explore:N, card:<id>
+  if (target === 'home') {
+    router.goHome()
+  } else if (target === 'srs') {
+    router.goToReview()
+  } else if (target.startsWith('explore')) {
+    const level = parseInt(target.split(':')[1]) || 1
+    router.goToExplore(level)
+  } else if (target.startsWith('card:')) {
+    const cardId = target.slice(5)
+    router.goToCard(cardId)
   }
 }
 
 /**
- * Strip tool call markup from content for display
- * Shows card content preview when a card is being generated
+ * Handle actions from commands
+ * @returns {boolean} Whether to stop executing more commands
  */
-function getDisplayContent(content) {
-  if (!content) return ''
+async function handleAction(action) {
+  switch (action.type) {
+    case 'navigate':
+      handleNavigate(action.target)
+      return true  // Navigation is terminal - don't continue LLM
+      
+    case 'create-card':
+      // Two-phase: ask LLM to generate card content with format guide
+      pendingAction.value = action
+      await generateCardContent(action.intent)
+      return true  // Stop - wait for user to save/dismiss card
+      
+    case 'direct-edit':
+      // LLM provided content directly - show confirmation
+      const editMsg = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: action.content,
+        timestamp: new Date().toISOString(),
+        pendingEdit: { cardId: action.cardId, section: action.section, content: action.content }
+      }
+      if (currentThread.value) {
+        await addMessage(currentThread.value.id, 'assistant', action.content, { 
+          pendingEdit: editMsg.pendingEdit 
+        })
+      }
+      messages.value.push(editMsg)
+      await scrollToBottom()
+      return true  // Stop - wait for user to apply/dismiss
+      
+    case 'edit-card':
+      // No content provided - ask LLM to generate
+      pendingAction.value = action
+      await generateEditContent(action.cardId, action.section, action.userRequest)
+      return true  // Stop - wait for user to apply/dismiss edit
+  }
+  return false
+}
+
+/**
+ * Generate card content with format guide
+ * @param {string} intent - Full user intent, e.g., "grammar card for 在" or just "在"
+ */
+async function generateCardContent(intent) {
+  const { lookupChinese } = await import('../services/dictionary.js')
   
-  // Check if there's a createCard or replaceCard with content being streamed
-  // Look for "content": " followed by the card markdown
-  const contentMatch = content.match(/"content"\s*:\s*"([\s\S]*?)(?:"(?:\s*\})|$)/)
-  if (contentMatch) {
-    // Extract text before the tool call
-    const beforeTool = content.split('<tool>')[0].trim()
+  // Extract Chinese characters from intent for dictionary lookup
+  const chineseMatch = intent.match(/[\u4e00-\u9fff]+/)
+  const word = chineseMatch ? chineseMatch[0] : intent
+  
+  const dictResult = await lookupChinese(word)
+  const dictContext = formatForLLM(dictResult)
+  
+  // Use intent as the input - it contains both the word and the context (e.g., "grammar card")
+  const prompt = buildMarkdownPrompt(intent, dictContext)
+
+  isStreaming.value = true
+  streamingContent.value = ''
+  
+  try {
+    let fullContent = ''
     
-    // Unescape the JSON string content
-    let cardContent = contentMatch[1]
-      .replace(/\\n/g, '\n')
-      .replace(/\\"/g, '"')
-      .replace(/\\\\/g, '\\')
+    await client.stream({
+      messages: [
+        { role: 'system', content: 'You are a helpful Chinese language learning assistant. Generate flashcard content in markdown format exactly as requested. Do not wrap in code blocks.' },
+        { role: 'user', content: prompt }
+      ]
+    }, (chunk) => {
+      fullContent = chunk.fullContent
+      streamingContent.value = fullContent
+    })
     
-    // Build display: any intro text + card preview
-    const parts = []
-    if (beforeTool) {
-      parts.push(beforeTool)
+    // Save the generated content
+    const metadata = { 
+      generatedCard: { word, content: fullContent }
     }
-    parts.push('\n\n---\n**Card preview:**\n\n' + cardContent)
-    return parts.join('')
+    const updatedThread = await addMessage(currentThread.value.id, 'assistant', fullContent, metadata)
+    const assistantMsg = updatedThread.messages[updatedThread.messages.length - 1]
+    messages.value.push(assistantMsg)
+    
+  } finally {
+    isStreaming.value = false
+    streamingContent.value = ''
+    pendingAction.value = null
+    await scrollToBottom()
+  }
+}
+
+/**
+ * Generate edit content for a section
+ */
+async function generateEditContent(cardId, section, userRequest) {
+  const { getMarkdownCard } = await import('../services/markdownStorage.js')
+  const { parseCardSections } = await import('../services/cardMarkdown.js')
+  const card = getMarkdownCard(cardId)
+  
+  if (!card) {
+    messages.value.push({
+      id: Date.now().toString(),
+      role: 'system',
+      content: `Card not found: ${cardId}`,
+      timestamp: new Date().toISOString()
+    })
+    return
   }
   
-  // No card content being streamed - use simple stripping
-  // Remove complete tool calls
-  let result = content
-    .replace(/<tool>[\s\S]*?<\/tool>/g, '')
-    .replace(/<args>[\s\S]*?<\/args>/g, '')
+  // Extract just the section content
+  const sections = parseCardSections(card.content)
+  const currentSectionContent = sections[section] || '(empty)'
   
-  // Handle incomplete tool calls during streaming
-  const toolStart = result.indexOf('<tool>')
-  if (toolStart !== -1) {
-    result = result.substring(0, toolStart)
+  const prompt = `Edit the "${section}" section based on this request: "${userRequest}"
+
+Current ${section} content:
+${currentSectionContent}
+
+Output ONLY the new content for this section (no header, no explanation). Make minimal changes to fulfill the request.`
+
+  isStreaming.value = true
+  streamingContent.value = ''
+  
+  try {
+    let fullContent = ''
+    
+    await client.stream({
+      messages: [
+        { role: 'system', content: `You are editing a Chinese flashcard section. Output only the updated content for the ${section} section - no section header, no explanation. Make minimal targeted changes.` },
+        { role: 'user', content: prompt }
+      ]
+    }, (chunk) => {
+      fullContent = chunk.fullContent
+      streamingContent.value = fullContent
+    })
+    
+    // Save with edit metadata
+    const metadata = {
+      pendingEdit: { cardId, section, content: fullContent }
+    }
+    const updatedThread = await addMessage(currentThread.value.id, 'assistant', fullContent, metadata)
+    const assistantMsg = updatedThread.messages[updatedThread.messages.length - 1]
+    messages.value.push(assistantMsg)
+    
+  } finally {
+    isStreaming.value = false
+    streamingContent.value = ''
+    pendingAction.value = null
+    await scrollToBottom()
   }
-  
-  const argsStart = result.indexOf('<args>')
-  if (argsStart !== -1) {
-    result = result.substring(0, argsStart)
+}
+
+/**
+ * Apply generated card
+ */
+async function applyGeneratedCard(msg) {
+  const { generatedCard } = msg
+  if (generatedCard) {
+    emit('create-card', { 
+      word: generatedCard.word, 
+      content: generatedCard.content 
+    })
+    msg.applied = true
+    
+    // Persist the applied state
+    if (currentThread.value) {
+      await updateMessage(currentThread.value.id, msg.id, { applied: true })
+    }
   }
-  
-  return result.trim()
+}
+
+/**
+ * Apply pending edit
+ */
+async function applyPendingEdit(msg) {
+  const { pendingEdit } = msg
+  if (pendingEdit) {
+    emit('edit-card', {
+      cardId: pendingEdit.cardId,
+      section: pendingEdit.section,
+      content: pendingEdit.content
+    })
+    msg.applied = true
+    
+    // Persist the applied state
+    if (currentThread.value) {
+      await updateMessage(currentThread.value.id, msg.id, { applied: true })
+    }
+  }
+}
+
+function getRoleLabel(msg) {
+  if (msg.role === 'user') return 'You'
+  if (msg.isCommandResult) return 'System'
+  return 'Assistant'
+}
+
+function getMessageDisplayContent(msg) {
+  // For assistant messages, strip command blocks for display
+  return getDisplayText(msg.content)
 }
 
 function formatThreadDate(dateStr) {
@@ -418,6 +658,29 @@ function formatThreadDate(dateStr) {
   if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
   
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+}
+
+/**
+ * Generate a thread title from the first user message
+ * Truncates to ~40 chars at word boundary
+ */
+function generateThreadTitle(message) {
+  const maxLength = 40
+  const cleaned = message.trim().replace(/\\n+/g, ' ')
+  
+  if (cleaned.length <= maxLength) {
+    return cleaned
+  }
+  
+  // Find last space before maxLength
+  const truncated = cleaned.slice(0, maxLength)
+  const lastSpace = truncated.lastIndexOf(' ')
+  
+  if (lastSpace > 20) {
+    return truncated.slice(0, lastSpace) + '…'
+  }
+  
+  return truncated + '…'
 }
 
 async function scrollToBottom() {
@@ -434,17 +697,6 @@ function autoResize() {
     el.style.height = Math.min(el.scrollHeight, 120) + 'px'
   }
 }
-
-onMounted(async () => {
-  inputRef.value?.focus()
-  
-  // If there's an initial query, send it automatically
-  if (props.initialQuery) {
-    inputText.value = props.initialQuery
-    await nextTick()
-    await sendMessage()
-  }
-})
 </script>
 
 <style scoped>
@@ -615,45 +867,38 @@ onMounted(async () => {
   }
 }
 
-/* Tool call UI */
-.tool-call {
-  margin-top: 12px;
-  padding: 12px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.tool-call-header {
-  margin-bottom: 8px;
-}
-
-.tool-name {
-  font-size: 0.85rem;
-  color: var(--text);
-}
-
-.tool-preview {
-  margin-bottom: 10px;
-}
-
-.tool-preview pre {
-  margin: 0;
-  padding: 8px;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+/* Command result messages */
+.chat-message.command-result {
   font-size: 0.8rem;
-  max-height: 120px;
-  overflow: auto;
+  opacity: 0.8;
 }
 
-.tool-actions {
-  display: flex;
-  gap: 8px;
+.chat-message.command-result .message-role {
+  color: var(--secondary);
 }
 
-.tool-applied {
+.command-output {
+  background: var(--bg);
+  border-radius: var(--radius);
+  padding: 8px;
+  overflow-x: auto;
+}
+
+.command-output pre {
+  margin: 0;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Action prompts */
+.action-prompt {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.action-applied {
   margin-top: 8px;
   font-size: 0.8rem;
   color: var(--text-muted);
@@ -693,5 +938,23 @@ onMounted(async () => {
 
 .send-btn {
   flex-shrink: 0;
+}
+
+/* Inline speak icons after Chinese text */
+.message-content :deep(.inline-speak) {
+  display: inline;
+  margin-left: 2px;
+  font-size: 0.7em;
+  color: var(--text-muted);
+  opacity: 0.4;
+  cursor: pointer;
+  transition: opacity 0.15s ease, color 0.15s ease;
+  user-select: none;
+  vertical-align: middle;
+}
+
+.message-content :deep(.inline-speak:hover) {
+  opacity: 1;
+  color: var(--secondary);
 }
 </style>

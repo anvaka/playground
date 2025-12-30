@@ -21,14 +21,6 @@
         </div>
         <div class="editor-actions">
           <button 
-            v-if="!isGenerating && content" 
-            class="btn btn-small" 
-            @click="handleRegenerate"
-            :disabled="isGenerating"
-          >
-            Regenerate
-          </button>
-          <button 
             v-if="hasChanges" 
             class="btn btn-small btn-primary" 
             @click="handleSave"
@@ -56,16 +48,6 @@
             Preview
           </button>
         </div>
-        <button 
-          class="chat-toggle-btn"
-          @click="openChat"
-          title="Chat about this card"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
-          <span class="chat-label">Chat</span>
-        </button>
       </div>
 
       <!-- Content area -->
@@ -77,13 +59,16 @@
           v-model="content"
           class="editor-textarea"
           placeholder="Card content in markdown..."
+          @paste="handlePaste"
         ></textarea>
 
         <!-- Preview mode -->
         <div 
           v-show="mode === 'preview'" 
+          ref="previewRef"
           class="editor-preview markdown-content"
           v-html="renderedContent"
+          @click="handlePreviewClick"
         ></div>
 
         <!-- Streaming indicator -->
@@ -114,23 +99,24 @@ import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { renderMarkdown, parseCardSections, extractFrontInfo } from '../services/cardMarkdown.js'
 import { useSpeech } from '../composables/useSpeech.js'
 import { useMarkdownCardGeneration } from '../composables/useMarkdownCardGeneration.js'
+import { saveImageBlob, getNextImageIndex, resizeImageBlob } from '../services/imageGen.js'
+import { useCardImages } from '../composables/useCardImages.js'
+import { useLLM } from '@anvaka/vue-llm'
 
 const props = defineProps({
   card: {
     type: Object,
-    required: true
-  },
-  getClient: {
-    type: Function,
     required: true
   }
 })
 
 const emit = defineEmits(['saved', 'create-card', 'open-chat'])
 
-// Initialize composable with provided client getter
+const { client } = useLLM()
+
+// Initialize composable with LLM client getter
 const cardGen = useMarkdownCardGeneration({
-  getClient: props.getClient,
+  getClient: () => client,
   onCardSaved: (saved) => emit('saved', saved)
 })
 
@@ -140,6 +126,10 @@ const mode = ref('preview')
 const content = ref('')
 const originalContent = ref('')
 const textareaRef = ref(null)
+const previewRef = ref(null)
+const isPastingImage = ref(false)
+
+const { resolveImageUrl } = useCardImages()
 
 // Computed bindings to composable state
 const isGenerating = computed(() => cardGen.loading.value)
@@ -184,10 +174,68 @@ const renderedContent = computed(() => {
   return renderMarkdown(content.value)
 })
 
+/**
+ * Resolve card:// images in preview
+ */
+async function resolvePreviewImages() {
+  if (!previewRef.value) return
+  
+  // Look for images with data-card-src attribute
+  const images = previewRef.value.querySelectorAll('img[data-card-src]')
+  for (const img of images) {
+    const cardSrc = img.getAttribute('data-card-src')
+    if (!cardSrc) continue
+    
+    img.classList.add('card-image-loading')
+    img.classList.remove('card-image-pending')
+    try {
+      const objectUrl = await resolveImageUrl(cardSrc)
+      if (objectUrl) {
+        img.src = objectUrl
+        img.removeAttribute('data-card-src')
+        img.classList.remove('card-image-loading')
+      } else {
+        img.classList.add('card-image-error')
+      }
+    } catch {
+      img.classList.add('card-image-error')
+    }
+  }
+}
+
+// Resolve images when content changes while in preview mode
+watch(renderedContent, async () => {
+  if (mode.value === 'preview') {
+    await nextTick()
+    resolvePreviewImages()
+  }
+})
+
+// Also resolve when switching to preview mode
+watch(mode, async (newMode) => {
+  if (newMode === 'preview') {
+    await nextTick()
+    resolvePreviewImages()
+  }
+})
+
 function handleSave() {
   const saved = cardGen.save(content.value)
   if (saved) {
     originalContent.value = content.value
+  }
+}
+
+/**
+ * Handle clicks on inline speak icons in preview
+ */
+function handlePreviewClick(event) {
+  const target = event.target
+  if (target.classList.contains('inline-speak')) {
+    const text = decodeURIComponent(target.dataset.speak || '')
+    if (text) {
+      speak(text)
+    }
   }
 }
 
@@ -196,26 +244,6 @@ async function handleGenerate() {
   if (character) {
     await cardGen.generate(character)
   }
-}
-
-async function handleRegenerate() {
-  await cardGen.regenerate()
-  // Auto-save after regeneration
-  if (cardGen.currentCard.value) {
-    const saved = cardGen.save(cardGen.currentCard.value.content)
-    if (saved) {
-      originalContent.value = saved.content
-    }
-  }
-}
-
-// Chat integration
-function openChat() {
-  emit('open-chat', {
-    cardId: props.card?.id || 'new',
-    cardContent: content.value,
-    cardCharacter: displayCharacter.value
-  })
 }
 
 // Called from parent when chat wants to edit card
@@ -240,63 +268,34 @@ defineExpose({
 })
 
 /**
- * Rebuild markdown from sections object
+ * Rebuild markdown from sections object, preserving standard order
  */
 function rebuildMarkdown(sections) {
   const lines = []
   
-  if (sections.front) {
-    lines.push('# Front')
-    lines.push(sections.front)
-    lines.push('')
-  }
+  // Standard section order - covers all known section types
+  const sectionOrder = [
+    { key: 'front', header: '# Front' },
+    { key: 'hint', header: '## Hint' },
+    { key: 'back', header: '# Back', allowEmpty: true },
+    { key: 'image', header: '## Image' },
+    { key: 'meaning', header: '## Meaning' },
+    { key: 'examples', header: '## Examples' },
+    { key: 'related', header: '## Related' },
+    { key: 'components', header: '## Components' },
+    { key: 'memory', header: '## Memory' },
+    { key: 'answer', header: '## Answer' },
+    { key: 'pattern', header: '## Pattern' },
+    { key: 'usage', header: '## Usage' },
+    { key: 'contrast', header: '## Contrast' },
+  ]
   
-  if (sections.hint) {
-    lines.push('## Hint')
-    lines.push(sections.hint)
-    lines.push('')
-  }
-  
-  if (sections.back !== undefined) {
-    lines.push('# Back')
-    lines.push(sections.back || '')
-    lines.push('')
-  }
-  
-  if (sections.image) {
-    lines.push('## Image')
-    lines.push(sections.image)
-    lines.push('')
-  }
-  
-  if (sections.examples) {
-    lines.push('## Examples')
-    lines.push(sections.examples)
-    lines.push('')
-  }
-  
-  if (sections.related) {
-    lines.push('## Related')
-    lines.push(sections.related)
-    lines.push('')
-  }
-  
-  if (sections.meaning) {
-    lines.push('## Meaning')
-    lines.push(sections.meaning)
-    lines.push('')
-  }
-  
-  if (sections.components) {
-    lines.push('## Components')
-    lines.push(sections.components)
-    lines.push('')
-  }
-  
-  if (sections.memory) {
-    lines.push('## Memory')
-    lines.push(sections.memory)
-    lines.push('')
+  for (const { key, header, allowEmpty } of sectionOrder) {
+    if (sections[key] || (allowEmpty && sections[key] !== undefined)) {
+      lines.push(header)
+      lines.push(sections[key] || '')
+      lines.push('')
+    }
   }
   
   return lines.join('\n').trim()
@@ -321,11 +320,104 @@ watch(mode, async (newMode) => {
   }
 })
 
-onMounted(() => {
+onMounted(async () => {
   if (props.card?.isNew || !content.value) {
     mode.value = 'write'
+  } else {
+    // Resolve images if starting in preview mode
+    await nextTick()
+    if (mode.value === 'preview') {
+      resolvePreviewImages()
+    }
   }
 })
+
+/**
+ * Handle paste event to support image pasting
+ */
+async function handlePaste(event) {
+  const items = event.clipboardData?.items
+  if (!items) return
+  
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      event.preventDefault()
+      await pasteImage(item)
+      break
+    }
+  }
+}
+
+/**
+ * Process and save pasted image, insert markdown at cursor
+ */
+async function pasteImage(item) {
+  const blob = item.getAsFile()
+  if (!blob) return
+  
+  isPastingImage.value = true
+  
+  try {
+    // Ensure card has an ID (generate if needed for new cards)
+    let cardId = props.card?.id
+    if (!cardId) {
+      cardId = crypto.randomUUID()
+      // Update the card object with generated ID
+      if (props.card) {
+        props.card.id = cardId
+      }
+    }
+    
+    // Resize if needed
+    const resizedBlob = await resizeImageBlob(blob)
+    
+    // Get next available index for this card
+    const index = await getNextImageIndex(cardId)
+    
+    // Save to IndexedDB
+    await saveImageBlob(cardId, index, resizedBlob)
+    
+    // Build the card:// URL
+    const imageUrl = `card://${cardId}/img/${index}`
+    const markdownImage = `![image](${imageUrl})`
+    
+    // Insert at cursor position
+    insertAtCursor(markdownImage)
+  } catch (err) {
+    console.error('Failed to paste image:', err)
+    cardGen.error.value = 'Failed to paste image: ' + err.message
+  } finally {
+    isPastingImage.value = false
+  }
+}
+
+/**
+ * Insert text at current cursor position in textarea
+ */
+function insertAtCursor(text) {
+  const textarea = textareaRef.value
+  if (!textarea) return
+  
+  const start = textarea.selectionStart
+  const end = textarea.selectionEnd
+  const before = content.value.substring(0, start)
+  const after = content.value.substring(end)
+  
+  // Add newlines if inserting in middle of content
+  const needsNewlineBefore = before.length > 0 && !before.endsWith('\n')
+  const needsNewlineAfter = after.length > 0 && !after.startsWith('\n')
+  
+  const insertion = (needsNewlineBefore ? '\n' : '') + text + (needsNewlineAfter ? '\n' : '')
+  
+  content.value = before + insertion + after
+  
+  // Move cursor after inserted text
+  nextTick(() => {
+    const newPos = start + insertion.length
+    textarea.setSelectionRange(newPos, newPos)
+    textarea.focus()
+  })
+}
 </script>
 
 <style scoped>
@@ -572,6 +664,28 @@ onMounted(() => {
   color: var(--text-secondary);
 }
 
+/* Card images */
+.markdown-content :deep(img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  margin: 8px 0;
+}
+
+.markdown-content :deep(img.card-image-pending),
+.markdown-content :deep(img.card-image-loading) {
+  opacity: 0.5;
+  min-height: 100px;
+  background: rgba(128, 128, 128, 0.1);
+}
+
+.markdown-content :deep(img.card-image-error) {
+  opacity: 0.3;
+  min-height: 50px;
+  background: rgba(220, 53, 69, 0.1);
+  border: 1px dashed rgba(220, 53, 69, 0.3);
+}
+
 /* Speak button */
 .speak-btn {
   display: inline-flex;
@@ -604,6 +718,24 @@ onMounted(() => {
 }
 
 .speak-btn:hover .speak-icon {
+  color: var(--secondary);
+}
+
+/* Inline speak icons after Chinese text */
+.markdown-content :deep(.inline-speak) {
+  display: inline;
+  margin-left: 2px;
+  font-size: 0.7em;
+  color: var(--text-muted);
+  opacity: 0.4;
+  cursor: pointer;
+  transition: opacity 0.15s ease, color 0.15s ease;
+  user-select: none;
+  vertical-align: middle;
+}
+
+.markdown-content :deep(.inline-speak:hover) {
+  opacity: 1;
   color: var(--secondary);
 }
 </style>

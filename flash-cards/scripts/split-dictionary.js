@@ -113,23 +113,87 @@ function loadCedict() {
   return bySimplified
 }
 
+// ============ Priority Scoring ============
+
+/**
+ * Score a single pinyin reading entry (lower = higher priority)
+ * Common meanings get low scores, rare ones (surnames, variants) get high scores
+ */
+function scorePinyinEntry(entry) {
+  const defs = entry.definitions.split('/').filter(Boolean)
+  let score = 0
+  
+  // Capitalized pinyin = proper noun (surnames, place names) → penalize heavily
+  if (/^[A-Z]/.test(entry.pinyin)) {
+    score += 100
+  }
+  
+  // Check definition patterns
+  let hasSurname = false
+  let hasVariant = false
+  let hasArchaic = false
+  let hasCommonGrammar = false
+  let hasConcreteDefinition = false
+  
+  for (const def of defs) {
+    const d = def.toLowerCase()
+    
+    // Penalties for rare/specialized meanings
+    if (/surname\b/.test(d)) hasSurname = true
+    if (/^(old |archaic )?variant of /.test(d)) hasVariant = true
+    if (/^archaic\b|^old\b/.test(d)) hasArchaic = true
+    
+    // "used in X" = only appears in specific compounds, not standalone
+    if (/^used in /.test(d)) score += 50
+    
+    // Loanwords are often less common than native meanings
+    if (/\(loanword\)|\bloanword\b/.test(d)) score += 40
+    
+    // Bonuses for common grammar/function words
+    if (/\b(specifier|pronoun|particle|measure word|classifier|conjunction|preposition|auxiliary)\b/.test(d)) {
+      hasCommonGrammar = true
+    }
+    
+    // Regular definitions (not just cross-references)
+    if (!/^(old |archaic )?(variant|see) /.test(d) && !/surname/.test(d)) {
+      hasConcreteDefinition = true
+    }
+  }
+  
+  // Apply penalties
+  if (hasSurname) score += 80
+  if (hasVariant && !hasConcreteDefinition) score += 60  // Pure variant reference
+  if (hasArchaic && !hasConcreteDefinition) score += 40
+  
+  // Apply bonuses
+  if (hasCommonGrammar) score -= 30
+  if (hasConcreteDefinition && !hasSurname) score -= 10
+  
+  return score
+}
+
 // ============ Merging ============
 
 /**
  * Merge multiple cedict entries for same word into one line
  * 长 with [cháng] and [zhǎng] becomes:
  * 長 长 [cháng] /long/... [zhǎng] /chief/...
+ * 
+ * Entries are sorted by priority so common meanings come first
  */
 function mergeEntries(entries) {
-  if (entries.length === 1) {
-    return entries[0].raw
+  // Sort entries by priority score (lower = more common)
+  const sorted = [...entries].sort((a, b) => scorePinyinEntry(a) - scorePinyinEntry(b))
+  
+  if (sorted.length === 1) {
+    return sorted[0].raw
   }
   
   // Use first entry's traditional/simplified
-  const first = entries[0]
+  const first = sorted[0]
   const parts = [`${first.traditional} ${first.simplified}`]
   
-  for (const entry of entries) {
+  for (const entry of sorted) {
     parts.push(`[${entry.pinyin}] /${entry.definitions}/`)
   }
   

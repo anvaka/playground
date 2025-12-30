@@ -172,18 +172,6 @@ export function useMarkdownCardGeneration({ getClient, onCardSaved }) {
   }
 
   /**
-   * Regenerate content for current card
-   */
-  async function regenerate() {
-    if (!currentCard.value?.character) {
-      error.value = 'No card to regenerate'
-      return null
-    }
-    
-    return generate(currentCard.value.character, '')
-  }
-
-  /**
    * Save the current card
    */
   function save(content) {
@@ -235,7 +223,6 @@ export function useMarkdownCardGeneration({ getClient, onCardSaved }) {
     openCard,
     generate,
     generateFreeform,
-    regenerate,
     save,
     clear,
     clearError

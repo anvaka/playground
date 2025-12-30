@@ -1,10 +1,10 @@
 /**
  * Chat storage service using IndexedDB
- * Stores conversation threads associated with cards
+ * Stores global conversation threads (not tied to specific cards)
  */
 
 const DB_NAME = 'flashcards-chats'
-const DB_VERSION = 1
+const DB_VERSION = 2  // Bump version for schema change
 const STORE_NAME = 'threads'
 
 let dbPromise = null
@@ -31,12 +31,14 @@ function getDB() {
     request.onupgradeneeded = (event) => {
       const db = event.target.result
 
-      // Create threads store with indexes
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' })
-        store.createIndex('cardId', 'cardId', { unique: false })
-        store.createIndex('updated', 'updated', { unique: false })
+      // Delete old store if exists (schema change)
+      if (db.objectStoreNames.contains(STORE_NAME)) {
+        db.deleteObjectStore(STORE_NAME)
       }
+      
+      // Create threads store with updated indexes
+      const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' })
+      store.createIndex('updated', 'updated', { unique: false })
     }
   })
 
@@ -44,18 +46,16 @@ function getDB() {
 }
 
 /**
- * Get all chat threads for a specific card
- * @param {string} cardId - Card ID to filter by
+ * Get all chat threads (global)
  * @returns {Promise<Array>} Threads sorted by updated date (newest first)
  */
-export async function getThreadsForCard(cardId) {
+export async function getAllThreads() {
   const db = await getDB()
   
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(STORE_NAME, 'readonly')
     const store = transaction.objectStore(STORE_NAME)
-    const index = store.index('cardId')
-    const request = index.getAll(cardId)
+    const request = store.getAll()
 
     request.onsuccess = () => {
       const threads = request.result || []
@@ -86,17 +86,17 @@ export async function getThread(threadId) {
 }
 
 /**
- * Create a new chat thread for a card
- * @param {string} cardId - Associated card ID
+ * Create a new chat thread
+ * @param {string} title - Optional title for the thread
  * @returns {Promise<Object>} Created thread object
  */
-export async function createThread(cardId) {
+export async function createThread(title = null) {
   const db = await getDB()
   const now = new Date().toISOString()
 
   const thread = {
     id: generateId(),
-    cardId,
+    title,  // Can be set later based on first message
     created: now,
     updated: now,
     messages: []
@@ -106,6 +106,33 @@ export async function createThread(cardId) {
     const transaction = db.transaction(STORE_NAME, 'readwrite')
     const store = transaction.objectStore(STORE_NAME)
     const request = store.add(thread)
+
+    request.onsuccess = () => resolve(thread)
+    request.onerror = () => reject(request.error)
+  })
+}
+
+/**
+ * Update the title of a thread
+ * @param {string} threadId - Thread ID
+ * @param {string} title - New title
+ * @returns {Promise<Object>} Updated thread
+ */
+export async function updateThreadTitle(threadId, title) {
+  const db = await getDB()
+  const thread = await getThread(threadId)
+
+  if (!thread) {
+    throw new Error(`Thread not found: ${threadId}`)
+  }
+
+  thread.title = title
+  thread.updated = new Date().toISOString()
+
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE_NAME, 'readwrite')
+    const store = transaction.objectStore(STORE_NAME)
+    const request = store.put(thread)
 
     request.onsuccess = () => resolve(thread)
     request.onerror = () => reject(request.error)
@@ -201,43 +228,18 @@ export async function deleteThread(threadId) {
 }
 
 /**
- * Delete all threads for a card
- * @param {string} cardId - Card ID
- * @returns {Promise<void>}
+ * Get the most recent thread (or create one if none exist)
+ * @returns {Promise<Object>} Most recent thread
  */
-export async function deleteThreadsForCard(cardId) {
-  const threads = await getThreadsForCard(cardId)
-  const db = await getDB()
-
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readwrite')
-    const store = transaction.objectStore(STORE_NAME)
-
-    let remaining = threads.length
-    if (remaining === 0) {
-      resolve()
-      return
-    }
-
-    for (const thread of threads) {
-      const request = store.delete(thread.id)
-      request.onsuccess = () => {
-        remaining--
-        if (remaining === 0) resolve()
-      }
-      request.onerror = () => reject(request.error)
-    }
-  })
-}
-
-/**
- * Get thread count for a card (for badge display)
- * @param {string} cardId - Card ID
- * @returns {Promise<number>} Number of threads
- */
-export async function getThreadCount(cardId) {
-  const threads = await getThreadsForCard(cardId)
-  return threads.length
+export async function getOrCreateCurrentThread() {
+  const threads = await getAllThreads()
+  
+  if (threads.length > 0) {
+    return threads[0]  // Most recent
+  }
+  
+  // Create a new thread
+  return createThread()
 }
 
 /**

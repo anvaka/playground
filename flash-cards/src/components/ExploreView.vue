@@ -18,6 +18,10 @@
         {{ level.label }}
         <span v-if="level.count" class="level-count">{{ level.count }}</span>
       </button>
+      <label v-if="knownCount > 0" class="filter-toggle">
+        <input type="checkbox" v-model="hideKnown" />
+        <span>Hide known ({{ knownCount }})</span>
+      </label>
     </div>
 
     <!-- Word List -->
@@ -39,6 +43,17 @@
             <polyline points="20 6 9 17 4 12"/>
           </svg>
         </div>
+        <button 
+          class="known-btn"
+          :class="{ active: knownWords.has(item.simplified) }"
+          @click.stop="toggleKnownWord(item.simplified)"
+          :title="knownWords.has(item.simplified) ? 'Unmark as known' : 'Mark as known'"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
       </div>
       
       <!-- Load More -->
@@ -60,6 +75,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { getWordsByHskLevel, getHskWordCount, formatDefinitions } from '../services/dictionary.js'
 import { getMarkdownCards } from '../services/markdownStorage.js'
+import { getKnownWords, toggleKnown, getKnownCount } from '../services/knownWords.js'
 
 const props = defineProps({
   initialLevel: {
@@ -70,14 +86,22 @@ const props = defineProps({
 
 const emit = defineEmits(['select-word', 'change-level'])
 
-const PAGE_SIZE = 50
+const PAGE_SIZE = 500
 
 const selectedLevel = ref(props.initialLevel || 1)
-const words = ref([])
+const allWords = ref([])
 const offset = ref(0)
 const loading = ref(false)
 const totalCount = ref(0)
 const savedWords = ref(new Set())
+const knownWords = ref(new Set())
+const hideKnown = ref(false)
+const knownCount = computed(() => knownWords.value.size)
+
+const words = computed(() => {
+  if (!hideKnown.value) return allWords.value
+  return allWords.value.filter(item => !knownWords.value.has(item.simplified))
+})
 
 // HSK levels with counts
 const levels = computed(() => [
@@ -91,7 +115,7 @@ const levels = computed(() => [
   { value: 7, label: 'HSK 7-9', count: getHskWordCount(7) },
 ])
 
-const hasMore = computed(() => words.value.length < totalCount.value)
+const hasMore = computed(() => allWords.value.length < totalCount.value)
 
 function formatDef(entry) {
   if (!entry?.definitions) return ''
@@ -112,17 +136,22 @@ async function loadWords(reset = false) {
   
   if (reset) {
     offset.value = 0
-    words.value = []
+    allWords.value = []
   }
   
   try {
     const newWords = await getWordsByHskLevel(selectedLevel.value, offset.value, PAGE_SIZE)
-    words.value = reset ? newWords : [...words.value, ...newWords]
+    allWords.value = reset ? newWords : [...allWords.value, ...newWords]
     offset.value += newWords.length
     totalCount.value = getHskWordCount(selectedLevel.value)
   } finally {
     loading.value = false
   }
+}
+
+function toggleKnownWord(simplified) {
+  toggleKnown(simplified)
+  knownWords.value = new Set(getKnownWords())
 }
 
 function loadMore() {
@@ -147,14 +176,22 @@ watch(() => props.initialLevel, (newLevel) => {
   }
 })
 
+function loadKnownWords() {
+  knownWords.value = new Set(getKnownWords())
+}
+
 onMounted(() => {
   loadSavedWords()
+  loadKnownWords()
   loadWords(true)
 })
 
 // Expose refresh for parent to call after card saved
 defineExpose({
-  refresh: loadSavedWords
+  refresh: () => {
+    loadSavedWords()
+    loadKnownWords()
+  }
 })
 </script>
 
@@ -228,7 +265,7 @@ defineExpose({
 
 .word-item {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr auto auto;
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
@@ -307,5 +344,47 @@ defineExpose({
   text-align: center;
   padding: 40px 20px;
   color: var(--text-muted);
+}
+
+.filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.filter-toggle input {
+  cursor: pointer;
+}
+
+.known-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0.5;
+  transition: all 0.15s ease;
+}
+
+.known-btn:hover {
+  opacity: 1;
+  border-color: var(--border-hover);
+}
+
+.known-btn.active {
+  opacity: 1;
+  color: var(--secondary);
+  border-color: var(--secondary);
+  background: var(--secondary-light, rgba(99, 102, 241, 0.1));
 }
 </style>
