@@ -1,6 +1,6 @@
 {
   "devDependencies": {
-    "parse": "^2.1.0",
+    "parse": "^2.10.0",
     "pngjs": "^3.3.3"
   },
   "dependencies": {
